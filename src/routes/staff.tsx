@@ -1,7 +1,7 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect } from "react";
 import { useSession, useRoles } from "@/hooks/use-auth";
-import { LayoutDashboard, MonitorPlay, Bike } from "lucide-react";
+import { LayoutDashboard, MonitorPlay, Bike, BookOpen } from "lucide-react";
 
 export const Route = createFileRoute("/staff")({
   head: () => ({
@@ -24,6 +24,7 @@ function StaffHub() {
 
   const cards = [
     { to: "/admin" as const, icon: LayoutDashboard, title: "Admin dashboard", desc: "Orders, menu, drivers.", show: has("admin") || has("staff") },
+    { to: "/admin/menu" as const, icon: BookOpen, title: "Menu manager", desc: "Categories, items, modifiers, images.", show: has("admin") || has("staff") },
     { to: "/kds" as const, icon: MonitorPlay, title: "Kitchen display", desc: "Live tickets for the kitchen.", show: has("admin") || has("staff") },
     { to: "/driver" as const, icon: Bike, title: "Driver app", desc: "Pick up and deliver orders.", show: has("admin") || has("driver") },
   ];

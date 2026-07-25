@@ -84,6 +84,7 @@ function Admin() {
           <div className="flex gap-2 text-sm">
             <Link to="/kds" className="rounded-full border border-border bg-card px-4 py-2 font-semibold hover:border-primary">KDS</Link>
             <Link to="/driver" className="rounded-full border border-border bg-card px-4 py-2 font-semibold hover:border-primary">Driver</Link>
+            <Link to="/admin/menu" className="rounded-full border border-border bg-card px-4 py-2 font-semibold hover:border-primary">Menu</Link>
           </div>
         </div>
 
