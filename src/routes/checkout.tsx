@@ -125,7 +125,7 @@ function Checkout() {
     <div className="min-h-screen bg-background">
       <SiteHeader />
       <div className="mx-auto grid max-w-4xl gap-8 px-4 py-12 lg:grid-cols-[1fr_360px]">
-        <form onSubmit={submit} className="space-y-6">
+        <form id="checkout-form" onSubmit={submit} className="space-y-6">
           {!user && !loading && (
             <div className="rounded-2xl border border-primary/30 bg-primary/5 p-4">
               <p className="font-semibold text-primary">Get 10% off & earn loyalty points</p>
@@ -237,7 +237,7 @@ function Checkout() {
             <div className="flex justify-between"><span className="text-muted-foreground">Delivery</span><span>{money(delivery)}</span></div>
             <div className="mt-2 flex justify-between border-t border-border pt-2 font-display text-lg font-bold"><span>Total</span><span className="text-primary">{money(total)}</span></div>
           </div>
-          <button onClick={submit} disabled={busy} className="mt-4 h-12 w-full rounded-full bg-primary font-semibold text-primary-foreground shadow-brand transition hover:bg-primary-hover disabled:opacity-60">
+          <button type="submit" form="checkout-form" disabled={busy} className="mt-4 h-12 w-full rounded-full bg-primary font-semibold text-primary-foreground shadow-brand transition hover:bg-primary-hover disabled:opacity-60">
             {busy ? "Placing…" : "Place order & pay"}
           </button>
           <p className="mt-2 text-center text-xs text-muted-foreground">
