@@ -1,6 +1,29 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { getRequest } from "@tanstack/react-start/server";
+import { createClient } from "@supabase/supabase-js";
+import type { Database } from "@/integrations/supabase/types";
+
+function createServerSupabase(bearer?: string) {
+  const url = process.env.SUPABASE_URL!;
+  const key = process.env.SUPABASE_PUBLISHABLE_KEY!;
+  return createClient<Database>(url, key, {
+    auth: { persistSession: false, autoRefreshToken: false },
+    global: {
+      fetch: (input, init) => {
+        const h = new Headers(init?.headers);
+        if (key.startsWith("sb_") && h.get("Authorization") === `Bearer ${key}`) h.delete("Authorization");
+        h.set("apikey", key);
+        if (bearer) h.set("Authorization", `Bearer ${bearer}`);
+        return fetch(input, { ...init, headers: h });
+      },
+    },
+  });
+}
+
+export const LOYALTY_DISCOUNT_RATE = 0.1; // 10% off for signed-in customers
+export const POINTS_PER_POUND = 1;
 
 const CartItemSchema = z.object({
   menu_item_id: z.string().uuid(),
@@ -26,10 +49,19 @@ const CreateOrderSchema = z.object({
 });
 
 export const createOrder = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => CreateOrderSchema.parse(d))
-  .handler(async ({ data, context }) => {
-    const { supabase, userId } = context;
+  .handler(async ({ data }) => {
+    // Optional auth: signed-in customers get discount + points.
+    const req = getRequest();
+    const authHeader = req?.headers.get("authorization") ?? "";
+    const token = authHeader.startsWith("Bearer ") ? authHeader.slice(7) : "";
+    const validToken = token && token.split(".").length === 3 ? token : "";
+    const supabase = createServerSupabase(validToken || undefined);
+    let userId: string | null = null;
+    if (validToken) {
+      const { data: u } = await supabase.auth.getUser(validToken);
+      userId = u.user?.id ?? null;
+    }
 
     const ids = data.items.map((i) => i.menu_item_id);
     const { data: menu, error: menuErr } = await supabase
@@ -54,7 +86,9 @@ export const createOrder = createServerFn({ method: "POST" })
     });
 
     const delivery_fee = data.type === "delivery" ? 299 : 0;
-    const total = subtotal + delivery_fee;
+    const discount = userId ? Math.round(subtotal * LOYALTY_DISCOUNT_RATE) : 0;
+    const total = Math.max(0, subtotal - discount) + delivery_fee;
+    const points_earned = userId ? Math.floor(Math.max(0, subtotal - discount) / 100) * POINTS_PER_POUND : 0;
     const reference = `cafe1-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 
     const { data: order, error: orderErr } = await supabase
@@ -76,6 +110,8 @@ export const createOrder = createServerFn({ method: "POST" })
         scheduled_for: data.schedule_mode === "scheduled" ? data.scheduled_for ?? null : null,
         subtotal_cents: subtotal,
         delivery_fee_cents: delivery_fee,
+        discount_cents: discount,
+        points_earned,
         total_cents: total,
         sumup_reference: reference,
       })
@@ -87,6 +123,22 @@ export const createOrder = createServerFn({ method: "POST" })
       .from("order_items")
       .insert(lines.map((l) => ({ ...l, order_id: order.id })));
     if (itemsErr) throw new Error(itemsErr.message);
+
+    // Award loyalty points immediately for authed customers.
+    if (userId && points_earned > 0) {
+      const { data: prof } = await supabase
+        .from("profiles")
+        .select("loyalty_points, lifetime_points")
+        .eq("id", userId)
+        .maybeSingle();
+      await supabase
+        .from("profiles")
+        .update({
+          loyalty_points: (prof?.loyalty_points ?? 0) + points_earned,
+          lifetime_points: (prof?.lifetime_points ?? 0) + points_earned,
+        })
+        .eq("id", userId);
+    }
 
     let checkout_url: string | null = null;
     let checkout_id: string | null = null;

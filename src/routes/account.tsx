@@ -26,13 +26,26 @@ function Account() {
     if (!loading && !user) navigate({ to: "/auth", search: { next: "/account" } });
   }, [loading, user, navigate]);
 
+  const { data: profile } = useQuery({
+    queryKey: ["my-profile", user?.id],
+    enabled: !!user,
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("profiles")
+        .select("loyalty_points, lifetime_points, full_name")
+        .eq("id", user!.id)
+        .maybeSingle();
+      return data;
+    },
+  });
+
   const { data: orders } = useQuery({
     queryKey: ["my-orders", user?.id],
     enabled: !!user,
     queryFn: async () => {
       const { data } = await supabase
         .from("orders")
-        .select("id, order_number, total_cents, status, created_at, type")
+        .select("id, order_number, total_cents, status, created_at, type, points_earned")
         .eq("customer_id", user!.id)
         .order("created_at", { ascending: false })
         .limit(20);
@@ -48,6 +61,19 @@ function Account() {
         {user && <p className="mt-1 text-muted-foreground">{user.email}</p>}
         <div className="mt-3">
           <button onClick={() => supabase.auth.signOut().then(() => navigate({ to: "/" }))} className="text-sm text-primary hover:underline">Sign out</button>
+        </div>
+
+        <div className="mt-8 grid gap-4 sm:grid-cols-2">
+          <div className="rounded-2xl border border-primary/30 bg-primary/5 p-5">
+            <p className="text-xs uppercase tracking-wider text-primary/80">Loyalty points</p>
+            <p className="mt-1 font-display text-4xl font-bold text-primary">{profile?.loyalty_points ?? 0}</p>
+            <p className="mt-1 text-xs text-muted-foreground">Earn 1 point per £1 spent. Coming soon: redeem for free items.</p>
+          </div>
+          <div className="rounded-2xl border border-border bg-card p-5">
+            <p className="text-xs uppercase tracking-wider text-muted-foreground">Member perk</p>
+            <p className="mt-1 font-display text-2xl font-bold">10% off every order</p>
+            <p className="mt-1 text-xs text-muted-foreground">Automatically applied at checkout when signed in.</p>
+          </div>
         </div>
 
         <h2 className="mt-10 font-display text-2xl font-bold">Recent orders</h2>

@@ -207,11 +207,14 @@ export type Database = {
           delivered_at: string | null
           delivery_fee_cents: number
           delivery_notes: string | null
+          discount_cents: number
           driver_id: string | null
+          guest_token: string
           id: string
           order_number: number
           payment_status: Database["public"]["Enums"]["payment_status"]
           picked_up_at: string | null
+          points_earned: number
           postcode: string | null
           ready_at: string | null
           schedule_mode: string
@@ -239,11 +242,14 @@ export type Database = {
           delivered_at?: string | null
           delivery_fee_cents?: number
           delivery_notes?: string | null
+          discount_cents?: number
           driver_id?: string | null
+          guest_token?: string
           id?: string
           order_number?: number
           payment_status?: Database["public"]["Enums"]["payment_status"]
           picked_up_at?: string | null
+          points_earned?: number
           postcode?: string | null
           ready_at?: string | null
           schedule_mode?: string
@@ -271,11 +277,14 @@ export type Database = {
           delivered_at?: string | null
           delivery_fee_cents?: number
           delivery_notes?: string | null
+          discount_cents?: number
           driver_id?: string | null
+          guest_token?: string
           id?: string
           order_number?: number
           payment_status?: Database["public"]["Enums"]["payment_status"]
           picked_up_at?: string | null
+          points_earned?: number
           postcode?: string | null
           ready_at?: string | null
           schedule_mode?: string
@@ -298,6 +307,8 @@ export type Database = {
           email: string | null
           full_name: string | null
           id: string
+          lifetime_points: number
+          loyalty_points: number
           phone: string | null
           updated_at: string
         }
@@ -306,6 +317,8 @@ export type Database = {
           email?: string | null
           full_name?: string | null
           id: string
+          lifetime_points?: number
+          loyalty_points?: number
           phone?: string | null
           updated_at?: string
         }
@@ -314,6 +327,8 @@ export type Database = {
           email?: string | null
           full_name?: string | null
           id?: string
+          lifetime_points?: number
+          loyalty_points?: number
           phone?: string | null
           updated_at?: string
         }
