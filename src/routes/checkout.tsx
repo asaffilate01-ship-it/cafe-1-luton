@@ -1,4 +1,4 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { createOrder } from "@/lib/orders.functions";
@@ -64,17 +64,17 @@ function Checkout() {
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
-    if (!loading && !user) navigate({ to: "/auth", search: { next: "/checkout" } });
-  }, [loading, user, navigate]);
-
-  useEffect(() => {
     if (user?.email && !form.customer_email)
       setForm((f) => ({ ...f, customer_email: user.email ?? "" }));
   }, [user, form.customer_email]);
 
   const subtotal = c.items.reduce((s, i) => s + i.price_cents * i.qty, 0);
   const delivery = mode === "delivery" ? 299 : 0;
-  const total = subtotal + delivery;
+  const discount = user ? Math.round(subtotal * 0.1) : 0;
+  const total = Math.max(0, subtotal - discount) + delivery;
+  const pointsEarn = user ? Math.floor(Math.max(0, subtotal - discount) / 100) : 0;
+  // Prevent unused import warning when navigate not used
+  void navigate;
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
@@ -126,6 +126,20 @@ function Checkout() {
       <SiteHeader />
       <div className="mx-auto grid max-w-4xl gap-8 px-4 py-12 lg:grid-cols-[1fr_360px]">
         <form onSubmit={submit} className="space-y-6">
+          {!user && !loading && (
+            <div className="rounded-2xl border border-primary/30 bg-primary/5 p-4">
+              <p className="font-semibold text-primary">Get 10% off & earn loyalty points</p>
+              <p className="mt-1 text-sm text-muted-foreground">
+                <Link to="/auth" search={{ next: "/checkout" }} className="font-semibold text-primary underline">Sign in or create an account</Link>{" "}
+                to unlock member pricing and earn 1 point per £1 — or continue as guest below.
+              </p>
+            </div>
+          )}
+          {user && (
+            <div className="rounded-2xl border border-primary/40 bg-primary/10 p-4 text-sm">
+              <span className="font-semibold text-primary">Member perks applied</span> — 10% off this order and you'll earn {pointsEarn} points.
+            </div>
+          )}
           <div className="rounded-2xl border border-border bg-card p-5">
             <p className="font-semibold">How would you like your order?</p>
             <div className="mt-3 grid grid-cols-3 gap-2">
@@ -217,13 +231,18 @@ function Checkout() {
           </ul>
           <div className="mt-3 space-y-1 text-sm">
             <div className="flex justify-between"><span className="text-muted-foreground">Subtotal</span><span>{money(subtotal)}</span></div>
+            {discount > 0 && (
+              <div className="flex justify-between text-primary"><span>Member discount (10%)</span><span>−{money(discount)}</span></div>
+            )}
             <div className="flex justify-between"><span className="text-muted-foreground">Delivery</span><span>{money(delivery)}</span></div>
             <div className="mt-2 flex justify-between border-t border-border pt-2 font-display text-lg font-bold"><span>Total</span><span className="text-primary">{money(total)}</span></div>
           </div>
           <button onClick={submit} disabled={busy} className="mt-4 h-12 w-full rounded-full bg-primary font-semibold text-primary-foreground shadow-brand transition hover:bg-primary-hover disabled:opacity-60">
             {busy ? "Placing…" : "Place order & pay"}
           </button>
-          <p className="mt-2 text-center text-xs text-muted-foreground">Secured by SumUp</p>
+          <p className="mt-2 text-center text-xs text-muted-foreground">
+            {user ? "Secured by SumUp" : "Guest checkout · Secured by SumUp"}
+          </p>
         </aside>
       </div>
     </div>
