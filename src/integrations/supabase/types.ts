@@ -198,6 +198,7 @@ export type Database = {
           address_line1: string | null
           address_line2: string | null
           city: string | null
+          company_name: string | null
           created_at: string
           customer_email: string | null
           customer_id: string | null
@@ -213,11 +214,14 @@ export type Database = {
           picked_up_at: string | null
           postcode: string | null
           ready_at: string | null
+          schedule_mode: string
+          scheduled_for: string | null
           status: Database["public"]["Enums"]["order_status"]
           subtotal_cents: number
           sumup_checkout_id: string | null
           sumup_reference: string | null
           sumup_transaction_id: string | null
+          table_number: string | null
           total_cents: number
           type: Database["public"]["Enums"]["order_type"]
           updated_at: string
@@ -226,6 +230,7 @@ export type Database = {
           address_line1?: string | null
           address_line2?: string | null
           city?: string | null
+          company_name?: string | null
           created_at?: string
           customer_email?: string | null
           customer_id?: string | null
@@ -241,11 +246,14 @@ export type Database = {
           picked_up_at?: string | null
           postcode?: string | null
           ready_at?: string | null
+          schedule_mode?: string
+          scheduled_for?: string | null
           status?: Database["public"]["Enums"]["order_status"]
           subtotal_cents?: number
           sumup_checkout_id?: string | null
           sumup_reference?: string | null
           sumup_transaction_id?: string | null
+          table_number?: string | null
           total_cents?: number
           type: Database["public"]["Enums"]["order_type"]
           updated_at?: string
@@ -254,6 +262,7 @@ export type Database = {
           address_line1?: string | null
           address_line2?: string | null
           city?: string | null
+          company_name?: string | null
           created_at?: string
           customer_email?: string | null
           customer_id?: string | null
@@ -269,11 +278,14 @@ export type Database = {
           picked_up_at?: string | null
           postcode?: string | null
           ready_at?: string | null
+          schedule_mode?: string
+          scheduled_for?: string | null
           status?: Database["public"]["Enums"]["order_status"]
           subtotal_cents?: number
           sumup_checkout_id?: string | null
           sumup_reference?: string | null
           sumup_transaction_id?: string | null
+          table_number?: string | null
           total_cents?: number
           type?: Database["public"]["Enums"]["order_type"]
           updated_at?: string
