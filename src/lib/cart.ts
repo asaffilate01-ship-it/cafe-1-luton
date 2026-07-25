@@ -27,6 +27,8 @@ function persist() {
 }
 load();
 
+const EMPTY: State = { items: [] };
+
 export const cart = {
   get: () => state,
   subscribe(cb: () => void) {
@@ -56,18 +58,12 @@ export const cart = {
     state = { items: [] };
     persist();
   },
-  total() {
-    return state.items.reduce((s, i) => s + i.price_cents * i.qty, 0);
-  },
-  count() {
-    return state.items.reduce((s, i) => s + i.qty, 0);
-  },
 };
 
 export function useCart() {
   return useSyncExternalStore(
     (cb) => cart.subscribe(cb),
     () => state,
-    () => ({ items: [] }),
+    () => EMPTY,
   );
 }
