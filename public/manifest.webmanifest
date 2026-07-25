@@ -1,0 +1,22 @@
+{
+  "name": "Cafe1 — Order, Collect, Deliver",
+  "short_name": "Cafe1",
+  "description": "Order Cafe1 for delivery, pickup or dine-in.",
+  "start_url": "/",
+  "scope": "/",
+  "id": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#ffffff",
+  "theme_color": "#dc2626",
+  "categories": ["food", "shopping", "lifestyle"],
+  "icons": [
+    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" },
+    { "src": "/apple-touch-icon.png", "sizes": "512x512", "type": "image/png" }
+  ],
+  "shortcuts": [
+    { "name": "Menu", "url": "/menu" },
+    { "name": "My orders", "url": "/account" }
+  ]
+}
