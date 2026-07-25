@@ -9,10 +9,16 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as ContactRouteImport } from './routes/contact'
 import { Route as AboutRouteImport } from './routes/about'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ApiPublicSumupWebhookRouteImport } from './routes/api/public/sumup-webhook'
 
+const ContactRoute = ContactRouteImport.update({
+  id: '/contact',
+  path: '/contact',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AboutRoute = AboutRouteImport.update({
   id: '/about',
   path: '/about',
@@ -32,35 +38,46 @@ const ApiPublicSumupWebhookRoute = ApiPublicSumupWebhookRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
+  '/contact': typeof ContactRoute
   '/api/public/sumup-webhook': typeof ApiPublicSumupWebhookRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
+  '/contact': typeof ContactRoute
   '/api/public/sumup-webhook': typeof ApiPublicSumupWebhookRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
+  '/contact': typeof ContactRoute
   '/api/public/sumup-webhook': typeof ApiPublicSumupWebhookRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/about' | '/api/public/sumup-webhook'
+  fullPaths: '/' | '/about' | '/contact' | '/api/public/sumup-webhook'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/about' | '/api/public/sumup-webhook'
-  id: '__root__' | '/' | '/about' | '/api/public/sumup-webhook'
+  to: '/' | '/about' | '/contact' | '/api/public/sumup-webhook'
+  id: '__root__' | '/' | '/about' | '/contact' | '/api/public/sumup-webhook'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AboutRoute: typeof AboutRoute
+  ContactRoute: typeof ContactRoute
   ApiPublicSumupWebhookRoute: typeof ApiPublicSumupWebhookRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/contact': {
+      id: '/contact'
+      path: '/contact'
+      fullPath: '/contact'
+      preLoaderRoute: typeof ContactRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/about': {
       id: '/about'
       path: '/about'
@@ -88,6 +105,7 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AboutRoute: AboutRoute,
+  ContactRoute: ContactRoute,
   ApiPublicSumupWebhookRoute: ApiPublicSumupWebhookRoute,
 }
 export const routeTree = rootRouteImport
