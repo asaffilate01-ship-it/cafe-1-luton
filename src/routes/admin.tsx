@@ -41,7 +41,7 @@ function Admin() {
   const markPaid = useServerFn(markPaidManually);
 
   useEffect(() => {
-    if (!loading && !user) navigate({ to: "/auth", search: { next: "/admin" } });
+    if (!loading && !user) navigate({ to: "/admin/login", search: { next: "/admin" } });
   }, [loading, user, navigate]);
 
   useEffect(() => {
