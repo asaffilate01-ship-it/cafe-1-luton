@@ -131,11 +131,15 @@ export const updateOrderStatus = createServerFn({ method: "POST" })
       .parse(d),
   )
   .handler(async ({ data, context }) => {
-    const patch: Record<string, unknown> = { status: data.status };
-    if (data.status === "ready") patch.ready_at = new Date().toISOString();
-    if (data.status === "out_for_delivery") patch.picked_up_at = new Date().toISOString();
-    if (data.status === "delivered" || data.status === "completed")
-      patch.delivered_at = new Date().toISOString();
+    const now = new Date().toISOString();
+    const patch = {
+      status: data.status,
+      ...(data.status === "ready" ? { ready_at: now } : {}),
+      ...(data.status === "out_for_delivery" ? { picked_up_at: now } : {}),
+      ...(data.status === "delivered" || data.status === "completed"
+        ? { delivered_at: now }
+        : {}),
+    };
     const { error } = await context.supabase
       .from("orders")
       .update(patch)
