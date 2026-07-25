@@ -13,6 +13,8 @@ type Order = {
   total_cents: number;
   customer_name: string;
   created_at: string;
+  scheduled_for: string | null;
+  schedule_mode: string | null;
 };
 
 export const Route = createFileRoute("/order/$orderId")({
@@ -64,7 +66,13 @@ function OrderView() {
       <div className="mx-auto max-w-2xl px-4 py-12">
         <p className="text-sm uppercase tracking-wider text-muted-foreground">Order</p>
         <h1 className="font-display text-4xl font-bold">#{order.order_number}</h1>
-        <p className="mt-1 text-muted-foreground">{order.customer_name} · {order.type.replace("_", " ")}</p>
+        <p className="mt-1 text-muted-foreground">
+          {order.customer_name} · {order.type === "collection" ? "Pickup" : order.type.replace("_", " ")}
+          {" · "}
+          {order.schedule_mode === "scheduled" && order.scheduled_for
+            ? `for ${new Date(order.scheduled_for).toLocaleString([], { hour: "2-digit", minute: "2-digit", weekday: "short" })}`
+            : "ASAP"}
+        </p>
 
         <div className="mt-8 rounded-2xl border border-border bg-card p-5">
           <div className="grid grid-cols-6 gap-2">
