@@ -22,6 +22,24 @@ export const Route = createFileRoute("/checkout")({
 });
 
 type Mode = "delivery" | "collection" | "dine_in";
+type ScheduleMode = "asap" | "scheduled";
+
+function buildTimeSlots(): { value: string; label: string }[] {
+  const slots: { value: string; label: string }[] = [];
+  const now = new Date();
+  const start = new Date(now.getTime() + 30 * 60 * 1000);
+  // round up to next 15 minutes
+  const m = start.getMinutes();
+  start.setMinutes(m + ((15 - (m % 15)) % 15), 0, 0);
+  for (let i = 0; i < 24; i++) {
+    const d = new Date(start.getTime() + i * 15 * 60 * 1000);
+    slots.push({
+      value: d.toISOString(),
+      label: d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+    });
+  }
+  return slots;
+}
 
 function Checkout() {
   const c = useCart();
@@ -29,14 +47,19 @@ function Checkout() {
   const { user, loading } = useSession();
   const place = useServerFn(createOrder);
   const [mode, setMode] = useState<Mode>("collection");
+  const [scheduleMode, setScheduleMode] = useState<ScheduleMode>("asap");
+  const [scheduledFor, setScheduledFor] = useState<string>("");
+  const timeSlots = useState(() => buildTimeSlots())[0];
   const [form, setForm] = useState({
     customer_name: "",
     customer_phone: "",
     customer_email: "",
+    company_name: "",
     address_line1: "",
     city: "",
     postcode: "",
     delivery_notes: "",
+    table_number: "",
   });
   const [busy, setBusy] = useState(false);
 
@@ -64,10 +87,14 @@ function Checkout() {
           customer_name: form.customer_name,
           customer_phone: form.customer_phone,
           customer_email: form.customer_email,
+          company_name: mode === "delivery" ? form.company_name || undefined : undefined,
           address_line1: mode === "delivery" ? form.address_line1 : undefined,
           city: mode === "delivery" ? form.city : undefined,
           postcode: mode === "delivery" ? form.postcode : undefined,
           delivery_notes: form.delivery_notes || undefined,
+          table_number: mode === "dine_in" ? form.table_number || undefined : undefined,
+          schedule_mode: scheduleMode,
+          scheduled_for: scheduleMode === "scheduled" ? scheduledFor || undefined : undefined,
           items: c.items.map((i) => ({ menu_item_id: i.id, qty: i.qty })),
         },
       });
@@ -111,29 +138,68 @@ function Checkout() {
                     mode === m ? "border-primary bg-primary text-primary-foreground" : "border-border bg-background hover:border-primary"
                   }`}
                 >
-                  {m.replace("_", " ")}
+                  {m === "collection" ? "Pickup" : m === "dine_in" ? "Dine in" : "Delivery"}
                 </button>
               ))}
             </div>
           </div>
 
           <div className="rounded-2xl border border-border bg-card p-5">
+            <p className="font-semibold">When?</p>
+            <div className="mt-3 grid grid-cols-2 gap-2">
+              {(["asap", "scheduled"] as const).map((s) => (
+                <button
+                  type="button"
+                  key={s}
+                  onClick={() => setScheduleMode(s)}
+                  className={`h-11 rounded-xl border text-sm font-semibold transition ${
+                    scheduleMode === s ? "border-primary bg-primary text-primary-foreground" : "border-border bg-background hover:border-primary"
+                  }`}
+                >
+                  {s === "asap" ? "ASAP" : "Schedule for later"}
+                </button>
+              ))}
+            </div>
+            {scheduleMode === "scheduled" && (
+              <select
+                required
+                value={scheduledFor}
+                onChange={(e) => setScheduledFor(e.target.value)}
+                className="mt-3 h-11 w-full rounded-xl border border-border bg-background px-4"
+              >
+                <option value="">Select a time slot…</option>
+                {timeSlots.map((s) => (
+                  <option key={s.value} value={s.value}>{s.label}</option>
+                ))}
+              </select>
+            )}
+          </div>
+
+          <div className="rounded-2xl border border-border bg-card p-5">
             <p className="font-semibold">Your details</p>
             <div className="mt-3 grid gap-3 sm:grid-cols-2">
-              <input required placeholder="Full name" value={form.customer_name} onChange={(e) => setForm({ ...form, customer_name: e.target.value })} className="h-11 rounded-xl border border-border bg-background px-4" />
+              <input required placeholder="Contact person's name" value={form.customer_name} onChange={(e) => setForm({ ...form, customer_name: e.target.value })} className="h-11 rounded-xl border border-border bg-background px-4" />
               <input required placeholder="Phone" value={form.customer_phone} onChange={(e) => setForm({ ...form, customer_phone: e.target.value })} className="h-11 rounded-xl border border-border bg-background px-4" />
               <input type="email" placeholder="Email (optional)" value={form.customer_email} onChange={(e) => setForm({ ...form, customer_email: e.target.value })} className="h-11 rounded-xl border border-border bg-background px-4 sm:col-span-2" />
             </div>
           </div>
 
+          {mode === "dine_in" && (
+            <div className="rounded-2xl border border-border bg-card p-5">
+              <p className="font-semibold">Table</p>
+              <input placeholder="Table number (optional)" value={form.table_number} onChange={(e) => setForm({ ...form, table_number: e.target.value })} className="mt-3 h-11 w-full rounded-xl border border-border bg-background px-4" />
+            </div>
+          )}
+
           {mode === "delivery" && (
             <div className="rounded-2xl border border-border bg-card p-5">
               <p className="font-semibold">Delivery address</p>
               <div className="mt-3 grid gap-3 sm:grid-cols-2">
-                <input required placeholder="Address" value={form.address_line1} onChange={(e) => setForm({ ...form, address_line1: e.target.value })} className="h-11 rounded-xl border border-border bg-background px-4 sm:col-span-2" />
-                <input required placeholder="City" value={form.city} onChange={(e) => setForm({ ...form, city: e.target.value })} className="h-11 rounded-xl border border-border bg-background px-4" />
                 <input required placeholder="Postcode" value={form.postcode} onChange={(e) => setForm({ ...form, postcode: e.target.value })} className="h-11 rounded-xl border border-border bg-background px-4" />
-                <textarea placeholder="Delivery notes (optional)" value={form.delivery_notes} onChange={(e) => setForm({ ...form, delivery_notes: e.target.value })} className="min-h-20 rounded-xl border border-border bg-background p-3 sm:col-span-2" />
+                <input placeholder="Office / company name (optional)" value={form.company_name} onChange={(e) => setForm({ ...form, company_name: e.target.value })} className="h-11 rounded-xl border border-border bg-background px-4" />
+                <input required placeholder="Street address" value={form.address_line1} onChange={(e) => setForm({ ...form, address_line1: e.target.value })} className="h-11 rounded-xl border border-border bg-background px-4 sm:col-span-2" />
+                <input required placeholder="City" value={form.city} onChange={(e) => setForm({ ...form, city: e.target.value })} className="h-11 rounded-xl border border-border bg-background px-4" />
+                <textarea placeholder="Delivery notes — buzzer, floor, gate code (optional)" value={form.delivery_notes} onChange={(e) => setForm({ ...form, delivery_notes: e.target.value })} className="min-h-20 rounded-xl border border-border bg-background p-3 sm:col-span-2" />
               </div>
             </div>
           )}

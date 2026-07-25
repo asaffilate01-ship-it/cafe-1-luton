@@ -12,7 +12,8 @@ type Job = {
   id: string; order_number: number; status: string; total_cents: number;
   customer_name: string; customer_phone: string;
   address_line1: string | null; city: string | null; postcode: string | null;
-  delivery_notes: string | null;
+  delivery_notes: string | null; company_name: string | null;
+  scheduled_for: string | null; schedule_mode: string | null;
 };
 
 export const Route = createFileRoute("/driver")({
@@ -36,7 +37,7 @@ function Driver() {
     async function load() {
       const { data } = await supabase
         .from("orders")
-        .select("id, order_number, status, total_cents, customer_name, customer_phone, address_line1, city, postcode, delivery_notes")
+        .select("id, order_number, status, total_cents, customer_name, customer_phone, address_line1, city, postcode, delivery_notes, company_name, scheduled_for, schedule_mode")
         .eq("type", "delivery")
         .in("status", ["ready", "out_for_delivery"])
         .order("created_at");
@@ -82,7 +83,12 @@ function Driver() {
                 </div>
                 <a href={`tel:${j.customer_phone}`} className="grid h-10 w-10 place-items-center rounded-full bg-primary-soft text-primary"><Phone className="h-4 w-4" /></a>
               </div>
-              <p className="mt-3 font-semibold">{j.customer_name}</p>
+              <p className="mt-3 font-semibold">{j.customer_name}{j.company_name ? ` · ${j.company_name}` : ""}</p>
+              <p className="text-xs text-muted-foreground">
+                {j.schedule_mode === "scheduled" && j.scheduled_for
+                  ? `For ${new Date(j.scheduled_for).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}`
+                  : "ASAP"}
+              </p>
               <a href={`https://maps.google.com/?q=${encodeURIComponent(addr)}`} target="_blank" rel="noreferrer" className="mt-1 flex items-start gap-1 text-sm text-primary hover:underline">
                 <MapPin className="mt-0.5 h-4 w-4 shrink-0" /> {addr || "No address"}
               </a>

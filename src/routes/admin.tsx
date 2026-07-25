@@ -11,7 +11,7 @@ import { Printer } from "lucide-react";
 type OrderRow = {
   id: string; order_number: number; status: string; payment_status: string;
   type: string; total_cents: number; customer_name: string; customer_phone: string;
-  created_at: string;
+  created_at: string; scheduled_for: string | null; schedule_mode: string | null;
 };
 
 const NEXT: Record<string, string> = {
@@ -48,7 +48,7 @@ function Admin() {
     async function load() {
       const { data } = await supabase
         .from("orders")
-        .select("id, order_number, status, payment_status, type, total_cents, customer_name, customer_phone, created_at")
+        .select("id, order_number, status, payment_status, type, total_cents, customer_name, customer_phone, created_at, scheduled_for, schedule_mode")
         .order("created_at", { ascending: false })
         .limit(50);
       setOrders((data ?? []) as OrderRow[]);
@@ -102,7 +102,15 @@ function Admin() {
                 <tr key={o.id}>
                   <td className="p-3 font-semibold">#{o.order_number}</td>
                   <td className="p-3">{o.customer_name}<br /><span className="text-xs text-muted-foreground">{o.customer_phone}</span></td>
-                  <td className="p-3 capitalize">{o.type.replace("_", " ")}</td>
+                  <td className="p-3 capitalize">
+                    {o.type === "collection" ? "Pickup" : o.type.replace("_", " ")}
+                    <br />
+                    <span className="text-xs text-muted-foreground">
+                      {o.schedule_mode === "scheduled" && o.scheduled_for
+                        ? new Date(o.scheduled_for).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
+                        : "ASAP"}
+                    </span>
+                  </td>
                   <td className="p-3"><span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${o.payment_status === "paid" ? "bg-primary-soft text-primary" : "bg-secondary text-muted-foreground"}`}>{o.payment_status}</span></td>
                   <td className="p-3 capitalize">{o.status.replace(/_/g, " ")}</td>
                   <td className="p-3 font-semibold">{money(o.total_cents)}</td>
