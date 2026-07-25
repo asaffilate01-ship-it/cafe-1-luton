@@ -9,6 +9,8 @@ type Order = {
   address_line1: string | null; city: string | null; postcode: string | null;
   delivery_notes: string | null; total_cents: number; subtotal_cents: number;
   delivery_fee_cents: number;
+  company_name: string | null; table_number: string | null;
+  schedule_mode: string | null; scheduled_for: string | null;
 };
 type Item = { id: string; name: string; qty: number; notes: string | null; unit_price_cents: number };
 
@@ -61,8 +63,17 @@ function PrintPage() {
           <div className="my-2 border-t border-dashed border-black" />
           <p><b>Order #{order.order_number}</b> · {order.type.replace("_", " ").toUpperCase()}</p>
           <p>{order.customer_name} · {order.customer_phone}</p>
+          <p className="text-xs">
+            {order.schedule_mode === "scheduled" && order.scheduled_for
+              ? `FOR: ${new Date(order.scheduled_for).toLocaleString()}`
+              : "ASAP"}
+          </p>
+          {order.type === "dine_in" && order.table_number && (
+            <p className="text-xs">TABLE: {order.table_number}</p>
+          )}
           {order.type === "delivery" && (
             <p className="mt-1 text-xs">
+              {order.company_name && <>{order.company_name}<br /></>}
               {[order.address_line1, order.city, order.postcode].filter(Boolean).join(", ")}
               {order.delivery_notes && <><br />NOTE: {order.delivery_notes}</>}
             </p>
