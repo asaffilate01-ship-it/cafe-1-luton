@@ -47,6 +47,7 @@ export type Database = {
           category_id: string | null
           created_at: string
           description: string | null
+          group_label: string | null
           id: string
           image_url: string | null
           is_veg: boolean
@@ -60,6 +61,7 @@ export type Database = {
           category_id?: string | null
           created_at?: string
           description?: string | null
+          group_label?: string | null
           id?: string
           image_url?: string | null
           is_veg?: boolean
@@ -73,6 +75,7 @@ export type Database = {
           category_id?: string | null
           created_at?: string
           description?: string | null
+          group_label?: string | null
           id?: string
           image_url?: string | null
           is_veg?: boolean
@@ -87,6 +90,57 @@ export type Database = {
             columns: ["category_id"]
             isOneToOne: false
             referencedRelation: "menu_categories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      menu_modifiers: {
+        Row: {
+          active: boolean
+          category_id: string | null
+          created_at: string
+          description: string | null
+          id: string
+          item_id: string | null
+          name: string
+          price_cents: number
+          sort_order: number
+        }
+        Insert: {
+          active?: boolean
+          category_id?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          item_id?: string | null
+          name: string
+          price_cents?: number
+          sort_order?: number
+        }
+        Update: {
+          active?: boolean
+          category_id?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          item_id?: string | null
+          name?: string
+          price_cents?: number
+          sort_order?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "menu_modifiers_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "menu_categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "menu_modifiers_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "menu_items"
             referencedColumns: ["id"]
           },
         ]
