@@ -160,11 +160,19 @@
     color: var(--color-foreground);
     font-family: var(--font-sans);
     -webkit-font-smoothing: antialiased;
+    overscroll-behavior-y: contain;
+  }
+  html, body {
+    /* iOS/Android standalone safe areas */
+    padding-top: env(safe-area-inset-top);
+    padding-bottom: env(safe-area-inset-bottom);
   }
   h1, h2, h3, .font-display {
     font-family: var(--font-display);
     letter-spacing: -0.01em;
   }
+  /* Better tap targets & no double-tap zoom on interactive controls */
+  button, a, [role="button"] { touch-action: manipulation; }
 }
 
 @utility bg-hero {
