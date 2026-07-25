@@ -12,7 +12,8 @@ type Job = {
   id: string; order_number: number; status: string; total_cents: number;
   customer_name: string; customer_phone: string;
   address_line1: string | null; city: string | null; postcode: string | null;
-  delivery_notes: string | null;
+  delivery_notes: string | null; company_name: string | null;
+  scheduled_for: string | null; schedule_mode: string | null;
 };
 
 export const Route = createFileRoute("/driver")({
