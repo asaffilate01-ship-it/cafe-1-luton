@@ -19,7 +19,7 @@ function StaffHub() {
   const { roles, has } = useRoles(user);
   const navigate = useNavigate();
   useEffect(() => {
-    if (!loading && !user) navigate({ to: "/auth", search: { next: "/staff" } });
+    if (!loading && !user) navigate({ to: "/admin/login", search: { next: "/staff" } });
   }, [loading, user, navigate]);
 
   const cards = [
