@@ -1,0 +1,13 @@
+User-agent: *
+Allow: /
+Disallow: /admin
+Disallow: /kds
+Disallow: /driver
+Disallow: /staff
+Disallow: /account
+Disallow: /order/
+Disallow: /print/
+Disallow: /checkout
+Disallow: /api/
+
+Sitemap: https://project--4e8d727f-9796-42a7-9a37-e92941913d6a.lovable.app/sitemap.xml
