@@ -40,7 +40,7 @@ function MenuManager() {
   const [selectedCat, setSelectedCat] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!loading && !user) navigate({ to: "/auth", search: { next: "/admin/menu" } });
+    if (!loading && !user) navigate({ to: "/admin/login", search: { next: "/admin/menu" } });
   }, [loading, user, navigate]);
 
   async function refresh() {
