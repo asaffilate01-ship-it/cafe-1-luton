@@ -372,8 +372,9 @@ function Checkout() {
             <p className="font-semibold">Your details</p>
             <div className="mt-3 grid gap-3 sm:grid-cols-2">
               <input required placeholder="Contact person's name" value={form.customer_name} onChange={(e) => setForm({ ...form, customer_name: e.target.value })} className="h-11 rounded-xl border border-border bg-background px-4" />
-              <input required placeholder="Phone" value={form.customer_phone} onChange={(e) => setForm({ ...form, customer_phone: e.target.value })} className="h-11 rounded-xl border border-border bg-background px-4" />
+              <input required={!voucher} placeholder={voucher ? "Phone (optional)" : "Phone"} value={form.customer_phone} onChange={(e) => setForm({ ...form, customer_phone: e.target.value })} className="h-11 rounded-xl border border-border bg-background px-4" />
               <input type="email" placeholder="Email (optional)" value={form.customer_email} onChange={(e) => setForm({ ...form, customer_email: e.target.value })} className="h-11 rounded-xl border border-border bg-background px-4 sm:col-span-2" />
+              {voucher && <p className="text-xs text-muted-foreground sm:col-span-2">With a court voucher code, only your name is required so we can label your order. Phone and email are optional.</p>}
             </div>
           </div>
 
