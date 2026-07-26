@@ -237,6 +237,7 @@ export type Database = {
           id: string
           image_url: string | null
           is_veg: boolean
+          loyalty_drink: boolean
           name: string
           price_cents: number
           sort_order: number
@@ -251,6 +252,7 @@ export type Database = {
           id?: string
           image_url?: string | null
           is_veg?: boolean
+          loyalty_drink?: boolean
           name: string
           price_cents: number
           sort_order?: number
@@ -265,6 +267,7 @@ export type Database = {
           id?: string
           image_url?: string | null
           is_veg?: boolean
+          loyalty_drink?: boolean
           name?: string
           price_cents?: number
           sort_order?: number
@@ -507,7 +510,10 @@ export type Database = {
       profiles: {
         Row: {
           created_at: string
+          drink_stamps: number
           email: string | null
+          free_drinks_available: number
+          free_drinks_redeemed: number
           full_name: string | null
           id: string
           lifetime_points: number
@@ -517,7 +523,10 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          drink_stamps?: number
           email?: string | null
+          free_drinks_available?: number
+          free_drinks_redeemed?: number
           full_name?: string | null
           id: string
           lifetime_points?: number
@@ -527,7 +536,10 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          drink_stamps?: number
           email?: string | null
+          free_drinks_available?: number
+          free_drinks_redeemed?: number
           full_name?: string | null
           id?: string
           lifetime_points?: number

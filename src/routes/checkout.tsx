@@ -115,6 +115,36 @@ function Checkout() {
     return () => { cancelled = true; clearTimeout(t); };
   }, [emailForDiscount]);
 
+  // Coffee/tea loyalty: stamps on the profile + which cart lines are eligible drinks.
+  const [stamps, setStamps] = useState<{ drink_stamps: number; free_drinks_available: number } | null>(null);
+  const [drinkItemIds, setDrinkItemIds] = useState<string[]>([]);
+  const cartItemIds = c.items.map((i) => i.menu_item_id).join(",");
+  useEffect(() => {
+    if (!user) { setStamps(null); return; }
+    let cancelled = false;
+    supabase
+      .from("profiles")
+      .select("drink_stamps, free_drinks_available")
+      .eq("id", user.id)
+      .maybeSingle()
+      .then(({ data }) => {
+        if (!cancelled) setStamps(data ? { drink_stamps: data.drink_stamps ?? 0, free_drinks_available: data.free_drinks_available ?? 0 } : null);
+      });
+    return () => { cancelled = true; };
+  }, [user]);
+  useEffect(() => {
+    const ids = cartItemIds ? cartItemIds.split(",") : [];
+    if (!ids.length) { setDrinkItemIds([]); return; }
+    let cancelled = false;
+    supabase
+      .from("menu_items")
+      .select("id")
+      .in("id", ids)
+      .eq("loyalty_drink", true)
+      .then(({ data }) => { if (!cancelled) setDrinkItemIds((data ?? []).map((r) => r.id)); });
+    return () => { cancelled = true; };
+  }, [cartItemIds]);
+
   const subtotal = c.items.reduce((s, i) => s + i.price_cents * i.qty, 0);
   const baseDelivery = settings?.delivery_fee_cents ?? 299;
   const freeThreshold = settings?.free_delivery_threshold_cents ?? null;
@@ -125,7 +155,15 @@ function Checkout() {
   const discountPercent = Math.max(user && !onTab ? 10 : 0, emailDiscount?.percent ?? 0);
   const loyaltyDiscount = Math.round(subtotal * (discountPercent / 100));
   const promoDiscount = promo && !freeDeliveryByPromo ? Math.min(promo.discount_cents, subtotal) : 0;
-  const discount = Math.min(subtotal, loyaltyDiscount + promoDiscount);
+  // Free drinks earned (every 11th) auto-apply to the cheapest eligible drinks.
+  const drinkUnitPrices = c.items
+    .filter((i) => drinkItemIds.includes(i.menu_item_id))
+    .flatMap((i) => Array.from({ length: i.qty }, () => i.base_price_cents))
+    .sort((a, b) => a - b);
+  const freeDrinksUsed = Math.min(stamps?.free_drinks_available ?? 0, drinkUnitPrices.length);
+  const freeDrinkDiscount = drinkUnitPrices.slice(0, freeDrinksUsed).reduce((s, p) => s + p, 0);
+  const stampsAfter = ((stamps?.drink_stamps ?? 0) + Math.max(0, drinkUnitPrices.length - freeDrinksUsed)) % 10;
+  const discount = Math.min(subtotal, loyaltyDiscount + promoDiscount + freeDrinkDiscount);
   const total = Math.max(0, subtotal - discount) + delivery;
   const pointsEarn = user && !onTab ? Math.floor(Math.max(0, subtotal - discount) / 100) : 0;
   const minOrder = settings?.min_order_cents ?? 0;
@@ -374,6 +412,26 @@ function Checkout() {
           )}
           <div className="mt-3 space-y-1 text-sm">
             <div className="flex justify-between"><span className="text-muted-foreground">Subtotal</span><span>{money(subtotal)}</span></div>
+            {user && (
+              <div className="!mt-3 rounded-xl border border-dashed border-primary/50 bg-primary-soft/50 p-3">
+                <div className="flex items-center justify-between text-xs font-semibold text-primary">
+                  <span>Coffee &amp; tea card — buy 10, 11th free</span>
+                  <span>{stampsAfter}/10</span>
+                </div>
+                <div className="mt-2 flex gap-1">
+                  {Array.from({ length: 10 }, (_, n) => (
+                    <span key={n} className={`h-2 flex-1 rounded-full ${n < stampsAfter ? "bg-primary" : "bg-primary/20"}`} />
+                  ))}
+                </div>
+                <p className="mt-2 text-xs text-muted-foreground">
+                  {freeDrinksUsed > 0
+                    ? `${freeDrinksUsed} free drink${freeDrinksUsed > 1 ? "s" : ""} applied to this order.`
+                    : (stamps?.free_drinks_available ?? 0) > 0
+                      ? `You have ${stamps?.free_drinks_available} free drink${(stamps?.free_drinks_available ?? 0) > 1 ? "s" : ""} — add a hot drink to use ${(stamps?.free_drinks_available ?? 0) > 1 ? "one" : "it"}.`
+                      : `${10 - stampsAfter} more drink${10 - stampsAfter === 1 ? "" : "s"} until your free one.`}
+                </p>
+              </div>
+            )}
             {loyaltyDiscount > 0 && (
               <div className="flex justify-between text-primary">
                 <span>
@@ -386,6 +444,12 @@ function Checkout() {
             )}
             {promoDiscount > 0 && (
               <div className="flex justify-between text-primary"><span>Promo {promo?.code}</span><span>−{money(promoDiscount)}</span></div>
+            )}
+            {freeDrinkDiscount > 0 && (
+              <div className="flex justify-between text-primary">
+                <span>Free drink{freeDrinksUsed > 1 ? `s × ${freeDrinksUsed}` : ""} (loyalty)</span>
+                <span>−{money(freeDrinkDiscount)}</span>
+              </div>
             )}
             {mode === "delivery" && (
               <div className="flex justify-between"><span className="text-muted-foreground">Delivery{freeDeliveryByPromo || freeDeliveryByThreshold ? " (free)" : ""}</span><span>{money(delivery)}</span></div>

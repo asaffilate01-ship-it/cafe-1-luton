@@ -71,7 +71,7 @@ export const createOrder = createServerFn({ method: "POST" })
     const ids = data.items.map((i) => i.menu_item_id);
     const modIds = [...new Set(data.items.flatMap((i) => i.modifier_ids ?? []))];
     const [{ data: menu, error: menuErr }, { data: modRows, error: modErr }] = await Promise.all([
-      supabase.from("menu_items").select("id,name,price_cents,active,category_id").in("id", ids),
+      supabase.from("menu_items").select("id,name,price_cents,active,category_id,loyalty_drink").in("id", ids),
       modIds.length
         ? supabase
             .from("menu_modifiers")
@@ -85,6 +85,8 @@ export const createOrder = createServerFn({ method: "POST" })
     const modById = new Map((modRows ?? []).map((m) => [m.id, m]));
 
     let subtotal = 0;
+    // Base prices of every loyalty-eligible drink unit in this order (for "11th free").
+    const drinkUnitPrices: number[] = [];
     const lines = data.items.map((i) => {
       const m = byId.get(i.menu_item_id);
       if (!m || !m.active) throw new Error(`Item unavailable`);
@@ -101,6 +103,9 @@ export const createOrder = createServerFn({ method: "POST" })
       });
       const unit = m.price_cents + chosen.reduce((s, mod) => s + mod.price_cents, 0);
       subtotal += unit * i.qty;
+      if (m.loyalty_drink) {
+        for (let n = 0; n < i.qty; n++) drinkUnitPrices.push(m.price_cents);
+      }
       const noteParts = [
         ...chosen.map((mod) => mod.name),
         ...(i.notes ? [i.notes] : []),
@@ -187,7 +192,37 @@ export const createOrder = createServerFn({ method: "POST" })
       if (p > discount_percent) discount_percent = p;
     }
     const loyalty_discount = Math.round(subtotal * (discount_percent / 100));
-    const discount = Math.min(subtotal, loyalty_discount + promo_discount);
+
+    // Coffee/tea loyalty: every 10 drinks earns a free one, auto-redeemed on the
+    // next order that contains an eligible drink. Registered customers only.
+    let stamps_before = 0;
+    let free_drinks_available = 0;
+    let free_drinks_used = 0;
+    let free_drink_discount = 0;
+    if (userId) {
+      const { data: prof } = await supabase
+        .from("profiles")
+        .select("drink_stamps, free_drinks_available")
+        .eq("id", userId)
+        .maybeSingle();
+      stamps_before = prof?.drink_stamps ?? 0;
+      free_drinks_available = prof?.free_drinks_available ?? 0;
+      if (free_drinks_available > 0 && drinkUnitPrices.length > 0) {
+        const cheapestFirst = [...drinkUnitPrices].sort((a, b) => a - b);
+        free_drinks_used = Math.min(free_drinks_available, cheapestFirst.length);
+        free_drink_discount = cheapestFirst
+          .slice(0, free_drinks_used)
+          .reduce((s, p) => s + p, 0);
+      }
+    }
+
+    const discount = Math.min(subtotal, loyalty_discount + promo_discount + free_drink_discount);
+    // Drinks paid for on this order earn stamps (free ones don't).
+    const stamps_earned = Math.max(0, drinkUnitPrices.length - free_drinks_used);
+    const stamps_total = stamps_before + stamps_earned;
+    const new_free_drinks = Math.floor(stamps_total / 10);
+    const drink_stamps_after = stamps_total % 10;
+    const free_drinks_after = free_drinks_available - free_drinks_used + new_free_drinks;
     const total = Math.max(0, subtotal - discount) + delivery_fee;
     const points_earned = userId ? Math.floor(Math.max(0, subtotal - discount) / 100) * POINTS_PER_POUND : 0;
     const reference = `cafe1-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
@@ -286,11 +321,11 @@ export const createOrder = createServerFn({ method: "POST" })
       }
     }
 
-    // Award loyalty points immediately for authed customers.
-    if (userId && points_earned > 0) {
+    // Award loyalty points + drink stamps immediately for authed customers.
+    if (userId && (points_earned > 0 || drinkUnitPrices.length > 0 || free_drinks_used > 0)) {
       const { data: prof } = await supabase
         .from("profiles")
-        .select("loyalty_points, lifetime_points")
+        .select("loyalty_points, lifetime_points, free_drinks_redeemed")
         .eq("id", userId)
         .maybeSingle();
       await supabase
@@ -298,6 +333,9 @@ export const createOrder = createServerFn({ method: "POST" })
         .update({
           loyalty_points: (prof?.loyalty_points ?? 0) + points_earned,
           lifetime_points: (prof?.lifetime_points ?? 0) + points_earned,
+          drink_stamps: drink_stamps_after,
+          free_drinks_available: free_drinks_after,
+          free_drinks_redeemed: (prof?.free_drinks_redeemed ?? 0) + free_drinks_used,
         })
         .eq("id", userId);
     }
@@ -309,6 +347,9 @@ export const createOrder = createServerFn({ method: "POST" })
       checkout_id,
       payment_configured: !!checkout_id,
       on_tab: !!account_id,
+      free_drinks_used,
+      drink_stamps: drink_stamps_after,
+      free_drinks_available: free_drinks_after,
     };
   });
 
