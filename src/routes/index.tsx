@@ -81,7 +81,7 @@ function Home() {
       <section className="border-y border-border bg-soft">
         <div className="mx-auto grid max-w-6xl gap-6 px-4 py-16 sm:grid-cols-2 lg:grid-cols-4">
           {[
-            { icon: Coffee, title: "Speciality coffee", body: "House blend roasted weekly. Silky milk, sharp espresso, honest prices." },
+            { icon: Coffee, title: "Fresh Italian coffee", body: "Freshly ground Italian beans. Silky milk, sharp espresso, honest prices." },
             { icon: BadgeCheck, title: "100% halal", body: "All meat and food served at Café 1 is halal." },
             { icon: Croissant, title: "Made fresh daily", body: "Pastries baked in-house every morning. Sandwiches built to order." },
             { icon: Bike, title: "Fast delivery", body: "In-house drivers get your order to you hot — track it live from your phone." },
