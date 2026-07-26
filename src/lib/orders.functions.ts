@@ -227,14 +227,58 @@ export const createOrder = createServerFn({ method: "POST" })
     const points_earned = userId ? Math.floor(Math.max(0, subtotal - discount) / 100) * POINTS_PER_POUND : 0;
     const reference = `cafe1-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 
+    // Court vouchers: a daily allowance held against a person's email/phone.
+    // Any amount above the remaining allowance is paid by the customer.
+    let voucher_cents = 0;
+    let voucher_holder_id: string | null = null;
+    let voucher_holder_name: string | null = null;
+    {
+      const vEmail = (data.customer_email || authEmail || "").trim();
+      const vPhone = (data.customer_phone || "").trim();
+      if (vEmail || vPhone.replace(/\D/g, "").length >= 7) {
+        const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+        const { data: vRows } = await supabaseAdmin.rpc("get_voucher_balance", {
+          _email: vEmail,
+          _phone: vPhone,
+        });
+        const v = (vRows ?? [])[0];
+        if (v && v.remaining_cents > 0 && total > 0) {
+          const wanted = Math.min(v.remaining_cents, total);
+          // Reserve now so two devices can't spend the same allowance twice.
+          const { data: taken } = await supabaseAdmin.rpc("redeem_voucher", {
+            _holder_id: v.holder_id,
+            _order_id: null as unknown as string,
+            _amount_cents: wanted,
+          });
+          voucher_cents = (taken as number | null) ?? 0;
+          if (voucher_cents > 0) {
+            voucher_holder_id = v.holder_id;
+            voucher_holder_name = v.holder_name;
+          }
+        }
+      }
+    }
+
+    async function releaseVoucher() {
+      if (!voucher_holder_id || voucher_cents <= 0) return;
+      const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+      await supabaseAdmin
+        .from("voucher_redemptions")
+        .delete()
+        .eq("holder_id", voucher_holder_id)
+        .is("order_id", null);
+    }
+
+    const payable = Math.max(0, total - voucher_cents);
+
     // Charge to a house-account tab if a valid code is supplied.
     let account_id: string | null = null;
     if (data.account_code) {
       const { data: rows, error: acctErr } = await supabase
         .rpc("verify_account_code", { _code: data.account_code.trim() });
-      if (acctErr) throw new Error(acctErr.message);
+      if (acctErr) { await releaseVoucher(); throw new Error(acctErr.message); }
       const row = (rows ?? [])[0];
-      if (!row) throw new Error("That tab access code isn't valid or is no longer active.");
+      if (!row) { await releaseVoucher(); throw new Error("That tab access code isn't valid or is no longer active."); }
       account_id = row.id;
 
       // Enforce the account's credit limit against the unsettled balance.
@@ -245,7 +289,8 @@ export const createOrder = createServerFn({ method: "POST" })
         const { data: openOrders } = await supabaseAdmin
           .from("orders").select("total_cents").eq("account_id", account_id).eq("payment_status", "on_account");
         const outstanding = (openOrders ?? []).reduce((s, o) => s + o.total_cents, 0);
-        if (outstanding + total > acct.credit_limit_cents) {
+        if (outstanding + payable > acct.credit_limit_cents) {
+          await releaseVoucher();
           throw new Error(
             `This tab has reached its credit limit of £${(acct.credit_limit_cents / 100).toFixed(2)}. Please settle the outstanding balance first.`,
           );
@@ -255,23 +300,27 @@ export const createOrder = createServerFn({ method: "POST" })
 
     // Create SumUp checkout FIRST — if it fails, don't create a phantom unpaid order.
     let checkout_id: string | null = null;
-    if (!account_id) {
+    if (!account_id && payable > 0) {
       const { createSumUpCheckout } = await import("./sumup.server");
       try {
         const co = await createSumUpCheckout({
           reference,
-          amount_cents: total,
+          amount_cents: payable,
           description: `Cafe1 order`,
           customer_email: data.customer_email || undefined,
         });
         checkout_id = co.id;
       } catch (e) {
         console.error("[SumUp] checkout create failed", e);
+        await releaseVoucher();
         throw new Error(
           "We couldn't start the card payment. Please try again in a moment, or contact us if it keeps failing.",
         );
       }
     }
+
+    // Voucher covers the whole order (and it isn't on a tab) — nothing to charge.
+    const fully_covered = !account_id && payable === 0 && voucher_cents > 0;
 
     const { data: order, error: orderErr } = await supabase
       .from("orders")
@@ -294,17 +343,34 @@ export const createOrder = createServerFn({ method: "POST" })
         subtotal_cents: subtotal,
         delivery_fee_cents: delivery_fee,
         discount_cents: discount,
+        voucher_cents,
+        voucher_holder_id,
         points_earned,
-        total_cents: total,
+        total_cents: payable,
         sumup_reference: reference,
         sumup_checkout_id: checkout_id,
         promo_code: applied_promo,
         promo_discount_cents: free_delivery_promo ? 0 : promo_discount,
         ...(account_id ? { payment_status: "on_account" as const, status: "paid" as const } : {}),
+        ...(fully_covered ? { payment_status: "paid" as const, status: "paid" as const } : {}),
       })
       .select()
       .single();
-    if (orderErr) throw new Error(orderErr.message);
+    if (orderErr) { await releaseVoucher(); throw new Error(orderErr.message); }
+
+    // Attach the reserved voucher redemption to this order for the court report.
+    if (voucher_holder_id && voucher_cents > 0) {
+      try {
+        const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+        await supabaseAdmin
+          .from("voucher_redemptions")
+          .update({ order_id: order.id })
+          .eq("holder_id", voucher_holder_id)
+          .is("order_id", null);
+      } catch (e) {
+        console.error("[vouchers] could not attach redemption to order", e);
+      }
+    }
 
     const { error: itemsErr } = await supabase
       .from("order_items")
@@ -343,10 +409,14 @@ export const createOrder = createServerFn({ method: "POST" })
     return {
       order_id: order.id,
       order_number: order.order_number,
-      total_cents: total,
+      total_cents: payable,
+      gross_total_cents: total,
+      voucher_cents,
+      voucher_holder_name,
       checkout_id,
-      payment_configured: !!checkout_id,
+      payment_configured: !!checkout_id || fully_covered,
       on_tab: !!account_id,
+      fully_covered,
       free_drinks_used,
       drink_stamps: drink_stamps_after,
       free_drinks_available: free_drinks_after,
