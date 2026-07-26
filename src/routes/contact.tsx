@@ -16,10 +16,10 @@ export const Route = createFileRoute("/contact")({
 
 function Contact() {
   const rows = [
-    { icon: MapPin, label: "Visit", value: "12 High Street, London" },
+    { icon: MapPin, label: "Visit", value: "Cafe 1, St Albans Crown Court, AL1 3JW" },
     { icon: Phone, label: "Call", value: "020 7000 0000" },
     { icon: Mail, label: "Email", value: "hello@cafe1.example" },
-    { icon: Clock, label: "Open", value: "Mon–Sun · 7:00–19:00" },
+    { icon: Clock, label: "Open", value: "Mon–Sun · 8:30–17:00 (delivery until 16:30)" },
   ];
   return (
     <div className="min-h-screen bg-background">

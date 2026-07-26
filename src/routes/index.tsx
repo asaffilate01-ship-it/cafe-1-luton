@@ -47,7 +47,7 @@ function Home() {
             </div>
             <div className="mt-8 flex flex-wrap gap-6 text-sm text-muted-foreground">
               <div className="flex items-center gap-2"><Bike className="h-4 w-4 text-primary" /> Local delivery</div>
-              <div className="flex items-center gap-2"><MapPin className="h-4 w-4 text-primary" /> 12 High Street</div>
+              <div className="flex items-center gap-2"><MapPin className="h-4 w-4 text-primary" /> Cafe 1, St Albans Crown Court, AL1 3JW</div>
             </div>
           </div>
 
