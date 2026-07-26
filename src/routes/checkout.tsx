@@ -97,6 +97,24 @@ function Checkout() {
       setForm((f) => ({ ...f, customer_email: user.email ?? "" }));
   }, [user, form.customer_email]);
 
+  // Fixed per-customer discount, recognised from the email address.
+  const [emailDiscount, setEmailDiscount] = useState<null | { percent: number; label: string | null }>(null);
+  const emailForDiscount = (form.customer_email || "").trim().toLowerCase();
+  useEffect(() => {
+    if (!emailForDiscount || !emailForDiscount.includes("@")) {
+      setEmailDiscount(null);
+      return;
+    }
+    let cancelled = false;
+    const t = setTimeout(async () => {
+      const { data } = await supabase.rpc("get_customer_discount", { _email: emailForDiscount });
+      if (cancelled) return;
+      const row = (data ?? [])[0];
+      setEmailDiscount(row ? { percent: row.percent, label: row.label ?? null } : null);
+    }, 400);
+    return () => { cancelled = true; clearTimeout(t); };
+  }, [emailForDiscount]);
+
   const subtotal = c.items.reduce((s, i) => s + i.price_cents * i.qty, 0);
   const baseDelivery = settings?.delivery_fee_cents ?? 299;
   const freeThreshold = settings?.free_delivery_threshold_cents ?? null;
@@ -104,7 +122,8 @@ function Checkout() {
   const freeDeliveryByPromo = promo?.discount_type === "free_delivery";
   const delivery = mode === "delivery" && !freeDeliveryByThreshold && !freeDeliveryByPromo ? baseDelivery : 0;
   const onTab = !!tabSession;
-  const loyaltyDiscount = user && !onTab ? Math.round(subtotal * 0.1) : 0;
+  const discountPercent = Math.max(user && !onTab ? 10 : 0, emailDiscount?.percent ?? 0);
+  const loyaltyDiscount = Math.round(subtotal * (discountPercent / 100));
   const promoDiscount = promo && !freeDeliveryByPromo ? Math.min(promo.discount_cents, subtotal) : 0;
   const discount = Math.min(subtotal, loyaltyDiscount + promoDiscount);
   const total = Math.max(0, subtotal - discount) + delivery;
@@ -356,7 +375,14 @@ function Checkout() {
           <div className="mt-3 space-y-1 text-sm">
             <div className="flex justify-between"><span className="text-muted-foreground">Subtotal</span><span>{money(subtotal)}</span></div>
             {loyaltyDiscount > 0 && (
-              <div className="flex justify-between text-primary"><span>Member discount (10%)</span><span>−{money(loyaltyDiscount)}</span></div>
+              <div className="flex justify-between text-primary">
+                <span>
+                  {emailDiscount && emailDiscount.percent >= (user && !onTab ? 10 : 0)
+                    ? `${emailDiscount.label || "Customer discount"} (${discountPercent}%)`
+                    : `Member discount (${discountPercent}%)`}
+                </span>
+                <span>−{money(loyaltyDiscount)}</span>
+              </div>
             )}
             {promoDiscount > 0 && (
               <div className="flex justify-between text-primary"><span>Promo {promo?.code}</span><span>−{money(promoDiscount)}</span></div>

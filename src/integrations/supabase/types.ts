@@ -170,6 +170,36 @@ export type Database = {
         }
         Relationships: []
       }
+      customer_discounts: {
+        Row: {
+          active: boolean
+          created_at: string
+          email: string
+          id: string
+          label: string | null
+          percent: number
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          email: string
+          id?: string
+          label?: string | null
+          percent?: number
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          email?: string
+          id?: string
+          label?: string | null
+          percent?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       menu_categories: {
         Row: {
           active: boolean
@@ -632,6 +662,13 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      get_customer_discount: {
+        Args: { _email: string }
+        Returns: {
+          label: string
+          percent: number
+        }[]
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]

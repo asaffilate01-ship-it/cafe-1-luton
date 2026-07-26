@@ -1,7 +1,7 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect } from "react";
 import { useSession, useRoles } from "@/hooks/use-auth";
-import { LayoutDashboard, MonitorPlay, Bike, BookOpen, Megaphone, ReceiptText, UserCog, Settings, Image as ImageIcon, Ticket } from "lucide-react";
+import { LayoutDashboard, MonitorPlay, Bike, BookOpen, Megaphone, ReceiptText, UserCog, Settings, Image as ImageIcon, Ticket, BadgePercent } from "lucide-react";
 
 export const Route = createFileRoute("/staff")({
   head: () => ({
@@ -28,6 +28,7 @@ function StaffHub() {
     { to: "/admin/broadcasts" as const, icon: Megaphone, title: "Broadcasts", desc: "Publish offers and announcements.", show: has("admin") || has("staff") },
     { to: "/admin/banners" as const, icon: ImageIcon, title: "Promo banners", desc: "Hero carousel for home & menu.", show: has("admin") || has("staff") },
     { to: "/admin/promos" as const, icon: Ticket, title: "Promo codes", desc: "Discount codes for checkout.", show: has("admin") || has("staff") },
+    { to: "/admin/customer-discounts" as const, icon: BadgePercent, title: "Customer discounts", desc: "Automatic % off by email address.", show: has("admin") || has("staff") },
     { to: "/admin/settings" as const, icon: Settings, title: "Store settings", desc: "Hours, fees, minimum order.", show: has("admin") || has("staff") },
     { to: "/admin/accounts" as const, icon: ReceiptText, title: "Tab accounts", desc: "Business tabs, access codes and bills.", show: has("admin") || has("staff") },
     { to: "/admin/users" as const, icon: UserCog, title: "Users & roles", desc: "Grant staff, driver or admin access.", show: has("admin") },
