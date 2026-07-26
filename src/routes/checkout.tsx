@@ -491,12 +491,13 @@ function Checkout() {
             )}
             {voucher && (
               <div className="!mt-3 rounded-xl border border-primary/40 bg-primary/10 p-3 text-xs">
-                <p className="font-semibold text-primary">Court voucher — {voucher.holder_name}</p>
+                <p className="font-semibold text-primary">Court voucher — {voucher.code}</p>
                 <p className="mt-1 text-muted-foreground">
                   {voucher.remaining_cents > 0
                     ? `${money(voucher.remaining_cents)} of today's ${money(voucher.allocated_cents)} allowance left.${voucherApplied < grossTotal ? ` You'll pay the ${money(total)} difference by card.` : " This order is fully covered."}`
                     : `Today's ${money(voucher.allocated_cents)} allowance has already been used.`}
                 </p>
+                <button type="button" onClick={() => { setVoucher(null); setVoucherInput(""); }} className="mt-2 text-xs font-semibold text-primary underline">Remove voucher</button>
               </div>
             )}
             {voucherApplied > 0 && (
