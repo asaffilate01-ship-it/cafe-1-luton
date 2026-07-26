@@ -321,11 +321,11 @@ export const createOrder = createServerFn({ method: "POST" })
       }
     }
 
-    // Award loyalty points immediately for authed customers.
-    if (userId && points_earned > 0) {
+    // Award loyalty points + drink stamps immediately for authed customers.
+    if (userId && (points_earned > 0 || drinkUnitPrices.length > 0 || free_drinks_used > 0)) {
       const { data: prof } = await supabase
         .from("profiles")
-        .select("loyalty_points, lifetime_points")
+        .select("loyalty_points, lifetime_points, free_drinks_redeemed")
         .eq("id", userId)
         .maybeSingle();
       await supabase
@@ -333,6 +333,9 @@ export const createOrder = createServerFn({ method: "POST" })
         .update({
           loyalty_points: (prof?.loyalty_points ?? 0) + points_earned,
           lifetime_points: (prof?.lifetime_points ?? 0) + points_earned,
+          drink_stamps: drink_stamps_after,
+          free_drinks_available: free_drinks_after,
+          free_drinks_redeemed: (prof?.free_drinks_redeemed ?? 0) + free_drinks_used,
         })
         .eq("id", userId);
     }
