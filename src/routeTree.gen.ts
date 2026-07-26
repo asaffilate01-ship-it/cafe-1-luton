@@ -24,6 +24,7 @@ import { Route as AccountRouteImport } from './routes/account'
 import { Route as AboutRouteImport } from './routes/about'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as PrintOrderIdRouteImport } from './routes/print.$orderId'
+import { Route as PayOrderIdRouteImport } from './routes/pay.$orderId'
 import { Route as OrderOrderIdRouteImport } from './routes/order.$orderId'
 import { Route as AdminUsersRouteImport } from './routes/admin.users'
 import { Route as AdminMenuRouteImport } from './routes/admin.menu'
@@ -107,6 +108,11 @@ const PrintOrderIdRoute = PrintOrderIdRouteImport.update({
   path: '/print/$orderId',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PayOrderIdRoute = PayOrderIdRouteImport.update({
+  id: '/pay/$orderId',
+  path: '/pay/$orderId',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const OrderOrderIdRoute = OrderOrderIdRouteImport.update({
   id: '/order/$orderId',
   path: '/order/$orderId',
@@ -164,6 +170,7 @@ export interface FileRoutesByFullPath {
   '/admin/menu': typeof AdminMenuRoute
   '/admin/users': typeof AdminUsersRoute
   '/order/$orderId': typeof OrderOrderIdRoute
+  '/pay/$orderId': typeof PayOrderIdRoute
   '/print/$orderId': typeof PrintOrderIdRoute
   '/api/public/sumup-webhook': typeof ApiPublicSumupWebhookRoute
 }
@@ -188,6 +195,7 @@ export interface FileRoutesByTo {
   '/admin/menu': typeof AdminMenuRoute
   '/admin/users': typeof AdminUsersRoute
   '/order/$orderId': typeof OrderOrderIdRoute
+  '/pay/$orderId': typeof PayOrderIdRoute
   '/print/$orderId': typeof PrintOrderIdRoute
   '/api/public/sumup-webhook': typeof ApiPublicSumupWebhookRoute
 }
@@ -213,6 +221,7 @@ export interface FileRoutesById {
   '/admin/menu': typeof AdminMenuRoute
   '/admin/users': typeof AdminUsersRoute
   '/order/$orderId': typeof OrderOrderIdRoute
+  '/pay/$orderId': typeof PayOrderIdRoute
   '/print/$orderId': typeof PrintOrderIdRoute
   '/api/public/sumup-webhook': typeof ApiPublicSumupWebhookRoute
 }
@@ -239,6 +248,7 @@ export interface FileRouteTypes {
     | '/admin/menu'
     | '/admin/users'
     | '/order/$orderId'
+    | '/pay/$orderId'
     | '/print/$orderId'
     | '/api/public/sumup-webhook'
   fileRoutesByTo: FileRoutesByTo
@@ -263,6 +273,7 @@ export interface FileRouteTypes {
     | '/admin/menu'
     | '/admin/users'
     | '/order/$orderId'
+    | '/pay/$orderId'
     | '/print/$orderId'
     | '/api/public/sumup-webhook'
   id:
@@ -287,6 +298,7 @@ export interface FileRouteTypes {
     | '/admin/menu'
     | '/admin/users'
     | '/order/$orderId'
+    | '/pay/$orderId'
     | '/print/$orderId'
     | '/api/public/sumup-webhook'
   fileRoutesById: FileRoutesById
@@ -307,6 +319,7 @@ export interface RootRouteChildren {
   StaffRoute: typeof StaffRoute
   TabRoute: typeof TabRoute
   OrderOrderIdRoute: typeof OrderOrderIdRoute
+  PayOrderIdRoute: typeof PayOrderIdRoute
   PrintOrderIdRoute: typeof PrintOrderIdRoute
   ApiPublicSumupWebhookRoute: typeof ApiPublicSumupWebhookRoute
 }
@@ -418,6 +431,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PrintOrderIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/pay/$orderId': {
+      id: '/pay/$orderId'
+      path: '/pay/$orderId'
+      fullPath: '/pay/$orderId'
+      preLoaderRoute: typeof PayOrderIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/order/$orderId': {
       id: '/order/$orderId'
       path: '/order/$orderId'
@@ -504,9 +524,20 @@ const rootRouteChildren: RootRouteChildren = {
   StaffRoute: StaffRoute,
   TabRoute: TabRoute,
   OrderOrderIdRoute: OrderOrderIdRoute,
+  PayOrderIdRoute: PayOrderIdRoute,
   PrintOrderIdRoute: PrintOrderIdRoute,
   ApiPublicSumupWebhookRoute: ApiPublicSumupWebhookRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
