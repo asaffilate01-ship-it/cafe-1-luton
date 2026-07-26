@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import { ShoppingBag, Coffee, ReceiptText } from "lucide-react";
+import { ShoppingBag, Coffee, ReceiptText, MapPin } from "lucide-react";
 import { useCart } from "@/lib/cart";
 import { useSession } from "@/hooks/use-auth";
 import { useTab } from "@/lib/tab";
@@ -53,12 +53,18 @@ export function SiteFooter() {
   return (
     <footer className="mt-24 border-t border-border bg-secondary/50">
       <div className="mx-auto flex max-w-6xl flex-col gap-2 px-4 py-10 text-sm text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex items-center gap-2">
-          <span className="grid h-6 w-6 place-items-center rounded-full bg-primary text-primary-foreground">
-            <Coffee className="h-3.5 w-3.5" />
-          </span>
-          <span className="font-display font-semibold text-foreground">Cafe1</span>
-          <span>© {new Date().getFullYear()}</span>
+        <div className="flex flex-col gap-1">
+          <div className="flex items-center gap-2">
+            <span className="grid h-6 w-6 place-items-center rounded-full bg-primary text-primary-foreground">
+              <Coffee className="h-3.5 w-3.5" />
+            </span>
+            <span className="font-display font-semibold text-foreground">Cafe1</span>
+            <span>© {new Date().getFullYear()}</span>
+          </div>
+          <address className="flex items-center gap-1.5 not-italic">
+            <MapPin className="h-3.5 w-3.5 text-primary" />
+            Cafe 1, St Albans Crown Court, AL1 3JW
+          </address>
         </div>
         <div className="flex gap-4">
           <Link to="/menu" className="hover:text-primary">Menu</Link>
