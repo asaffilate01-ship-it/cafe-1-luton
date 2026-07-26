@@ -127,7 +127,7 @@ export const createOrder = createServerFn({ method: "POST" })
         points_earned,
         total_cents: total,
         sumup_reference: reference,
-        ...(account_id ? { payment_status: "on_account" as const, status: "preparing" as const } : {}),
+        ...(account_id ? { payment_status: "on_account" as const, status: "paid" as const } : {}),
       })
       .select()
       .single();
@@ -236,7 +236,7 @@ export const markPaidManually = createServerFn({ method: "POST" })
       .from("orders")
       .update({
         payment_status: "paid",
-        status: "preparing",
+        status: "paid",
         sumup_transaction_id: data.sumup_transaction_id ?? null,
       })
       .eq("id", data.order_id);
@@ -252,8 +252,25 @@ export const assignDriver = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const { error } = await context.supabase
       .from("orders")
-      .update({ driver_id: data.driver_id })
+      .update({ driver_id: data.driver_id, status: "out_for_delivery", picked_up_at: new Date().toISOString() })
       .eq("id", data.order_id);
     if (error) throw new Error(error.message);
     return { ok: true };
+  });
+
+export const listDrivers = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { data: roles, error } = await context.supabase
+      .from("user_roles")
+      .select("user_id")
+      .eq("role", "driver");
+    if (error) throw new Error(error.message);
+    const ids = (roles ?? []).map((r) => r.user_id);
+    if (!ids.length) return [] as { id: string; full_name: string | null; email: string | null }[];
+    const { data: profs } = await context.supabase
+      .from("profiles")
+      .select("id, full_name, email")
+      .in("id", ids);
+    return (profs ?? []) as { id: string; full_name: string | null; email: string | null }[];
   });
