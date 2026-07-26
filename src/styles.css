@@ -309,8 +309,19 @@
 }
 
 /* Print styles for kitchen/counter tickets */
+/* Default: iMin D4-504 built-in 58mm thermal printer */
+@page { size: 58mm auto; margin: 0; }
 @media print {
   .no-print { display: none !important; }
   body { background: white !important; }
-  .ticket-page { page-break-after: always; }
+  html, body { width: 58mm; margin: 0 !important; padding: 0 !important; }
+  .ticket-page {
+    page-break-after: always;
+    width: 58mm !important;
+    max-width: 58mm !important;
+    padding: 2mm 2.5mm !important;
+    font-size: 11px !important;
+    color: #000 !important;
+  }
+  .ticket-page:last-child { page-break-after: auto; }
 }

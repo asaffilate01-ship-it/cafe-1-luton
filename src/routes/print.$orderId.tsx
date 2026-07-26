@@ -25,6 +25,26 @@ function PrintPage() {
   const { orderId } = Route.useParams();
   const [order, setOrder] = useState<Order | null>(null);
   const [items, setItems] = useState<Item[]>([]);
+  const [paper, setPaper] = useState<58 | 80>(58);
+
+  useEffect(() => {
+    const saved = typeof window !== "undefined" ? window.localStorage.getItem("cafe1_paper_mm") : null;
+    if (saved === "80") setPaper(80);
+  }, []);
+
+  useEffect(() => {
+    if (typeof document === "undefined") return;
+    window.localStorage.setItem("cafe1_paper_mm", String(paper));
+    const id = "cafe1-paper-size";
+    let el = document.getElementById(id) as HTMLStyleElement | null;
+    if (!el) {
+      el = document.createElement("style");
+      el.id = id;
+      document.head.appendChild(el);
+    }
+    el.textContent = `@page { size: ${paper}mm auto; margin: 0; }
+@media print { html, body, .ticket-page { width: ${paper}mm !important; max-width: ${paper}mm !important; } }`;
+  }, [paper]);
 
   useEffect(() => {
     (async () => {
@@ -50,11 +70,27 @@ function PrintPage() {
 
   return (
     <div style={{ fontFamily: "monospace" }} className="bg-white text-black">
-      <div className="no-print p-4 text-sm">
+      <div className="no-print flex flex-wrap items-center gap-3 p-4 text-sm">
         <button onClick={() => window.print()} className="rounded bg-primary px-4 py-2 font-semibold text-primary-foreground">Print again</button>
+        <div className="flex items-center gap-1 rounded-full border border-border p-1">
+          {[58, 80].map((w) => (
+            <button
+              key={w}
+              onClick={() => setPaper(w as 58 | 80)}
+              className={`rounded-full px-3 py-1 text-xs font-semibold ${paper === w ? "bg-primary text-primary-foreground" : "text-muted-foreground"}`}
+            >
+              {w}mm
+            </button>
+          ))}
+        </div>
+        <span className="text-xs text-muted-foreground">iMin D4-504 built-in printer uses 58mm</span>
       </div>
       {copies.map((copy) => (
-        <section key={copy.label} className="ticket-page mx-auto max-w-[320px] p-4 text-[13px] leading-snug">
+        <section
+          key={copy.label}
+          className="ticket-page mx-auto p-4 text-[13px] leading-snug"
+          style={{ maxWidth: paper === 58 ? 240 : 320 }}
+        >
           <div className="text-center">
             <p className="text-lg font-bold">CAFE1</p>
             <p className="text-xs">{copy.label}</p>
