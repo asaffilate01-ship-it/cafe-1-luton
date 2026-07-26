@@ -192,7 +192,37 @@ export const createOrder = createServerFn({ method: "POST" })
       if (p > discount_percent) discount_percent = p;
     }
     const loyalty_discount = Math.round(subtotal * (discount_percent / 100));
-    const discount = Math.min(subtotal, loyalty_discount + promo_discount);
+
+    // Coffee/tea loyalty: every 10 drinks earns a free one, auto-redeemed on the
+    // next order that contains an eligible drink. Registered customers only.
+    let stamps_before = 0;
+    let free_drinks_available = 0;
+    let free_drinks_used = 0;
+    let free_drink_discount = 0;
+    if (userId) {
+      const { data: prof } = await supabase
+        .from("profiles")
+        .select("drink_stamps, free_drinks_available")
+        .eq("id", userId)
+        .maybeSingle();
+      stamps_before = prof?.drink_stamps ?? 0;
+      free_drinks_available = prof?.free_drinks_available ?? 0;
+      if (free_drinks_available > 0 && drinkUnitPrices.length > 0) {
+        const cheapestFirst = [...drinkUnitPrices].sort((a, b) => a - b);
+        free_drinks_used = Math.min(free_drinks_available, cheapestFirst.length);
+        free_drink_discount = cheapestFirst
+          .slice(0, free_drinks_used)
+          .reduce((s, p) => s + p, 0);
+      }
+    }
+
+    const discount = Math.min(subtotal, loyalty_discount + promo_discount + free_drink_discount);
+    // Drinks paid for on this order earn stamps (free ones don't).
+    const stamps_earned = Math.max(0, drinkUnitPrices.length - free_drinks_used);
+    const stamps_total = stamps_before + stamps_earned;
+    const new_free_drinks = Math.floor(stamps_total / 10);
+    const drink_stamps_after = stamps_total % 10;
+    const free_drinks_after = free_drinks_available - free_drinks_used + new_free_drinks;
     const total = Math.max(0, subtotal - discount) + delivery_fee;
     const points_earned = userId ? Math.floor(Math.max(0, subtotal - discount) / 100) * POINTS_PER_POUND : 0;
     const reference = `cafe1-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
