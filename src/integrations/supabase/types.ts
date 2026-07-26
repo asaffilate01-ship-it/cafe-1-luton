@@ -14,6 +14,48 @@ export type Database = {
   }
   public: {
     Tables: {
+      accounts: {
+        Row: {
+          access_code: string
+          active: boolean
+          contact_email: string | null
+          contact_name: string | null
+          contact_phone: string | null
+          created_at: string
+          credit_limit_cents: number | null
+          id: string
+          name: string
+          notes: string | null
+          updated_at: string
+        }
+        Insert: {
+          access_code: string
+          active?: boolean
+          contact_email?: string | null
+          contact_name?: string | null
+          contact_phone?: string | null
+          created_at?: string
+          credit_limit_cents?: number | null
+          id?: string
+          name: string
+          notes?: string | null
+          updated_at?: string
+        }
+        Update: {
+          access_code?: string
+          active?: boolean
+          contact_email?: string | null
+          contact_name?: string | null
+          contact_phone?: string | null
+          created_at?: string
+          credit_limit_cents?: number | null
+          id?: string
+          name?: string
+          notes?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       broadcasts: {
         Row: {
           active: boolean
@@ -231,6 +273,7 @@ export type Database = {
       }
       orders: {
         Row: {
+          account_id: string | null
           address_line1: string | null
           address_line2: string | null
           city: string | null
@@ -266,6 +309,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          account_id?: string | null
           address_line1?: string | null
           address_line2?: string | null
           city?: string | null
@@ -301,6 +345,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          account_id?: string | null
           address_line1?: string | null
           address_line2?: string | null
           city?: string | null
@@ -335,7 +380,15 @@ export type Database = {
           type?: Database["public"]["Enums"]["order_type"]
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "orders_account_id_fkey"
+            columns: ["account_id"]
+            isOneToOne: false
+            referencedRelation: "accounts"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       profiles: {
         Row: {
@@ -403,6 +456,13 @@ export type Database = {
         }
         Returns: boolean
       }
+      verify_account_code: {
+        Args: { _code: string }
+        Returns: {
+          id: string
+          name: string
+        }[]
+      }
     }
     Enums: {
       app_role: "admin" | "staff" | "driver" | "customer"
@@ -417,7 +477,7 @@ export type Database = {
         | "cancelled"
         | "refunded"
       order_type: "delivery" | "collection" | "dine_in"
-      payment_status: "pending" | "paid" | "failed" | "refunded"
+      payment_status: "pending" | "paid" | "failed" | "refunded" | "on_account"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -558,7 +618,7 @@ export const Constants = {
         "refunded",
       ],
       order_type: ["delivery", "collection", "dine_in"],
-      payment_status: ["pending", "paid", "failed", "refunded"],
+      payment_status: ["pending", "paid", "failed", "refunded", "on_account"],
     },
   },
 } as const
