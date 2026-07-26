@@ -1,7 +1,7 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect } from "react";
 import { useSession, useRoles } from "@/hooks/use-auth";
-import { LayoutDashboard, MonitorPlay, Bike, BookOpen, Megaphone, ReceiptText, UserCog, Settings, Image as ImageIcon, Ticket } from "lucide-react";
+import { LayoutDashboard, MonitorPlay, Bike, BookOpen, Megaphone, ReceiptText, UserCog, Settings, Image as ImageIcon, Ticket, BadgePercent } from "lucide-react";
 
 export const Route = createFileRoute("/staff")({
   head: () => ({
