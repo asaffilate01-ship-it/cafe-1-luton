@@ -186,6 +186,47 @@ function OrderView() {
           <p className="mt-4 text-sm text-muted-foreground">Payment: <span className="font-semibold text-foreground">{order.payment_status}</span></p>
         </div>
 
+        {tracking && (
+          <div className="mt-6 rounded-2xl border border-border bg-card p-5">
+            <div className="flex items-center justify-between gap-3">
+              <div className="flex items-center gap-2">
+                <span className="grid h-9 w-9 place-items-center rounded-full bg-primary-soft text-primary">
+                  <Navigation className="h-4 w-4" />
+                </span>
+                <div>
+                  <p className="font-semibold">Live delivery tracking</p>
+                  <p className="text-xs text-muted-foreground">
+                    {driverLoc
+                      ? `Driver updated ${new Date(driverLoc.updated_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}`
+                      : "Waiting for your driver to go live…"}
+                  </p>
+                </div>
+              </div>
+              {driverLoc && (
+                <span className="rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold text-primary">
+                  {(() => {
+                    const m = metresBetween(driverLoc, STORE);
+                    return m < 950 ? `${Math.round(m)} m from the café` : `${(m / 1609).toFixed(1)} mi from the café`;
+                  })()}
+                </span>
+              )}
+            </div>
+            {driverLoc ? (
+              <LiveMap
+                className="mt-4 h-64 w-full"
+                points={[
+                  { lat: driverLoc.lat, lng: driverLoc.lng, label: "Your driver", kind: "driver" },
+                  { ...STORE, label: "Café 1", kind: "store" },
+                ]}
+              />
+            ) : (
+              <div className="mt-4 grid h-24 place-items-center rounded-xl bg-secondary text-sm text-muted-foreground">
+                The map appears as soon as the driver starts sharing location.
+              </div>
+            )}
+          </div>
+        )}
+
         <div className="mt-6 rounded-2xl border border-border bg-card p-5">
           <ul className="divide-y divide-border text-sm">
             {items.map((i) => (
