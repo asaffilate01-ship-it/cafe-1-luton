@@ -31,12 +31,12 @@ function Home() {
           <div>
             <StoreStatus />
             <h1 className="mt-5 font-display text-5xl font-bold leading-[1.05] sm:text-6xl">
-              Freshly brewed.
+              British Classics. Desi Favourites.
               <br />
-              <span className="text-primary">Delivered fast.</span>
+              <span className="text-primary">One Great Menu.</span>
             </h1>
             <p className="mt-5 max-w-lg text-lg text-muted-foreground">
-              Cafe1 serves proper coffee, all-day breakfast and generous sandwiches. Order for delivery, collection or dine-in — pay in seconds with SumUp.
+              Enjoy all-day breakfasts, hot meals, paninis, parathas, cakes, coffees and more from Café 1 at St Albans Crown Court.
             </p>
             <div className="mt-8 flex flex-wrap gap-3">
               <Link to="/menu" className="inline-flex h-12 items-center gap-2 rounded-full bg-primary px-6 font-semibold text-primary-foreground shadow-brand transition hover:bg-primary-hover">
