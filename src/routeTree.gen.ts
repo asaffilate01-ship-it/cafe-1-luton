@@ -19,7 +19,6 @@ import { Route as ContactRouteImport } from './routes/contact'
 import { Route as CheckoutRouteImport } from './routes/checkout'
 import { Route as CartRouteImport } from './routes/cart'
 import { Route as AuthRouteImport } from './routes/auth'
-import { Route as AdminRouteImport } from './routes/admin'
 import { Route as AccountRouteImport } from './routes/account'
 import { Route as AboutRouteImport } from './routes/about'
 import { Route as IndexRouteImport } from './routes/index'
@@ -81,11 +80,6 @@ const AuthRoute = AuthRouteImport.update({
   path: '/auth',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AdminRoute = AdminRouteImport.update({
-  id: '/admin',
-  path: '/admin',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const AccountRoute = AccountRouteImport.update({
   id: '/account',
   path: '/account',
@@ -112,24 +106,24 @@ const OrderOrderIdRoute = OrderOrderIdRouteImport.update({
   getParentRoute: () => rootRouteImport,
 } as any)
 const AdminMenuRoute = AdminMenuRouteImport.update({
-  id: '/menu',
-  path: '/menu',
-  getParentRoute: () => AdminRoute,
+  id: '/admin/menu',
+  path: '/admin/menu',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const AdminLoginRoute = AdminLoginRouteImport.update({
-  id: '/login',
-  path: '/login',
-  getParentRoute: () => AdminRoute,
+  id: '/admin/login',
+  path: '/admin/login',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const AdminBroadcastsRoute = AdminBroadcastsRouteImport.update({
-  id: '/broadcasts',
-  path: '/broadcasts',
-  getParentRoute: () => AdminRoute,
+  id: '/admin/broadcasts',
+  path: '/admin/broadcasts',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const AdminAccountsRoute = AdminAccountsRouteImport.update({
-  id: '/accounts',
-  path: '/accounts',
-  getParentRoute: () => AdminRoute,
+  id: '/admin/accounts',
+  path: '/admin/accounts',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const ApiPublicSumupWebhookRoute = ApiPublicSumupWebhookRouteImport.update({
   id: '/api/public/sumup-webhook',
@@ -141,7 +135,6 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
   '/account': typeof AccountRoute
-  '/admin': typeof AdminRouteWithChildren
   '/auth': typeof AuthRoute
   '/cart': typeof CartRoute
   '/checkout': typeof CheckoutRoute
@@ -164,7 +157,6 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
   '/account': typeof AccountRoute
-  '/admin': typeof AdminRouteWithChildren
   '/auth': typeof AuthRoute
   '/cart': typeof CartRoute
   '/checkout': typeof CheckoutRoute
@@ -188,7 +180,6 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
   '/account': typeof AccountRoute
-  '/admin': typeof AdminRouteWithChildren
   '/auth': typeof AuthRoute
   '/cart': typeof CartRoute
   '/checkout': typeof CheckoutRoute
@@ -213,7 +204,6 @@ export interface FileRouteTypes {
     | '/'
     | '/about'
     | '/account'
-    | '/admin'
     | '/auth'
     | '/cart'
     | '/checkout'
@@ -236,7 +226,6 @@ export interface FileRouteTypes {
     | '/'
     | '/about'
     | '/account'
-    | '/admin'
     | '/auth'
     | '/cart'
     | '/checkout'
@@ -259,7 +248,6 @@ export interface FileRouteTypes {
     | '/'
     | '/about'
     | '/account'
-    | '/admin'
     | '/auth'
     | '/cart'
     | '/checkout'
@@ -283,7 +271,6 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AboutRoute: typeof AboutRoute
   AccountRoute: typeof AccountRoute
-  AdminRoute: typeof AdminRouteWithChildren
   AuthRoute: typeof AuthRoute
   CartRoute: typeof CartRoute
   CheckoutRoute: typeof CheckoutRoute
@@ -294,6 +281,10 @@ export interface RootRouteChildren {
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   StaffRoute: typeof StaffRoute
   TabRoute: typeof TabRoute
+  AdminAccountsRoute: typeof AdminAccountsRoute
+  AdminBroadcastsRoute: typeof AdminBroadcastsRoute
+  AdminLoginRoute: typeof AdminLoginRoute
+  AdminMenuRoute: typeof AdminMenuRoute
   OrderOrderIdRoute: typeof OrderOrderIdRoute
   PrintOrderIdRoute: typeof PrintOrderIdRoute
   ApiPublicSumupWebhookRoute: typeof ApiPublicSumupWebhookRoute
@@ -371,13 +362,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/admin': {
-      id: '/admin'
-      path: '/admin'
-      fullPath: '/admin'
-      preLoaderRoute: typeof AdminRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/account': {
       id: '/account'
       path: '/account'
@@ -415,31 +399,31 @@ declare module '@tanstack/react-router' {
     }
     '/admin/menu': {
       id: '/admin/menu'
-      path: '/menu'
+      path: '/admin/menu'
       fullPath: '/admin/menu'
       preLoaderRoute: typeof AdminMenuRouteImport
-      parentRoute: typeof AdminRoute
+      parentRoute: typeof rootRouteImport
     }
     '/admin/login': {
       id: '/admin/login'
-      path: '/login'
+      path: '/admin/login'
       fullPath: '/admin/login'
       preLoaderRoute: typeof AdminLoginRouteImport
-      parentRoute: typeof AdminRoute
+      parentRoute: typeof rootRouteImport
     }
     '/admin/broadcasts': {
       id: '/admin/broadcasts'
-      path: '/broadcasts'
+      path: '/admin/broadcasts'
       fullPath: '/admin/broadcasts'
       preLoaderRoute: typeof AdminBroadcastsRouteImport
-      parentRoute: typeof AdminRoute
+      parentRoute: typeof rootRouteImport
     }
     '/admin/accounts': {
       id: '/admin/accounts'
-      path: '/accounts'
+      path: '/admin/accounts'
       fullPath: '/admin/accounts'
       preLoaderRoute: typeof AdminAccountsRouteImport
-      parentRoute: typeof AdminRoute
+      parentRoute: typeof rootRouteImport
     }
     '/api/public/sumup-webhook': {
       id: '/api/public/sumup-webhook'
@@ -451,27 +435,10 @@ declare module '@tanstack/react-router' {
   }
 }
 
-interface AdminRouteChildren {
-  AdminAccountsRoute: typeof AdminAccountsRoute
-  AdminBroadcastsRoute: typeof AdminBroadcastsRoute
-  AdminLoginRoute: typeof AdminLoginRoute
-  AdminMenuRoute: typeof AdminMenuRoute
-}
-
-const AdminRouteChildren: AdminRouteChildren = {
-  AdminAccountsRoute: AdminAccountsRoute,
-  AdminBroadcastsRoute: AdminBroadcastsRoute,
-  AdminLoginRoute: AdminLoginRoute,
-  AdminMenuRoute: AdminMenuRoute,
-}
-
-const AdminRouteWithChildren = AdminRoute._addFileChildren(AdminRouteChildren)
-
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AboutRoute: AboutRoute,
   AccountRoute: AccountRoute,
-  AdminRoute: AdminRouteWithChildren,
   AuthRoute: AuthRoute,
   CartRoute: CartRoute,
   CheckoutRoute: CheckoutRoute,
@@ -482,6 +449,10 @@ const rootRouteChildren: RootRouteChildren = {
   SitemapDotxmlRoute: SitemapDotxmlRoute,
   StaffRoute: StaffRoute,
   TabRoute: TabRoute,
+  AdminAccountsRoute: AdminAccountsRoute,
+  AdminBroadcastsRoute: AdminBroadcastsRoute,
+  AdminLoginRoute: AdminLoginRoute,
+  AdminMenuRoute: AdminMenuRoute,
   OrderOrderIdRoute: OrderOrderIdRoute,
   PrintOrderIdRoute: PrintOrderIdRoute,
   ApiPublicSumupWebhookRoute: ApiPublicSumupWebhookRoute,
