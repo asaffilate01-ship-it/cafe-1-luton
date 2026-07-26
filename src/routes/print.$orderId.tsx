@@ -17,6 +17,11 @@ type Item = { id: string; name: string; qty: number; notes: string | null; unit_
 export const Route = createFileRoute("/print/$orderId")({
   validateSearch: (s: Record<string, unknown>) => ({
     paper: s.paper === "80" || s.paper === 80 ? (80 as const) : s.paper === "58" || s.paper === 58 ? (58 as const) : undefined,
+    preview: s.preview === "1" || s.preview === 1 || s.preview === true ? true : undefined,
+    type:
+      s.type === "dine_in" || s.type === "collection" || s.type === "delivery"
+        ? (s.type as "dine_in" | "collection" | "delivery")
+        : undefined,
   }),
   head: () => ({
     meta: [{ title: "Ticket — Cafe1" }, { name: "robots", content: "noindex" }],
@@ -24,12 +29,45 @@ export const Route = createFileRoute("/print/$orderId")({
   component: PrintPage,
 });
 
+const SAMPLE_TYPES = [
+  { value: "dine_in", label: "Dine in" },
+  { value: "collection", label: "Pickup" },
+  { value: "delivery", label: "Delivery" },
+] as const;
+
+function sampleOrder(type: "dine_in" | "collection" | "delivery", scheduled: boolean): { order: Order; items: Item[] } {
+  const now = new Date();
+  const slot = new Date(now.getTime() + 45 * 60000);
+  return {
+    order: {
+      id: "test", order_number: 9999, type, status: "preparing",
+      customer_name: "TEST PRINT", customer_phone: "07000 000000",
+      created_at: now.toISOString(),
+      address_line1: "Crown Court, Civic Close", city: "St Albans", postcode: "AL1 3JW",
+      delivery_notes: type === "delivery" ? "Reception desk, ask for Sam" : null,
+      subtotal_cents: 1490, delivery_fee_cents: type === "delivery" ? 0 : 0, total_cents: 1490,
+      company_name: type === "delivery" ? "Sample Offices Ltd" : null,
+      table_number: type === "dine_in" ? "12" : null,
+      schedule_mode: scheduled ? "scheduled" : "asap",
+      scheduled_for: scheduled ? slot.toISOString() : null,
+    },
+    items: [
+      { id: "t1", name: "Flat White", qty: 2, notes: "Oat milk, extra hot", unit_price_cents: 320 },
+      { id: "t2", name: "Jacket Potato", qty: 1, notes: "Cheese + beans", unit_price_cents: 650 },
+      { id: "t3", name: "Bacon Roll", qty: 1, notes: null, unit_price_cents: 200 },
+    ],
+  };
+}
+
 function PrintPage() {
   const { orderId } = Route.useParams();
-  const { paper: paperParam } = Route.useSearch();
+  const { paper: paperParam, preview, type: typeParam } = Route.useSearch();
+  const isTest = orderId === "test";
   const [order, setOrder] = useState<Order | null>(null);
   const [items, setItems] = useState<Item[]>([]);
   const [paper, setPaper] = useState<58 | 80>(58);
+  const [sampleType, setSampleType] = useState<"dine_in" | "collection" | "delivery">(typeParam ?? "delivery");
+  const [sampleScheduled, setSampleScheduled] = useState(false);
 
   useEffect(() => {
     if (paperParam) {
@@ -55,6 +93,12 @@ function PrintPage() {
   }, [paper]);
 
   useEffect(() => {
+    if (isTest) {
+      const s = sampleOrder(sampleType, sampleScheduled);
+      setOrder(s.order);
+      setItems(s.items);
+      return;
+    }
     (async () => {
       const [{ data: o }, { data: its }] = await Promise.all([
         supabase.from("orders").select("*").eq("id", orderId).maybeSingle(),
@@ -63,11 +107,11 @@ function PrintPage() {
       setOrder((o as unknown) as Order | null);
       setItems((its ?? []) as Item[]);
     })();
-  }, [orderId]);
+  }, [orderId, isTest, sampleType, sampleScheduled]);
 
   useEffect(() => {
-    if (order) setTimeout(() => window.print(), 400);
-  }, [order]);
+    if (order && !preview && !isTest) setTimeout(() => window.print(), 400);
+  }, [order, preview, isTest]);
 
   if (!order) return <div className="p-6">Loading…</div>;
 
@@ -79,7 +123,9 @@ function PrintPage() {
   return (
     <div style={{ fontFamily: "monospace" }} className="bg-white text-black">
       <div className="no-print flex flex-wrap items-center gap-3 p-4 text-sm">
-        <button onClick={() => window.print()} className="rounded bg-primary px-4 py-2 font-semibold text-primary-foreground">Print again</button>
+        <button onClick={() => window.print()} className="rounded bg-primary px-4 py-2 font-semibold text-primary-foreground">
+          {isTest ? "Send test print" : preview ? "Print ticket" : "Print again"}
+        </button>
         <div className="flex items-center gap-1 rounded-full border border-border p-1">
           {[58, 80].map((w) => (
             <button
@@ -91,7 +137,34 @@ function PrintPage() {
             </button>
           ))}
         </div>
+        {isTest && (
+          <>
+            <div className="flex items-center gap-1 rounded-full border border-border p-1">
+              {SAMPLE_TYPES.map((t) => (
+                <button
+                  key={t.value}
+                  onClick={() => setSampleType(t.value)}
+                  className={`rounded-full px-3 py-1 text-xs font-semibold ${sampleType === t.value ? "bg-primary text-primary-foreground" : "text-muted-foreground"}`}
+                >
+                  {t.label}
+                </button>
+              ))}
+            </div>
+            <label className="inline-flex items-center gap-1 text-xs text-muted-foreground">
+              <input type="checkbox" checked={sampleScheduled} onChange={(e) => setSampleScheduled(e.target.checked)} />
+              Scheduled slot (instead of ASAP)
+            </label>
+          </>
+        )}
         <span className="text-xs text-muted-foreground">iMin D4-504 built-in printer uses 58mm</span>
+        {isTest && (
+          <span className="w-full rounded-lg bg-primary-soft px-3 py-2 text-xs font-semibold text-primary">
+            Test ticket — sample data only, no order is created. Print it to check paper width, header and formatting on this device.
+          </span>
+        )}
+        {preview && !isTest && (
+          <span className="w-full text-xs text-muted-foreground">Preview mode — nothing prints until you press the button.</span>
+        )}
       </div>
       {copies.map((copy) => (
         <section
