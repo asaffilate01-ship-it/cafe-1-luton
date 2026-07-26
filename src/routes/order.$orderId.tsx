@@ -1,8 +1,10 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { SiteHeader } from "@/components/site-header";
 import { money } from "@/lib/format";
+import { toast } from "sonner";
+import { Bell } from "lucide-react";
 
 type Order = {
   id: string;
@@ -32,15 +34,42 @@ export const Route = createFileRoute("/order/$orderId")({
 
 const STEPS = ["pending_payment", "paid", "preparing", "ready", "out_for_delivery", "delivered"] as const;
 
+const STATUS_MESSAGES: Record<string, { title: string; body: string }> = {
+  paid: { title: "Payment received", body: "We've got your payment — the kitchen is on it!" },
+  preparing: { title: "Order accepted 👩‍🍳", body: "Cafe1 is preparing your order now." },
+  ready: { title: "Ready to collect ☕", body: "Your order is ready at the counter." },
+  out_for_delivery: { title: "On the way 🚴", body: "Your driver has picked up your order." },
+  delivered: { title: "Delivered ✅", body: "Enjoy! Thanks for ordering from Cafe1." },
+  cancelled: { title: "Order cancelled", body: "Your order was cancelled. Contact us if this was a mistake." },
+};
+
 function OrderView() {
   const { orderId } = Route.useParams();
   const [order, setOrder] = useState<Order | null>(null);
   const [items, setItems] = useState<Array<{ id: string; name: string; qty: number; unit_price_cents: number }>>([]);
+  const lastStatus = useRef<string | null>(null);
+  const [notifPerm, setNotifPerm] = useState<NotificationPermission | "unsupported">(
+    typeof Notification !== "undefined" ? Notification.permission : "unsupported",
+  );
+
+  function notify(status: string) {
+    const msg = STATUS_MESSAGES[status];
+    if (!msg) return;
+    toast.success(msg.title, { description: msg.body });
+    if (typeof Notification !== "undefined" && Notification.permission === "granted") {
+      try {
+        new Notification(`Cafe1 · ${msg.title}`, { body: msg.body, icon: "/icon-512.png", tag: `order-${orderId}` });
+      } catch { /* noop */ }
+    }
+  }
 
   useEffect(() => {
     async function load() {
       const { data } = await supabase.from("orders").select("*").eq("id", orderId).maybeSingle();
-      setOrder((data as unknown) as Order | null);
+      const o = (data as unknown) as Order | null;
+      if (o && lastStatus.current && lastStatus.current !== o.status) notify(o.status);
+      if (o) lastStatus.current = o.status;
+      setOrder(o);
       const { data: its } = await supabase.from("order_items").select("*").eq("order_id", orderId);
       setItems(its ?? []);
     }
@@ -50,6 +79,7 @@ function OrderView() {
       .on("postgres_changes", { event: "UPDATE", schema: "public", table: "orders", filter: `id=eq.${orderId}` }, () => load())
       .subscribe();
     return () => { supabase.removeChannel(ch); };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [orderId]);
 
   if (!order) return (
@@ -73,6 +103,20 @@ function OrderView() {
             ? `for ${new Date(order.scheduled_for).toLocaleString([], { hour: "2-digit", minute: "2-digit", weekday: "short" })}`
             : "ASAP"}
         </p>
+
+        {notifPerm === "default" && (
+          <button
+            type="button"
+            onClick={async () => {
+              const p = await Notification.requestPermission();
+              setNotifPerm(p);
+              if (p === "granted") toast.success("Notifications on — we'll ping you when your order moves.");
+            }}
+            className="mt-4 inline-flex items-center gap-2 rounded-full border border-primary/40 bg-primary/5 px-4 py-2 text-sm font-semibold text-primary hover:bg-primary/10"
+          >
+            <Bell className="h-4 w-4" /> Turn on order updates
+          </button>
+        )}
 
         <div className="mt-8 rounded-2xl border border-border bg-card p-5">
           <div className="grid grid-cols-6 gap-2">
