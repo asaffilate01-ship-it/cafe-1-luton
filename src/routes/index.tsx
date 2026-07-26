@@ -4,6 +4,7 @@ import { SiteHeader, SiteFooter } from "@/components/site-header";
 import { PromoBanner } from "@/components/promo-banner";
 import { PromoCarousel } from "@/components/promo-carousel";
 import { StoreStatus } from "@/components/store-status";
+import heroImage from "@/assets/cafe1-hero.jpg.asset.json";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -52,7 +53,11 @@ function Home() {
           </div>
 
           <div className="relative">
-            <div className="aspect-square rounded-[2rem] bg-hero shadow-brand-lg" />
+            <img
+              src={heroImage.url}
+              alt="Café 1 spread: full English breakfast, fish and chips, jacket potato, loaded fries and a mug of tea"
+              className="aspect-square w-full rounded-[2rem] object-cover shadow-brand-lg"
+            />
             <div className="absolute -bottom-6 -left-6 hidden max-w-xs rounded-2xl border border-border bg-card p-5 shadow-brand sm:block">
               <div className="flex items-center gap-3">
                 <span className="grid h-10 w-10 place-items-center rounded-full bg-primary-soft text-primary">
