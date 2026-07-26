@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { ArrowRight, Bike, Coffee, Croissant, MapPin, Clock } from "lucide-react";
 import { SiteHeader, SiteFooter } from "@/components/site-header";
+import { PromoBanner } from "@/components/promo-banner";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -18,6 +19,7 @@ function Home() {
   return (
     <div className="min-h-screen bg-background text-foreground">
       <SiteHeader />
+      <PromoBanner />
       <section className="relative overflow-hidden">
         <div className="mx-auto grid max-w-6xl gap-10 px-4 py-16 sm:py-24 lg:grid-cols-2 lg:items-center">
           <div>
