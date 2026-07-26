@@ -164,6 +164,17 @@ function Checkout() {
       <SiteHeader />
       <div className="mx-auto grid max-w-4xl gap-8 px-4 py-12 lg:grid-cols-[1fr_360px]">
         <form id="checkout-form" onSubmit={submit} className="space-y-6">
+          {!status.open && (
+            <div className={`rounded-2xl border p-4 text-sm ${settings?.allow_preorder_when_closed ? "border-amber-500/40 bg-amber-500/10 text-amber-900" : "border-destructive/40 bg-destructive/10 text-destructive"}`}>
+              <p className="font-semibold">
+                {settings?.closed_message || "We're currently closed."}
+                {status.nextOpenLabel && <span className="ml-1 font-normal opacity-80">Opens {status.nextOpenLabel}.</span>}
+              </p>
+              {settings?.allow_preorder_when_closed && (
+                <p className="mt-1 opacity-90">You can still pre-order — pick “Schedule for later” below.</p>
+              )}
+            </div>
+          )}
           {tabSession && (
             <div className="flex items-start justify-between gap-3 rounded-2xl border border-primary/40 bg-primary/10 p-4 text-sm">
               <div>
@@ -279,16 +290,45 @@ function Checkout() {
               </li>
             ))}
           </ul>
+          {!onTab && (
+            <div className="mt-4 border-t border-border pt-4">
+              <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Promo code</p>
+              {promo ? (
+                <div className="mt-2 flex items-center justify-between gap-2 rounded-xl border border-primary/40 bg-primary/10 p-2 text-sm">
+                  <div>
+                    <span className="font-mono font-bold text-primary">{promo.code}</span>
+                    <p className="text-xs text-muted-foreground">{promo.message}</p>
+                  </div>
+                  <button type="button" onClick={() => { setPromo(null); setPromoInput(""); }} className="text-xs font-semibold text-primary underline">Remove</button>
+                </div>
+              ) : (
+                <div className="mt-2 flex gap-2">
+                  <input value={promoInput} onChange={(e) => setPromoInput(e.target.value.toUpperCase())} placeholder="Enter code" className="h-10 flex-1 rounded-lg border border-border bg-background px-3 font-mono text-sm uppercase" />
+                  <button type="button" onClick={applyPromo} disabled={promoBusy || !promoInput.trim()} className="h-10 rounded-lg bg-primary px-4 text-sm font-semibold text-primary-foreground hover:bg-primary-hover disabled:opacity-50">Apply</button>
+                </div>
+              )}
+            </div>
+          )}
           <div className="mt-3 space-y-1 text-sm">
             <div className="flex justify-between"><span className="text-muted-foreground">Subtotal</span><span>{money(subtotal)}</span></div>
-            {discount > 0 && (
-              <div className="flex justify-between text-primary"><span>Member discount (10%)</span><span>−{money(discount)}</span></div>
+            {loyaltyDiscount > 0 && (
+              <div className="flex justify-between text-primary"><span>Member discount (10%)</span><span>−{money(loyaltyDiscount)}</span></div>
             )}
-            <div className="flex justify-between"><span className="text-muted-foreground">Delivery</span><span>{money(delivery)}</span></div>
+            {promoDiscount > 0 && (
+              <div className="flex justify-between text-primary"><span>Promo {promo?.code}</span><span>−{money(promoDiscount)}</span></div>
+            )}
+            {mode === "delivery" && (
+              <div className="flex justify-between"><span className="text-muted-foreground">Delivery{freeDeliveryByPromo || freeDeliveryByThreshold ? " (free)" : ""}</span><span>{money(delivery)}</span></div>
+            )}
             <div className="mt-2 flex justify-between border-t border-border pt-2 font-display text-lg font-bold"><span>Total</span><span className="text-primary">{money(total)}</span></div>
+            {belowMin && (
+              <p className="mt-2 rounded-lg bg-destructive/10 p-2 text-center text-xs font-semibold text-destructive">
+                Minimum order £{(minOrder/100).toFixed(2)} — add £{((minOrder-subtotal)/100).toFixed(2)} more.
+              </p>
+            )}
           </div>
-          <button type="submit" form="checkout-form" disabled={busy} className="mt-4 h-12 w-full rounded-full bg-primary font-semibold text-primary-foreground shadow-brand transition hover:bg-primary-hover disabled:opacity-60">
-            {busy ? "Placing…" : onTab ? "Add to tab" : "Place order & pay"}
+          <button type="submit" form="checkout-form" disabled={busy || belowMin || storeBlocks} className="mt-4 h-12 w-full rounded-full bg-primary font-semibold text-primary-foreground shadow-brand transition hover:bg-primary-hover disabled:opacity-60">
+            {busy ? "Placing…" : storeBlocks ? "Closed — try later" : belowMin ? `Add £${((minOrder-subtotal)/100).toFixed(2)} more` : onTab ? "Add to tab" : "Place order & pay"}
           </button>
           <p className="mt-2 text-center text-xs text-muted-foreground">
             {onTab ? "Billed to your account — settle later" : user ? "Secured by SumUp" : "Guest checkout · Secured by SumUp"}
