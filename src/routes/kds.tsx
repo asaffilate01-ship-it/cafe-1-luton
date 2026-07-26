@@ -32,7 +32,7 @@ function KDS() {
       const { data: orders } = await supabase
         .from("orders")
         .select("id, order_number, status, type, customer_name, created_at")
-        .in("status", ["paid", "preparing", "ready"])
+        .in("status", ["preparing", "ready"])
         .order("created_at");
       const ids = (orders ?? []).map((o) => o.id);
       const { data: items } = ids.length
@@ -89,7 +89,6 @@ function KDS() {
                 ))}
               </ul>
               <div className="mt-3 flex gap-2">
-                {t.status === "paid" && <button onClick={() => set(t.id, "preparing")} className="h-9 flex-1 rounded-full bg-primary text-sm font-semibold text-primary-foreground hover:bg-primary-hover">Start</button>}
                 {t.status === "preparing" && <button onClick={() => set(t.id, "ready")} className="h-9 flex-1 rounded-full bg-primary text-sm font-semibold text-primary-foreground hover:bg-primary-hover">Mark ready</button>}
                 {t.status === "ready" && <span className="h-9 flex-1 rounded-full bg-primary-soft text-center text-sm font-semibold leading-9 text-primary">Ready</span>}
                 <a href={`/print/${t.id}`} target="_blank" rel="noreferrer" className="grid h-9 w-9 place-items-center rounded-full border border-border hover:border-primary hover:text-primary" aria-label="Print">🖨</a>
