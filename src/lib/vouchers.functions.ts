@@ -23,8 +23,8 @@ export const lookupVoucher = createServerFn({ method: "POST" })
     }
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data: rows, error } = await supabaseAdmin.rpc("get_voucher_balance", {
-      _email: email || null,
-      _phone: phone || null,
+      _email: email,
+      _phone: phone,
     });
     if (error) {
       console.error("[vouchers] lookup failed", error);
