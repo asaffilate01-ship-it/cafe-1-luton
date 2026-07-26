@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { SiteHeader, SiteFooter } from "@/components/site-header";
+import { PromoBanner } from "@/components/promo-banner";
 import { cart, useCart } from "@/lib/cart";
 import { money } from "@/lib/format";
 import { Plus, Minus, Search, Leaf, ShoppingBag, X } from "lucide-react";
@@ -94,6 +95,7 @@ function MenuPage() {
   return (
     <div className="min-h-screen bg-background pb-28">
       <SiteHeader />
+      <PromoBanner />
 
       {/* Restaurant hero */}
       <div className="bg-gradient-to-b from-primary-soft/40 to-transparent">
