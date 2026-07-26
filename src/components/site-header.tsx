@@ -1,5 +1,6 @@
 import { Link } from "@tanstack/react-router";
-import { ShoppingBag, ReceiptText, MapPin } from "lucide-react";
+import { ShoppingBag, ReceiptText, MapPin, Facebook, Instagram, Youtube, Music2 } from "lucide-react";
+import { openCookieSettings } from "@/lib/cookie-consent";
 import logo from "@/assets/cafe1-logo.png.asset.json";
 import { useCart } from "@/lib/cart";
 import { useSession } from "@/hooks/use-auth";
@@ -51,7 +52,7 @@ export function SiteHeader() {
 export function SiteFooter() {
   return (
     <footer className="mt-24 border-t border-border bg-secondary/50">
-      <div className="mx-auto flex max-w-6xl flex-col gap-2 px-4 py-10 text-sm text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
+      <div className="mx-auto flex max-w-6xl flex-col gap-6 px-4 py-10 text-sm text-muted-foreground sm:flex-row sm:justify-between">
         <div className="flex flex-col gap-1">
           <div className="flex items-center gap-2">
             <img src={logo.url} alt="Café 1 logo" className="h-7 w-auto" width={28} height={28} loading="lazy" />
@@ -61,12 +62,38 @@ export function SiteFooter() {
             <MapPin className="h-3.5 w-3.5 text-primary" />
             Cafe 1, St Albans Crown Court, AL1 3JW
           </address>
+          <div className="mt-3 flex items-center gap-2">
+            {[
+              { href: "https://facebook.com", label: "Café 1 on Facebook", Icon: Facebook },
+              { href: "https://instagram.com", label: "Café 1 on Instagram", Icon: Instagram },
+              { href: "https://tiktok.com", label: "Café 1 on TikTok", Icon: Music2 },
+              { href: "https://youtube.com", label: "Café 1 on YouTube", Icon: Youtube },
+            ].map(({ href, label, Icon }) => (
+              <a
+                key={label}
+                href={href}
+                target="_blank"
+                rel="noreferrer noopener"
+                aria-label={label}
+                title={label}
+                className="grid h-9 w-9 place-items-center rounded-full border border-border bg-card text-muted-foreground transition-colors hover:border-primary hover:text-primary"
+              >
+                <Icon className="h-4 w-4" />
+              </a>
+            ))}
+          </div>
         </div>
-        <div className="flex gap-4">
+        <nav aria-label="Footer" className="grid grid-cols-2 gap-x-8 gap-y-2 sm:grid-cols-2">
           <Link to="/menu" className="hover:text-primary">Menu</Link>
           <Link to="/contact" className="hover:text-primary">Contact</Link>
+          <Link to="/privacy" className="hover:text-primary">Privacy Policy</Link>
+          <Link to="/terms" className="hover:text-primary">Terms &amp; Conditions</Link>
+          <Link to="/cookies" className="hover:text-primary">Cookie Policy</Link>
+          <Link to="/gdpr" className="hover:text-primary">GDPR</Link>
+          <Link to="/complaints" className="hover:text-primary">Complaints</Link>
+          <button onClick={openCookieSettings} className="text-left hover:text-primary">Cookie settings</button>
           <Link to="/staff" className="hover:text-primary">Staff</Link>
-        </div>
+        </nav>
       </div>
     </footer>
   );
