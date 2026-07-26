@@ -723,30 +723,33 @@ export type Database = {
       voucher_holders: {
         Row: {
           active: boolean
+          code: string
           created_at: string
           email: string | null
           id: string
-          name: string
+          name: string | null
           notes: string | null
           phone: string | null
           updated_at: string
         }
         Insert: {
           active?: boolean
+          code: string
           created_at?: string
           email?: string | null
           id?: string
-          name: string
+          name?: string | null
           notes?: string | null
           phone?: string | null
           updated_at?: string
         }
         Update: {
           active?: boolean
+          code?: string
           created_at?: string
           email?: string | null
           id?: string
-          name?: string
+          name?: string | null
           notes?: string | null
           phone?: string | null
           updated_at?: string
@@ -821,6 +824,17 @@ export type Database = {
         Args: { _email: string; _phone: string }
         Returns: {
           allocated_cents: number
+          holder_id: string
+          holder_name: string
+          remaining_cents: number
+          used_cents: number
+        }[]
+      }
+      get_voucher_balance_by_code: {
+        Args: { _code: string }
+        Returns: {
+          allocated_cents: number
+          code: string
           holder_id: string
           holder_name: string
           remaining_cents: number
