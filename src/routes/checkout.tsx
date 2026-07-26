@@ -2,6 +2,7 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { createOrder } from "@/lib/orders.functions";
+import { lookupVoucher } from "@/lib/vouchers.functions";
 import { checkDeliveryPostcode } from "@/lib/delivery.functions";
 import { cart, useCart } from "@/lib/cart";
 import { money } from "@/lib/format";
@@ -52,6 +53,7 @@ function Checkout() {
   const tabSession = useTab();
   const { status, settings } = useStoreStatus();
   const place = useServerFn(createOrder);
+  const findVoucher = useServerFn(lookupVoucher);
   const checkArea = useServerFn(checkDeliveryPostcode);
   const [mode, setMode] = useState<Mode>("collection");
   const [scheduleMode, setScheduleMode] = useState<ScheduleMode>("asap");
@@ -164,7 +166,7 @@ function Checkout() {
   const freeDrinkDiscount = drinkUnitPrices.slice(0, freeDrinksUsed).reduce((s, p) => s + p, 0);
   const stampsAfter = ((stamps?.drink_stamps ?? 0) + Math.max(0, drinkUnitPrices.length - freeDrinksUsed)) % 10;
   const discount = Math.min(subtotal, loyaltyDiscount + promoDiscount + freeDrinkDiscount);
-  const total = Math.max(0, subtotal - discount) + delivery;
+  const grossTotal = Math.max(0, subtotal - discount) + delivery;
   const pointsEarn = user && !onTab ? Math.floor(Math.max(0, subtotal - discount) / 100) : 0;
   const minOrder = settings?.min_order_cents ?? 0;
   const belowMin = minOrder > 0 && subtotal < minOrder;
