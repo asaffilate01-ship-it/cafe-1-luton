@@ -10,6 +10,8 @@ import { cart, useCart, type CartModifier } from "@/lib/cart";
 import { money } from "@/lib/format";
 import { Plus, Minus, Search, Leaf, ShoppingBag, X, Settings2 } from "lucide-react";
 import { toast } from "sonner";
+import { OrderSetupGate } from "@/components/order-setup-gate";
+import { describeContext, useOrderContext, orderContext } from "@/lib/order-context";
 
 export const Route = createFileRoute("/menu")({
   head: () => ({
@@ -24,6 +26,11 @@ export const Route = createFileRoute("/menu")({
 });
 
 function MenuPage() {
+  const ctx = useOrderContext();
+  const [gateOpen, setGateOpen] = useState(false);
+  useEffect(() => {
+    if (!ctx) setGateOpen(true);
+  }, [ctx]);
   const { data, isLoading } = useQuery({
     queryKey: ["menu"],
     queryFn: async () => {
