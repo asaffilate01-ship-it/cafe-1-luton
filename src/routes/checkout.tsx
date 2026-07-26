@@ -418,13 +418,6 @@ function Checkout() {
             </div>
           </div>
 
-          {mode === "dine_in" && (
-            <div className="rounded-2xl border border-border bg-card p-5">
-              <p className="font-semibold">Table</p>
-              <input placeholder="Table number (optional)" value={form.table_number} onChange={(e) => setForm({ ...form, table_number: e.target.value })} className="mt-3 h-11 w-full rounded-xl border border-border bg-background px-4" />
-            </div>
-          )}
-
           {mode === "delivery" && (
             <div className="rounded-2xl border border-border bg-card p-5">
               <p className="font-semibold">Delivery address</p>
