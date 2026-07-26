@@ -11,6 +11,10 @@ export type BusinessSettings = {
   delivery_fee_cents: number;
   free_delivery_threshold_cents: number | null;
   closed_message: string | null;
+  delivery_open_time?: string;
+  delivery_close_time?: string;
+  delivery_origin_postcode?: string;
+  delivery_radius_m?: number;
 };
 
 export const DAY_NAMES = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
