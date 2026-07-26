@@ -50,9 +50,7 @@ export function PromoCarousel() {
         {banners.map((b) => {
           const cardStyle = b.image_url
             ? { backgroundImage: `linear-gradient(120deg, rgba(20,20,20,.55), rgba(20,20,20,.15)), url(${b.image_url})`, backgroundSize: "cover", backgroundPosition: "center" }
-            : b.bg_color
-              ? { background: `linear-gradient(120deg, ${b.bg_color}, color-mix(in oklab, ${b.bg_color} 60%, black))` }
-              : undefined;
+              : { background: `linear-gradient(120deg, ${b.bg_color ?? "oklch(0.55 0.22 27)"}, color-mix(in oklab, ${b.bg_color ?? "oklch(0.55 0.22 27)"} 60%, black))` };
           const inner = (
             <div
               className="flex h-40 w-full min-w-full snap-start items-end rounded-2xl p-5 text-white shadow-brand sm:h-56"
