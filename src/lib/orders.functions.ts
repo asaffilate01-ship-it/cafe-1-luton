@@ -135,6 +135,19 @@ export const createOrder = createServerFn({ method: "POST" })
     }
 
     const baseDeliveryFee = settings?.delivery_fee_cents ?? 299;
+
+    // Delivery-only rules: service window + half-mile radius from the shop.
+    if (data.type === "delivery" && settings) {
+      const ds = settings as unknown as import("./delivery.server").DeliverySettings;
+      const { isWithinDeliveryWindow, formatWindow, checkDeliveryArea } = await import("./delivery.server");
+      const when = data.schedule_mode === "scheduled" && data.scheduled_for ? new Date(data.scheduled_for) : new Date();
+      if (!isWithinDeliveryWindow(ds, when)) {
+        throw new Error(`We deliver between ${formatWindow(ds)}. Please pick a delivery time in that window, or choose collection.`);
+      }
+      const area = await checkDeliveryArea(data.postcode ?? "", ds);
+      if (!area.ok) throw new Error(area.reason);
+    }
+
     const freeThreshold = settings?.free_delivery_threshold_cents ?? null;
     let delivery_fee = data.type === "delivery"
       ? (freeThreshold && subtotal >= freeThreshold ? 0 : baseDeliveryFee)
