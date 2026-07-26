@@ -1,11 +1,13 @@
 import { Link } from "@tanstack/react-router";
-import { ShoppingBag, Coffee } from "lucide-react";
+import { ShoppingBag, Coffee, ReceiptText } from "lucide-react";
 import { useCart } from "@/lib/cart";
 import { useSession } from "@/hooks/use-auth";
+import { useTab } from "@/lib/tab";
 
 export function SiteHeader() {
   const c = useCart();
   const { user } = useSession();
+  const tabSession = useTab();
   const count = c.items.reduce((s, i) => s + i.qty, 0);
   return (
     <header className="sticky top-0 z-40 border-b border-border bg-background/85 backdrop-blur">
@@ -23,6 +25,12 @@ export function SiteHeader() {
           <Link to="/contact" activeProps={{ className: "text-primary" }} className="hover:text-primary">Contact</Link>
         </nav>
         <div className="flex items-center gap-2">
+          {tabSession && (
+            <Link to="/tab" className="hidden items-center gap-1.5 rounded-full border border-primary/40 bg-primary/10 px-3 py-1.5 text-xs font-semibold text-primary sm:inline-flex" title={`Tab: ${tabSession.name}`}>
+              <ReceiptText className="h-3.5 w-3.5" />
+              <span className="max-w-[8rem] truncate">{tabSession.name}</span>
+            </Link>
+          )}
           <Link to="/cart" className="relative inline-flex h-10 items-center gap-2 rounded-full border border-border bg-card px-4 text-sm font-semibold hover:border-primary hover:text-primary">
             <ShoppingBag className="h-4 w-4" />
             Cart
