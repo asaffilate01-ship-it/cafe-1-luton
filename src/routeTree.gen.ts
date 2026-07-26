@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as TabRouteImport } from './routes/tab'
 import { Route as StaffRouteImport } from './routes/staff'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as MenuRouteImport } from './routes/menu'
@@ -29,6 +30,11 @@ import { Route as AdminLoginRouteImport } from './routes/admin.login'
 import { Route as AdminBroadcastsRouteImport } from './routes/admin.broadcasts'
 import { Route as ApiPublicSumupWebhookRouteImport } from './routes/api/public/sumup-webhook'
 
+const TabRoute = TabRouteImport.update({
+  id: '/tab',
+  path: '/tab',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const StaffRoute = StaffRouteImport.update({
   id: '/staff',
   path: '/staff',
@@ -139,6 +145,7 @@ export interface FileRoutesByFullPath {
   '/menu': typeof MenuRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/staff': typeof StaffRoute
+  '/tab': typeof TabRoute
   '/admin/broadcasts': typeof AdminBroadcastsRoute
   '/admin/login': typeof AdminLoginRoute
   '/admin/menu': typeof AdminMenuRoute
@@ -160,6 +167,7 @@ export interface FileRoutesByTo {
   '/menu': typeof MenuRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/staff': typeof StaffRoute
+  '/tab': typeof TabRoute
   '/admin/broadcasts': typeof AdminBroadcastsRoute
   '/admin/login': typeof AdminLoginRoute
   '/admin/menu': typeof AdminMenuRoute
@@ -182,6 +190,7 @@ export interface FileRoutesById {
   '/menu': typeof MenuRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/staff': typeof StaffRoute
+  '/tab': typeof TabRoute
   '/admin/broadcasts': typeof AdminBroadcastsRoute
   '/admin/login': typeof AdminLoginRoute
   '/admin/menu': typeof AdminMenuRoute
@@ -205,6 +214,7 @@ export interface FileRouteTypes {
     | '/menu'
     | '/sitemap.xml'
     | '/staff'
+    | '/tab'
     | '/admin/broadcasts'
     | '/admin/login'
     | '/admin/menu'
@@ -226,6 +236,7 @@ export interface FileRouteTypes {
     | '/menu'
     | '/sitemap.xml'
     | '/staff'
+    | '/tab'
     | '/admin/broadcasts'
     | '/admin/login'
     | '/admin/menu'
@@ -247,6 +258,7 @@ export interface FileRouteTypes {
     | '/menu'
     | '/sitemap.xml'
     | '/staff'
+    | '/tab'
     | '/admin/broadcasts'
     | '/admin/login'
     | '/admin/menu'
@@ -269,6 +281,7 @@ export interface RootRouteChildren {
   MenuRoute: typeof MenuRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   StaffRoute: typeof StaffRoute
+  TabRoute: typeof TabRoute
   OrderOrderIdRoute: typeof OrderOrderIdRoute
   PrintOrderIdRoute: typeof PrintOrderIdRoute
   ApiPublicSumupWebhookRoute: typeof ApiPublicSumupWebhookRoute
@@ -276,6 +289,13 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/tab': {
+      id: '/tab'
+      path: '/tab'
+      fullPath: '/tab'
+      preLoaderRoute: typeof TabRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/staff': {
       id: '/staff'
       path: '/staff'
@@ -440,6 +460,7 @@ const rootRouteChildren: RootRouteChildren = {
   MenuRoute: MenuRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
   StaffRoute: StaffRoute,
+  TabRoute: TabRoute,
   OrderOrderIdRoute: OrderOrderIdRoute,
   PrintOrderIdRoute: PrintOrderIdRoute,
   ApiPublicSumupWebhookRoute: ApiPublicSumupWebhookRoute,
