@@ -23,7 +23,7 @@ export function StoreStatus({ className = "" }: { className?: string }) {
   return (
     <div className={`flex flex-wrap items-center gap-3 text-sm ${className}`}>
       <span className="inline-flex items-center gap-1.5 rounded-full bg-muted px-3 py-1 font-semibold text-muted-foreground">
-        <XCircle className="h-4 w-4" /> Closed
+        <XCircle className="h-4 w-4" /> {status.reason === "bank_holiday" ? `Closed — ${status.holidayName ?? "bank holiday"}` : status.reason === "closed_day" ? "Closed today" : "Closed"}
       </span>
       {status.nextOpenLabel && (
         <span className="text-muted-foreground">Opens {status.nextOpenLabel}</span>
