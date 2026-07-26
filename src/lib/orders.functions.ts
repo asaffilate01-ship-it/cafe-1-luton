@@ -49,6 +49,7 @@ const CreateOrderSchema = z.object({
   items: z.array(CartItemSchema).min(1).max(50),
   account_code: z.string().min(3).max(40).optional(),
   promo_code: z.string().min(1).max(40).optional(),
+  voucher_code: z.string().min(1).max(40).optional(),
 });
 
 export const createOrder = createServerFn({ method: "POST" })
@@ -233,13 +234,11 @@ export const createOrder = createServerFn({ method: "POST" })
     let voucher_holder_id: string | null = null;
     let voucher_holder_name: string | null = null;
     {
-      const vEmail = (data.customer_email || authEmail || "").trim();
-      const vPhone = (data.customer_phone || "").trim();
-      if (vEmail || vPhone.replace(/\D/g, "").length >= 7) {
+      const vCode = (data.voucher_code || "").trim();
+      if (vCode) {
         const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-        const { data: vRows } = await supabaseAdmin.rpc("get_voucher_balance", {
-          _email: vEmail,
-          _phone: vPhone,
+        const { data: vRows } = await supabaseAdmin.rpc("get_voucher_balance_by_code", {
+          _code: vCode,
         });
         const v = (vRows ?? [])[0];
         if (v && v.remaining_cents > 0 && total > 0) {
@@ -253,7 +252,7 @@ export const createOrder = createServerFn({ method: "POST" })
           voucher_cents = (taken as number | null) ?? 0;
           if (voucher_cents > 0) {
             voucher_holder_id = v.holder_id;
-            voucher_holder_name = v.holder_name;
+            voucher_holder_name = v.holder_name ?? v.code;
           }
         }
       }

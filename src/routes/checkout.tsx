@@ -167,24 +167,33 @@ function Checkout() {
   const stampsAfter = ((stamps?.drink_stamps ?? 0) + Math.max(0, drinkUnitPrices.length - freeDrinksUsed)) % 10;
   const discount = Math.min(subtotal, loyaltyDiscount + promoDiscount + freeDrinkDiscount);
   const grossTotal = Math.max(0, subtotal - discount) + delivery;
-  // Court voucher: recognised from the customer's email or phone number.
-  const [voucher, setVoucher] = useState<null | { holder_name: string; remaining_cents: number; allocated_cents: number }>(null);
-  const voucherKey = `${(form.customer_email || "").trim().toLowerCase()}|${(form.customer_phone || "").replace(/\D/g, "")}`;
-  useEffect(() => {
-    const [em, ph] = voucherKey.split("|");
-    if (!em.includes("@") && ph.length < 7) { setVoucher(null); return; }
-    let cancelled = false;
-    const t = setTimeout(async () => {
-      try {
-        const res = await findVoucher({ data: { email: em, phone: ph } });
-        if (cancelled) return;
-        setVoucher(res.found ? { holder_name: res.holder_name, remaining_cents: res.remaining_cents, allocated_cents: res.allocated_cents } : null);
-      } catch {
-        if (!cancelled) setVoucher(null);
+  // Court voucher: recognised from an anonymous code the court gives the customer.
+  const [voucherInput, setVoucherInput] = useState("");
+  const [voucher, setVoucher] = useState<null | { code: string; remaining_cents: number; allocated_cents: number }>(null);
+  const [voucherBusy, setVoucherBusy] = useState(false);
+  const [voucherError, setVoucherError] = useState<string | null>(null);
+  async function applyVoucher() {
+    const code = voucherInput.trim().toUpperCase();
+    if (!code) return;
+    setVoucherBusy(true);
+    setVoucherError(null);
+    try {
+      const res = await findVoucher({ data: { code } });
+      if (!res.found) {
+        setVoucher(null);
+        setVoucherError("That voucher code isn't recognised or is inactive.");
+      } else if (res.remaining_cents <= 0) {
+        setVoucher(null);
+        setVoucherError("This voucher has no allowance left for today.");
+      } else {
+        setVoucher({ code: res.code, remaining_cents: res.remaining_cents, allocated_cents: res.allocated_cents });
       }
-    }, 450);
-    return () => { cancelled = true; clearTimeout(t); };
-  }, [voucherKey, findVoucher]);
+    } catch {
+      setVoucherError("Couldn't check the voucher code. Please try again.");
+    } finally {
+      setVoucherBusy(false);
+    }
+  }
   const voucherApplied = voucher ? Math.min(voucher.remaining_cents, grossTotal) : 0;
   const total = Math.max(0, grossTotal - voucherApplied);
   const pointsEarn = user && !onTab ? Math.floor(Math.max(0, subtotal - discount) / 100) : 0;
@@ -239,6 +248,7 @@ function Checkout() {
           })),
           account_code: tabSession?.code,
           promo_code: promo?.code,
+          voucher_code: voucher?.code,
         },
       });
       cart.clear();
@@ -435,6 +445,29 @@ function Checkout() {
               )}
             </div>
           )}
+          {!onTab && (
+            <div className="mt-4 border-t border-border pt-4">
+              <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Court voucher code</p>
+              {voucher ? (
+                <div className="mt-2 flex items-center justify-between gap-2 rounded-xl border border-primary/40 bg-primary/10 p-2 text-sm">
+                  <div>
+                    <span className="font-mono font-bold text-primary">{voucher.code}</span>
+                    <p className="text-xs text-muted-foreground">{money(voucher.remaining_cents)} left today</p>
+                  </div>
+                  <button type="button" onClick={() => { setVoucher(null); setVoucherInput(""); setVoucherError(null); }} className="text-xs font-semibold text-primary underline">Remove</button>
+                </div>
+              ) : (
+                <>
+                  <div className="mt-2 flex gap-2">
+                    <input value={voucherInput} onChange={(e) => { setVoucherInput(e.target.value.toUpperCase()); setVoucherError(null); }} placeholder="Enter court code" className="h-10 flex-1 rounded-lg border border-border bg-background px-3 font-mono text-sm uppercase" />
+                    <button type="button" onClick={applyVoucher} disabled={voucherBusy || !voucherInput.trim()} className="h-10 rounded-lg bg-primary px-4 text-sm font-semibold text-primary-foreground hover:bg-primary-hover disabled:opacity-50">Apply</button>
+                  </div>
+                  {voucherError && <p className="mt-1 text-xs text-destructive">{voucherError}</p>}
+                  <p className="mt-1 text-xs text-muted-foreground">If the court issued you a voucher code, enter it here to deduct today's allowance.</p>
+                </>
+              )}
+            </div>
+          )}
           <div className="mt-3 space-y-1 text-sm">
             <div className="flex justify-between"><span className="text-muted-foreground">Subtotal</span><span>{money(subtotal)}</span></div>
             {user && (
@@ -481,12 +514,13 @@ function Checkout() {
             )}
             {voucher && (
               <div className="!mt-3 rounded-xl border border-primary/40 bg-primary/10 p-3 text-xs">
-                <p className="font-semibold text-primary">Court voucher — {voucher.holder_name}</p>
+                <p className="font-semibold text-primary">Court voucher — {voucher.code}</p>
                 <p className="mt-1 text-muted-foreground">
                   {voucher.remaining_cents > 0
                     ? `${money(voucher.remaining_cents)} of today's ${money(voucher.allocated_cents)} allowance left.${voucherApplied < grossTotal ? ` You'll pay the ${money(total)} difference by card.` : " This order is fully covered."}`
                     : `Today's ${money(voucher.allocated_cents)} allowance has already been used.`}
                 </p>
+                <button type="button" onClick={() => { setVoucher(null); setVoucherInput(""); }} className="mt-2 text-xs font-semibold text-primary underline">Remove voucher</button>
               </div>
             )}
             {voucherApplied > 0 && (

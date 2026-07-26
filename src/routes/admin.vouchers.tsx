@@ -22,7 +22,7 @@ export const Route = createFileRoute("/admin/vouchers")({
   component: AdminVouchers,
 });
 
-type Holder = { id: string; name: string; email: string | null; phone: string | null; notes: string | null; active: boolean };
+type Holder = { id: string; code: string; name: string | null; notes: string | null; active: boolean };
 type Allocation = { id: string; holder_id: string; for_date: string; amount_cents: number; notes: string | null };
 type Redemption = {
   id: string; holder_id: string; for_date: string; amount_cents: number; created_at: string;
@@ -50,7 +50,7 @@ function AdminVouchers() {
     queryKey: ["voucher-holders"],
     enabled: !!user && allowed,
     queryFn: async () => {
-      const { data, error } = await supabase.from("voucher_holders").select("*").order("name");
+      const { data, error } = await supabase.from("voucher_holders").select("*").order("code");
       if (error) throw error;
       return (data ?? []) as Holder[];
     },
@@ -96,25 +96,34 @@ function AdminVouchers() {
   const byId = useMemo(() => Object.fromEntries((holders ?? []).map((h) => [h.id, h])), [holders]);
   const reportTotal = (report ?? []).reduce((s, r) => s + r.amount_cents, 0);
 
-  const [form, setForm] = useState({ name: "", email: "", phone: "", notes: "" });
+  const [bulkCodes, setBulkCodes] = useState("");
+  const [defaultAllowance, setDefaultAllowance] = useState("15.00");
   const [busy, setBusy] = useState(false);
 
-  async function addHolder(e: React.FormEvent) {
+  async function addCodes(e: React.FormEvent) {
     e.preventDefault();
-    if (!form.name.trim() || (!form.email.trim() && !form.phone.trim()))
-      return toast.error("Add a name plus an email or phone number.");
+    const codes = Array.from(new Set(
+      bulkCodes.split(/[\s,;]+/).map((c) => c.trim().toUpperCase()).filter(Boolean),
+    ));
+    if (!codes.length) return toast.error("Paste at least one code.");
     setBusy(true);
-    const { error } = await supabase.from("voucher_holders").insert({
-      name: form.name.trim(),
-      email: form.email.trim().toLowerCase() || null,
-      phone: form.phone.trim() || null,
-      notes: form.notes.trim() || null,
-    });
+    const { data: inserted, error } = await supabase
+      .from("voucher_holders")
+      .upsert(codes.map((code) => ({ code, active: true })), { onConflict: "code", ignoreDuplicates: true })
+      .select("id, code");
+    if (error) { setBusy(false); return toast.error(error.message); }
+    // Set today's default allowance for every code we just added.
+    const cents = Math.round(parseFloat(defaultAllowance || "0") * 100);
+    if (Number.isFinite(cents) && cents > 0 && (inserted ?? []).length) {
+      const { data: all } = await supabase.from("voucher_holders").select("id, code").in("code", codes);
+      const rows = (all ?? []).map((h) => ({ holder_id: h.id, for_date: date, amount_cents: cents }));
+      await supabase.from("voucher_allocations").upsert(rows, { onConflict: "holder_id,for_date" });
+    }
     setBusy(false);
-    if (error) return toast.error(error.message.includes("uniq") ? "That email or phone already exists." : error.message);
-    toast.success("Voucher holder added");
-    setForm({ name: "", email: "", phone: "", notes: "" });
+    toast.success(`${codes.length} code${codes.length === 1 ? "" : "s"} activated`);
+    setBulkCodes("");
     qc.invalidateQueries({ queryKey: ["voucher-holders"] });
+    qc.invalidateQueries({ queryKey: ["voucher-allocations", date] });
   }
 
   async function setAllowance(holder_id: string, pounds: string) {
@@ -136,20 +145,18 @@ function AdminVouchers() {
 
   function exportCsv() {
     const rows = [
-      ["Date", "Time", "Name", "Email", "Phone", "Order #", "Voucher amount (GBP)"],
+      ["Date", "Time", "Code", "Order #", "Voucher amount (GBP)"],
       ...(report ?? []).map((r) => {
         const h = byId[r.holder_id];
         return [
           r.for_date,
           new Date(r.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
-          h?.name ?? "",
-          h?.email ?? "",
-          h?.phone ?? "",
+          h?.code ?? "",
           r.orders?.order_number ? `#${r.orders.order_number}` : "",
           (r.amount_cents / 100).toFixed(2),
         ];
       }),
-      ["", "", "", "", "", "TOTAL", (reportTotal / 100).toFixed(2)],
+      ["", "", "", "TOTAL", (reportTotal / 100).toFixed(2)],
     ];
     const csv = rows.map((r) => r.map((c) => `"${String(c).replace(/"/g, '""')}"`).join(",")).join("\n");
     const url = URL.createObjectURL(new Blob([csv], { type: "text/csv" }));
@@ -170,15 +177,20 @@ function AdminVouchers() {
           <span className="grid h-10 w-10 place-items-center rounded-xl bg-primary-soft text-primary"><Ticket className="h-5 w-5" /></span>
           <div>
             <h1 className="font-display text-3xl font-bold">Court vouchers</h1>
-            <p className="text-sm text-muted-foreground">Daily allowances by name + email/phone. Anything above the allowance is paid by the customer.</p>
+            <p className="text-sm text-muted-foreground">Anonymous court-issued codes. Paste the week's codes, set today's allowance, and the customer enters their code at checkout.</p>
           </div>
         </div>
 
-        <form onSubmit={addHolder} className="mt-8 grid gap-3 rounded-2xl border border-border bg-card p-5 sm:grid-cols-4">
-          <input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="Full name" className="h-11 rounded-xl border border-border bg-background px-3 text-sm" />
-          <input value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} placeholder="Email" className="h-11 rounded-xl border border-border bg-background px-3 text-sm" />
-          <input value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} placeholder="Phone" className="h-11 rounded-xl border border-border bg-background px-3 text-sm" />
-          <button disabled={busy} className="h-11 rounded-xl bg-primary font-semibold text-primary-foreground hover:bg-primary-hover disabled:opacity-60">Add person</button>
+        <form onSubmit={addCodes} className="mt-8 grid gap-3 rounded-2xl border border-border bg-card p-5">
+          <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Paste voucher codes (one per line, or comma separated)</label>
+          <textarea value={bulkCodes} onChange={(e) => setBulkCodes(e.target.value)} rows={4} placeholder={"COURT-A1B2\nCOURT-C3D4"} className="rounded-xl border border-border bg-background p-3 font-mono text-sm uppercase" />
+          <div className="flex flex-wrap items-center gap-3">
+            <label className="flex items-center gap-2 text-sm">
+              <span className="text-muted-foreground">Today's allowance £</span>
+              <input type="number" step="0.01" min="0" value={defaultAllowance} onChange={(e) => setDefaultAllowance(e.target.value)} className="h-10 w-24 rounded-xl border border-border bg-background px-3 text-sm" />
+            </label>
+            <button disabled={busy} className="h-11 rounded-xl bg-primary px-5 font-semibold text-primary-foreground hover:bg-primary-hover disabled:opacity-60">Activate codes</button>
+          </div>
         </form>
 
         <div className="mt-8 rounded-2xl border border-border bg-card p-5">
@@ -194,8 +206,8 @@ function AdminVouchers() {
               return (
                 <div key={h.id} className="flex flex-wrap items-center gap-3 py-3">
                   <div className="min-w-[180px] flex-1">
-                    <p className="font-semibold">{h.name}</p>
-                    <p className="text-xs text-muted-foreground">{[h.email, h.phone].filter(Boolean).join(" · ") || "—"}</p>
+                    <p className="font-mono font-semibold">{h.code}</p>
+                    {h.notes && <p className="text-xs text-muted-foreground">{h.notes}</p>}
                   </div>
                   <label className="flex items-center gap-2 text-sm">
                     <span className="text-muted-foreground">£</span>
@@ -207,11 +219,11 @@ function AdminVouchers() {
                     />
                   </label>
                   <span className="text-xs text-muted-foreground">used {money(used)} · left <span className="font-semibold text-primary">{money(left)}</span></span>
-                  <button onClick={() => removeHolder(h.id)} className="rounded-lg p-2 text-muted-foreground hover:text-destructive" aria-label={`Remove ${h.name}`}><Trash2 className="h-4 w-4" /></button>
+                  <button onClick={() => removeHolder(h.id)} className="rounded-lg p-2 text-muted-foreground hover:text-destructive" aria-label={`Remove ${h.code}`}><Trash2 className="h-4 w-4" /></button>
                 </div>
               );
             })}
-            {!(holders ?? []).length && <p className="py-6 text-sm text-muted-foreground">No voucher holders yet.</p>}
+            {!(holders ?? []).length && <p className="py-6 text-sm text-muted-foreground">No voucher codes yet.</p>}
           </div>
         </div>
 
@@ -230,7 +242,7 @@ function AdminVouchers() {
           <div className="mt-4 overflow-x-auto">
             <table className="w-full text-sm">
               <thead className="text-left text-xs uppercase text-muted-foreground">
-                <tr><th className="py-2">Date & time</th><th>Name</th><th>Email / phone</th><th>Order</th><th className="text-right">Amount</th></tr>
+                <tr><th className="py-2">Date & time</th><th>Code</th><th>Order</th><th className="text-right">Amount</th></tr>
               </thead>
               <tbody className="divide-y divide-border">
                 {(report ?? []).map((r) => {
@@ -238,18 +250,17 @@ function AdminVouchers() {
                   return (
                     <tr key={r.id}>
                       <td className="py-2">{r.for_date} {new Date(r.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</td>
-                      <td>{h?.name ?? "—"}</td>
-                      <td className="text-muted-foreground">{[h?.email, h?.phone].filter(Boolean).join(" · ") || "—"}</td>
+                      <td className="font-mono">{h?.code ?? "—"}</td>
                       <td>{r.orders?.order_number ? `#${r.orders.order_number}` : "—"}</td>
                       <td className="text-right font-semibold">{money(r.amount_cents)}</td>
                     </tr>
                   );
                 })}
-                {!(report ?? []).length && <tr><td colSpan={5} className="py-6 text-muted-foreground">No vouchers used in this period.</td></tr>}
+                {!(report ?? []).length && <tr><td colSpan={4} className="py-6 text-muted-foreground">No vouchers used in this period.</td></tr>}
               </tbody>
               <tfoot>
                 <tr className="border-t border-border font-display text-base font-bold">
-                  <td className="pt-3" colSpan={4}>Total to reclaim</td>
+                  <td className="pt-3" colSpan={3}>Total to reclaim</td>
                   <td className="pt-3 text-right text-primary">{money(reportTotal)}</td>
                 </tr>
               </tfoot>
