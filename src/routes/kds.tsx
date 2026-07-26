@@ -98,6 +98,15 @@ function KDS() {
           <h1 className="font-display text-2xl font-bold">Kitchen Display · Cafe1</h1>
           <div className="flex items-center gap-3">
             <AlertsToggle />
+            <a
+              href={`/print/test?paper=${kdsPaper}&preview=1`}
+              target="_blank"
+              rel="noreferrer"
+              className="rounded-full bg-primary-foreground/10 px-3 py-1.5 text-xs font-semibold hover:bg-primary-foreground/20"
+              title="Print a sample ticket on this device — no order is created"
+            >
+              Test print
+            </a>
             <div className="flex items-center gap-1 rounded-full bg-primary-foreground/10 p-1">
               {([58, 80] as const).map((w) => (
                 <button
@@ -144,7 +153,8 @@ function KDS() {
               <div className="mt-3 flex gap-2">
                 {t.status === "preparing" && <button onClick={() => set(t.id, "ready")} className="h-9 flex-1 rounded-full bg-primary text-sm font-semibold text-primary-foreground hover:bg-primary-hover">Mark ready</button>}
                 {t.status === "ready" && <span className="h-9 flex-1 rounded-full bg-primary-soft text-center text-sm font-semibold leading-9 text-primary">Ready</span>}
-                <a href={`/print/${t.id}?paper=${kdsPaper}`} target="_blank" rel="noreferrer" className="grid h-9 w-9 place-items-center rounded-full border border-border hover:border-primary hover:text-primary" aria-label="Print">🖨</a>
+                <a href={`/print/${t.id}?paper=${kdsPaper}&preview=1`} target="_blank" rel="noreferrer" className="grid h-9 w-9 place-items-center rounded-full border border-border hover:border-primary hover:text-primary" aria-label="Print preview" title="Preview then print">👁</a>
+                <a href={`/print/${t.id}?paper=${kdsPaper}`} target="_blank" rel="noreferrer" className="grid h-9 w-9 place-items-center rounded-full border border-border hover:border-primary hover:text-primary" aria-label="Print" title="Print now">🖨</a>
               </div>
             </div>
           );
