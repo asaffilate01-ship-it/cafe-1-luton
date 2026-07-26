@@ -32,14 +32,25 @@ export const Route = createFileRoute("/order/$orderId")({
   component: OrderView,
 });
 
-const STEPS = ["pending_payment", "paid", "preparing", "ready", "out_for_delivery", "delivered"] as const;
+const DELIVERY_STEPS = ["pending_payment", "paid", "preparing", "ready", "out_for_delivery", "delivered"] as const;
+const COUNTER_STEPS = ["pending_payment", "paid", "preparing", "ready", "completed"] as const;
+const STEP_LABELS: Record<string, string> = {
+  pending_payment: "Placed",
+  paid: "Awaiting accept",
+  preparing: "Preparing",
+  ready: "Ready",
+  out_for_delivery: "On the way",
+  delivered: "Delivered",
+  completed: "Collected",
+};
 
 const STATUS_MESSAGES: Record<string, { title: string; body: string }> = {
-  paid: { title: "Payment received", body: "We've got your payment — the kitchen is on it!" },
+  paid: { title: "Payment received", body: "We've got your payment — waiting for the café to accept." },
   preparing: { title: "Order accepted 👩‍🍳", body: "Cafe1 is preparing your order now." },
-  ready: { title: "Ready to collect ☕", body: "Your order is ready at the counter." },
+  ready: { title: "Ready ☕", body: "Your order is ready." },
   out_for_delivery: { title: "On the way 🚴", body: "Your driver has picked up your order." },
   delivered: { title: "Delivered ✅", body: "Enjoy! Thanks for ordering from Cafe1." },
+  completed: { title: "All done ✅", body: "Thanks for ordering from Cafe1." },
   cancelled: { title: "Order cancelled", body: "Your order was cancelled. Contact us if this was a mistake." },
 };
 
@@ -89,7 +100,8 @@ function OrderView() {
     </div>
   );
 
-  const stepIdx = Math.max(0, STEPS.indexOf(order.status as (typeof STEPS)[number]));
+  const steps = order.type === "delivery" ? DELIVERY_STEPS : COUNTER_STEPS;
+  const stepIdx = Math.max(0, (steps as readonly string[]).indexOf(order.status));
   return (
     <div className="min-h-screen bg-background">
       <SiteHeader />
@@ -119,11 +131,11 @@ function OrderView() {
         )}
 
         <div className="mt-8 rounded-2xl border border-border bg-card p-5">
-          <div className="grid grid-cols-6 gap-2">
-            {STEPS.map((s, idx) => (
+          <div className="grid gap-2" style={{ gridTemplateColumns: `repeat(${steps.length}, minmax(0, 1fr))` }}>
+            {steps.map((s, idx) => (
               <div key={s} className="text-center">
                 <div className={`mx-auto h-2 rounded-full ${idx <= stepIdx ? "bg-primary" : "bg-border"}`} />
-                <p className={`mt-2 text-[10px] uppercase tracking-wider ${idx <= stepIdx ? "text-primary font-semibold" : "text-muted-foreground"}`}>{s.replace(/_/g, " ")}</p>
+                <p className={`mt-2 text-[10px] uppercase tracking-wider ${idx <= stepIdx ? "text-primary font-semibold" : "text-muted-foreground"}`}>{STEP_LABELS[s] ?? s}</p>
               </div>
             ))}
           </div>
