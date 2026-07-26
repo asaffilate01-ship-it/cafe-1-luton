@@ -71,7 +71,7 @@ export const createOrder = createServerFn({ method: "POST" })
     const ids = data.items.map((i) => i.menu_item_id);
     const modIds = [...new Set(data.items.flatMap((i) => i.modifier_ids ?? []))];
     const [{ data: menu, error: menuErr }, { data: modRows, error: modErr }] = await Promise.all([
-      supabase.from("menu_items").select("id,name,price_cents,active,category_id").in("id", ids),
+      supabase.from("menu_items").select("id,name,price_cents,active,category_id,loyalty_drink").in("id", ids),
       modIds.length
         ? supabase
             .from("menu_modifiers")
@@ -85,6 +85,8 @@ export const createOrder = createServerFn({ method: "POST" })
     const modById = new Map((modRows ?? []).map((m) => [m.id, m]));
 
     let subtotal = 0;
+    // Base prices of every loyalty-eligible drink unit in this order (for "11th free").
+    const drinkUnitPrices: number[] = [];
     const lines = data.items.map((i) => {
       const m = byId.get(i.menu_item_id);
       if (!m || !m.active) throw new Error(`Item unavailable`);
@@ -101,6 +103,9 @@ export const createOrder = createServerFn({ method: "POST" })
       });
       const unit = m.price_cents + chosen.reduce((s, mod) => s + mod.price_cents, 0);
       subtotal += unit * i.qty;
+      if (m.loyalty_drink) {
+        for (let n = 0; n < i.qty; n++) drinkUnitPrices.push(m.price_cents);
+      }
       const noteParts = [
         ...chosen.map((mod) => mod.name),
         ...(i.notes ? [i.notes] : []),
