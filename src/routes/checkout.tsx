@@ -245,6 +245,9 @@ function Checkout() {
       if (res.on_tab) {
         toast.success(`Added to ${tabSession?.name}'s tab`);
         navigate({ to: "/order/$orderId", params: { orderId: res.order_id } });
+      } else if (res.fully_covered) {
+        toast.success(`Paid in full by court voucher (${money(res.voucher_cents)})`);
+        navigate({ to: "/order/$orderId", params: { orderId: res.order_id } });
       } else {
         // Send them to the on-site card payment page.
         navigate({ to: "/pay/$orderId", params: { orderId: res.order_id } });
