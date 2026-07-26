@@ -412,6 +412,26 @@ function Checkout() {
           )}
           <div className="mt-3 space-y-1 text-sm">
             <div className="flex justify-between"><span className="text-muted-foreground">Subtotal</span><span>{money(subtotal)}</span></div>
+            {user && (
+              <div className="!mt-3 rounded-xl border border-dashed border-primary/50 bg-primary-soft/50 p-3">
+                <div className="flex items-center justify-between text-xs font-semibold text-primary">
+                  <span>Coffee &amp; tea card — buy 10, 11th free</span>
+                  <span>{stampsAfter}/10</span>
+                </div>
+                <div className="mt-2 flex gap-1">
+                  {Array.from({ length: 10 }, (_, n) => (
+                    <span key={n} className={`h-2 flex-1 rounded-full ${n < stampsAfter ? "bg-primary" : "bg-primary/20"}`} />
+                  ))}
+                </div>
+                <p className="mt-2 text-xs text-muted-foreground">
+                  {freeDrinksUsed > 0
+                    ? `${freeDrinksUsed} free drink${freeDrinksUsed > 1 ? "s" : ""} applied to this order.`
+                    : (stamps?.free_drinks_available ?? 0) > 0
+                      ? `You have ${stamps?.free_drinks_available} free drink${(stamps?.free_drinks_available ?? 0) > 1 ? "s" : ""} — add a hot drink to use ${(stamps?.free_drinks_available ?? 0) > 1 ? "one" : "it"}.`
+                      : `${10 - stampsAfter} more drink${10 - stampsAfter === 1 ? "" : "s"} until your free one.`}
+                </p>
+              </div>
+            )}
             {loyaltyDiscount > 0 && (
               <div className="flex justify-between text-primary">
                 <span>
