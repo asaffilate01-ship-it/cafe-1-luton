@@ -9,13 +9,18 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as TermsRouteImport } from './routes/terms'
 import { Route as TabRouteImport } from './routes/tab'
 import { Route as StaffRouteImport } from './routes/staff'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
+import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as MenuRouteImport } from './routes/menu'
 import { Route as KdsRouteImport } from './routes/kds'
+import { Route as GdprRouteImport } from './routes/gdpr'
 import { Route as DriverRouteImport } from './routes/driver'
+import { Route as CookiesRouteImport } from './routes/cookies'
 import { Route as ContactRouteImport } from './routes/contact'
+import { Route as ComplaintsRouteImport } from './routes/complaints'
 import { Route as CheckoutRouteImport } from './routes/checkout'
 import { Route as CartRouteImport } from './routes/cart'
 import { Route as AuthRouteImport } from './routes/auth'
@@ -36,6 +41,11 @@ import { Route as AdminBannersRouteImport } from './routes/admin.banners'
 import { Route as AdminAccountsRouteImport } from './routes/admin.accounts'
 import { Route as ApiPublicSumupWebhookRouteImport } from './routes/api/public/sumup-webhook'
 
+const TermsRoute = TermsRouteImport.update({
+  id: '/terms',
+  path: '/terms',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const TabRoute = TabRouteImport.update({
   id: '/tab',
   path: '/tab',
@@ -51,6 +61,11 @@ const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
   path: '/sitemap.xml',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PrivacyRoute = PrivacyRouteImport.update({
+  id: '/privacy',
+  path: '/privacy',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const MenuRoute = MenuRouteImport.update({
   id: '/menu',
   path: '/menu',
@@ -61,14 +76,29 @@ const KdsRoute = KdsRouteImport.update({
   path: '/kds',
   getParentRoute: () => rootRouteImport,
 } as any)
+const GdprRoute = GdprRouteImport.update({
+  id: '/gdpr',
+  path: '/gdpr',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const DriverRoute = DriverRouteImport.update({
   id: '/driver',
   path: '/driver',
   getParentRoute: () => rootRouteImport,
 } as any)
+const CookiesRoute = CookiesRouteImport.update({
+  id: '/cookies',
+  path: '/cookies',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ContactRoute = ContactRouteImport.update({
   id: '/contact',
   path: '/contact',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ComplaintsRoute = ComplaintsRouteImport.update({
+  id: '/complaints',
+  path: '/complaints',
   getParentRoute: () => rootRouteImport,
 } as any)
 const CheckoutRoute = CheckoutRouteImport.update({
@@ -175,13 +205,18 @@ export interface FileRoutesByFullPath {
   '/auth': typeof AuthRoute
   '/cart': typeof CartRoute
   '/checkout': typeof CheckoutRoute
+  '/complaints': typeof ComplaintsRoute
   '/contact': typeof ContactRoute
+  '/cookies': typeof CookiesRoute
   '/driver': typeof DriverRoute
+  '/gdpr': typeof GdprRoute
   '/kds': typeof KdsRoute
   '/menu': typeof MenuRoute
+  '/privacy': typeof PrivacyRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/staff': typeof StaffRoute
   '/tab': typeof TabRoute
+  '/terms': typeof TermsRoute
   '/admin/accounts': typeof AdminAccountsRoute
   '/admin/banners': typeof AdminBannersRoute
   '/admin/broadcasts': typeof AdminBroadcastsRoute
@@ -203,13 +238,18 @@ export interface FileRoutesByTo {
   '/auth': typeof AuthRoute
   '/cart': typeof CartRoute
   '/checkout': typeof CheckoutRoute
+  '/complaints': typeof ComplaintsRoute
   '/contact': typeof ContactRoute
+  '/cookies': typeof CookiesRoute
   '/driver': typeof DriverRoute
+  '/gdpr': typeof GdprRoute
   '/kds': typeof KdsRoute
   '/menu': typeof MenuRoute
+  '/privacy': typeof PrivacyRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/staff': typeof StaffRoute
   '/tab': typeof TabRoute
+  '/terms': typeof TermsRoute
   '/admin/accounts': typeof AdminAccountsRoute
   '/admin/banners': typeof AdminBannersRoute
   '/admin/broadcasts': typeof AdminBroadcastsRoute
@@ -232,13 +272,18 @@ export interface FileRoutesById {
   '/auth': typeof AuthRoute
   '/cart': typeof CartRoute
   '/checkout': typeof CheckoutRoute
+  '/complaints': typeof ComplaintsRoute
   '/contact': typeof ContactRoute
+  '/cookies': typeof CookiesRoute
   '/driver': typeof DriverRoute
+  '/gdpr': typeof GdprRoute
   '/kds': typeof KdsRoute
   '/menu': typeof MenuRoute
+  '/privacy': typeof PrivacyRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/staff': typeof StaffRoute
   '/tab': typeof TabRoute
+  '/terms': typeof TermsRoute
   '/admin/accounts': typeof AdminAccountsRoute
   '/admin/banners': typeof AdminBannersRoute
   '/admin/broadcasts': typeof AdminBroadcastsRoute
@@ -262,13 +307,18 @@ export interface FileRouteTypes {
     | '/auth'
     | '/cart'
     | '/checkout'
+    | '/complaints'
     | '/contact'
+    | '/cookies'
     | '/driver'
+    | '/gdpr'
     | '/kds'
     | '/menu'
+    | '/privacy'
     | '/sitemap.xml'
     | '/staff'
     | '/tab'
+    | '/terms'
     | '/admin/accounts'
     | '/admin/banners'
     | '/admin/broadcasts'
@@ -290,13 +340,18 @@ export interface FileRouteTypes {
     | '/auth'
     | '/cart'
     | '/checkout'
+    | '/complaints'
     | '/contact'
+    | '/cookies'
     | '/driver'
+    | '/gdpr'
     | '/kds'
     | '/menu'
+    | '/privacy'
     | '/sitemap.xml'
     | '/staff'
     | '/tab'
+    | '/terms'
     | '/admin/accounts'
     | '/admin/banners'
     | '/admin/broadcasts'
@@ -318,13 +373,18 @@ export interface FileRouteTypes {
     | '/auth'
     | '/cart'
     | '/checkout'
+    | '/complaints'
     | '/contact'
+    | '/cookies'
     | '/driver'
+    | '/gdpr'
     | '/kds'
     | '/menu'
+    | '/privacy'
     | '/sitemap.xml'
     | '/staff'
     | '/tab'
+    | '/terms'
     | '/admin/accounts'
     | '/admin/banners'
     | '/admin/broadcasts'
@@ -347,13 +407,18 @@ export interface RootRouteChildren {
   AuthRoute: typeof AuthRoute
   CartRoute: typeof CartRoute
   CheckoutRoute: typeof CheckoutRoute
+  ComplaintsRoute: typeof ComplaintsRoute
   ContactRoute: typeof ContactRoute
+  CookiesRoute: typeof CookiesRoute
   DriverRoute: typeof DriverRoute
+  GdprRoute: typeof GdprRoute
   KdsRoute: typeof KdsRoute
   MenuRoute: typeof MenuRoute
+  PrivacyRoute: typeof PrivacyRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   StaffRoute: typeof StaffRoute
   TabRoute: typeof TabRoute
+  TermsRoute: typeof TermsRoute
   OrderOrderIdRoute: typeof OrderOrderIdRoute
   PayOrderIdRoute: typeof PayOrderIdRoute
   PrintOrderIdRoute: typeof PrintOrderIdRoute
@@ -362,6 +427,13 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/terms': {
+      id: '/terms'
+      path: '/terms'
+      fullPath: '/terms'
+      preLoaderRoute: typeof TermsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/tab': {
       id: '/tab'
       path: '/tab'
@@ -383,6 +455,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SitemapDotxmlRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/privacy': {
+      id: '/privacy'
+      path: '/privacy'
+      fullPath: '/privacy'
+      preLoaderRoute: typeof PrivacyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/menu': {
       id: '/menu'
       path: '/menu'
@@ -397,6 +476,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof KdsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/gdpr': {
+      id: '/gdpr'
+      path: '/gdpr'
+      fullPath: '/gdpr'
+      preLoaderRoute: typeof GdprRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/driver': {
       id: '/driver'
       path: '/driver'
@@ -404,11 +490,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DriverRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/cookies': {
+      id: '/cookies'
+      path: '/cookies'
+      fullPath: '/cookies'
+      preLoaderRoute: typeof CookiesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/contact': {
       id: '/contact'
       path: '/contact'
       fullPath: '/contact'
       preLoaderRoute: typeof ContactRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/complaints': {
+      id: '/complaints'
+      path: '/complaints'
+      fullPath: '/complaints'
+      preLoaderRoute: typeof ComplaintsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/checkout': {
@@ -579,13 +679,18 @@ const rootRouteChildren: RootRouteChildren = {
   AuthRoute: AuthRoute,
   CartRoute: CartRoute,
   CheckoutRoute: CheckoutRoute,
+  ComplaintsRoute: ComplaintsRoute,
   ContactRoute: ContactRoute,
+  CookiesRoute: CookiesRoute,
   DriverRoute: DriverRoute,
+  GdprRoute: GdprRoute,
   KdsRoute: KdsRoute,
   MenuRoute: MenuRoute,
+  PrivacyRoute: PrivacyRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
   StaffRoute: StaffRoute,
   TabRoute: TabRoute,
+  TermsRoute: TermsRoute,
   OrderOrderIdRoute: OrderOrderIdRoute,
   PayOrderIdRoute: PayOrderIdRoute,
   PrintOrderIdRoute: PrintOrderIdRoute,
