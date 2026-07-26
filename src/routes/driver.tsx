@@ -5,10 +5,12 @@ import { useServerFn } from "@tanstack/react-start";
 import { updateOrderStatus } from "@/lib/orders.functions";
 import { useSession, useRoles } from "@/hooks/use-auth";
 import { toast } from "sonner";
-import { MapPin, Phone } from "lucide-react";
+import { MapPin, Phone, Navigation } from "lucide-react";
 import { money } from "@/lib/format";
 import { useAlertOnIncrease, useNotificationPermission } from "@/hooks/use-order-alerts";
 import { Bell, BellOff } from "lucide-react";
+import { useDriverLocationSharing } from "@/hooks/use-driver-location";
+import { LiveMap } from "@/components/live-map";
 
 type Job = {
   id: string; order_number: number; status: string; total_cents: number;
@@ -69,6 +71,10 @@ function Driver() {
 
   useAlertOnIncrease(jobs.length, "New delivery · Cafe1", "A new job was assigned to you.");
   const { perm, request } = useNotificationPermission();
+  const { sharing, start, stop, error: locError, last } = useDriverLocationSharing(
+    user?.id,
+    jobs.map((j) => j.id),
+  );
 
   return (
     <div className="min-h-screen bg-background">
@@ -89,6 +95,34 @@ function Driver() {
         </div>
       </header>
       <div className="mx-auto max-w-2xl space-y-4 p-4">
+        <div className="rounded-2xl border border-border bg-card p-4 shadow-sm">
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <p className="font-semibold">Live location sharing</p>
+              <p className="text-xs text-muted-foreground">
+                {sharing
+                  ? last
+                    ? `Broadcasting · updated ${new Date(last.at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" })}`
+                    : "Getting your position…"
+                  : "Turn on so customers can track your delivery."}
+              </p>
+            </div>
+            <button
+              onClick={() => (sharing ? stop() : start())}
+              className={`inline-flex h-11 shrink-0 items-center gap-2 rounded-full px-5 text-sm font-semibold ${sharing ? "border border-border bg-secondary" : "bg-primary text-primary-foreground hover:bg-primary-hover"}`}
+            >
+              <Navigation className={`h-4 w-4 ${sharing ? "animate-pulse text-primary" : ""}`} />
+              {sharing ? "Stop" : "Go live"}
+            </button>
+          </div>
+          {locError && <p className="mt-2 text-xs text-destructive">{locError}</p>}
+          {sharing && last && (
+            <LiveMap
+              className="mt-4 h-48 w-full"
+              points={[{ lat: last.lat, lng: last.lng, label: "You", kind: "driver" }]}
+            />
+          )}
+        </div>
         {jobs.map((j) => {
           const addr = [j.address_line1, j.city, j.postcode].filter(Boolean).join(", ");
           return (

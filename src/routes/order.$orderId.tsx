@@ -4,7 +4,22 @@ import { supabase } from "@/integrations/supabase/client";
 import { SiteHeader } from "@/components/site-header";
 import { money } from "@/lib/format";
 import { toast } from "sonner";
-import { Bell } from "lucide-react";
+import { Bell, Navigation } from "lucide-react";
+import { LiveMap } from "@/components/live-map";
+
+const STORE = { lat: 51.7486, lng: -0.3345 };
+
+type DriverLoc = { lat: number; lng: number; updated_at: string };
+
+function metresBetween(a: { lat: number; lng: number }, b: { lat: number; lng: number }) {
+  const R = 6371000;
+  const dLat = ((b.lat - a.lat) * Math.PI) / 180;
+  const dLng = ((b.lng - a.lng) * Math.PI) / 180;
+  const s =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos((a.lat * Math.PI) / 180) * Math.cos((b.lat * Math.PI) / 180) * Math.sin(dLng / 2) ** 2;
+  return 2 * R * Math.asin(Math.sqrt(s));
+}
 
 type Order = {
   id: string;
@@ -57,6 +72,7 @@ const STATUS_MESSAGES: Record<string, { title: string; body: string }> = {
 function OrderView() {
   const { orderId } = Route.useParams();
   const [order, setOrder] = useState<Order | null>(null);
+  const [driverLoc, setDriverLoc] = useState<DriverLoc | null>(null);
   const [items, setItems] = useState<Array<{ id: string; name: string; qty: number; unit_price_cents: number }>>([]);
   const lastStatus = useRef<string | null>(null);
   const [notifPerm, setNotifPerm] = useState<NotificationPermission | "unsupported">(
@@ -92,6 +108,34 @@ function OrderView() {
     return () => { supabase.removeChannel(ch); };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [orderId]);
+
+  const tracking = order?.type === "delivery" && order.status === "out_for_delivery";
+
+  useEffect(() => {
+    if (!tracking) { setDriverLoc(null); return; }
+    async function loadLoc() {
+      const { data } = await supabase
+        .from("driver_locations")
+        .select("lat, lng, updated_at")
+        .eq("order_id", orderId)
+        .maybeSingle();
+      setDriverLoc((data as DriverLoc | null) ?? null);
+    }
+    loadLoc();
+    const ch = supabase
+      .channel(`driver-loc-${orderId}`)
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "driver_locations", filter: `order_id=eq.${orderId}` },
+        (payload) => {
+          const row = payload.new as DriverLoc | undefined;
+          if (row?.lat != null) setDriverLoc(row);
+        },
+      )
+      .subscribe();
+    const poll = setInterval(loadLoc, 20000);
+    return () => { supabase.removeChannel(ch); clearInterval(poll); };
+  }, [orderId, tracking]);
 
   if (!order) return (
     <div className="min-h-screen bg-background">
@@ -141,6 +185,47 @@ function OrderView() {
           </div>
           <p className="mt-4 text-sm text-muted-foreground">Payment: <span className="font-semibold text-foreground">{order.payment_status}</span></p>
         </div>
+
+        {tracking && (
+          <div className="mt-6 rounded-2xl border border-border bg-card p-5">
+            <div className="flex items-center justify-between gap-3">
+              <div className="flex items-center gap-2">
+                <span className="grid h-9 w-9 place-items-center rounded-full bg-primary-soft text-primary">
+                  <Navigation className="h-4 w-4" />
+                </span>
+                <div>
+                  <p className="font-semibold">Live delivery tracking</p>
+                  <p className="text-xs text-muted-foreground">
+                    {driverLoc
+                      ? `Driver updated ${new Date(driverLoc.updated_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}`
+                      : "Waiting for your driver to go live…"}
+                  </p>
+                </div>
+              </div>
+              {driverLoc && (
+                <span className="rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold text-primary">
+                  {(() => {
+                    const m = metresBetween(driverLoc, STORE);
+                    return m < 950 ? `${Math.round(m)} m from the café` : `${(m / 1609).toFixed(1)} mi from the café`;
+                  })()}
+                </span>
+              )}
+            </div>
+            {driverLoc ? (
+              <LiveMap
+                className="mt-4 h-64 w-full"
+                points={[
+                  { lat: driverLoc.lat, lng: driverLoc.lng, label: "Your driver", kind: "driver" },
+                  { ...STORE, label: "Café 1", kind: "store" },
+                ]}
+              />
+            ) : (
+              <div className="mt-4 grid h-24 place-items-center rounded-xl bg-secondary text-sm text-muted-foreground">
+                The map appears as soon as the driver starts sharing location.
+              </div>
+            )}
+          </div>
+        )}
 
         <div className="mt-6 rounded-2xl border border-border bg-card p-5">
           <ul className="divide-y divide-border text-sm">
