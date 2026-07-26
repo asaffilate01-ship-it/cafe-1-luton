@@ -177,15 +177,20 @@ function AdminVouchers() {
           <span className="grid h-10 w-10 place-items-center rounded-xl bg-primary-soft text-primary"><Ticket className="h-5 w-5" /></span>
           <div>
             <h1 className="font-display text-3xl font-bold">Court vouchers</h1>
-            <p className="text-sm text-muted-foreground">Daily allowances by name + email/phone. Anything above the allowance is paid by the customer.</p>
+            <p className="text-sm text-muted-foreground">Anonymous court-issued codes. Paste the week's codes, set today's allowance, and the customer enters their code at checkout.</p>
           </div>
         </div>
 
-        <form onSubmit={addHolder} className="mt-8 grid gap-3 rounded-2xl border border-border bg-card p-5 sm:grid-cols-4">
-          <input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="Full name" className="h-11 rounded-xl border border-border bg-background px-3 text-sm" />
-          <input value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} placeholder="Email" className="h-11 rounded-xl border border-border bg-background px-3 text-sm" />
-          <input value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} placeholder="Phone" className="h-11 rounded-xl border border-border bg-background px-3 text-sm" />
-          <button disabled={busy} className="h-11 rounded-xl bg-primary font-semibold text-primary-foreground hover:bg-primary-hover disabled:opacity-60">Add person</button>
+        <form onSubmit={addCodes} className="mt-8 grid gap-3 rounded-2xl border border-border bg-card p-5">
+          <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Paste voucher codes (one per line, or comma separated)</label>
+          <textarea value={bulkCodes} onChange={(e) => setBulkCodes(e.target.value)} rows={4} placeholder={"COURT-A1B2\nCOURT-C3D4"} className="rounded-xl border border-border bg-background p-3 font-mono text-sm uppercase" />
+          <div className="flex flex-wrap items-center gap-3">
+            <label className="flex items-center gap-2 text-sm">
+              <span className="text-muted-foreground">Today's allowance £</span>
+              <input type="number" step="0.01" min="0" value={defaultAllowance} onChange={(e) => setDefaultAllowance(e.target.value)} className="h-10 w-24 rounded-xl border border-border bg-background px-3 text-sm" />
+            </label>
+            <button disabled={busy} className="h-11 rounded-xl bg-primary px-5 font-semibold text-primary-foreground hover:bg-primary-hover disabled:opacity-60">Activate codes</button>
+          </div>
         </form>
 
         <div className="mt-8 rounded-2xl border border-border bg-card p-5">
@@ -201,8 +206,8 @@ function AdminVouchers() {
               return (
                 <div key={h.id} className="flex flex-wrap items-center gap-3 py-3">
                   <div className="min-w-[180px] flex-1">
-                    <p className="font-semibold">{h.name}</p>
-                    <p className="text-xs text-muted-foreground">{[h.email, h.phone].filter(Boolean).join(" · ") || "—"}</p>
+                    <p className="font-mono font-semibold">{h.code}</p>
+                    {h.notes && <p className="text-xs text-muted-foreground">{h.notes}</p>}
                   </div>
                   <label className="flex items-center gap-2 text-sm">
                     <span className="text-muted-foreground">£</span>
@@ -214,11 +219,11 @@ function AdminVouchers() {
                     />
                   </label>
                   <span className="text-xs text-muted-foreground">used {money(used)} · left <span className="font-semibold text-primary">{money(left)}</span></span>
-                  <button onClick={() => removeHolder(h.id)} className="rounded-lg p-2 text-muted-foreground hover:text-destructive" aria-label={`Remove ${h.name}`}><Trash2 className="h-4 w-4" /></button>
+                  <button onClick={() => removeHolder(h.id)} className="rounded-lg p-2 text-muted-foreground hover:text-destructive" aria-label={`Remove ${h.code}`}><Trash2 className="h-4 w-4" /></button>
                 </div>
               );
             })}
-            {!(holders ?? []).length && <p className="py-6 text-sm text-muted-foreground">No voucher holders yet.</p>}
+            {!(holders ?? []).length && <p className="py-6 text-sm text-muted-foreground">No voucher codes yet.</p>}
           </div>
         </div>
 
@@ -237,7 +242,7 @@ function AdminVouchers() {
           <div className="mt-4 overflow-x-auto">
             <table className="w-full text-sm">
               <thead className="text-left text-xs uppercase text-muted-foreground">
-                <tr><th className="py-2">Date & time</th><th>Name</th><th>Email / phone</th><th>Order</th><th className="text-right">Amount</th></tr>
+                <tr><th className="py-2">Date & time</th><th>Code</th><th>Order</th><th className="text-right">Amount</th></tr>
               </thead>
               <tbody className="divide-y divide-border">
                 {(report ?? []).map((r) => {
@@ -245,18 +250,17 @@ function AdminVouchers() {
                   return (
                     <tr key={r.id}>
                       <td className="py-2">{r.for_date} {new Date(r.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</td>
-                      <td>{h?.name ?? "—"}</td>
-                      <td className="text-muted-foreground">{[h?.email, h?.phone].filter(Boolean).join(" · ") || "—"}</td>
+                      <td className="font-mono">{h?.code ?? "—"}</td>
                       <td>{r.orders?.order_number ? `#${r.orders.order_number}` : "—"}</td>
                       <td className="text-right font-semibold">{money(r.amount_cents)}</td>
                     </tr>
                   );
                 })}
-                {!(report ?? []).length && <tr><td colSpan={5} className="py-6 text-muted-foreground">No vouchers used in this period.</td></tr>}
+                {!(report ?? []).length && <tr><td colSpan={4} className="py-6 text-muted-foreground">No vouchers used in this period.</td></tr>}
               </tbody>
               <tfoot>
                 <tr className="border-t border-border font-display text-base font-bold">
-                  <td className="pt-3" colSpan={4}>Total to reclaim</td>
+                  <td className="pt-3" colSpan={3}>Total to reclaim</td>
                   <td className="pt-3 text-right text-primary">{money(reportTotal)}</td>
                 </tr>
               </tfoot>
