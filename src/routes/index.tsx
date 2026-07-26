@@ -83,7 +83,7 @@ function Home() {
           {[
             { icon: Coffee, title: "Fresh Italian coffee", body: "Freshly ground Italian beans. Silky milk, sharp espresso, honest prices." },
             { icon: BadgeCheck, title: "100% halal", body: "All meat and food served at Café 1 is halal." },
-            { icon: Croissant, title: "Made fresh daily", body: "Pastries baked in-house every morning. Sandwiches built to order." },
+            { icon: Croissant, title: "Made fresh daily", body: "Fresh desi food cooked to order, alongside paninis, jackets and all-day breakfasts." },
             { icon: Bike, title: "Fast delivery", body: "In-house drivers get your order to you hot — track it live from your phone." },
           ].map((f) => (
             <div key={f.title} className="card-3d card-3d-hover p-6">
