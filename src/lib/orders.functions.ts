@@ -49,6 +49,7 @@ const CreateOrderSchema = z.object({
   items: z.array(CartItemSchema).min(1).max(50),
   account_code: z.string().min(3).max(40).optional(),
   promo_code: z.string().min(1).max(40).optional(),
+  voucher_code: z.string().min(1).max(40).optional(),
 });
 
 export const createOrder = createServerFn({ method: "POST" })
