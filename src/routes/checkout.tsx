@@ -8,6 +8,8 @@ import { SiteHeader } from "@/components/site-header";
 import { useSession } from "@/hooks/use-auth";
 import { tab, useTab } from "@/lib/tab";
 import { toast } from "sonner";
+import { useStoreStatus } from "@/hooks/use-store-status";
+import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/checkout")({
   head: () => ({
@@ -47,11 +49,15 @@ function Checkout() {
   const navigate = useNavigate();
   const { user, loading } = useSession();
   const tabSession = useTab();
+  const { status, settings } = useStoreStatus();
   const place = useServerFn(createOrder);
   const [mode, setMode] = useState<Mode>("collection");
   const [scheduleMode, setScheduleMode] = useState<ScheduleMode>("asap");
   const [scheduledFor, setScheduledFor] = useState<string>("");
   const timeSlots = useState(() => buildTimeSlots())[0];
+  const [promoInput, setPromoInput] = useState("");
+  const [promo, setPromo] = useState<null | { code: string; discount_cents: number; discount_type: string; message: string | null }>(null);
+  const [promoBusy, setPromoBusy] = useState(false);
   const [form, setForm] = useState({
     customer_name: "",
     customer_phone: "",
@@ -71,13 +77,40 @@ function Checkout() {
   }, [user, form.customer_email]);
 
   const subtotal = c.items.reduce((s, i) => s + i.price_cents * i.qty, 0);
-  const delivery = mode === "delivery" ? 299 : 0;
+  const baseDelivery = settings?.delivery_fee_cents ?? 299;
+  const freeThreshold = settings?.free_delivery_threshold_cents ?? null;
+  const freeDeliveryByThreshold = mode === "delivery" && !!freeThreshold && subtotal >= (freeThreshold ?? 0);
+  const freeDeliveryByPromo = promo?.discount_type === "free_delivery";
+  const delivery = mode === "delivery" && !freeDeliveryByThreshold && !freeDeliveryByPromo ? baseDelivery : 0;
   const onTab = !!tabSession;
-  const discount = user && !onTab ? Math.round(subtotal * 0.1) : 0;
+  const loyaltyDiscount = user && !onTab ? Math.round(subtotal * 0.1) : 0;
+  const promoDiscount = promo && !freeDeliveryByPromo ? Math.min(promo.discount_cents, subtotal) : 0;
+  const discount = Math.min(subtotal, loyaltyDiscount + promoDiscount);
   const total = Math.max(0, subtotal - discount) + delivery;
   const pointsEarn = user && !onTab ? Math.floor(Math.max(0, subtotal - discount) / 100) : 0;
+  const minOrder = settings?.min_order_cents ?? 0;
+  const belowMin = minOrder > 0 && subtotal < minOrder;
+  const storeBlocks = !status.open && !(settings?.allow_preorder_when_closed && scheduleMode === "scheduled");
   // Prevent unused import warning when navigate not used
   void navigate;
+
+  async function applyPromo() {
+    const code = promoInput.trim().toUpperCase();
+    if (!code) return;
+    setPromoBusy(true);
+    const { data, error } = await supabase.rpc("validate_promo_code", {
+      _code: code, _subtotal_cents: subtotal, _order_type: mode,
+    });
+    setPromoBusy(false);
+    const row = (data ?? [])[0];
+    if (error || !row || !row.valid) {
+      toast.error(row?.message || error?.message || "That code isn't valid.");
+      setPromo(null);
+      return;
+    }
+    setPromo({ code: row.code, discount_cents: row.discount_cents ?? 0, discount_type: row.discount_type, message: row.message });
+    toast.success(row.message || "Promo applied");
+  }
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
@@ -100,6 +133,7 @@ function Checkout() {
           scheduled_for: scheduleMode === "scheduled" ? scheduledFor || undefined : undefined,
           items: c.items.map((i) => ({ menu_item_id: i.id, qty: i.qty })),
           account_code: tabSession?.code,
+          promo_code: promo?.code,
         },
       });
       cart.clear();
