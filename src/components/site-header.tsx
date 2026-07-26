@@ -1,5 +1,6 @@
 import { Link } from "@tanstack/react-router";
-import { ShoppingBag, Coffee, ReceiptText, MapPin } from "lucide-react";
+import { ShoppingBag, ReceiptText, MapPin } from "lucide-react";
+import logo from "@/assets/cafe1-logo.png.asset.json";
 import { useCart } from "@/lib/cart";
 import { useSession } from "@/hooks/use-auth";
 import { useTab } from "@/lib/tab";
@@ -13,10 +14,8 @@ export function SiteHeader() {
     <header className="sticky top-0 z-40 border-b border-border bg-background/85 backdrop-blur">
       <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4">
         <Link to="/" className="flex items-center gap-2">
-          <span className="grid h-9 w-9 place-items-center rounded-full bg-primary text-primary-foreground">
-            <Coffee className="h-5 w-5" />
-          </span>
-          <span className="font-display text-xl font-bold tracking-tight">Cafe1</span>
+          <img src={logo.url} alt="Café 1 logo" className="h-10 w-auto" width={40} height={40} />
+          <span className="sr-only">Café 1</span>
         </Link>
         <nav className="hidden items-center gap-6 text-sm font-medium sm:flex">
           <Link to="/" activeOptions={{ exact: true }} activeProps={{ className: "text-primary" }} className="hover:text-primary">Home</Link>
@@ -55,10 +54,7 @@ export function SiteFooter() {
       <div className="mx-auto flex max-w-6xl flex-col gap-2 px-4 py-10 text-sm text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
         <div className="flex flex-col gap-1">
           <div className="flex items-center gap-2">
-            <span className="grid h-6 w-6 place-items-center rounded-full bg-primary text-primary-foreground">
-              <Coffee className="h-3.5 w-3.5" />
-            </span>
-            <span className="font-display font-semibold text-foreground">Cafe1</span>
+            <img src={logo.url} alt="Café 1 logo" className="h-7 w-auto" width={28} height={28} loading="lazy" />
             <span>© {new Date().getFullYear()}</span>
           </div>
           <address className="flex items-center gap-1.5 not-italic">
