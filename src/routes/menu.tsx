@@ -116,8 +116,22 @@ function MenuPage() {
             Freshly made all day. Delivery, collection or dine-in.
           </p>
           <div className="mt-3"><StoreStatus /></div>
+          <button
+            type="button"
+            onClick={() => setGateOpen(true)}
+            className="mt-3 inline-flex items-center gap-2 rounded-full border border-primary/40 bg-primary/10 px-4 py-2 text-sm font-semibold text-primary hover:bg-primary/20"
+          >
+            <Settings2 className="h-4 w-4" />
+            {describeContext(ctx)}
+            <span className="text-xs font-medium opacity-70">Change</span>
+          </button>
         </div>
       </div>
+      <OrderSetupGate
+        open={gateOpen}
+        onClose={() => setGateOpen(false)}
+        dismissible={!!ctx}
+      />
 
       {/* Sticky search + category pills */}
       <div className="sticky top-14 z-30 border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80">
