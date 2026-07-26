@@ -92,6 +92,72 @@ export type Database = {
         }
         Relationships: []
       }
+      business_hours: {
+        Row: {
+          close_time: string
+          closed: boolean
+          day_of_week: number
+          id: string
+          open_time: string
+        }
+        Insert: {
+          close_time?: string
+          closed?: boolean
+          day_of_week: number
+          id?: string
+          open_time?: string
+        }
+        Update: {
+          close_time?: string
+          closed?: boolean
+          day_of_week?: number
+          id?: string
+          open_time?: string
+        }
+        Relationships: []
+      }
+      business_settings: {
+        Row: {
+          accepting_orders: boolean
+          allow_preorder_when_closed: boolean
+          closed_message: string | null
+          delivery_fee_cents: number
+          delivery_minutes: number
+          free_delivery_threshold_cents: number | null
+          id: string
+          min_order_cents: number
+          name: string
+          prep_minutes: number
+          updated_at: string
+        }
+        Insert: {
+          accepting_orders?: boolean
+          allow_preorder_when_closed?: boolean
+          closed_message?: string | null
+          delivery_fee_cents?: number
+          delivery_minutes?: number
+          free_delivery_threshold_cents?: number | null
+          id?: string
+          min_order_cents?: number
+          name?: string
+          prep_minutes?: number
+          updated_at?: string
+        }
+        Update: {
+          accepting_orders?: boolean
+          allow_preorder_when_closed?: boolean
+          closed_message?: string | null
+          delivery_fee_cents?: number
+          delivery_minutes?: number
+          free_delivery_threshold_cents?: number | null
+          id?: string
+          min_order_cents?: number
+          name?: string
+          prep_minutes?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       menu_categories: {
         Row: {
           active: boolean
@@ -295,6 +361,8 @@ export type Database = {
           picked_up_at: string | null
           points_earned: number
           postcode: string | null
+          promo_code: string | null
+          promo_discount_cents: number
           ready_at: string | null
           schedule_mode: string
           scheduled_for: string | null
@@ -331,6 +399,8 @@ export type Database = {
           picked_up_at?: string | null
           points_earned?: number
           postcode?: string | null
+          promo_code?: string | null
+          promo_discount_cents?: number
           ready_at?: string | null
           schedule_mode?: string
           scheduled_for?: string | null
@@ -367,6 +437,8 @@ export type Database = {
           picked_up_at?: string | null
           points_earned?: number
           postcode?: string | null
+          promo_code?: string | null
+          promo_discount_cents?: number
           ready_at?: string | null
           schedule_mode?: string
           scheduled_for?: string | null
@@ -423,6 +495,105 @@ export type Database = {
         }
         Relationships: []
       }
+      promo_banners: {
+        Row: {
+          active: boolean
+          badge: string | null
+          bg_color: string | null
+          created_at: string
+          cta_label: string | null
+          cta_url: string | null
+          ends_at: string | null
+          id: string
+          image_url: string | null
+          sort_order: number
+          starts_at: string | null
+          subtitle: string | null
+          title: string
+        }
+        Insert: {
+          active?: boolean
+          badge?: string | null
+          bg_color?: string | null
+          created_at?: string
+          cta_label?: string | null
+          cta_url?: string | null
+          ends_at?: string | null
+          id?: string
+          image_url?: string | null
+          sort_order?: number
+          starts_at?: string | null
+          subtitle?: string | null
+          title: string
+        }
+        Update: {
+          active?: boolean
+          badge?: string | null
+          bg_color?: string | null
+          created_at?: string
+          cta_label?: string | null
+          cta_url?: string | null
+          ends_at?: string | null
+          id?: string
+          image_url?: string | null
+          sort_order?: number
+          starts_at?: string | null
+          subtitle?: string | null
+          title?: string
+        }
+        Relationships: []
+      }
+      promo_codes: {
+        Row: {
+          active: boolean
+          applies_to: string
+          code: string
+          created_at: string
+          description: string | null
+          discount_type: Database["public"]["Enums"]["promo_discount_type"]
+          discount_value: number
+          expires_at: string | null
+          first_order_only: boolean
+          id: string
+          max_uses: number | null
+          min_subtotal_cents: number
+          starts_at: string | null
+          uses: number
+        }
+        Insert: {
+          active?: boolean
+          applies_to?: string
+          code: string
+          created_at?: string
+          description?: string | null
+          discount_type?: Database["public"]["Enums"]["promo_discount_type"]
+          discount_value?: number
+          expires_at?: string | null
+          first_order_only?: boolean
+          id?: string
+          max_uses?: number | null
+          min_subtotal_cents?: number
+          starts_at?: string | null
+          uses?: number
+        }
+        Update: {
+          active?: boolean
+          applies_to?: string
+          code?: string
+          created_at?: string
+          description?: string | null
+          discount_type?: Database["public"]["Enums"]["promo_discount_type"]
+          discount_value?: number
+          expires_at?: string | null
+          first_order_only?: boolean
+          id?: string
+          max_uses?: number | null
+          min_subtotal_cents?: number
+          starts_at?: string | null
+          uses?: number
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string
@@ -456,6 +627,18 @@ export type Database = {
         }
         Returns: boolean
       }
+      increment_promo_use: { Args: { _code: string }; Returns: undefined }
+      validate_promo_code: {
+        Args: { _code: string; _order_type: string; _subtotal_cents: number }
+        Returns: {
+          code: string
+          discount_cents: number
+          discount_type: Database["public"]["Enums"]["promo_discount_type"]
+          discount_value: number
+          message: string
+          valid: boolean
+        }[]
+      }
       verify_account_code: {
         Args: { _code: string }
         Returns: {
@@ -478,6 +661,7 @@ export type Database = {
         | "refunded"
       order_type: "delivery" | "collection" | "dine_in"
       payment_status: "pending" | "paid" | "failed" | "refunded" | "on_account"
+      promo_discount_type: "percent" | "fixed_amount" | "free_delivery"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -619,6 +803,7 @@ export const Constants = {
       ],
       order_type: ["delivery", "collection", "dine_in"],
       payment_status: ["pending", "paid", "failed", "refunded", "on_account"],
+      promo_discount_type: ["percent", "fixed_amount", "free_delivery"],
     },
   },
 } as const
