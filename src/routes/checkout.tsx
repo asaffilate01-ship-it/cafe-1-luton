@@ -106,12 +106,9 @@ function Checkout() {
       if (res.on_tab) {
         toast.success(`Added to ${tabSession?.name}'s tab`);
         navigate({ to: "/order/$orderId", params: { orderId: res.order_id } });
-      } else if (res.checkout_url) {
-        window.location.href = res.checkout_url;
       } else {
-        if (!res.payment_configured)
-          toast.message("Order placed. Pay at the counter — SumUp online checkout isn't configured yet.");
-        navigate({ to: "/order/$orderId", params: { orderId: res.order_id } });
+        // Send them to the on-site card payment page.
+        navigate({ to: "/pay/$orderId", params: { orderId: res.order_id } });
       }
     } catch (err: unknown) {
       toast.error(err instanceof Error ? err.message : "Order failed");

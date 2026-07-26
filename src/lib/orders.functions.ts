@@ -103,6 +103,26 @@ export const createOrder = createServerFn({ method: "POST" })
       account_id = row.id;
     }
 
+    // Create SumUp checkout FIRST — if it fails, don't create a phantom unpaid order.
+    let checkout_id: string | null = null;
+    if (!account_id) {
+      const { createSumUpCheckout } = await import("./sumup.server");
+      try {
+        const co = await createSumUpCheckout({
+          reference,
+          amount_cents: total,
+          description: `Cafe1 order`,
+          customer_email: data.customer_email || undefined,
+        });
+        checkout_id = co.id;
+      } catch (e) {
+        console.error("[SumUp] checkout create failed", e);
+        throw new Error(
+          "We couldn't start the card payment. Please try again in a moment, or contact us if it keeps failing.",
+        );
+      }
+    }
+
     const { data: order, error: orderErr } = await supabase
       .from("orders")
       .insert({
@@ -127,6 +147,7 @@ export const createOrder = createServerFn({ method: "POST" })
         points_earned,
         total_cents: total,
         sumup_reference: reference,
+        sumup_checkout_id: checkout_id,
         ...(account_id ? { payment_status: "on_account" as const, status: "paid" as const } : {}),
       })
       .select()
@@ -154,33 +175,10 @@ export const createOrder = createServerFn({ method: "POST" })
         .eq("id", userId);
     }
 
-    let checkout_url: string | null = null;
-    let checkout_id: string | null = null;
-    // Tab orders skip online payment — they're settled later.
-    if (!account_id) try {
-      const { createSumUpCheckout } = await import("./sumup.server");
-      const origin =
-        process.env.APP_URL ||
-        "https://project--4e8d727f-9796-42a7-9a37-e92941913d6a.lovable.app";
-      const co = await createSumUpCheckout({
-        reference,
-        amount_cents: total,
-        description: `Cafe1 order #${order.order_number}`,
-        return_url: `${origin}/order/${order.id}`,
-        customer_email: data.customer_email || undefined,
-      });
-      checkout_id = co.id;
-      checkout_url = co.hosted_checkout_url ?? null;
-      await supabase.from("orders").update({ sumup_checkout_id: co.id }).eq("id", order.id);
-    } catch (e) {
-      console.error("[SumUp] checkout create failed", e);
-    }
-
     return {
       order_id: order.id,
       order_number: order.order_number,
       total_cents: total,
-      checkout_url,
       checkout_id,
       payment_configured: !!checkout_id,
       on_tab: !!account_id,
