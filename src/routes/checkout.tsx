@@ -167,24 +167,33 @@ function Checkout() {
   const stampsAfter = ((stamps?.drink_stamps ?? 0) + Math.max(0, drinkUnitPrices.length - freeDrinksUsed)) % 10;
   const discount = Math.min(subtotal, loyaltyDiscount + promoDiscount + freeDrinkDiscount);
   const grossTotal = Math.max(0, subtotal - discount) + delivery;
-  // Court voucher: recognised from the customer's email or phone number.
-  const [voucher, setVoucher] = useState<null | { holder_name: string; remaining_cents: number; allocated_cents: number }>(null);
-  const voucherKey = `${(form.customer_email || "").trim().toLowerCase()}|${(form.customer_phone || "").replace(/\D/g, "")}`;
-  useEffect(() => {
-    const [em, ph] = voucherKey.split("|");
-    if (!em.includes("@") && ph.length < 7) { setVoucher(null); return; }
-    let cancelled = false;
-    const t = setTimeout(async () => {
-      try {
-        const res = await findVoucher({ data: { email: em, phone: ph } });
-        if (cancelled) return;
-        setVoucher(res.found ? { holder_name: res.holder_name, remaining_cents: res.remaining_cents, allocated_cents: res.allocated_cents } : null);
-      } catch {
-        if (!cancelled) setVoucher(null);
+  // Court voucher: recognised from an anonymous code the court gives the customer.
+  const [voucherInput, setVoucherInput] = useState("");
+  const [voucher, setVoucher] = useState<null | { code: string; remaining_cents: number; allocated_cents: number }>(null);
+  const [voucherBusy, setVoucherBusy] = useState(false);
+  const [voucherError, setVoucherError] = useState<string | null>(null);
+  async function applyVoucher() {
+    const code = voucherInput.trim().toUpperCase();
+    if (!code) return;
+    setVoucherBusy(true);
+    setVoucherError(null);
+    try {
+      const res = await findVoucher({ data: { code } });
+      if (!res.found) {
+        setVoucher(null);
+        setVoucherError("That voucher code isn't recognised or is inactive.");
+      } else if (res.remaining_cents <= 0) {
+        setVoucher(null);
+        setVoucherError("This voucher has no allowance left for today.");
+      } else {
+        setVoucher({ code: res.code, remaining_cents: res.remaining_cents, allocated_cents: res.allocated_cents });
       }
-    }, 450);
-    return () => { cancelled = true; clearTimeout(t); };
-  }, [voucherKey, findVoucher]);
+    } catch {
+      setVoucherError("Couldn't check the voucher code. Please try again.");
+    } finally {
+      setVoucherBusy(false);
+    }
+  }
   const voucherApplied = voucher ? Math.min(voucher.remaining_cents, grossTotal) : 0;
   const total = Math.max(0, grossTotal - voucherApplied);
   const pointsEarn = user && !onTab ? Math.floor(Math.max(0, subtotal - discount) / 100) : 0;
@@ -239,6 +248,7 @@ function Checkout() {
           })),
           account_code: tabSession?.code,
           promo_code: promo?.code,
+          voucher_code: voucher?.code,
         },
       });
       cart.clear();
