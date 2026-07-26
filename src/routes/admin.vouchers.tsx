@@ -22,7 +22,7 @@ export const Route = createFileRoute("/admin/vouchers")({
   component: AdminVouchers,
 });
 
-type Holder = { id: string; name: string; email: string | null; phone: string | null; notes: string | null; active: boolean };
+type Holder = { id: string; code: string; name: string | null; notes: string | null; active: boolean };
 type Allocation = { id: string; holder_id: string; for_date: string; amount_cents: number; notes: string | null };
 type Redemption = {
   id: string; holder_id: string; for_date: string; amount_cents: number; created_at: string;
@@ -50,7 +50,7 @@ function AdminVouchers() {
     queryKey: ["voucher-holders"],
     enabled: !!user && allowed,
     queryFn: async () => {
-      const { data, error } = await supabase.from("voucher_holders").select("*").order("name");
+      const { data, error } = await supabase.from("voucher_holders").select("*").order("code");
       if (error) throw error;
       return (data ?? []) as Holder[];
     },
@@ -96,25 +96,34 @@ function AdminVouchers() {
   const byId = useMemo(() => Object.fromEntries((holders ?? []).map((h) => [h.id, h])), [holders]);
   const reportTotal = (report ?? []).reduce((s, r) => s + r.amount_cents, 0);
 
-  const [form, setForm] = useState({ name: "", email: "", phone: "", notes: "" });
+  const [bulkCodes, setBulkCodes] = useState("");
+  const [defaultAllowance, setDefaultAllowance] = useState("15.00");
   const [busy, setBusy] = useState(false);
 
-  async function addHolder(e: React.FormEvent) {
+  async function addCodes(e: React.FormEvent) {
     e.preventDefault();
-    if (!form.name.trim() || (!form.email.trim() && !form.phone.trim()))
-      return toast.error("Add a name plus an email or phone number.");
+    const codes = Array.from(new Set(
+      bulkCodes.split(/[\s,;]+/).map((c) => c.trim().toUpperCase()).filter(Boolean),
+    ));
+    if (!codes.length) return toast.error("Paste at least one code.");
     setBusy(true);
-    const { error } = await supabase.from("voucher_holders").insert({
-      name: form.name.trim(),
-      email: form.email.trim().toLowerCase() || null,
-      phone: form.phone.trim() || null,
-      notes: form.notes.trim() || null,
-    });
+    const { data: inserted, error } = await supabase
+      .from("voucher_holders")
+      .upsert(codes.map((code) => ({ code, active: true })), { onConflict: "code", ignoreDuplicates: true })
+      .select("id, code");
+    if (error) { setBusy(false); return toast.error(error.message); }
+    // Set today's default allowance for every code we just added.
+    const cents = Math.round(parseFloat(defaultAllowance || "0") * 100);
+    if (Number.isFinite(cents) && cents > 0 && (inserted ?? []).length) {
+      const { data: all } = await supabase.from("voucher_holders").select("id, code").in("code", codes);
+      const rows = (all ?? []).map((h) => ({ holder_id: h.id, for_date: date, amount_cents: cents }));
+      await supabase.from("voucher_allocations").upsert(rows, { onConflict: "holder_id,for_date" });
+    }
     setBusy(false);
-    if (error) return toast.error(error.message.includes("uniq") ? "That email or phone already exists." : error.message);
-    toast.success("Voucher holder added");
-    setForm({ name: "", email: "", phone: "", notes: "" });
+    toast.success(`${codes.length} code${codes.length === 1 ? "" : "s"} activated`);
+    setBulkCodes("");
     qc.invalidateQueries({ queryKey: ["voucher-holders"] });
+    qc.invalidateQueries({ queryKey: ["voucher-allocations", date] });
   }
 
   async function setAllowance(holder_id: string, pounds: string) {
@@ -136,20 +145,18 @@ function AdminVouchers() {
 
   function exportCsv() {
     const rows = [
-      ["Date", "Time", "Name", "Email", "Phone", "Order #", "Voucher amount (GBP)"],
+      ["Date", "Time", "Code", "Order #", "Voucher amount (GBP)"],
       ...(report ?? []).map((r) => {
         const h = byId[r.holder_id];
         return [
           r.for_date,
           new Date(r.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
-          h?.name ?? "",
-          h?.email ?? "",
-          h?.phone ?? "",
+          h?.code ?? "",
           r.orders?.order_number ? `#${r.orders.order_number}` : "",
           (r.amount_cents / 100).toFixed(2),
         ];
       }),
-      ["", "", "", "", "", "TOTAL", (reportTotal / 100).toFixed(2)],
+      ["", "", "", "TOTAL", (reportTotal / 100).toFixed(2)],
     ];
     const csv = rows.map((r) => r.map((c) => `"${String(c).replace(/"/g, '""')}"`).join(",")).join("\n");
     const url = URL.createObjectURL(new Blob([csv], { type: "text/csv" }));
