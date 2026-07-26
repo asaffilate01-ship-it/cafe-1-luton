@@ -66,10 +66,6 @@ function Admin() {
     fetchDrivers().then((d) => setDrivers(d as Driver[])).catch(() => {});
   }, [user, has, fetchDrivers]);
 
-  if (!rolesLoading && user && !has("admin") && !has("staff")) {
-    return <div className="p-10 text-center text-muted-foreground">Not authorised. Ask an admin to grant you a role.</div>;
-  }
-
   async function setStatus(o: OrderRow, next: string, label?: string) {
     try {
       await update({ data: { order_id: o.id, status: next as "preparing" } });
@@ -92,6 +88,10 @@ function Admin() {
   const incoming = orders.filter((o) => o.status === "paid");
   useAlertOnIncrease(incoming.length, "New order · Cafe1", `${incoming.length} order${incoming.length === 1 ? "" : "s"} awaiting acceptance`);
   const { perm, request } = useNotificationPermission();
+
+  if (!rolesLoading && user && !has("admin") && !has("staff")) {
+    return <div className="p-10 text-center text-muted-foreground">Not authorised. Ask an admin to grant you a role.</div>;
+  }
 
   return (
     <div className="min-h-screen bg-background">
