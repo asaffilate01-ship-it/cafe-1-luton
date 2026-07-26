@@ -46,6 +46,7 @@ const CreateOrderSchema = z.object({
   schedule_mode: z.enum(["asap", "scheduled"]).default("asap"),
   scheduled_for: z.string().datetime().optional(),
   items: z.array(CartItemSchema).min(1).max(50),
+  account_code: z.string().min(3).max(40).optional(),
 });
 
 export const createOrder = createServerFn({ method: "POST" })
@@ -91,10 +92,22 @@ export const createOrder = createServerFn({ method: "POST" })
     const points_earned = userId ? Math.floor(Math.max(0, subtotal - discount) / 100) * POINTS_PER_POUND : 0;
     const reference = `cafe1-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 
+    // Charge to a house-account tab if a valid code is supplied.
+    let account_id: string | null = null;
+    if (data.account_code) {
+      const { data: rows, error: acctErr } = await supabase
+        .rpc("verify_account_code", { _code: data.account_code.trim() });
+      if (acctErr) throw new Error(acctErr.message);
+      const row = (rows ?? [])[0];
+      if (!row) throw new Error("That tab access code isn't valid or is no longer active.");
+      account_id = row.id;
+    }
+
     const { data: order, error: orderErr } = await supabase
       .from("orders")
       .insert({
         customer_id: userId,
+        account_id,
         customer_name: data.customer_name,
         customer_phone: data.customer_phone,
         customer_email: data.customer_email || null,
@@ -114,6 +127,7 @@ export const createOrder = createServerFn({ method: "POST" })
         points_earned,
         total_cents: total,
         sumup_reference: reference,
+        ...(account_id ? { payment_status: "on_account" as const, status: "preparing" as const } : {}),
       })
       .select()
       .single();
@@ -142,7 +156,8 @@ export const createOrder = createServerFn({ method: "POST" })
 
     let checkout_url: string | null = null;
     let checkout_id: string | null = null;
-    try {
+    // Tab orders skip online payment — they're settled later.
+    if (!account_id) try {
       const { createSumUpCheckout } = await import("./sumup.server");
       const origin =
         process.env.APP_URL ||
@@ -168,6 +183,7 @@ export const createOrder = createServerFn({ method: "POST" })
       checkout_url,
       checkout_id,
       payment_configured: !!checkout_id,
+      on_tab: !!account_id,
     };
   });
 
