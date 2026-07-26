@@ -9,7 +9,7 @@ import {
   getAccountStatement,
   settleAccount,
 } from "@/lib/accounts.functions";
-import { useSession } from "@/hooks/use-auth";
+import { useSession, useRoles } from "@/hooks/use-auth";
 import { money } from "@/lib/format";
 import { toast } from "sonner";
 import { ArrowLeft, Copy, RefreshCw, Printer, CheckCircle2, Plus } from "lucide-react";
@@ -29,7 +29,8 @@ type Account = Awaited<ReturnType<typeof listAccounts>>[number];
 type Statement = Awaited<ReturnType<typeof getAccountStatement>>;
 
 function AccountsAdmin() {
-  const { user, roles, loading } = useSession();
+  const { user, loading } = useSession();
+  const { roles } = useRoles(user);
   const navigate = useNavigate();
   const list = useServerFn(listAccounts);
   const create = useServerFn(createAccount);
