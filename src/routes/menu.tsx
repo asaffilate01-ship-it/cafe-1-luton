@@ -4,6 +4,8 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { SiteHeader, SiteFooter } from "@/components/site-header";
 import { PromoBanner } from "@/components/promo-banner";
+import { PromoCarousel } from "@/components/promo-carousel";
+import { StoreStatus } from "@/components/store-status";
 import { cart, useCart } from "@/lib/cart";
 import { money } from "@/lib/format";
 import { Plus, Minus, Search, Leaf, ShoppingBag, X } from "lucide-react";
@@ -100,11 +102,13 @@ function MenuPage() {
       {/* Restaurant hero */}
       <div className="bg-gradient-to-b from-primary-soft/40 to-transparent">
         <div className="mx-auto max-w-6xl px-4 pt-8 pb-4 sm:pt-10">
+          <PromoCarousel />
           <p className="text-xs font-medium uppercase tracking-widest text-primary">Cafe1 · St Albans</p>
           <h1 className="mt-1 font-display text-4xl font-bold sm:text-5xl">Menu</h1>
           <p className="mt-2 max-w-xl text-sm text-muted-foreground">
             Freshly made all day. Delivery, collection or dine-in.
           </p>
+          <div className="mt-3"><StoreStatus /></div>
         </div>
       </div>
 

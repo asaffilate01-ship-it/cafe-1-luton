@@ -1,7 +1,9 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { ArrowRight, Bike, Coffee, Croissant, MapPin, Clock } from "lucide-react";
+import { ArrowRight, Bike, Coffee, Croissant, MapPin } from "lucide-react";
 import { SiteHeader, SiteFooter } from "@/components/site-header";
 import { PromoBanner } from "@/components/promo-banner";
+import { PromoCarousel } from "@/components/promo-carousel";
+import { StoreStatus } from "@/components/store-status";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -20,12 +22,13 @@ function Home() {
     <div className="min-h-screen bg-background text-foreground">
       <SiteHeader />
       <PromoBanner />
+      <div className="mx-auto max-w-6xl px-4 pt-6">
+        <PromoCarousel />
+      </div>
       <section className="relative overflow-hidden">
         <div className="mx-auto grid max-w-6xl gap-10 px-4 py-16 sm:py-24 lg:grid-cols-2 lg:items-center">
           <div>
-            <span className="inline-flex items-center gap-2 rounded-full bg-primary-soft px-3 py-1 text-xs font-semibold uppercase tracking-wider text-primary">
-              <span className="h-1.5 w-1.5 rounded-full bg-primary" /> Now open · Order online
-            </span>
+            <StoreStatus />
             <h1 className="mt-5 font-display text-5xl font-bold leading-[1.05] sm:text-6xl">
               Freshly brewed.
               <br />
@@ -43,7 +46,6 @@ function Home() {
               </Link>
             </div>
             <div className="mt-8 flex flex-wrap gap-6 text-sm text-muted-foreground">
-              <div className="flex items-center gap-2"><Clock className="h-4 w-4 text-primary" /> Ready in 15–25 min</div>
               <div className="flex items-center gap-2"><Bike className="h-4 w-4 text-primary" /> Local delivery</div>
               <div className="flex items-center gap-2"><MapPin className="h-4 w-4 text-primary" /> 12 High Street</div>
             </div>
