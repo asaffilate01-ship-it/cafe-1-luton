@@ -534,8 +534,23 @@ function Checkout() {
               </p>
             )}
           </div>
-          <button type="submit" form="checkout-form" disabled={busy || belowMin || storeBlocks} className="mt-4 h-12 w-full rounded-full bg-primary font-semibold text-primary-foreground shadow-brand transition hover:bg-primary-hover disabled:opacity-60">
-            {busy ? "Placing…" : storeBlocks ? "Closed — try later" : belowMin ? `Add £${((minOrder-subtotal)/100).toFixed(2)} more` : onTab ? "Add to tab" : "Place order & pay"}
+          <button
+            type="submit"
+            form="checkout-form"
+            disabled={busy || belowMin || storeBlocks || (mode === "delivery" && area?.ok === false)}
+            className="mt-4 h-12 w-full rounded-full bg-primary font-semibold text-primary-foreground shadow-brand transition hover:bg-primary-hover disabled:opacity-60"
+          >
+            {busy
+              ? "Placing…"
+              : storeBlocks
+                ? "Closed — try later"
+                : mode === "delivery" && area?.ok === false
+                  ? "Outside delivery area"
+                  : belowMin
+                    ? `Add £${((minOrder-subtotal)/100).toFixed(2)} more`
+                    : onTab
+                      ? "Add to tab"
+                      : "Place order & pay"}
           </button>
           <p className="mt-2 text-center text-xs text-muted-foreground">
             {onTab ? "Billed to your account — settle later" : user ? "Secured by SumUp" : "Guest checkout · Secured by SumUp"}
