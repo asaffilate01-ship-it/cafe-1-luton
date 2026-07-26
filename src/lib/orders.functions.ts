@@ -29,6 +29,7 @@ const CartItemSchema = z.object({
   menu_item_id: z.string().uuid(),
   qty: z.number().int().min(1).max(50),
   notes: z.string().max(200).optional(),
+  modifier_ids: z.array(z.string().uuid()).max(20).optional(),
 });
 
 const CreateOrderSchema = z.object({
@@ -66,24 +67,48 @@ export const createOrder = createServerFn({ method: "POST" })
     }
 
     const ids = data.items.map((i) => i.menu_item_id);
-    const { data: menu, error: menuErr } = await supabase
-      .from("menu_items")
-      .select("id,name,price_cents,active")
-      .in("id", ids);
+    const modIds = [...new Set(data.items.flatMap((i) => i.modifier_ids ?? []))];
+    const [{ data: menu, error: menuErr }, { data: modRows, error: modErr }] = await Promise.all([
+      supabase.from("menu_items").select("id,name,price_cents,active,category_id").in("id", ids),
+      modIds.length
+        ? supabase
+            .from("menu_modifiers")
+            .select("id,name,price_cents,active,category_id,item_id")
+            .in("id", modIds)
+        : Promise.resolve({ data: [], error: null } as const),
+    ]);
     if (menuErr) throw new Error(menuErr.message);
+    if (modErr) throw new Error(modErr.message);
     const byId = new Map((menu ?? []).map((m) => [m.id, m]));
+    const modById = new Map((modRows ?? []).map((m) => [m.id, m]));
 
     let subtotal = 0;
     const lines = data.items.map((i) => {
       const m = byId.get(i.menu_item_id);
       if (!m || !m.active) throw new Error(`Item unavailable`);
-      subtotal += m.price_cents * i.qty;
+      const chosen = (i.modifier_ids ?? []).map((id) => {
+        const mod = modById.get(id);
+        if (
+          !mod ||
+          !mod.active ||
+          !(mod.item_id === m.id || (!mod.item_id && mod.category_id === m.category_id))
+        ) {
+          throw new Error("An add-on you chose is no longer available");
+        }
+        return mod;
+      });
+      const unit = m.price_cents + chosen.reduce((s, mod) => s + mod.price_cents, 0);
+      subtotal += unit * i.qty;
+      const noteParts = [
+        ...chosen.map((mod) => mod.name),
+        ...(i.notes ? [i.notes] : []),
+      ];
       return {
         menu_item_id: m.id,
         name: m.name,
         qty: i.qty,
-        unit_price_cents: m.price_cents,
-        notes: i.notes ?? null,
+        unit_price_cents: unit,
+        notes: noteParts.length ? noteParts.join(" · ") : null,
       };
     });
 

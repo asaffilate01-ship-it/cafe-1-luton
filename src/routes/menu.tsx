@@ -6,9 +6,9 @@ import { SiteHeader, SiteFooter } from "@/components/site-header";
 import { PromoBanner } from "@/components/promo-banner";
 import { PromoCarousel } from "@/components/promo-carousel";
 import { StoreStatus } from "@/components/store-status";
-import { cart, useCart } from "@/lib/cart";
+import { cart, useCart, type CartModifier } from "@/lib/cart";
 import { money } from "@/lib/format";
-import { Plus, Minus, Search, Leaf, ShoppingBag, X } from "lucide-react";
+import { Plus, Minus, Search, Leaf, ShoppingBag, X, Settings2 } from "lucide-react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/menu")({
@@ -201,7 +201,6 @@ function MenuPage() {
 
         {filtered?.cats.map((cat) => {
           const items = filtered.items.filter((i) => i.category_id === cat.id);
-          const catMods = filtered.mods.filter((m) => m.category_id === cat.id);
           if (!items.length) return null;
           const groups = new Map<string, typeof items>();
           for (const it of items) {
@@ -231,24 +230,17 @@ function MenuPage() {
                   )}
                   <div className="mt-3 grid gap-3 sm:grid-cols-2">
                     {gItems.map((i) => (
-                      <ItemCard key={i.id} item={i} />
+                      <ItemCard
+                        key={i.id}
+                        item={i}
+                        mods={filtered.mods.filter(
+                          (m) => m.item_id === i.id || (!m.item_id && m.category_id === cat.id),
+                        )}
+                      />
                     ))}
                   </div>
                 </div>
               ))}
-
-              {catMods.length > 0 && (
-                <div className="mt-4 rounded-xl border border-dashed border-border bg-muted/30 p-3">
-                  <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                    Add-ons
-                  </p>
-                  <p className="mt-1 text-sm text-foreground/80">
-                    {catMods
-                      .map((m) => `${m.name}${m.price_cents ? ` +${money(m.price_cents)}` : ""}`)
-                      .join(" · ")}
-                  </p>
-                </div>
-              )}
             </section>
           );
         })}
@@ -289,76 +281,226 @@ type MenuItem = {
   is_veg: boolean;
 };
 
-function ItemCard({ item }: { item: MenuItem }) {
+type Modifier = {
+  id: string;
+  name: string;
+  description: string | null;
+  price_cents: number;
+};
+
+function ItemCard({ item, mods }: { item: MenuItem; mods: Modifier[] }) {
   const cartState = useCart();
-  const inCart = cartState.items.find((i) => i.id === item.id);
-  const qty = inCart?.qty ?? 0;
+  const [open, setOpen] = useState(false);
+  const lines = cartState.items.filter((i) => i.menu_item_id === item.id);
+  const qty = lines.reduce((a, i) => a + i.qty, 0);
+  const hasMods = mods.length > 0;
+
+  function quickAdd() {
+    if (hasMods) {
+      setOpen(true);
+      return;
+    }
+    cart.add({ menu_item_id: item.id, name: item.name, base_price_cents: item.price_cents });
+    toast.success(`Added ${item.name}`);
+  }
+
+  function decrement() {
+    const last = lines[lines.length - 1];
+    if (last) cart.setQty(last.id, last.qty - 1);
+  }
 
   return (
-    <div className="group relative flex gap-3 overflow-hidden rounded-2xl border border-border bg-card p-3 transition hover:border-primary/40 hover:shadow-brand">
-      <div className="min-w-0 flex-1">
-        <div className="flex items-start gap-2">
-          {item.is_veg && (
-            <span
-              className="mt-1.5 grid h-4 w-4 shrink-0 place-items-center rounded-sm border border-green-600"
-              title="Vegetarian"
-              aria-label="Vegetarian"
-            >
-              <span className="h-1.5 w-1.5 rounded-full bg-green-600" />
-            </span>
+    <>
+      <div className="group relative flex gap-3 overflow-hidden rounded-2xl border border-border bg-card p-3 transition hover:border-primary/40 hover:shadow-brand">
+        <button
+          type="button"
+          onClick={() => (hasMods ? setOpen(true) : quickAdd())}
+          className="min-w-0 flex-1 text-left"
+        >
+          <div className="flex items-start gap-2">
+            {item.is_veg && (
+              <span
+                className="mt-1.5 grid h-4 w-4 shrink-0 place-items-center rounded-sm border border-green-600"
+                title="Vegetarian"
+                aria-label="Vegetarian"
+              >
+                <span className="h-1.5 w-1.5 rounded-full bg-green-600" />
+              </span>
+            )}
+            <p className="line-clamp-2 font-semibold">{item.name}</p>
+          </div>
+          {item.description && (
+            <p className="mt-1 line-clamp-2 text-sm text-muted-foreground">{item.description}</p>
           )}
-          <p className="line-clamp-2 font-semibold">{item.name}</p>
+          <p className="mt-2 font-display text-lg font-bold text-primary">{money(item.price_cents)}</p>
+          {hasMods && (
+            <p className="mt-1 inline-flex items-center gap-1 text-xs font-semibold text-primary/80">
+              <Settings2 className="h-3 w-3" /> Customise · {mods.length} add-ons
+            </p>
+          )}
+        </button>
+
+        <div className="relative h-24 w-24 shrink-0 sm:h-28 sm:w-28">
+          {item.image_url ? (
+            <img
+              src={item.image_url}
+              alt={item.name}
+              loading="lazy"
+              className="h-full w-full rounded-xl object-cover"
+            />
+          ) : (
+            <div className="grid h-full w-full place-items-center rounded-xl bg-muted text-muted-foreground">
+              <ShoppingBag className="h-6 w-6 opacity-40" />
+            </div>
+          )}
+
+          {qty === 0 ? (
+            <button
+              onClick={quickAdd}
+              className="absolute -bottom-2 -right-2 grid h-9 w-9 place-items-center rounded-full border-2 border-background bg-primary text-primary-foreground shadow-brand transition hover:bg-primary-hover"
+              aria-label={`Add ${item.name}`}
+            >
+              <Plus className="h-4 w-4" />
+            </button>
+          ) : (
+            <div className="absolute -bottom-2 -right-2 flex items-center gap-1 rounded-full border-2 border-background bg-primary px-1 py-0.5 text-primary-foreground shadow-brand">
+              <button
+                onClick={decrement}
+                className="grid h-7 w-7 place-items-center rounded-full hover:bg-primary-hover"
+                aria-label="Decrease"
+              >
+                <Minus className="h-3.5 w-3.5" />
+              </button>
+              <span className="min-w-[1ch] text-center text-sm font-bold">{qty}</span>
+              <button
+                onClick={quickAdd}
+                className="grid h-7 w-7 place-items-center rounded-full hover:bg-primary-hover"
+                aria-label="Increase"
+              >
+                <Plus className="h-3.5 w-3.5" />
+              </button>
+            </div>
+          )}
         </div>
-        {item.description && (
-          <p className="mt-1 line-clamp-2 text-sm text-muted-foreground">{item.description}</p>
-        )}
-        <p className="mt-2 font-display text-lg font-bold text-primary">{money(item.price_cents)}</p>
       </div>
 
-      <div className="relative h-24 w-24 shrink-0 sm:h-28 sm:w-28">
-        {item.image_url ? (
-          <img
-            src={item.image_url}
-            alt={item.name}
-            loading="lazy"
-            className="h-full w-full rounded-xl object-cover"
-          />
-        ) : (
-          <div className="grid h-full w-full place-items-center rounded-xl bg-muted text-muted-foreground">
-            <ShoppingBag className="h-6 w-6 opacity-40" />
-          </div>
-        )}
+      {open && <CustomiseSheet item={item} mods={mods} onClose={() => setOpen(false)} />}
+    </>
+  );
+}
 
-        {qty === 0 ? (
-          <button
-            onClick={() => {
-              cart.add({ id: item.id, name: item.name, price_cents: item.price_cents });
-              toast.success(`Added ${item.name}`);
-            }}
-            className="absolute -bottom-2 -right-2 grid h-9 w-9 place-items-center rounded-full border-2 border-background bg-primary text-primary-foreground shadow-brand transition hover:bg-primary-hover"
-            aria-label={`Add ${item.name}`}
-          >
-            <Plus className="h-4 w-4" />
+function CustomiseSheet({
+  item,
+  mods,
+  onClose,
+}: {
+  item: MenuItem;
+  mods: Modifier[];
+  onClose: () => void;
+}) {
+  const [chosen, setChosen] = useState<Record<string, boolean>>({});
+  const [note, setNote] = useState("");
+  const [qty, setQty] = useState(1);
+
+  const selected: CartModifier[] = mods
+    .filter((m) => chosen[m.id])
+    .map((m) => ({ id: m.id, name: m.name, price_cents: m.price_cents }));
+  const unit = item.price_cents + selected.reduce((s, m) => s + m.price_cents, 0);
+
+  function add() {
+    cart.add(
+      {
+        menu_item_id: item.id,
+        name: item.name,
+        base_price_cents: item.price_cents,
+        modifiers: selected,
+        notes: note.trim() || undefined,
+      },
+      qty,
+    );
+    toast.success(`Added ${qty} × ${item.name}`);
+    onClose();
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 sm:items-center" role="dialog" aria-modal="true">
+      <button className="absolute inset-0" aria-label="Close" onClick={onClose} />
+      <div className="relative flex max-h-[88vh] w-full max-w-lg flex-col overflow-hidden rounded-t-3xl border border-border bg-card sm:rounded-3xl">
+        <div className="flex items-start gap-3 border-b border-border p-4">
+          <div className="min-w-0 flex-1">
+            <h3 className="font-display text-xl font-bold">{item.name}</h3>
+            {item.description && (
+              <p className="mt-1 text-sm text-muted-foreground">{item.description}</p>
+            )}
+          </div>
+          <button onClick={onClose} className="grid h-9 w-9 shrink-0 place-items-center rounded-full hover:bg-muted" aria-label="Close">
+            <X className="h-4 w-4" />
           </button>
-        ) : (
-          <div className="absolute -bottom-2 -right-2 flex items-center gap-1 rounded-full border-2 border-background bg-primary px-1 py-0.5 text-primary-foreground shadow-brand">
-            <button
-              onClick={() => cart.setQty(item.id, qty - 1)}
-              className="grid h-7 w-7 place-items-center rounded-full hover:bg-primary-hover"
-              aria-label="Decrease"
-            >
-              <Minus className="h-3.5 w-3.5" />
+        </div>
+
+        <div className="flex-1 overflow-y-auto p-4">
+          <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
+            Add-ons & options
+          </p>
+          <p className="mt-0.5 text-xs text-muted-foreground">Optional — pick as many as you like.</p>
+          <ul className="mt-3 divide-y divide-border rounded-2xl border border-border">
+            {mods.map((m) => {
+              const on = !!chosen[m.id];
+              return (
+                <li key={m.id}>
+                  <label className="flex cursor-pointer items-center gap-3 p-3">
+                    <input
+                      type="checkbox"
+                      checked={on}
+                      onChange={(e) => setChosen((c) => ({ ...c, [m.id]: e.target.checked }))}
+                      className="h-5 w-5 accent-[var(--color-primary,red)]"
+                    />
+                    <span className="min-w-0 flex-1">
+                      <span className="block font-medium">{m.name}</span>
+                      {m.description && (
+                        <span className="block text-xs text-muted-foreground">{m.description}</span>
+                      )}
+                    </span>
+                    <span className="text-sm font-semibold text-primary">
+                      {m.price_cents ? `+${money(m.price_cents)}` : "Free"}
+                    </span>
+                  </label>
+                </li>
+              );
+            })}
+          </ul>
+
+          <label className="mt-4 block">
+            <span className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
+              Special instructions
+            </span>
+            <textarea
+              value={note}
+              onChange={(e) => setNote(e.target.value)}
+              maxLength={200}
+              placeholder="e.g. no butter, extra crispy"
+              className="mt-2 min-h-16 w-full rounded-xl border border-border bg-background p-3 text-sm"
+            />
+          </label>
+        </div>
+
+        <div className="flex items-center gap-3 border-t border-border p-4">
+          <div className="flex items-center gap-1 rounded-full border border-border">
+            <button onClick={() => setQty((q) => Math.max(1, q - 1))} className="grid h-10 w-10 place-items-center rounded-full hover:bg-muted" aria-label="Decrease quantity">
+              <Minus className="h-4 w-4" />
             </button>
-            <span className="min-w-[1ch] text-center text-sm font-bold">{qty}</span>
-            <button
-              onClick={() => cart.add({ id: item.id, name: item.name, price_cents: item.price_cents })}
-              className="grid h-7 w-7 place-items-center rounded-full hover:bg-primary-hover"
-              aria-label="Increase"
-            >
-              <Plus className="h-3.5 w-3.5" />
+            <span className="w-6 text-center font-bold">{qty}</span>
+            <button onClick={() => setQty((q) => Math.min(50, q + 1))} className="grid h-10 w-10 place-items-center rounded-full hover:bg-muted" aria-label="Increase quantity">
+              <Plus className="h-4 w-4" />
             </button>
           </div>
-        )}
+          <button
+            onClick={add}
+            className="h-12 flex-1 rounded-full bg-primary font-semibold text-primary-foreground shadow-brand transition hover:bg-primary-hover"
+          >
+            Add to basket · {money(unit * qty)}
+          </button>
+        </div>
       </div>
     </div>
   );

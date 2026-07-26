@@ -131,7 +131,12 @@ function Checkout() {
           table_number: mode === "dine_in" ? form.table_number || undefined : undefined,
           schedule_mode: scheduleMode,
           scheduled_for: scheduleMode === "scheduled" ? scheduledFor || undefined : undefined,
-          items: c.items.map((i) => ({ menu_item_id: i.id, qty: i.qty })),
+          items: c.items.map((i) => ({
+            menu_item_id: i.menu_item_id,
+            qty: i.qty,
+            notes: i.notes,
+            modifier_ids: i.modifiers?.map((m) => m.id),
+          })),
           account_code: tabSession?.code,
           promo_code: promo?.code,
         },
@@ -285,7 +290,14 @@ function Checkout() {
           <ul className="mt-3 divide-y divide-border text-sm">
             {c.items.map((i) => (
               <li key={i.id} className="flex justify-between py-2">
-                <span>{i.qty} × {i.name}</span>
+                <span>
+                  {i.qty} × {i.name}
+                  {i.modifiers?.length > 0 && (
+                    <span className="block text-xs text-muted-foreground">
+                      {i.modifiers.map((m) => m.name).join(" · ")}
+                    </span>
+                  )}
+                </span>
                 <span>{money(i.price_cents * i.qty)}</span>
               </li>
             ))}
