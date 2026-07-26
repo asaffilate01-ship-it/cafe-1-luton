@@ -36,9 +36,20 @@ export const Route = createFileRoute("/kds")({
 
 function KDS() {
   const [tickets, setTickets] = useState<Ticket[]>([]);
+  const [kdsPaper, setKdsPaper] = useState<58 | 80>(80);
   const update = useServerFn(updateOrderStatus);
   const { user } = useSession();
   const { has } = useRoles(user);
+
+  useEffect(() => {
+    const saved = window.localStorage.getItem("cafe1_kds_paper_mm");
+    if (saved === "58") setKdsPaper(58);
+  }, []);
+
+  function pickPaper(w: 58 | 80) {
+    setKdsPaper(w);
+    window.localStorage.setItem("cafe1_kds_paper_mm", String(w));
+  }
 
   useEffect(() => {
     async function load() {
@@ -87,6 +98,18 @@ function KDS() {
           <h1 className="font-display text-2xl font-bold">Kitchen Display · Cafe1</h1>
           <div className="flex items-center gap-3">
             <AlertsToggle />
+            <div className="flex items-center gap-1 rounded-full bg-primary-foreground/10 p-1">
+              {([58, 80] as const).map((w) => (
+                <button
+                  key={w}
+                  onClick={() => pickPaper(w)}
+                  className={`rounded-full px-2.5 py-1 text-xs font-semibold ${kdsPaper === w ? "bg-primary-foreground text-primary" : "opacity-80"}`}
+                  title="Kitchen printer paper width"
+                >
+                  {w}mm
+                </button>
+              ))}
+            </div>
             <span className="text-sm opacity-80">{tickets.length} active</span>
           </div>
         </div>
@@ -121,7 +144,7 @@ function KDS() {
               <div className="mt-3 flex gap-2">
                 {t.status === "preparing" && <button onClick={() => set(t.id, "ready")} className="h-9 flex-1 rounded-full bg-primary text-sm font-semibold text-primary-foreground hover:bg-primary-hover">Mark ready</button>}
                 {t.status === "ready" && <span className="h-9 flex-1 rounded-full bg-primary-soft text-center text-sm font-semibold leading-9 text-primary">Ready</span>}
-                <a href={`/print/${t.id}`} target="_blank" rel="noreferrer" className="grid h-9 w-9 place-items-center rounded-full border border-border hover:border-primary hover:text-primary" aria-label="Print">🖨</a>
+                <a href={`/print/${t.id}?paper=${kdsPaper}`} target="_blank" rel="noreferrer" className="grid h-9 w-9 place-items-center rounded-full border border-border hover:border-primary hover:text-primary" aria-label="Print">🖨</a>
               </div>
             </div>
           );
