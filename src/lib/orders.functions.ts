@@ -135,6 +135,19 @@ export const createOrder = createServerFn({ method: "POST" })
     }
 
     const baseDeliveryFee = settings?.delivery_fee_cents ?? 299;
+
+    // Delivery-only rules: service window + half-mile radius from the shop.
+    if (data.type === "delivery" && settings) {
+      const ds = settings as unknown as import("./delivery.server").DeliverySettings;
+      const { isWithinDeliveryWindow, formatWindow, checkDeliveryArea } = await import("./delivery.server");
+      const when = data.schedule_mode === "scheduled" && data.scheduled_for ? new Date(data.scheduled_for) : new Date();
+      if (!isWithinDeliveryWindow(ds, when)) {
+        throw new Error(`We deliver between ${formatWindow(ds)}. Please pick a delivery time in that window, or choose collection.`);
+      }
+      const area = await checkDeliveryArea(data.postcode ?? "", ds);
+      if (!area.ok) throw new Error(area.reason);
+    }
+
     const freeThreshold = settings?.free_delivery_threshold_cents ?? null;
     let delivery_fee = data.type === "delivery"
       ? (freeThreshold && subtotal >= freeThreshold ? 0 : baseDeliveryFee)
@@ -177,6 +190,21 @@ export const createOrder = createServerFn({ method: "POST" })
       const row = (rows ?? [])[0];
       if (!row) throw new Error("That tab access code isn't valid or is no longer active.");
       account_id = row.id;
+
+      // Enforce the account's credit limit against the unsettled balance.
+      const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+      const { data: acct } = await supabaseAdmin
+        .from("accounts").select("credit_limit_cents").eq("id", account_id).maybeSingle();
+      if (acct?.credit_limit_cents) {
+        const { data: openOrders } = await supabaseAdmin
+          .from("orders").select("total_cents").eq("account_id", account_id).eq("payment_status", "on_account");
+        const outstanding = (openOrders ?? []).reduce((s, o) => s + o.total_cents, 0);
+        if (outstanding + total > acct.credit_limit_cents) {
+          throw new Error(
+            `This tab has reached its credit limit of £${(acct.credit_limit_cents / 100).toFixed(2)}. Please settle the outstanding balance first.`,
+          );
+        }
+      }
     }
 
     // Create SumUp checkout FIRST — if it fails, don't create a phantom unpaid order.

@@ -2,6 +2,7 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { createOrder } from "@/lib/orders.functions";
+import { checkDeliveryPostcode } from "@/lib/delivery.functions";
 import { cart, useCart } from "@/lib/cart";
 import { money } from "@/lib/format";
 import { SiteHeader } from "@/components/site-header";
@@ -51,6 +52,7 @@ function Checkout() {
   const tabSession = useTab();
   const { status, settings } = useStoreStatus();
   const place = useServerFn(createOrder);
+  const checkArea = useServerFn(checkDeliveryPostcode);
   const [mode, setMode] = useState<Mode>("collection");
   const [scheduleMode, setScheduleMode] = useState<ScheduleMode>("asap");
   const [scheduledFor, setScheduledFor] = useState<string>("");
@@ -70,6 +72,25 @@ function Checkout() {
     table_number: "",
   });
   const [busy, setBusy] = useState(false);
+  const [area, setArea] = useState<null | { ok: boolean; message: string }>(null);
+  const [areaBusy, setAreaBusy] = useState(false);
+
+  async function verifyPostcode(pc: string) {
+    if (!pc.trim()) { setArea(null); return; }
+    setAreaBusy(true);
+    try {
+      const res = await checkArea({ data: { postcode: pc } });
+      setArea(
+        res.ok
+          ? { ok: true, message: `Great — you're in our delivery area (${((res.distance_m ?? 0) / 1609.34).toFixed(2)} miles away).` }
+          : { ok: false, message: res.reason },
+      );
+    } catch {
+      setArea(null);
+    } finally {
+      setAreaBusy(false);
+    }
+  }
 
   useEffect(() => {
     if (user?.email && !form.customer_email)
@@ -275,12 +296,23 @@ function Checkout() {
             <div className="rounded-2xl border border-border bg-card p-5">
               <p className="font-semibold">Delivery address</p>
               <div className="mt-3 grid gap-3 sm:grid-cols-2">
-                <input required placeholder="Postcode" value={form.postcode} onChange={(e) => setForm({ ...form, postcode: e.target.value })} className="h-11 rounded-xl border border-border bg-background px-4" />
+                <input required placeholder="Postcode" value={form.postcode} onChange={(e) => { setForm({ ...form, postcode: e.target.value }); setArea(null); }} onBlur={(e) => void verifyPostcode(e.target.value)} className="h-11 rounded-xl border border-border bg-background px-4" />
                 <input placeholder="Office / company name (optional)" value={form.company_name} onChange={(e) => setForm({ ...form, company_name: e.target.value })} className="h-11 rounded-xl border border-border bg-background px-4" />
                 <input required placeholder="Street address" value={form.address_line1} onChange={(e) => setForm({ ...form, address_line1: e.target.value })} className="h-11 rounded-xl border border-border bg-background px-4 sm:col-span-2" />
                 <input required placeholder="City" value={form.city} onChange={(e) => setForm({ ...form, city: e.target.value })} className="h-11 rounded-xl border border-border bg-background px-4" />
                 <textarea placeholder="Delivery notes — buzzer, floor, gate code (optional)" value={form.delivery_notes} onChange={(e) => setForm({ ...form, delivery_notes: e.target.value })} className="min-h-20 rounded-xl border border-border bg-background p-3 sm:col-span-2" />
               </div>
+              <p className="mt-3 text-xs text-muted-foreground">
+                We deliver up to ½ mile from {settings?.delivery_origin_postcode ?? "AL1 3JW"}, between{" "}
+                {(settings?.delivery_open_time ?? "08:30").slice(0, 5)}–{(settings?.delivery_close_time ?? "16:30").slice(0, 5)}.
+                Typical delivery time {settings?.delivery_minutes ?? 45} min.
+              </p>
+              {areaBusy && <p className="mt-2 text-xs text-muted-foreground">Checking your postcode…</p>}
+              {area && (
+                <p className={`mt-2 rounded-xl px-3 py-2 text-xs font-medium ${area.ok ? "bg-primary/10 text-primary" : "bg-destructive/10 text-destructive"}`}>
+                  {area.message}
+                </p>
+              )}
             </div>
           )}
         </form>

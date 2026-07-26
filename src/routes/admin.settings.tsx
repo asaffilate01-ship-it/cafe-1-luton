@@ -51,6 +51,10 @@ function AdminSettings() {
       delivery_fee_cents: s.delivery_fee_cents,
       free_delivery_threshold_cents: s.free_delivery_threshold_cents,
       closed_message: s.closed_message,
+      delivery_open_time: s.delivery_open_time,
+      delivery_close_time: s.delivery_close_time,
+      delivery_origin_postcode: s.delivery_origin_postcode,
+      delivery_radius_m: s.delivery_radius_m,
     }).eq("id", s.id);
     if (upd.error) { setBusy(false); return toast.error(upd.error.message); }
     for (const h of hours) {
@@ -109,6 +113,25 @@ function AdminSettings() {
               <NumberField label="Minimum order (pence)" v={s.min_order_cents} on={(v) => setS({ ...s, min_order_cents: v })} />
               <NumberField label="Delivery fee (pence)" v={s.delivery_fee_cents} on={(v) => setS({ ...s, delivery_fee_cents: v })} />
               <NumberField label="Free delivery over (pence, blank = never)" v={s.free_delivery_threshold_cents ?? 0} on={(v) => setS({ ...s, free_delivery_threshold_cents: v || null })} />
+            </div>
+          </section>
+
+          <section className="rounded-2xl border border-border bg-card p-5">
+            <p className="font-semibold">Delivery area & window</p>
+            <div className="mt-3 grid gap-3 sm:grid-cols-2">
+              <label className="text-sm">
+                <span className="text-muted-foreground">Delivery from</span>
+                <input type="time" value={(s.delivery_open_time ?? "08:30").slice(0,5)} onChange={(e) => setS({ ...s, delivery_open_time: e.target.value })} className="mt-1 h-10 w-full rounded-lg border border-border bg-background px-3" />
+              </label>
+              <label className="text-sm">
+                <span className="text-muted-foreground">Delivery until</span>
+                <input type="time" value={(s.delivery_close_time ?? "16:30").slice(0,5)} onChange={(e) => setS({ ...s, delivery_close_time: e.target.value })} className="mt-1 h-10 w-full rounded-lg border border-border bg-background px-3" />
+              </label>
+              <label className="text-sm">
+                <span className="text-muted-foreground">Shop postcode (delivery origin)</span>
+                <input value={s.delivery_origin_postcode ?? ""} onChange={(e) => setS({ ...s, delivery_origin_postcode: e.target.value.toUpperCase() })} className="mt-1 h-10 w-full rounded-lg border border-border bg-background px-3" />
+              </label>
+              <NumberField label="Max delivery distance (metres — 805 = ½ mile)" v={s.delivery_radius_m ?? 805} on={(v) => setS({ ...s, delivery_radius_m: v })} />
             </div>
           </section>
 

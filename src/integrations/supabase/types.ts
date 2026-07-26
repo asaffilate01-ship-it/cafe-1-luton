@@ -121,8 +121,12 @@ export type Database = {
           accepting_orders: boolean
           allow_preorder_when_closed: boolean
           closed_message: string | null
+          delivery_close_time: string
           delivery_fee_cents: number
           delivery_minutes: number
+          delivery_open_time: string
+          delivery_origin_postcode: string
+          delivery_radius_m: number
           free_delivery_threshold_cents: number | null
           id: string
           min_order_cents: number
@@ -134,8 +138,12 @@ export type Database = {
           accepting_orders?: boolean
           allow_preorder_when_closed?: boolean
           closed_message?: string | null
+          delivery_close_time?: string
           delivery_fee_cents?: number
           delivery_minutes?: number
+          delivery_open_time?: string
+          delivery_origin_postcode?: string
+          delivery_radius_m?: number
           free_delivery_threshold_cents?: number | null
           id?: string
           min_order_cents?: number
@@ -147,8 +155,12 @@ export type Database = {
           accepting_orders?: boolean
           allow_preorder_when_closed?: boolean
           closed_message?: string | null
+          delivery_close_time?: string
           delivery_fee_cents?: number
           delivery_minutes?: number
+          delivery_open_time?: string
+          delivery_origin_postcode?: string
+          delivery_radius_m?: number
           free_delivery_threshold_cents?: number | null
           id?: string
           min_order_cents?: number
