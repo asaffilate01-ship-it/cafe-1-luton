@@ -70,8 +70,8 @@ function Home() {
               </div>
             </div>
             <div className="card-3d absolute -right-4 top-8 hidden p-4 sm:block">
-              <p className="text-xs uppercase tracking-wider text-muted-foreground">Live orders</p>
-              <p className="font-display text-2xl font-bold text-primary">27 today</p>
+              <p className="text-xs uppercase tracking-wider text-muted-foreground">Ready in</p>
+              <p className="font-display text-2xl font-bold text-primary">~15 min</p>
             </div>
           </div>
         </div>
