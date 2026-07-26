@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as TermsRouteImport } from './routes/terms'
 import { Route as TabRouteImport } from './routes/tab'
 import { Route as StaffRouteImport } from './routes/staff'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
@@ -37,6 +38,11 @@ import { Route as AdminBannersRouteImport } from './routes/admin.banners'
 import { Route as AdminAccountsRouteImport } from './routes/admin.accounts'
 import { Route as ApiPublicSumupWebhookRouteImport } from './routes/api/public/sumup-webhook'
 
+const TermsRoute = TermsRouteImport.update({
+  id: '/terms',
+  path: '/terms',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const TabRoute = TabRouteImport.update({
   id: '/tab',
   path: '/tab',
@@ -189,6 +195,7 @@ export interface FileRoutesByFullPath {
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/staff': typeof StaffRoute
   '/tab': typeof TabRoute
+  '/terms': typeof TermsRoute
   '/admin/accounts': typeof AdminAccountsRoute
   '/admin/banners': typeof AdminBannersRoute
   '/admin/broadcasts': typeof AdminBroadcastsRoute
@@ -218,6 +225,7 @@ export interface FileRoutesByTo {
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/staff': typeof StaffRoute
   '/tab': typeof TabRoute
+  '/terms': typeof TermsRoute
   '/admin/accounts': typeof AdminAccountsRoute
   '/admin/banners': typeof AdminBannersRoute
   '/admin/broadcasts': typeof AdminBroadcastsRoute
@@ -248,6 +256,7 @@ export interface FileRoutesById {
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/staff': typeof StaffRoute
   '/tab': typeof TabRoute
+  '/terms': typeof TermsRoute
   '/admin/accounts': typeof AdminAccountsRoute
   '/admin/banners': typeof AdminBannersRoute
   '/admin/broadcasts': typeof AdminBroadcastsRoute
@@ -279,6 +288,7 @@ export interface FileRouteTypes {
     | '/sitemap.xml'
     | '/staff'
     | '/tab'
+    | '/terms'
     | '/admin/accounts'
     | '/admin/banners'
     | '/admin/broadcasts'
@@ -308,6 +318,7 @@ export interface FileRouteTypes {
     | '/sitemap.xml'
     | '/staff'
     | '/tab'
+    | '/terms'
     | '/admin/accounts'
     | '/admin/banners'
     | '/admin/broadcasts'
@@ -337,6 +348,7 @@ export interface FileRouteTypes {
     | '/sitemap.xml'
     | '/staff'
     | '/tab'
+    | '/terms'
     | '/admin/accounts'
     | '/admin/banners'
     | '/admin/broadcasts'
@@ -367,6 +379,7 @@ export interface RootRouteChildren {
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   StaffRoute: typeof StaffRoute
   TabRoute: typeof TabRoute
+  TermsRoute: typeof TermsRoute
   OrderOrderIdRoute: typeof OrderOrderIdRoute
   PayOrderIdRoute: typeof PayOrderIdRoute
   PrintOrderIdRoute: typeof PrintOrderIdRoute
@@ -375,6 +388,13 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/terms': {
+      id: '/terms'
+      path: '/terms'
+      fullPath: '/terms'
+      preLoaderRoute: typeof TermsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/tab': {
       id: '/tab'
       path: '/tab'
@@ -607,6 +627,7 @@ const rootRouteChildren: RootRouteChildren = {
   SitemapDotxmlRoute: SitemapDotxmlRoute,
   StaffRoute: StaffRoute,
   TabRoute: TabRoute,
+  TermsRoute: TermsRoute,
   OrderOrderIdRoute: OrderOrderIdRoute,
   PayOrderIdRoute: PayOrderIdRoute,
   PrintOrderIdRoute: PrintOrderIdRoute,
