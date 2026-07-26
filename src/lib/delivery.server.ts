@@ -8,20 +8,41 @@ function normalise(pc: string) {
   return pc.replace(/\s+/g, "").toUpperCase();
 }
 
-/** Geocode a UK postcode with postcodes.io (free, no key). */
+const GATEWAY_URL = "https://connector-gateway.lovable.dev/google_maps";
+
+/** Geocode a UK postcode/address via the Google Maps Platform gateway. */
 export async function geocodePostcode(postcode: string): Promise<LatLng | null> {
   const key = normalise(postcode);
   if (!key) return null;
   if (cache.has(key)) return cache.get(key) ?? null;
+
+  const lovableKey = process.env.LOVABLE_API_KEY;
+  const gmKey = process.env.GOOGLE_MAPS_API_KEY;
+  if (!lovableKey || !gmKey) {
+    // Connector not linked yet — don't block orders.
+    cache.set(key, null);
+    return null;
+  }
+
   try {
-    const res = await fetch(`https://api.postcodes.io/postcodes/${encodeURIComponent(key)}`);
+    const address = `${postcode}, UK`;
+    const url = `${GATEWAY_URL}/maps/api/geocode/json?address=${encodeURIComponent(address)}&region=uk&components=country:GB`;
+    const res = await fetch(url, {
+      headers: {
+        Authorization: `Bearer ${lovableKey}`,
+        "X-Connection-Api-Key": gmKey,
+      },
+    });
     if (!res.ok) {
       cache.set(key, null);
       return null;
     }
-    const json = (await res.json()) as { result?: { latitude: number; longitude: number } };
-    const r = json.result;
-    const out = r ? { lat: r.latitude, lng: r.longitude } : null;
+    const json = (await res.json()) as {
+      status?: string;
+      results?: Array<{ geometry?: { location?: { lat: number; lng: number } } }>;
+    };
+    const loc = json.results?.[0]?.geometry?.location;
+    const out = loc ? { lat: loc.lat, lng: loc.lng } : null;
     cache.set(key, out);
     return out;
   } catch {
@@ -56,7 +77,7 @@ export async function checkDeliveryArea(
   postcode: string,
   settings: DeliverySettings,
 ): Promise<AreaCheck> {
-  const radius = settings.delivery_radius_m ?? 805;
+  const radius = settings.delivery_radius_m ?? 800;
   const [origin, dest] = await Promise.all([
     geocodePostcode(settings.delivery_origin_postcode),
     geocodePostcode(postcode),
@@ -67,7 +88,7 @@ export async function checkDeliveryArea(
   if (d > radius) {
     return {
       ok: false,
-      reason: `Sorry, that's outside our delivery area (we deliver up to ${(radius / 1609.34).toFixed(1)} miles from ${settings.delivery_origin_postcode}). Please choose collection instead.`,
+      reason: `Sorry, you're outside our delivery area — we only deliver within ${radius} m of ${settings.delivery_origin_postcode} (you're about ${d} m away). Please switch to Pickup or Dine-in instead.`,
       distance_m: d,
       radius_m: radius,
     };
