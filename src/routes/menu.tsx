@@ -10,6 +10,8 @@ import { cart, useCart, type CartModifier } from "@/lib/cart";
 import { money } from "@/lib/format";
 import { Plus, Minus, Search, Leaf, ShoppingBag, X, Settings2 } from "lucide-react";
 import { toast } from "sonner";
+import { OrderSetupGate } from "@/components/order-setup-gate";
+import { describeContext, useOrderContext, orderContext } from "@/lib/order-context";
 
 export const Route = createFileRoute("/menu")({
   head: () => ({
@@ -24,6 +26,11 @@ export const Route = createFileRoute("/menu")({
 });
 
 function MenuPage() {
+  const ctx = useOrderContext();
+  const [gateOpen, setGateOpen] = useState(false);
+  useEffect(() => {
+    if (!ctx) setGateOpen(true);
+  }, [ctx]);
   const { data, isLoading } = useQuery({
     queryKey: ["menu"],
     queryFn: async () => {
@@ -109,8 +116,22 @@ function MenuPage() {
             Freshly made all day. Delivery, collection or dine-in.
           </p>
           <div className="mt-3"><StoreStatus /></div>
+          <button
+            type="button"
+            onClick={() => setGateOpen(true)}
+            className="mt-3 inline-flex items-center gap-2 rounded-full border border-primary/40 bg-primary/10 px-4 py-2 text-sm font-semibold text-primary hover:bg-primary/20"
+          >
+            <Settings2 className="h-4 w-4" />
+            {describeContext(ctx)}
+            <span className="text-xs font-medium opacity-70">Change</span>
+          </button>
         </div>
       </div>
+      <OrderSetupGate
+        open={gateOpen}
+        onClose={() => setGateOpen(false)}
+        dismissible={!!ctx}
+      />
 
       {/* Sticky search + category pills */}
       <div className="sticky top-14 z-30 border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80">
