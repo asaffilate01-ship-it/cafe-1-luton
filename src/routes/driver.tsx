@@ -7,6 +7,8 @@ import { useSession, useRoles } from "@/hooks/use-auth";
 import { toast } from "sonner";
 import { MapPin, Phone } from "lucide-react";
 import { money } from "@/lib/format";
+import { useAlertOnIncrease, useNotificationPermission } from "@/hooks/use-order-alerts";
+import { Bell, BellOff } from "lucide-react";
 
 type Job = {
   id: string; order_number: number; status: string; total_cents: number;
@@ -65,12 +67,25 @@ function Driver() {
     }
   }
 
+  useAlertOnIncrease(jobs.length, "New delivery · Cafe1", "A new job was assigned to you.");
+  const { perm, request } = useNotificationPermission();
+
   return (
     <div className="min-h-screen bg-background">
       <header className="border-b border-border bg-primary text-primary-foreground">
         <div className="mx-auto flex max-w-2xl items-center justify-between px-4 py-4">
           <h1 className="font-display text-2xl font-bold">Driver · Cafe1</h1>
-          <span className="text-sm opacity-80">{jobs.length} job{jobs.length === 1 ? "" : "s"}</span>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={request}
+              className="flex items-center gap-1 rounded-full bg-primary-foreground/10 px-3 py-1.5 text-xs font-semibold hover:bg-primary-foreground/20"
+              title={perm === "granted" ? "Alerts on" : "Enable alerts"}
+            >
+              {perm === "granted" ? <Bell className="h-4 w-4" /> : <BellOff className="h-4 w-4" />}
+              <span>{perm === "granted" ? "On" : perm === "unsupported" ? "N/A" : "Alerts"}</span>
+            </button>
+            <span className="text-sm opacity-80">{jobs.length} job{jobs.length === 1 ? "" : "s"}</span>
+          </div>
         </div>
       </header>
       <div className="mx-auto max-w-2xl space-y-4 p-4">

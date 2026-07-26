@@ -5,6 +5,8 @@ import { useServerFn } from "@tanstack/react-start";
 import { updateOrderStatus } from "@/lib/orders.functions";
 import { toast } from "sonner";
 import { useSession, useRoles } from "@/hooks/use-auth";
+import { useAlertOnIncrease, useNotificationPermission } from "@/hooks/use-order-alerts";
+import { Bell, BellOff } from "lucide-react";
 
 type Item = { id: string; order_id: string; name: string; qty: number; notes: string | null };
 type Order = { id: string; order_number: number; status: string; type: string; customer_name: string; created_at: string };
@@ -64,12 +66,18 @@ function KDS() {
     }
   }
 
+  const preparingCount = tickets.filter((t) => t.status === "preparing").length;
+  useAlertOnIncrease(preparingCount, "New ticket · Kitchen", "A new order was accepted — start preparing.");
+
   return (
     <div className="min-h-screen bg-secondary">
       <header className="border-b border-border bg-primary text-primary-foreground">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-4">
           <h1 className="font-display text-2xl font-bold">Kitchen Display · Cafe1</h1>
-          <span className="text-sm opacity-80">{tickets.length} active</span>
+          <div className="flex items-center gap-3">
+            <AlertsToggle />
+            <span className="text-sm opacity-80">{tickets.length} active</span>
+          </div>
         </div>
       </header>
       <div className="mx-auto grid max-w-7xl gap-4 p-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
@@ -99,5 +107,19 @@ function KDS() {
         {!tickets.length && <div className="col-span-full p-16 text-center text-muted-foreground">No active tickets. Enjoy the quiet ☕</div>}
       </div>
     </div>
+  );
+}
+
+function AlertsToggle() {
+  const { perm, request } = useNotificationPermission();
+  return (
+    <button
+      onClick={request}
+      className="flex items-center gap-1 rounded-full bg-primary-foreground/10 px-3 py-1.5 text-xs font-semibold hover:bg-primary-foreground/20"
+      title={perm === "granted" ? "Alerts on" : "Enable alerts"}
+    >
+      {perm === "granted" ? <Bell className="h-4 w-4" /> : <BellOff className="h-4 w-4" />}
+      <span>{perm === "granted" ? "Alerts on" : perm === "unsupported" ? "No alerts" : "Enable alerts"}</span>
+    </button>
   );
 }
