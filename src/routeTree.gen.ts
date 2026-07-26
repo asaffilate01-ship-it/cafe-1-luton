@@ -36,6 +36,7 @@ import { Route as AdminSettingsRouteImport } from './routes/admin.settings'
 import { Route as AdminPromosRouteImport } from './routes/admin.promos'
 import { Route as AdminMenuRouteImport } from './routes/admin.menu'
 import { Route as AdminLoginRouteImport } from './routes/admin.login'
+import { Route as AdminCustomerDiscountsRouteImport } from './routes/admin.customer-discounts'
 import { Route as AdminBroadcastsRouteImport } from './routes/admin.broadcasts'
 import { Route as AdminBannersRouteImport } from './routes/admin.banners'
 import { Route as AdminAccountsRouteImport } from './routes/admin.accounts'
@@ -176,6 +177,11 @@ const AdminLoginRoute = AdminLoginRouteImport.update({
   path: '/login',
   getParentRoute: () => AdminRoute,
 } as any)
+const AdminCustomerDiscountsRoute = AdminCustomerDiscountsRouteImport.update({
+  id: '/customer-discounts',
+  path: '/customer-discounts',
+  getParentRoute: () => AdminRoute,
+} as any)
 const AdminBroadcastsRoute = AdminBroadcastsRouteImport.update({
   id: '/broadcasts',
   path: '/broadcasts',
@@ -220,6 +226,7 @@ export interface FileRoutesByFullPath {
   '/admin/accounts': typeof AdminAccountsRoute
   '/admin/banners': typeof AdminBannersRoute
   '/admin/broadcasts': typeof AdminBroadcastsRoute
+  '/admin/customer-discounts': typeof AdminCustomerDiscountsRoute
   '/admin/login': typeof AdminLoginRoute
   '/admin/menu': typeof AdminMenuRoute
   '/admin/promos': typeof AdminPromosRoute
@@ -253,6 +260,7 @@ export interface FileRoutesByTo {
   '/admin/accounts': typeof AdminAccountsRoute
   '/admin/banners': typeof AdminBannersRoute
   '/admin/broadcasts': typeof AdminBroadcastsRoute
+  '/admin/customer-discounts': typeof AdminCustomerDiscountsRoute
   '/admin/login': typeof AdminLoginRoute
   '/admin/menu': typeof AdminMenuRoute
   '/admin/promos': typeof AdminPromosRoute
@@ -287,6 +295,7 @@ export interface FileRoutesById {
   '/admin/accounts': typeof AdminAccountsRoute
   '/admin/banners': typeof AdminBannersRoute
   '/admin/broadcasts': typeof AdminBroadcastsRoute
+  '/admin/customer-discounts': typeof AdminCustomerDiscountsRoute
   '/admin/login': typeof AdminLoginRoute
   '/admin/menu': typeof AdminMenuRoute
   '/admin/promos': typeof AdminPromosRoute
@@ -322,6 +331,7 @@ export interface FileRouteTypes {
     | '/admin/accounts'
     | '/admin/banners'
     | '/admin/broadcasts'
+    | '/admin/customer-discounts'
     | '/admin/login'
     | '/admin/menu'
     | '/admin/promos'
@@ -355,6 +365,7 @@ export interface FileRouteTypes {
     | '/admin/accounts'
     | '/admin/banners'
     | '/admin/broadcasts'
+    | '/admin/customer-discounts'
     | '/admin/login'
     | '/admin/menu'
     | '/admin/promos'
@@ -388,6 +399,7 @@ export interface FileRouteTypes {
     | '/admin/accounts'
     | '/admin/banners'
     | '/admin/broadcasts'
+    | '/admin/customer-discounts'
     | '/admin/login'
     | '/admin/menu'
     | '/admin/promos'
@@ -616,6 +628,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminLoginRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/admin/customer-discounts': {
+      id: '/admin/customer-discounts'
+      path: '/customer-discounts'
+      fullPath: '/admin/customer-discounts'
+      preLoaderRoute: typeof AdminCustomerDiscountsRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/admin/broadcasts': {
       id: '/admin/broadcasts'
       path: '/broadcasts'
@@ -651,6 +670,7 @@ interface AdminRouteChildren {
   AdminAccountsRoute: typeof AdminAccountsRoute
   AdminBannersRoute: typeof AdminBannersRoute
   AdminBroadcastsRoute: typeof AdminBroadcastsRoute
+  AdminCustomerDiscountsRoute: typeof AdminCustomerDiscountsRoute
   AdminLoginRoute: typeof AdminLoginRoute
   AdminMenuRoute: typeof AdminMenuRoute
   AdminPromosRoute: typeof AdminPromosRoute
@@ -662,6 +682,7 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminAccountsRoute: AdminAccountsRoute,
   AdminBannersRoute: AdminBannersRoute,
   AdminBroadcastsRoute: AdminBroadcastsRoute,
+  AdminCustomerDiscountsRoute: AdminCustomerDiscountsRoute,
   AdminLoginRoute: AdminLoginRoute,
   AdminMenuRoute: AdminMenuRoute,
   AdminPromosRoute: AdminPromosRoute,
