@@ -6,6 +6,7 @@ import { cart, useCart } from "@/lib/cart";
 import { money } from "@/lib/format";
 import { SiteHeader } from "@/components/site-header";
 import { useSession } from "@/hooks/use-auth";
+import { tab, useTab } from "@/lib/tab";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/checkout")({
@@ -45,6 +46,7 @@ function Checkout() {
   const c = useCart();
   const navigate = useNavigate();
   const { user, loading } = useSession();
+  const tabSession = useTab();
   const place = useServerFn(createOrder);
   const [mode, setMode] = useState<Mode>("collection");
   const [scheduleMode, setScheduleMode] = useState<ScheduleMode>("asap");
@@ -70,9 +72,10 @@ function Checkout() {
 
   const subtotal = c.items.reduce((s, i) => s + i.price_cents * i.qty, 0);
   const delivery = mode === "delivery" ? 299 : 0;
-  const discount = user ? Math.round(subtotal * 0.1) : 0;
+  const onTab = !!tabSession;
+  const discount = user && !onTab ? Math.round(subtotal * 0.1) : 0;
   const total = Math.max(0, subtotal - discount) + delivery;
-  const pointsEarn = user ? Math.floor(Math.max(0, subtotal - discount) / 100) : 0;
+  const pointsEarn = user && !onTab ? Math.floor(Math.max(0, subtotal - discount) / 100) : 0;
   // Prevent unused import warning when navigate not used
   void navigate;
 
@@ -96,10 +99,14 @@ function Checkout() {
           schedule_mode: scheduleMode,
           scheduled_for: scheduleMode === "scheduled" ? scheduledFor || undefined : undefined,
           items: c.items.map((i) => ({ menu_item_id: i.id, qty: i.qty })),
+          account_code: tabSession?.code,
         },
       });
       cart.clear();
-      if (res.checkout_url) {
+      if (res.on_tab) {
+        toast.success(`Added to ${tabSession?.name}'s tab`);
+        navigate({ to: "/order/$orderId", params: { orderId: res.order_id } });
+      } else if (res.checkout_url) {
         window.location.href = res.checkout_url;
       } else {
         if (!res.payment_configured)
@@ -126,16 +133,28 @@ function Checkout() {
       <SiteHeader />
       <div className="mx-auto grid max-w-4xl gap-8 px-4 py-12 lg:grid-cols-[1fr_360px]">
         <form id="checkout-form" onSubmit={submit} className="space-y-6">
-          {!user && !loading && (
+          {tabSession && (
+            <div className="flex items-start justify-between gap-3 rounded-2xl border border-primary/40 bg-primary/10 p-4 text-sm">
+              <div>
+                <p className="font-semibold text-primary">Charging to {tabSession.name}'s tab</p>
+                <p className="mt-1 text-muted-foreground">This order will be added to the running bill — no payment now.</p>
+              </div>
+              <button type="button" onClick={() => tab.clear()} className="rounded-full border border-primary/40 px-3 py-1 text-xs font-semibold text-primary hover:bg-primary/20">Leave tab</button>
+            </div>
+          )}
+          {!user && !loading && !tabSession && (
             <div className="rounded-2xl border border-primary/30 bg-primary/5 p-4">
               <p className="font-semibold text-primary">Get 10% off & earn loyalty points</p>
               <p className="mt-1 text-sm text-muted-foreground">
                 <Link to="/auth" search={{ next: "/checkout" }} className="font-semibold text-primary underline">Sign in or create an account</Link>{" "}
                 to unlock member pricing and earn 1 point per £1 — or continue as guest below.
               </p>
+              <p className="mt-2 text-xs text-muted-foreground">
+                Got a business tab code? <Link to="/tab" className="font-semibold text-primary underline">Sign in with your account code</Link>.
+              </p>
             </div>
           )}
-          {user && (
+          {user && !tabSession && (
             <div className="rounded-2xl border border-primary/40 bg-primary/10 p-4 text-sm">
               <span className="font-semibold text-primary">Member perks applied</span> — 10% off this order and you'll earn {pointsEarn} points.
             </div>
@@ -238,10 +257,10 @@ function Checkout() {
             <div className="mt-2 flex justify-between border-t border-border pt-2 font-display text-lg font-bold"><span>Total</span><span className="text-primary">{money(total)}</span></div>
           </div>
           <button type="submit" form="checkout-form" disabled={busy} className="mt-4 h-12 w-full rounded-full bg-primary font-semibold text-primary-foreground shadow-brand transition hover:bg-primary-hover disabled:opacity-60">
-            {busy ? "Placing…" : "Place order & pay"}
+            {busy ? "Placing…" : onTab ? "Add to tab" : "Place order & pay"}
           </button>
           <p className="mt-2 text-center text-xs text-muted-foreground">
-            {user ? "Secured by SumUp" : "Guest checkout · Secured by SumUp"}
+            {onTab ? "Billed to your account — settle later" : user ? "Secured by SumUp" : "Guest checkout · Secured by SumUp"}
           </p>
         </aside>
       </div>
