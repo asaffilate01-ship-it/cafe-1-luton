@@ -77,9 +77,6 @@ function KDS() {
     return () => { supabase.removeChannel(ch); };
   }, []);
 
-  if (user && !has("admin") && !has("staff"))
-    return <div className="p-10 text-center text-muted-foreground">Not authorised.</div>;
-
   async function set(id: string, status: "preparing" | "ready") {
     try {
       await update({ data: { order_id: id, status } });
@@ -90,6 +87,9 @@ function KDS() {
 
   const preparingCount = tickets.filter((t) => t.status === "preparing").length;
   useAlertOnIncrease(preparingCount, "New ticket · Kitchen", "A new order was accepted — start preparing.");
+
+  if (user && !has("admin") && !has("staff"))
+    return <div className="p-10 text-center text-muted-foreground">Not authorised.</div>;
 
   return (
     <div className="min-h-screen bg-secondary">
