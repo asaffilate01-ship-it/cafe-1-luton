@@ -32,7 +32,7 @@ function Account() {
     queryFn: async () => {
       const { data } = await supabase
         .from("profiles")
-        .select("loyalty_points, lifetime_points, full_name")
+        .select("loyalty_points, lifetime_points, full_name, drink_stamps, free_drinks_available, free_drinks_redeemed")
         .eq("id", user!.id)
         .maybeSingle();
       return data;
@@ -73,6 +73,21 @@ function Account() {
             <p className="text-xs uppercase tracking-wider text-muted-foreground">Member perk</p>
             <p className="mt-1 font-display text-2xl font-bold">10% off every order</p>
             <p className="mt-1 text-xs text-muted-foreground">Automatically applied at checkout when signed in.</p>
+          </div>
+          <div className="rounded-2xl border border-primary/30 bg-primary/5 p-5 sm:col-span-2">
+            <div className="flex items-center justify-between">
+              <p className="text-xs uppercase tracking-wider text-primary/80">Coffee &amp; tea card</p>
+              <p className="text-xs font-semibold text-primary">{profile?.drink_stamps ?? 0}/10</p>
+            </div>
+            <div className="mt-3 flex gap-1.5">
+              {Array.from({ length: 10 }, (_, n) => (
+                <span key={n} className={`h-3 flex-1 rounded-full ${n < (profile?.drink_stamps ?? 0) ? "bg-primary" : "bg-primary/20"}`} />
+              ))}
+            </div>
+            <p className="mt-2 text-xs text-muted-foreground">
+              Buy 10 coffees or teas and your 11th is free — applied automatically at checkout.
+              {(profile?.free_drinks_available ?? 0) > 0 && ` You have ${profile?.free_drinks_available} free drink${(profile?.free_drinks_available ?? 0) > 1 ? "s" : ""} waiting!`}
+            </p>
           </div>
         </div>
 
