@@ -36,6 +36,14 @@ function CartPage() {
                 <li key={i.id} className="flex items-center gap-4 p-4">
                   <div className="flex-1">
                     <p className="font-semibold">{i.name}</p>
+                    {i.modifiers?.length > 0 && (
+                      <p className="text-sm text-primary">
+                        {i.modifiers
+                          .map((m) => `${m.name}${m.price_cents ? ` +${money(m.price_cents)}` : ""}`)
+                          .join(" · ")}
+                      </p>
+                    )}
+                    {i.notes && <p className="text-sm italic text-muted-foreground">“{i.notes}”</p>}
                     <p className="text-sm text-muted-foreground">{money(i.price_cents)} each</p>
                   </div>
                   <div className="flex items-center gap-1 rounded-full border border-border">
