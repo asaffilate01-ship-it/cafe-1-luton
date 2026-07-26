@@ -344,7 +344,7 @@ function Checkout() {
           )}
           {!user && !loading && !tabSession && (
             <div className="rounded-2xl border border-primary/30 bg-primary/5 p-4">
-              <p className="font-semibold text-primary">Get 10% off & earn loyalty points</p>
+              <p className="font-semibold text-primary">Earn loyalty points & get access to offers</p>
               <p className="mt-1 text-sm text-muted-foreground">
                 <Link to="/auth" search={{ next: "/checkout" }} className="font-semibold text-primary underline">Sign in or create an account</Link>{" "}
                 to unlock member pricing and earn 1 point per £1 — or continue as guest below.
