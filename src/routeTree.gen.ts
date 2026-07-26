@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as TabRouteImport } from './routes/tab'
 import { Route as StaffRouteImport } from './routes/staff'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
+import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as MenuRouteImport } from './routes/menu'
 import { Route as KdsRouteImport } from './routes/kds'
 import { Route as DriverRouteImport } from './routes/driver'
@@ -49,6 +50,11 @@ const StaffRoute = StaffRouteImport.update({
 const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
   id: '/sitemap.xml',
   path: '/sitemap.xml',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PrivacyRoute = PrivacyRouteImport.update({
+  id: '/privacy',
+  path: '/privacy',
   getParentRoute: () => rootRouteImport,
 } as any)
 const MenuRoute = MenuRouteImport.update({
@@ -179,6 +185,7 @@ export interface FileRoutesByFullPath {
   '/driver': typeof DriverRoute
   '/kds': typeof KdsRoute
   '/menu': typeof MenuRoute
+  '/privacy': typeof PrivacyRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/staff': typeof StaffRoute
   '/tab': typeof TabRoute
@@ -207,6 +214,7 @@ export interface FileRoutesByTo {
   '/driver': typeof DriverRoute
   '/kds': typeof KdsRoute
   '/menu': typeof MenuRoute
+  '/privacy': typeof PrivacyRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/staff': typeof StaffRoute
   '/tab': typeof TabRoute
@@ -236,6 +244,7 @@ export interface FileRoutesById {
   '/driver': typeof DriverRoute
   '/kds': typeof KdsRoute
   '/menu': typeof MenuRoute
+  '/privacy': typeof PrivacyRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/staff': typeof StaffRoute
   '/tab': typeof TabRoute
@@ -266,6 +275,7 @@ export interface FileRouteTypes {
     | '/driver'
     | '/kds'
     | '/menu'
+    | '/privacy'
     | '/sitemap.xml'
     | '/staff'
     | '/tab'
@@ -294,6 +304,7 @@ export interface FileRouteTypes {
     | '/driver'
     | '/kds'
     | '/menu'
+    | '/privacy'
     | '/sitemap.xml'
     | '/staff'
     | '/tab'
@@ -322,6 +333,7 @@ export interface FileRouteTypes {
     | '/driver'
     | '/kds'
     | '/menu'
+    | '/privacy'
     | '/sitemap.xml'
     | '/staff'
     | '/tab'
@@ -351,6 +363,7 @@ export interface RootRouteChildren {
   DriverRoute: typeof DriverRoute
   KdsRoute: typeof KdsRoute
   MenuRoute: typeof MenuRoute
+  PrivacyRoute: typeof PrivacyRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   StaffRoute: typeof StaffRoute
   TabRoute: typeof TabRoute
@@ -381,6 +394,13 @@ declare module '@tanstack/react-router' {
       path: '/sitemap.xml'
       fullPath: '/sitemap.xml'
       preLoaderRoute: typeof SitemapDotxmlRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/privacy': {
+      id: '/privacy'
+      path: '/privacy'
+      fullPath: '/privacy'
+      preLoaderRoute: typeof PrivacyRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/menu': {
@@ -583,6 +603,7 @@ const rootRouteChildren: RootRouteChildren = {
   DriverRoute: DriverRoute,
   KdsRoute: KdsRoute,
   MenuRoute: MenuRoute,
+  PrivacyRoute: PrivacyRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
   StaffRoute: StaffRoute,
   TabRoute: TabRoute,
