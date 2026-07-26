@@ -11,6 +11,7 @@ import { useAlertOnIncrease, useNotificationPermission } from "@/hooks/use-order
 import { Bell, BellOff } from "lucide-react";
 import { useDriverLocationSharing } from "@/hooks/use-driver-location";
 import { LiveMap } from "@/components/live-map";
+import { TurnByTurn } from "@/components/turn-by-turn";
 
 type Job = {
   id: string; order_number: number; status: string; total_cents: number;
@@ -144,6 +145,7 @@ function Driver() {
                 <MapPin className="mt-0.5 h-4 w-4 shrink-0" /> {addr || "No address"}
               </a>
               {j.delivery_notes && <p className="mt-2 rounded-xl bg-secondary p-3 text-sm">{j.delivery_notes}</p>}
+              {addr && <TurnByTurn destination={addr} position={last ? { lat: last.lat, lng: last.lng } : null} />}
               <div className="mt-4">
                 {j.status === "out_for_delivery" && <button onClick={() => set(j.id, "delivered")} className="h-12 w-full rounded-full bg-primary font-semibold text-primary-foreground hover:bg-primary-hover">Mark delivered</button>}
               </div>
