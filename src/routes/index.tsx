@@ -79,7 +79,7 @@ function Home() {
       </section>
 
       <section className="border-y border-border bg-soft">
-        <div className="mx-auto grid max-w-6xl gap-6 px-4 py-16 sm:grid-cols-3">
+        <div className="mx-auto grid max-w-6xl gap-6 px-4 py-16 sm:grid-cols-2 lg:grid-cols-4">
           {[
             { icon: Coffee, title: "Speciality coffee", body: "House blend roasted weekly. Silky milk, sharp espresso, honest prices." },
             { icon: BadgeCheck, title: "100% halal", body: "All meat and food served at Café 1 is halal." },
