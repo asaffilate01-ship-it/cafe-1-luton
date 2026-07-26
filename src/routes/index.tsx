@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { ArrowRight, Bike, Coffee, Croissant, MapPin } from "lucide-react";
+import { ArrowRight, Bike, Coffee, Croissant, MapPin, BadgeCheck } from "lucide-react";
 import { SiteHeader, SiteFooter } from "@/components/site-header";
 import { PromoBanner } from "@/components/promo-banner";
 import { PromoCarousel } from "@/components/promo-carousel";
@@ -47,6 +47,7 @@ function Home() {
               </Link>
             </div>
             <div className="mt-8 flex flex-wrap gap-6 text-sm text-muted-foreground">
+              <div className="flex items-center gap-2"><BadgeCheck className="h-4 w-4 text-primary" /> All food is halal</div>
               <div className="flex items-center gap-2"><Bike className="h-4 w-4 text-primary" /> Local delivery</div>
               <div className="flex items-center gap-2"><MapPin className="h-4 w-4 text-primary" /> Cafe 1, St Albans Crown Court, AL1 3JW</div>
             </div>
@@ -78,9 +79,10 @@ function Home() {
       </section>
 
       <section className="border-y border-border bg-soft">
-        <div className="mx-auto grid max-w-6xl gap-6 px-4 py-16 sm:grid-cols-3">
+        <div className="mx-auto grid max-w-6xl gap-6 px-4 py-16 sm:grid-cols-2 lg:grid-cols-4">
           {[
             { icon: Coffee, title: "Speciality coffee", body: "House blend roasted weekly. Silky milk, sharp espresso, honest prices." },
+            { icon: BadgeCheck, title: "100% halal", body: "All meat and food served at Café 1 is halal." },
             { icon: Croissant, title: "Made fresh daily", body: "Pastries baked in-house every morning. Sandwiches built to order." },
             { icon: Bike, title: "Fast delivery", body: "In-house drivers get your order to you hot — track it live from your phone." },
           ].map((f) => (
