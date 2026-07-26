@@ -27,9 +27,12 @@ import { Route as PrintOrderIdRouteImport } from './routes/print.$orderId'
 import { Route as PayOrderIdRouteImport } from './routes/pay.$orderId'
 import { Route as OrderOrderIdRouteImport } from './routes/order.$orderId'
 import { Route as AdminUsersRouteImport } from './routes/admin.users'
+import { Route as AdminSettingsRouteImport } from './routes/admin.settings'
+import { Route as AdminPromosRouteImport } from './routes/admin.promos'
 import { Route as AdminMenuRouteImport } from './routes/admin.menu'
 import { Route as AdminLoginRouteImport } from './routes/admin.login'
 import { Route as AdminBroadcastsRouteImport } from './routes/admin.broadcasts'
+import { Route as AdminBannersRouteImport } from './routes/admin.banners'
 import { Route as AdminAccountsRouteImport } from './routes/admin.accounts'
 import { Route as ApiPublicSumupWebhookRouteImport } from './routes/api/public/sumup-webhook'
 
@@ -123,6 +126,16 @@ const AdminUsersRoute = AdminUsersRouteImport.update({
   path: '/users',
   getParentRoute: () => AdminRoute,
 } as any)
+const AdminSettingsRoute = AdminSettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminPromosRoute = AdminPromosRouteImport.update({
+  id: '/promos',
+  path: '/promos',
+  getParentRoute: () => AdminRoute,
+} as any)
 const AdminMenuRoute = AdminMenuRouteImport.update({
   id: '/menu',
   path: '/menu',
@@ -136,6 +149,11 @@ const AdminLoginRoute = AdminLoginRouteImport.update({
 const AdminBroadcastsRoute = AdminBroadcastsRouteImport.update({
   id: '/broadcasts',
   path: '/broadcasts',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminBannersRoute = AdminBannersRouteImport.update({
+  id: '/banners',
+  path: '/banners',
   getParentRoute: () => AdminRoute,
 } as any)
 const AdminAccountsRoute = AdminAccountsRouteImport.update({
@@ -165,9 +183,12 @@ export interface FileRoutesByFullPath {
   '/staff': typeof StaffRoute
   '/tab': typeof TabRoute
   '/admin/accounts': typeof AdminAccountsRoute
+  '/admin/banners': typeof AdminBannersRoute
   '/admin/broadcasts': typeof AdminBroadcastsRoute
   '/admin/login': typeof AdminLoginRoute
   '/admin/menu': typeof AdminMenuRoute
+  '/admin/promos': typeof AdminPromosRoute
+  '/admin/settings': typeof AdminSettingsRoute
   '/admin/users': typeof AdminUsersRoute
   '/order/$orderId': typeof OrderOrderIdRoute
   '/pay/$orderId': typeof PayOrderIdRoute
@@ -190,9 +211,12 @@ export interface FileRoutesByTo {
   '/staff': typeof StaffRoute
   '/tab': typeof TabRoute
   '/admin/accounts': typeof AdminAccountsRoute
+  '/admin/banners': typeof AdminBannersRoute
   '/admin/broadcasts': typeof AdminBroadcastsRoute
   '/admin/login': typeof AdminLoginRoute
   '/admin/menu': typeof AdminMenuRoute
+  '/admin/promos': typeof AdminPromosRoute
+  '/admin/settings': typeof AdminSettingsRoute
   '/admin/users': typeof AdminUsersRoute
   '/order/$orderId': typeof OrderOrderIdRoute
   '/pay/$orderId': typeof PayOrderIdRoute
@@ -216,9 +240,12 @@ export interface FileRoutesById {
   '/staff': typeof StaffRoute
   '/tab': typeof TabRoute
   '/admin/accounts': typeof AdminAccountsRoute
+  '/admin/banners': typeof AdminBannersRoute
   '/admin/broadcasts': typeof AdminBroadcastsRoute
   '/admin/login': typeof AdminLoginRoute
   '/admin/menu': typeof AdminMenuRoute
+  '/admin/promos': typeof AdminPromosRoute
+  '/admin/settings': typeof AdminSettingsRoute
   '/admin/users': typeof AdminUsersRoute
   '/order/$orderId': typeof OrderOrderIdRoute
   '/pay/$orderId': typeof PayOrderIdRoute
@@ -243,9 +270,12 @@ export interface FileRouteTypes {
     | '/staff'
     | '/tab'
     | '/admin/accounts'
+    | '/admin/banners'
     | '/admin/broadcasts'
     | '/admin/login'
     | '/admin/menu'
+    | '/admin/promos'
+    | '/admin/settings'
     | '/admin/users'
     | '/order/$orderId'
     | '/pay/$orderId'
@@ -268,9 +298,12 @@ export interface FileRouteTypes {
     | '/staff'
     | '/tab'
     | '/admin/accounts'
+    | '/admin/banners'
     | '/admin/broadcasts'
     | '/admin/login'
     | '/admin/menu'
+    | '/admin/promos'
+    | '/admin/settings'
     | '/admin/users'
     | '/order/$orderId'
     | '/pay/$orderId'
@@ -293,9 +326,12 @@ export interface FileRouteTypes {
     | '/staff'
     | '/tab'
     | '/admin/accounts'
+    | '/admin/banners'
     | '/admin/broadcasts'
     | '/admin/login'
     | '/admin/menu'
+    | '/admin/promos'
+    | '/admin/settings'
     | '/admin/users'
     | '/order/$orderId'
     | '/pay/$orderId'
@@ -452,6 +488,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminUsersRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/admin/settings': {
+      id: '/admin/settings'
+      path: '/settings'
+      fullPath: '/admin/settings'
+      preLoaderRoute: typeof AdminSettingsRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/promos': {
+      id: '/admin/promos'
+      path: '/promos'
+      fullPath: '/admin/promos'
+      preLoaderRoute: typeof AdminPromosRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/admin/menu': {
       id: '/admin/menu'
       path: '/menu'
@@ -473,6 +523,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminBroadcastsRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/admin/banners': {
+      id: '/admin/banners'
+      path: '/banners'
+      fullPath: '/admin/banners'
+      preLoaderRoute: typeof AdminBannersRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/admin/accounts': {
       id: '/admin/accounts'
       path: '/accounts'
@@ -492,17 +549,23 @@ declare module '@tanstack/react-router' {
 
 interface AdminRouteChildren {
   AdminAccountsRoute: typeof AdminAccountsRoute
+  AdminBannersRoute: typeof AdminBannersRoute
   AdminBroadcastsRoute: typeof AdminBroadcastsRoute
   AdminLoginRoute: typeof AdminLoginRoute
   AdminMenuRoute: typeof AdminMenuRoute
+  AdminPromosRoute: typeof AdminPromosRoute
+  AdminSettingsRoute: typeof AdminSettingsRoute
   AdminUsersRoute: typeof AdminUsersRoute
 }
 
 const AdminRouteChildren: AdminRouteChildren = {
   AdminAccountsRoute: AdminAccountsRoute,
+  AdminBannersRoute: AdminBannersRoute,
   AdminBroadcastsRoute: AdminBroadcastsRoute,
   AdminLoginRoute: AdminLoginRoute,
   AdminMenuRoute: AdminMenuRoute,
+  AdminPromosRoute: AdminPromosRoute,
+  AdminSettingsRoute: AdminSettingsRoute,
   AdminUsersRoute: AdminUsersRoute,
 }
 

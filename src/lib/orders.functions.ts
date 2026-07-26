@@ -47,6 +47,7 @@ const CreateOrderSchema = z.object({
   scheduled_for: z.string().datetime().optional(),
   items: z.array(CartItemSchema).min(1).max(50),
   account_code: z.string().min(3).max(40).optional(),
+  promo_code: z.string().min(1).max(40).optional(),
 });
 
 export const createOrder = createServerFn({ method: "POST" })
@@ -86,8 +87,58 @@ export const createOrder = createServerFn({ method: "POST" })
       };
     });
 
-    const delivery_fee = data.type === "delivery" ? 299 : 0;
-    const discount = userId ? Math.round(subtotal * LOYALTY_DISCOUNT_RATE) : 0;
+    // Load business settings + hours for pricing + open/closed enforcement.
+    const [{ data: settings }, { data: hoursRows }] = await Promise.all([
+      supabase.from("business_settings").select("*").limit(1).maybeSingle(),
+      supabase.from("business_hours").select("*").order("day_of_week"),
+    ]);
+
+    if (settings && !settings.accepting_orders) {
+      throw new Error(settings.closed_message || "Sorry, we're not accepting orders right now.");
+    }
+    if (settings && subtotal < (settings.min_order_cents ?? 0)) {
+      const min = (settings.min_order_cents / 100).toFixed(2);
+      throw new Error(`Minimum order is £${min}.`);
+    }
+    // Enforce opening hours for ASAP orders. Scheduled pre-orders may be allowed even if closed now.
+    if (data.schedule_mode === "asap" && hoursRows && settings) {
+      const { computeStoreStatus } = await import("./business");
+      const status = computeStoreStatus(hoursRows as never, settings as never);
+      if (!status.open && !settings.allow_preorder_when_closed) {
+        throw new Error("We're closed right now. Please try a scheduled order.");
+      }
+    }
+
+    const baseDeliveryFee = settings?.delivery_fee_cents ?? 299;
+    const freeThreshold = settings?.free_delivery_threshold_cents ?? null;
+    let delivery_fee = data.type === "delivery"
+      ? (freeThreshold && subtotal >= freeThreshold ? 0 : baseDeliveryFee)
+      : 0;
+
+    // Validate and apply promo code (public RPC).
+    let promo_discount = 0;
+    let applied_promo: string | null = null;
+    let free_delivery_promo = false;
+    if (data.promo_code) {
+      const { data: rows, error: pErr } = await supabase.rpc("validate_promo_code", {
+        _code: data.promo_code.trim().toUpperCase(),
+        _subtotal_cents: subtotal,
+        _order_type: data.type,
+      });
+      if (pErr) throw new Error(pErr.message);
+      const row = (rows ?? [])[0];
+      if (!row || !row.valid) throw new Error(row?.message || "That promo code isn't valid.");
+      applied_promo = row.code;
+      if (row.discount_type === "free_delivery") {
+        free_delivery_promo = true;
+        delivery_fee = 0;
+      } else {
+        promo_discount = Math.min(row.discount_cents ?? 0, subtotal);
+      }
+    }
+
+    const loyalty_discount = userId ? Math.round(subtotal * LOYALTY_DISCOUNT_RATE) : 0;
+    const discount = Math.min(subtotal, loyalty_discount + promo_discount);
     const total = Math.max(0, subtotal - discount) + delivery_fee;
     const points_earned = userId ? Math.floor(Math.max(0, subtotal - discount) / 100) * POINTS_PER_POUND : 0;
     const reference = `cafe1-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
@@ -148,6 +199,8 @@ export const createOrder = createServerFn({ method: "POST" })
         total_cents: total,
         sumup_reference: reference,
         sumup_checkout_id: checkout_id,
+        promo_code: applied_promo,
+        promo_discount_cents: free_delivery_promo ? 0 : promo_discount,
         ...(account_id ? { payment_status: "on_account" as const, status: "paid" as const } : {}),
       })
       .select()
@@ -158,6 +211,16 @@ export const createOrder = createServerFn({ method: "POST" })
       .from("order_items")
       .insert(lines.map((l) => ({ ...l, order_id: order.id })));
     if (itemsErr) throw new Error(itemsErr.message);
+
+    // Increment promo usage counter (service_role only).
+    if (applied_promo) {
+      try {
+        const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+        await supabaseAdmin.rpc("increment_promo_use", { _code: applied_promo });
+      } catch (e) {
+        console.error("[promo] increment failed", e);
+      }
+    }
 
     // Award loyalty points immediately for authed customers.
     if (userId && points_earned > 0) {
