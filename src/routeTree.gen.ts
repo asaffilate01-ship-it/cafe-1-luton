@@ -18,6 +18,7 @@ import { Route as MenuRouteImport } from './routes/menu'
 import { Route as KdsRouteImport } from './routes/kds'
 import { Route as GdprRouteImport } from './routes/gdpr'
 import { Route as DriverRouteImport } from './routes/driver'
+import { Route as DevLoginRouteImport } from './routes/dev-login'
 import { Route as CookiesRouteImport } from './routes/cookies'
 import { Route as ContactRouteImport } from './routes/contact'
 import { Route as ComplaintsRouteImport } from './routes/complaints'
@@ -86,6 +87,11 @@ const GdprRoute = GdprRouteImport.update({
 const DriverRoute = DriverRouteImport.update({
   id: '/driver',
   path: '/driver',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DevLoginRoute = DevLoginRouteImport.update({
+  id: '/dev-login',
+  path: '/dev-login',
   getParentRoute: () => rootRouteImport,
 } as any)
 const CookiesRoute = CookiesRouteImport.update({
@@ -220,6 +226,7 @@ export interface FileRoutesByFullPath {
   '/complaints': typeof ComplaintsRoute
   '/contact': typeof ContactRoute
   '/cookies': typeof CookiesRoute
+  '/dev-login': typeof DevLoginRoute
   '/driver': typeof DriverRoute
   '/gdpr': typeof GdprRoute
   '/kds': typeof KdsRoute
@@ -255,6 +262,7 @@ export interface FileRoutesByTo {
   '/complaints': typeof ComplaintsRoute
   '/contact': typeof ContactRoute
   '/cookies': typeof CookiesRoute
+  '/dev-login': typeof DevLoginRoute
   '/driver': typeof DriverRoute
   '/gdpr': typeof GdprRoute
   '/kds': typeof KdsRoute
@@ -291,6 +299,7 @@ export interface FileRoutesById {
   '/complaints': typeof ComplaintsRoute
   '/contact': typeof ContactRoute
   '/cookies': typeof CookiesRoute
+  '/dev-login': typeof DevLoginRoute
   '/driver': typeof DriverRoute
   '/gdpr': typeof GdprRoute
   '/kds': typeof KdsRoute
@@ -328,6 +337,7 @@ export interface FileRouteTypes {
     | '/complaints'
     | '/contact'
     | '/cookies'
+    | '/dev-login'
     | '/driver'
     | '/gdpr'
     | '/kds'
@@ -363,6 +373,7 @@ export interface FileRouteTypes {
     | '/complaints'
     | '/contact'
     | '/cookies'
+    | '/dev-login'
     | '/driver'
     | '/gdpr'
     | '/kds'
@@ -398,6 +409,7 @@ export interface FileRouteTypes {
     | '/complaints'
     | '/contact'
     | '/cookies'
+    | '/dev-login'
     | '/driver'
     | '/gdpr'
     | '/kds'
@@ -434,6 +446,7 @@ export interface RootRouteChildren {
   ComplaintsRoute: typeof ComplaintsRoute
   ContactRoute: typeof ContactRoute
   CookiesRoute: typeof CookiesRoute
+  DevLoginRoute: typeof DevLoginRoute
   DriverRoute: typeof DriverRoute
   GdprRoute: typeof GdprRoute
   KdsRoute: typeof KdsRoute
@@ -512,6 +525,13 @@ declare module '@tanstack/react-router' {
       path: '/driver'
       fullPath: '/driver'
       preLoaderRoute: typeof DriverRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/dev-login': {
+      id: '/dev-login'
+      path: '/dev-login'
+      fullPath: '/dev-login'
+      preLoaderRoute: typeof DevLoginRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/cookies': {
@@ -724,6 +744,7 @@ const rootRouteChildren: RootRouteChildren = {
   ComplaintsRoute: ComplaintsRoute,
   ContactRoute: ContactRoute,
   CookiesRoute: CookiesRoute,
+  DevLoginRoute: DevLoginRoute,
   DriverRoute: DriverRoute,
   GdprRoute: GdprRoute,
   KdsRoute: KdsRoute,
