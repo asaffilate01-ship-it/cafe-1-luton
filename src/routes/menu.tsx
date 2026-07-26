@@ -6,7 +6,7 @@ import { SiteHeader, SiteFooter } from "@/components/site-header";
 import { PromoBanner } from "@/components/promo-banner";
 import { PromoCarousel } from "@/components/promo-carousel";
 import { StoreStatus } from "@/components/store-status";
-import { cart, useCart } from "@/lib/cart";
+import { cart, useCart, type CartModifier } from "@/lib/cart";
 import { money } from "@/lib/format";
 import { Plus, Minus, Search, Leaf, ShoppingBag, X } from "lucide-react";
 import { toast } from "sonner";
@@ -231,24 +231,18 @@ function MenuPage() {
                   )}
                   <div className="mt-3 grid gap-3 sm:grid-cols-2">
                     {gItems.map((i) => (
-                      <ItemCard key={i.id} item={i} />
+                      <ItemCard
+                        key={i.id}
+                        item={i}
+                        mods={filtered.mods.filter(
+                          (m) => m.item_id === i.id || (!m.item_id && m.category_id === cat.id),
+                        )}
+                      />
                     ))}
                   </div>
                 </div>
               ))}
-
-              {catMods.length > 0 && (
-                <div className="mt-4 rounded-xl border border-dashed border-border bg-muted/30 p-3">
-                  <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                    Add-ons
-                  </p>
-                  <p className="mt-1 text-sm text-foreground/80">
-                    {catMods
-                      .map((m) => `${m.name}${m.price_cents ? ` +${money(m.price_cents)}` : ""}`)
-                      .join(" · ")}
-                  </p>
-                </div>
-              )}
+              {void catMods}
             </section>
           );
         })}
