@@ -86,9 +86,10 @@ export async function checkDeliveryArea(
   if (!origin) return { ok: true, distance_m: 0, radius_m: radius }; // can't verify — don't block
   const d = Math.round(distanceMeters(origin, dest));
   if (d > radius) {
+    const miles = (d / 1609.34).toFixed(2);
     return {
       ok: false,
-      reason: `Sorry, you're outside our delivery area — we only deliver within ${radius} m of ${settings.delivery_origin_postcode} (you're about ${d} m away). Please switch to Pickup or Dine-in instead.`,
+      reason: `Sorry, you're outside our delivery area — we only deliver within half a mile of ${settings.delivery_origin_postcode} (you're about ${miles} mi away). Please switch to Pickup or Dine-in instead.`,
       distance_m: d,
       radius_m: radius,
     };
