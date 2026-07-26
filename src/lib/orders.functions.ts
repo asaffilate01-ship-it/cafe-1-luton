@@ -347,6 +347,9 @@ export const createOrder = createServerFn({ method: "POST" })
       checkout_id,
       payment_configured: !!checkout_id,
       on_tab: !!account_id,
+      free_drinks_used,
+      drink_stamps: drink_stamps_after,
+      free_drinks_available: free_drinks_after,
     };
   });
 
