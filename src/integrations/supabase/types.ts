@@ -420,6 +420,8 @@ export type Database = {
           total_cents: number
           type: Database["public"]["Enums"]["order_type"]
           updated_at: string
+          voucher_cents: number
+          voucher_holder_id: string | null
         }
         Insert: {
           account_id?: string | null
@@ -458,6 +460,8 @@ export type Database = {
           total_cents?: number
           type: Database["public"]["Enums"]["order_type"]
           updated_at?: string
+          voucher_cents?: number
+          voucher_holder_id?: string | null
         }
         Update: {
           account_id?: string | null
@@ -496,6 +500,8 @@ export type Database = {
           total_cents?: number
           type?: Database["public"]["Enums"]["order_type"]
           updated_at?: string
+          voucher_cents?: number
+          voucher_holder_id?: string | null
         }
         Relationships: [
           {
@@ -503,6 +509,13 @@ export type Database = {
             columns: ["account_id"]
             isOneToOne: false
             referencedRelation: "accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "orders_voucher_holder_id_fkey"
+            columns: ["voucher_holder_id"]
+            isOneToOne: false
+            referencedRelation: "voucher_holders"
             referencedColumns: ["id"]
           },
         ]
@@ -669,6 +682,129 @@ export type Database = {
         }
         Relationships: []
       }
+      voucher_allocations: {
+        Row: {
+          amount_cents: number
+          created_at: string
+          for_date: string
+          holder_id: string
+          id: string
+          notes: string | null
+          updated_at: string
+        }
+        Insert: {
+          amount_cents?: number
+          created_at?: string
+          for_date?: string
+          holder_id: string
+          id?: string
+          notes?: string | null
+          updated_at?: string
+        }
+        Update: {
+          amount_cents?: number
+          created_at?: string
+          for_date?: string
+          holder_id?: string
+          id?: string
+          notes?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "voucher_allocations_holder_id_fkey"
+            columns: ["holder_id"]
+            isOneToOne: false
+            referencedRelation: "voucher_holders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      voucher_holders: {
+        Row: {
+          active: boolean
+          created_at: string
+          email: string | null
+          id: string
+          name: string
+          notes: string | null
+          phone: string | null
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          email?: string | null
+          id?: string
+          name: string
+          notes?: string | null
+          phone?: string | null
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          email?: string | null
+          id?: string
+          name?: string
+          notes?: string | null
+          phone?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      voucher_redemptions: {
+        Row: {
+          allocation_id: string | null
+          amount_cents: number
+          created_at: string
+          for_date: string
+          holder_id: string
+          id: string
+          order_id: string | null
+        }
+        Insert: {
+          allocation_id?: string | null
+          amount_cents: number
+          created_at?: string
+          for_date?: string
+          holder_id: string
+          id?: string
+          order_id?: string | null
+        }
+        Update: {
+          allocation_id?: string | null
+          amount_cents?: number
+          created_at?: string
+          for_date?: string
+          holder_id?: string
+          id?: string
+          order_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "voucher_redemptions_allocation_id_fkey"
+            columns: ["allocation_id"]
+            isOneToOne: false
+            referencedRelation: "voucher_allocations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "voucher_redemptions_holder_id_fkey"
+            columns: ["holder_id"]
+            isOneToOne: false
+            referencedRelation: "voucher_holders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "voucher_redemptions_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
@@ -681,6 +817,16 @@ export type Database = {
           percent: number
         }[]
       }
+      get_voucher_balance: {
+        Args: { _email: string; _phone: string }
+        Returns: {
+          allocated_cents: number
+          holder_id: string
+          holder_name: string
+          remaining_cents: number
+          used_cents: number
+        }[]
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -689,6 +835,10 @@ export type Database = {
         Returns: boolean
       }
       increment_promo_use: { Args: { _code: string }; Returns: undefined }
+      redeem_voucher: {
+        Args: { _amount_cents: number; _holder_id: string; _order_id: string }
+        Returns: number
+      }
       validate_promo_code: {
         Args: { _code: string; _order_type: string; _subtotal_cents: number }
         Returns: {

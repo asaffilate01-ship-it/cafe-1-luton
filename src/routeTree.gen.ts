@@ -31,6 +31,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as PrintOrderIdRouteImport } from './routes/print.$orderId'
 import { Route as PayOrderIdRouteImport } from './routes/pay.$orderId'
 import { Route as OrderOrderIdRouteImport } from './routes/order.$orderId'
+import { Route as AdminVouchersRouteImport } from './routes/admin.vouchers'
 import { Route as AdminUsersRouteImport } from './routes/admin.users'
 import { Route as AdminSettingsRouteImport } from './routes/admin.settings'
 import { Route as AdminPromosRouteImport } from './routes/admin.promos'
@@ -152,6 +153,11 @@ const OrderOrderIdRoute = OrderOrderIdRouteImport.update({
   path: '/order/$orderId',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminVouchersRoute = AdminVouchersRouteImport.update({
+  id: '/vouchers',
+  path: '/vouchers',
+  getParentRoute: () => AdminRoute,
+} as any)
 const AdminUsersRoute = AdminUsersRouteImport.update({
   id: '/users',
   path: '/users',
@@ -232,6 +238,7 @@ export interface FileRoutesByFullPath {
   '/admin/promos': typeof AdminPromosRoute
   '/admin/settings': typeof AdminSettingsRoute
   '/admin/users': typeof AdminUsersRoute
+  '/admin/vouchers': typeof AdminVouchersRoute
   '/order/$orderId': typeof OrderOrderIdRoute
   '/pay/$orderId': typeof PayOrderIdRoute
   '/print/$orderId': typeof PrintOrderIdRoute
@@ -266,6 +273,7 @@ export interface FileRoutesByTo {
   '/admin/promos': typeof AdminPromosRoute
   '/admin/settings': typeof AdminSettingsRoute
   '/admin/users': typeof AdminUsersRoute
+  '/admin/vouchers': typeof AdminVouchersRoute
   '/order/$orderId': typeof OrderOrderIdRoute
   '/pay/$orderId': typeof PayOrderIdRoute
   '/print/$orderId': typeof PrintOrderIdRoute
@@ -301,6 +309,7 @@ export interface FileRoutesById {
   '/admin/promos': typeof AdminPromosRoute
   '/admin/settings': typeof AdminSettingsRoute
   '/admin/users': typeof AdminUsersRoute
+  '/admin/vouchers': typeof AdminVouchersRoute
   '/order/$orderId': typeof OrderOrderIdRoute
   '/pay/$orderId': typeof PayOrderIdRoute
   '/print/$orderId': typeof PrintOrderIdRoute
@@ -337,6 +346,7 @@ export interface FileRouteTypes {
     | '/admin/promos'
     | '/admin/settings'
     | '/admin/users'
+    | '/admin/vouchers'
     | '/order/$orderId'
     | '/pay/$orderId'
     | '/print/$orderId'
@@ -371,6 +381,7 @@ export interface FileRouteTypes {
     | '/admin/promos'
     | '/admin/settings'
     | '/admin/users'
+    | '/admin/vouchers'
     | '/order/$orderId'
     | '/pay/$orderId'
     | '/print/$orderId'
@@ -405,6 +416,7 @@ export interface FileRouteTypes {
     | '/admin/promos'
     | '/admin/settings'
     | '/admin/users'
+    | '/admin/vouchers'
     | '/order/$orderId'
     | '/pay/$orderId'
     | '/print/$orderId'
@@ -593,6 +605,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof OrderOrderIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin/vouchers': {
+      id: '/admin/vouchers'
+      path: '/vouchers'
+      fullPath: '/admin/vouchers'
+      preLoaderRoute: typeof AdminVouchersRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/admin/users': {
       id: '/admin/users'
       path: '/users'
@@ -676,6 +695,7 @@ interface AdminRouteChildren {
   AdminPromosRoute: typeof AdminPromosRoute
   AdminSettingsRoute: typeof AdminSettingsRoute
   AdminUsersRoute: typeof AdminUsersRoute
+  AdminVouchersRoute: typeof AdminVouchersRoute
 }
 
 const AdminRouteChildren: AdminRouteChildren = {
@@ -688,6 +708,7 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminPromosRoute: AdminPromosRoute,
   AdminSettingsRoute: AdminSettingsRoute,
   AdminUsersRoute: AdminUsersRoute,
+  AdminVouchersRoute: AdminVouchersRoute,
 }
 
 const AdminRouteWithChildren = AdminRoute._addFileChildren(AdminRouteChildren)

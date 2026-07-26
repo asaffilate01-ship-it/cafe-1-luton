@@ -2,6 +2,7 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { createOrder } from "@/lib/orders.functions";
+import { lookupVoucher } from "@/lib/vouchers.functions";
 import { checkDeliveryPostcode } from "@/lib/delivery.functions";
 import { cart, useCart } from "@/lib/cart";
 import { money } from "@/lib/format";
@@ -52,6 +53,7 @@ function Checkout() {
   const tabSession = useTab();
   const { status, settings } = useStoreStatus();
   const place = useServerFn(createOrder);
+  const findVoucher = useServerFn(lookupVoucher);
   const checkArea = useServerFn(checkDeliveryPostcode);
   const [mode, setMode] = useState<Mode>("collection");
   const [scheduleMode, setScheduleMode] = useState<ScheduleMode>("asap");
@@ -164,7 +166,27 @@ function Checkout() {
   const freeDrinkDiscount = drinkUnitPrices.slice(0, freeDrinksUsed).reduce((s, p) => s + p, 0);
   const stampsAfter = ((stamps?.drink_stamps ?? 0) + Math.max(0, drinkUnitPrices.length - freeDrinksUsed)) % 10;
   const discount = Math.min(subtotal, loyaltyDiscount + promoDiscount + freeDrinkDiscount);
-  const total = Math.max(0, subtotal - discount) + delivery;
+  const grossTotal = Math.max(0, subtotal - discount) + delivery;
+  // Court voucher: recognised from the customer's email or phone number.
+  const [voucher, setVoucher] = useState<null | { holder_name: string; remaining_cents: number; allocated_cents: number }>(null);
+  const voucherKey = `${(form.customer_email || "").trim().toLowerCase()}|${(form.customer_phone || "").replace(/\D/g, "")}`;
+  useEffect(() => {
+    const [em, ph] = voucherKey.split("|");
+    if (!em.includes("@") && ph.length < 7) { setVoucher(null); return; }
+    let cancelled = false;
+    const t = setTimeout(async () => {
+      try {
+        const res = await findVoucher({ data: { email: em, phone: ph } });
+        if (cancelled) return;
+        setVoucher(res.found ? { holder_name: res.holder_name, remaining_cents: res.remaining_cents, allocated_cents: res.allocated_cents } : null);
+      } catch {
+        if (!cancelled) setVoucher(null);
+      }
+    }, 450);
+    return () => { cancelled = true; clearTimeout(t); };
+  }, [voucherKey, findVoucher]);
+  const voucherApplied = voucher ? Math.min(voucher.remaining_cents, grossTotal) : 0;
+  const total = Math.max(0, grossTotal - voucherApplied);
   const pointsEarn = user && !onTab ? Math.floor(Math.max(0, subtotal - discount) / 100) : 0;
   const minOrder = settings?.min_order_cents ?? 0;
   const belowMin = minOrder > 0 && subtotal < minOrder;
@@ -222,6 +244,9 @@ function Checkout() {
       cart.clear();
       if (res.on_tab) {
         toast.success(`Added to ${tabSession?.name}'s tab`);
+        navigate({ to: "/order/$orderId", params: { orderId: res.order_id } });
+      } else if (res.fully_covered) {
+        toast.success(`Paid in full by court voucher (${money(res.voucher_cents)})`);
         navigate({ to: "/order/$orderId", params: { orderId: res.order_id } });
       } else {
         // Send them to the on-site card payment page.
@@ -453,6 +478,19 @@ function Checkout() {
             )}
             {mode === "delivery" && (
               <div className="flex justify-between"><span className="text-muted-foreground">Delivery{freeDeliveryByPromo || freeDeliveryByThreshold ? " (free)" : ""}</span><span>{money(delivery)}</span></div>
+            )}
+            {voucher && (
+              <div className="!mt-3 rounded-xl border border-primary/40 bg-primary/10 p-3 text-xs">
+                <p className="font-semibold text-primary">Court voucher — {voucher.holder_name}</p>
+                <p className="mt-1 text-muted-foreground">
+                  {voucher.remaining_cents > 0
+                    ? `${money(voucher.remaining_cents)} of today's ${money(voucher.allocated_cents)} allowance left.${voucherApplied < grossTotal ? ` You'll pay the ${money(total)} difference by card.` : " This order is fully covered."}`
+                    : `Today's ${money(voucher.allocated_cents)} allowance has already been used.`}
+                </p>
+              </div>
+            )}
+            {voucherApplied > 0 && (
+              <div className="flex justify-between text-primary"><span>Court voucher</span><span>−{money(voucherApplied)}</span></div>
             )}
             <div className="mt-2 flex justify-between border-t border-border pt-2 font-display text-lg font-bold"><span>Total</span><span className="text-primary">{money(total)}</span></div>
             {belowMin && (
