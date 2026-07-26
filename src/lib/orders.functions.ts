@@ -35,7 +35,7 @@ const CartItemSchema = z.object({
 const CreateOrderSchema = z.object({
   type: z.enum(["delivery", "collection", "dine_in"]),
   customer_name: z.string().min(1).max(100),
-  customer_phone: z.string().min(3).max(30),
+  customer_phone: z.string().max(30).optional().default(""),
   customer_email: z.string().email().optional().or(z.literal("")),
   company_name: z.string().max(120).optional(),
   address_line1: z.string().max(200).optional(),
