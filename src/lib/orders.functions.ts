@@ -190,6 +190,21 @@ export const createOrder = createServerFn({ method: "POST" })
       const row = (rows ?? [])[0];
       if (!row) throw new Error("That tab access code isn't valid or is no longer active.");
       account_id = row.id;
+
+      // Enforce the account's credit limit against the unsettled balance.
+      const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+      const { data: acct } = await supabaseAdmin
+        .from("accounts").select("credit_limit_cents").eq("id", account_id).maybeSingle();
+      if (acct?.credit_limit_cents) {
+        const { data: openOrders } = await supabaseAdmin
+          .from("orders").select("total_cents").eq("account_id", account_id).eq("payment_status", "on_account");
+        const outstanding = (openOrders ?? []).reduce((s, o) => s + o.total_cents, 0);
+        if (outstanding + total > acct.credit_limit_cents) {
+          throw new Error(
+            `This tab has reached its credit limit of £${(acct.credit_limit_cents / 100).toFixed(2)}. Please settle the outstanding balance first.`,
+          );
+        }
+      }
     }
 
     // Create SumUp checkout FIRST — if it fails, don't create a phantom unpaid order.
