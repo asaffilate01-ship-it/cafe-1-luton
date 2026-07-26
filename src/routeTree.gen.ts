@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as TabRouteImport } from './routes/tab'
 import { Route as StaffRouteImport } from './routes/staff'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as MenuRouteImport } from './routes/menu'
@@ -27,8 +28,14 @@ import { Route as OrderOrderIdRouteImport } from './routes/order.$orderId'
 import { Route as AdminMenuRouteImport } from './routes/admin.menu'
 import { Route as AdminLoginRouteImport } from './routes/admin.login'
 import { Route as AdminBroadcastsRouteImport } from './routes/admin.broadcasts'
+import { Route as AdminAccountsRouteImport } from './routes/admin.accounts'
 import { Route as ApiPublicSumupWebhookRouteImport } from './routes/api/public/sumup-webhook'
 
+const TabRoute = TabRouteImport.update({
+  id: '/tab',
+  path: '/tab',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const StaffRoute = StaffRouteImport.update({
   id: '/staff',
   path: '/staff',
@@ -119,6 +126,11 @@ const AdminBroadcastsRoute = AdminBroadcastsRouteImport.update({
   path: '/broadcasts',
   getParentRoute: () => AdminRoute,
 } as any)
+const AdminAccountsRoute = AdminAccountsRouteImport.update({
+  id: '/accounts',
+  path: '/accounts',
+  getParentRoute: () => AdminRoute,
+} as any)
 const ApiPublicSumupWebhookRoute = ApiPublicSumupWebhookRouteImport.update({
   id: '/api/public/sumup-webhook',
   path: '/api/public/sumup-webhook',
@@ -139,6 +151,8 @@ export interface FileRoutesByFullPath {
   '/menu': typeof MenuRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/staff': typeof StaffRoute
+  '/tab': typeof TabRoute
+  '/admin/accounts': typeof AdminAccountsRoute
   '/admin/broadcasts': typeof AdminBroadcastsRoute
   '/admin/login': typeof AdminLoginRoute
   '/admin/menu': typeof AdminMenuRoute
@@ -160,6 +174,8 @@ export interface FileRoutesByTo {
   '/menu': typeof MenuRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/staff': typeof StaffRoute
+  '/tab': typeof TabRoute
+  '/admin/accounts': typeof AdminAccountsRoute
   '/admin/broadcasts': typeof AdminBroadcastsRoute
   '/admin/login': typeof AdminLoginRoute
   '/admin/menu': typeof AdminMenuRoute
@@ -182,6 +198,8 @@ export interface FileRoutesById {
   '/menu': typeof MenuRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/staff': typeof StaffRoute
+  '/tab': typeof TabRoute
+  '/admin/accounts': typeof AdminAccountsRoute
   '/admin/broadcasts': typeof AdminBroadcastsRoute
   '/admin/login': typeof AdminLoginRoute
   '/admin/menu': typeof AdminMenuRoute
@@ -205,6 +223,8 @@ export interface FileRouteTypes {
     | '/menu'
     | '/sitemap.xml'
     | '/staff'
+    | '/tab'
+    | '/admin/accounts'
     | '/admin/broadcasts'
     | '/admin/login'
     | '/admin/menu'
@@ -226,6 +246,8 @@ export interface FileRouteTypes {
     | '/menu'
     | '/sitemap.xml'
     | '/staff'
+    | '/tab'
+    | '/admin/accounts'
     | '/admin/broadcasts'
     | '/admin/login'
     | '/admin/menu'
@@ -247,6 +269,8 @@ export interface FileRouteTypes {
     | '/menu'
     | '/sitemap.xml'
     | '/staff'
+    | '/tab'
+    | '/admin/accounts'
     | '/admin/broadcasts'
     | '/admin/login'
     | '/admin/menu'
@@ -269,6 +293,7 @@ export interface RootRouteChildren {
   MenuRoute: typeof MenuRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   StaffRoute: typeof StaffRoute
+  TabRoute: typeof TabRoute
   OrderOrderIdRoute: typeof OrderOrderIdRoute
   PrintOrderIdRoute: typeof PrintOrderIdRoute
   ApiPublicSumupWebhookRoute: typeof ApiPublicSumupWebhookRoute
@@ -276,6 +301,13 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/tab': {
+      id: '/tab'
+      path: '/tab'
+      fullPath: '/tab'
+      preLoaderRoute: typeof TabRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/staff': {
       id: '/staff'
       path: '/staff'
@@ -402,6 +434,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminBroadcastsRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/admin/accounts': {
+      id: '/admin/accounts'
+      path: '/accounts'
+      fullPath: '/admin/accounts'
+      preLoaderRoute: typeof AdminAccountsRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/api/public/sumup-webhook': {
       id: '/api/public/sumup-webhook'
       path: '/api/public/sumup-webhook'
@@ -413,12 +452,14 @@ declare module '@tanstack/react-router' {
 }
 
 interface AdminRouteChildren {
+  AdminAccountsRoute: typeof AdminAccountsRoute
   AdminBroadcastsRoute: typeof AdminBroadcastsRoute
   AdminLoginRoute: typeof AdminLoginRoute
   AdminMenuRoute: typeof AdminMenuRoute
 }
 
 const AdminRouteChildren: AdminRouteChildren = {
+  AdminAccountsRoute: AdminAccountsRoute,
   AdminBroadcastsRoute: AdminBroadcastsRoute,
   AdminLoginRoute: AdminLoginRoute,
   AdminMenuRoute: AdminMenuRoute,
@@ -440,6 +481,7 @@ const rootRouteChildren: RootRouteChildren = {
   MenuRoute: MenuRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
   StaffRoute: StaffRoute,
+  TabRoute: TabRoute,
   OrderOrderIdRoute: OrderOrderIdRoute,
   PrintOrderIdRoute: PrintOrderIdRoute,
   ApiPublicSumupWebhookRoute: ApiPublicSumupWebhookRoute,
