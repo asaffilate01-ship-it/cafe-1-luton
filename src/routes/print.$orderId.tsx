@@ -9,6 +9,8 @@ type Order = {
   address_line1: string | null; city: string | null; postcode: string | null;
   delivery_notes: string | null; total_cents: number; subtotal_cents: number;
   delivery_fee_cents: number;
+  discount_cents: number;
+  voucher_cents: number;
   company_name: string | null; table_number: string | null;
   schedule_mode: string | null; scheduled_for: string | null;
 };
@@ -46,6 +48,7 @@ function sampleOrder(type: "dine_in" | "collection" | "delivery", scheduled: boo
       address_line1: "Crown Court, Civic Close", city: "St Albans", postcode: "AL1 3JW",
       delivery_notes: type === "delivery" ? "Reception desk, ask for Sam" : null,
       subtotal_cents: 1490, delivery_fee_cents: type === "delivery" ? 0 : 0, total_cents: 1490,
+      discount_cents: 0, voucher_cents: 0,
       company_name: type === "delivery" ? "Sample Offices Ltd" : null,
       table_number: type === "dine_in" ? "12" : null,
       schedule_mode: scheduled ? "scheduled" : "asap",
@@ -216,8 +219,12 @@ function PrintPage() {
             <>
               <div className="my-2 border-t border-dashed border-black" />
               <div className="flex justify-between"><span>Subtotal</span><span>{money(order.subtotal_cents)}</span></div>
+              {order.discount_cents > 0 && <div className="flex justify-between"><span>Discount</span><span>−{money(order.discount_cents)}</span></div>}
               {order.delivery_fee_cents > 0 && <div className="flex justify-between"><span>Delivery</span><span>{money(order.delivery_fee_cents)}</span></div>}
-              <div className="flex justify-between font-bold"><span>TOTAL</span><span>{money(order.total_cents)}</span></div>
+              {order.voucher_cents > 0 && (
+                <div className="flex justify-between font-bold"><span>COURT VOUCHER</span><span>−{money(order.voucher_cents)}</span></div>
+              )}
+              <div className="flex justify-between font-bold"><span>{order.voucher_cents > 0 ? "TO PAY" : "TOTAL"}</span><span>{money(order.total_cents)}</span></div>
             </>
           )}
           <div className="my-2 border-t border-dashed border-black" />
