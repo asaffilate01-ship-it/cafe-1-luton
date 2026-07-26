@@ -97,16 +97,24 @@ function PrintPage() {
             <p className="mt-1 text-xs">{new Date(order.created_at).toLocaleString()}</p>
           </div>
           <div className="my-2 border-t border-dashed border-black" />
-          <p><b>Order #{order.order_number}</b> · {order.type.replace("_", " ").toUpperCase()}</p>
+          <p><b>Order #{order.order_number}</b></p>
+          <div className="my-1 border-2 border-black px-1 py-1 text-center">
+            <p className="text-[22px] font-black leading-tight">
+              {order.type === "dine_in" ? "DINE IN" : order.type === "collection" ? "PICKUP" : "DELIVERY"}
+            </p>
+            <p className="text-[18px] font-black leading-tight">
+              {order.schedule_mode === "scheduled" && order.scheduled_for
+                ? `FOR ${new Date(order.scheduled_for).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}`
+                : "ASAP"}
+            </p>
+            {order.schedule_mode === "scheduled" && order.scheduled_for && (
+              <p className="text-[11px] font-bold">{new Date(order.scheduled_for).toLocaleDateString()}</p>
+            )}
+            {order.type === "dine_in" && order.table_number && (
+              <p className="text-[16px] font-black leading-tight">TABLE {order.table_number}</p>
+            )}
+          </div>
           <p>{order.customer_name} · {order.customer_phone}</p>
-          <p className="text-xs">
-            {order.schedule_mode === "scheduled" && order.scheduled_for
-              ? `FOR: ${new Date(order.scheduled_for).toLocaleString()}`
-              : "ASAP"}
-          </p>
-          {order.type === "dine_in" && order.table_number && (
-            <p className="text-xs">TABLE: {order.table_number}</p>
-          )}
           {order.type === "delivery" && (
             <p className="mt-1 text-xs">
               {order.company_name && <>{order.company_name}<br /></>}
