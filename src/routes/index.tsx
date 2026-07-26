@@ -58,9 +58,9 @@ function Home() {
               alt="Café 1 spread: full English breakfast, fish and chips, jacket potato, loaded fries and a mug of tea"
               className="aspect-square w-full rounded-[2rem] object-cover shadow-brand-lg"
             />
-            <div className="absolute -bottom-6 -left-6 hidden max-w-xs rounded-2xl border border-border bg-card p-5 shadow-brand sm:block">
+            <div className="card-3d absolute -bottom-6 -left-6 hidden max-w-xs p-5 sm:block">
               <div className="flex items-center gap-3">
-                <span className="grid h-10 w-10 place-items-center rounded-full bg-primary-soft text-primary">
+                <span className="icon-3d h-11 w-11">
                   <Coffee className="h-5 w-5" />
                 </span>
                 <div>
@@ -69,7 +69,7 @@ function Home() {
                 </div>
               </div>
             </div>
-            <div className="absolute -right-4 top-8 hidden rounded-2xl border border-border bg-card p-4 shadow-brand sm:block">
+            <div className="card-3d absolute -right-4 top-8 hidden p-4 sm:block">
               <p className="text-xs uppercase tracking-wider text-muted-foreground">Live orders</p>
               <p className="font-display text-2xl font-bold text-primary">27 today</p>
             </div>
@@ -84,11 +84,11 @@ function Home() {
             { icon: Croissant, title: "Made fresh daily", body: "Pastries baked in-house every morning. Sandwiches built to order." },
             { icon: Bike, title: "Fast delivery", body: "In-house drivers get your order to you hot — track it live from your phone." },
           ].map((f) => (
-            <div key={f.title} className="rounded-2xl border border-border bg-card p-6 shadow-sm">
-              <span className="grid h-11 w-11 place-items-center rounded-xl bg-primary-soft text-primary">
-                <f.icon className="h-5 w-5" />
+            <div key={f.title} className="card-3d card-3d-hover p-6">
+              <span className="icon-3d h-14 w-14">
+                <f.icon className="h-6 w-6" />
               </span>
-              <h3 className="mt-4 font-display text-xl font-semibold">{f.title}</h3>
+              <h3 className="mt-5 font-display text-xl font-semibold">{f.title}</h3>
               <p className="mt-2 text-sm text-muted-foreground">{f.body}</p>
             </div>
           ))}
