@@ -1,0 +1,93 @@
+import { useEffect, useRef, useState } from "react";
+
+export type MapPoint = { lat: number; lng: number; label: string; kind: "driver" | "destination" | "store" };
+
+declare global {
+  interface Window { google?: any; __cafe1MapReady?: () => void }
+}
+
+let loaderPromise: Promise<void> | null = null;
+
+function loadMaps(): Promise<void> {
+  if (typeof window === "undefined") return Promise.reject(new Error("no window"));
+  if (window.google?.maps) return Promise.resolve();
+  if (loaderPromise) return loaderPromise;
+  const key = import.meta.env.VITE_LOVABLE_CONNECTOR_GOOGLE_MAPS_BROWSER_KEY;
+  const channel = import.meta.env.VITE_LOVABLE_CONNECTOR_GOOGLE_MAPS_TRACKING_ID;
+  if (!key) return Promise.reject(new Error("Maps key missing"));
+  loaderPromise = new Promise<void>((resolve, reject) => {
+    window.__cafe1MapReady = () => resolve();
+    const s = document.createElement("script");
+    s.src = `https://maps.googleapis.com/maps/api/js?key=${key}&loading=async&callback=__cafe1MapReady${channel ? `&channel=${channel}` : ""}`;
+    s.async = true;
+    s.onerror = () => reject(new Error("Maps failed to load"));
+    document.head.appendChild(s);
+  });
+  return loaderPromise;
+}
+
+const PIN: Record<MapPoint["kind"], string> = {
+  driver: "#dc2626",
+  destination: "#111827",
+  store: "#f59e0b",
+};
+
+export function LiveMap({ points, className = "" }: { points: MapPoint[]; className?: string }) {
+  const el = useRef<HTMLDivElement | null>(null);
+  const map = useRef<any>(null);
+  const markers = useRef<any[]>([]);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    loadMaps()
+      .then(() => {
+        if (cancelled || !el.current) return;
+        map.current = new window.google.maps.Map(el.current, {
+          center: points[0] ?? { lat: 51.7486, lng: -0.3345 },
+          zoom: 15,
+          disableDefaultUI: true,
+          zoomControl: true,
+        });
+      })
+      .catch((e) => !cancelled && setError(e instanceof Error ? e.message : "Map unavailable"));
+    return () => { cancelled = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
+    if (!map.current || !window.google?.maps) return;
+    markers.current.forEach((m) => m.setMap(null));
+    markers.current = points.map((p) =>
+      new window.google.maps.Marker({
+        position: { lat: p.lat, lng: p.lng },
+        map: map.current,
+        title: p.label,
+        icon: {
+          path: window.google.maps.SymbolPath.CIRCLE,
+          scale: p.kind === "driver" ? 10 : 7,
+          fillColor: PIN[p.kind],
+          fillOpacity: 1,
+          strokeColor: "#ffffff",
+          strokeWeight: 3,
+        },
+      }),
+    );
+    if (points.length === 1) {
+      map.current.setCenter(points[0]);
+    } else if (points.length > 1) {
+      const b = new window.google.maps.LatLngBounds();
+      points.forEach((p) => b.extend({ lat: p.lat, lng: p.lng }));
+      map.current.fitBounds(b, 64);
+    }
+  }, [points]);
+
+  if (error) {
+    return (
+      <div className={`grid place-items-center rounded-2xl border border-border bg-secondary text-sm text-muted-foreground ${className}`}>
+        Live map unavailable
+      </div>
+    );
+  }
+  return <div ref={el} className={`rounded-2xl border border-border ${className}`} />;
+}
