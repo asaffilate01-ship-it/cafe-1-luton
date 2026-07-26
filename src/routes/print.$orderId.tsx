@@ -15,6 +15,9 @@ type Order = {
 type Item = { id: string; name: string; qty: number; notes: string | null; unit_price_cents: number };
 
 export const Route = createFileRoute("/print/$orderId")({
+  validateSearch: (s: Record<string, unknown>) => ({
+    paper: s.paper === "80" || s.paper === 80 ? (80 as const) : s.paper === "58" || s.paper === 58 ? (58 as const) : undefined,
+  }),
   head: () => ({
     meta: [{ title: "Ticket — Cafe1" }, { name: "robots", content: "noindex" }],
   }),
@@ -23,18 +26,23 @@ export const Route = createFileRoute("/print/$orderId")({
 
 function PrintPage() {
   const { orderId } = Route.useParams();
+  const { paper: paperParam } = Route.useSearch();
   const [order, setOrder] = useState<Order | null>(null);
   const [items, setItems] = useState<Item[]>([]);
   const [paper, setPaper] = useState<58 | 80>(58);
 
   useEffect(() => {
+    if (paperParam) {
+      setPaper(paperParam);
+      return;
+    }
     const saved = typeof window !== "undefined" ? window.localStorage.getItem("cafe1_paper_mm") : null;
     if (saved === "80") setPaper(80);
-  }, []);
+  }, [paperParam]);
 
   useEffect(() => {
     if (typeof document === "undefined") return;
-    window.localStorage.setItem("cafe1_paper_mm", String(paper));
+    if (!paperParam) window.localStorage.setItem("cafe1_paper_mm", String(paper));
     const id = "cafe1-paper-size";
     let el = document.getElementById(id) as HTMLStyleElement | null;
     if (!el) {
