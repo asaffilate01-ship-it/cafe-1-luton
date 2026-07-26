@@ -61,9 +61,11 @@ export const createOrder = createServerFn({ method: "POST" })
     const validToken = token && token.split(".").length === 3 ? token : "";
     const supabase = createServerSupabase(validToken || undefined);
     let userId: string | null = null;
+    let authEmail: string | null = null;
     if (validToken) {
       const { data: u } = await supabase.auth.getUser(validToken);
       userId = u.user?.id ?? null;
+      authEmail = u.user?.email ?? null;
     }
 
     const ids = data.items.map((i) => i.menu_item_id);
@@ -175,7 +177,16 @@ export const createOrder = createServerFn({ method: "POST" })
       }
     }
 
-    const loyalty_discount = userId ? Math.round(subtotal * LOYALTY_DISCOUNT_RATE) : 0;
+    // Percentage discount: signed-in member rate, or a fixed per-customer rate
+    // set in the backend against their email address (whichever is higher).
+    let discount_percent = userId ? LOYALTY_DISCOUNT_RATE * 100 : 0;
+    const discountEmail = (data.customer_email || authEmail || "").trim();
+    if (discountEmail) {
+      const { data: dRows } = await supabase.rpc("get_customer_discount", { _email: discountEmail });
+      const p = (dRows ?? [])[0]?.percent ?? 0;
+      if (p > discount_percent) discount_percent = p;
+    }
+    const loyalty_discount = Math.round(subtotal * (discount_percent / 100));
     const discount = Math.min(subtotal, loyalty_discount + promo_discount);
     const total = Math.max(0, subtotal - discount) + delivery_fee;
     const points_earned = userId ? Math.floor(Math.max(0, subtotal - discount) / 100) * POINTS_PER_POUND : 0;
