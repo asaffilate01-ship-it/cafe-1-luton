@@ -12,6 +12,9 @@ import { tab, useTab } from "@/lib/tab";
 import { toast } from "sonner";
 import { useStoreStatus } from "@/hooks/use-store-status";
 import { supabase } from "@/integrations/supabase/client";
+import { useOrderContext, describeContext } from "@/lib/order-context";
+import { OrderSetupGate } from "@/components/order-setup-gate";
+import { Settings2 } from "lucide-react";
 
 export const Route = createFileRoute("/checkout")({
   head: () => ({
@@ -55,9 +58,11 @@ function Checkout() {
   const place = useServerFn(createOrder);
   const findVoucher = useServerFn(lookupVoucher);
   const checkArea = useServerFn(checkDeliveryPostcode);
-  const [mode, setMode] = useState<Mode>("collection");
-  const [scheduleMode, setScheduleMode] = useState<ScheduleMode>("asap");
-  const [scheduledFor, setScheduledFor] = useState<string>("");
+  const ctx = useOrderContext();
+  const [gateOpen, setGateOpen] = useState(false);
+  const [mode, setMode] = useState<Mode>(ctx?.mode ?? "collection");
+  const [scheduleMode, setScheduleMode] = useState<ScheduleMode>(ctx?.schedule_mode ?? "asap");
+  const [scheduledFor, setScheduledFor] = useState<string>(ctx?.scheduled_for ?? "");
   const timeSlots = useState(() => buildTimeSlots())[0];
   const [promoInput, setPromoInput] = useState("");
   const [promo, setPromo] = useState<null | { code: string; discount_cents: number; discount_type: string; message: string | null }>(null);
@@ -69,13 +74,34 @@ function Checkout() {
     company_name: "",
     address_line1: "",
     city: "",
-    postcode: "",
+    postcode: ctx?.postcode ?? "",
     delivery_notes: "",
     table_number: "",
   });
   const [busy, setBusy] = useState(false);
-  const [area, setArea] = useState<null | { ok: boolean; message: string }>(null);
+  const [area, setArea] = useState<null | { ok: boolean; message: string }>(
+    ctx?.mode === "delivery" && ctx.postcode && ctx.distance_m != null
+      ? { ok: true, message: `You're in our delivery area (${(ctx.distance_m / 1609.34).toFixed(2)} mi away).` }
+      : null,
+  );
   const [areaBusy, setAreaBusy] = useState(false);
+
+  // Keep local state in sync when the setup gate updates the shared context.
+  useEffect(() => {
+    if (!ctx) return;
+    setMode(ctx.mode);
+    setScheduleMode(ctx.schedule_mode);
+    setScheduledFor(ctx.scheduled_for ?? "");
+    if (ctx.mode === "delivery") {
+      setForm((f) => ({ ...f, postcode: ctx.postcode ?? f.postcode }));
+      if (ctx.distance_m != null) {
+        setArea({
+          ok: true,
+          message: `You're in our delivery area (${(ctx.distance_m / 1609.34).toFixed(2)} mi away).`,
+        });
+      }
+    }
+  }, [ctx?.mode, ctx?.schedule_mode, ctx?.scheduled_for, ctx?.postcode, ctx?.distance_m]);
 
   async function verifyPostcode(pc: string) {
     if (!pc.trim()) { setArea(null); return; }
@@ -282,6 +308,20 @@ function Checkout() {
       <SiteHeader />
       <div className="mx-auto grid max-w-4xl gap-8 px-4 py-12 lg:grid-cols-[1fr_360px]">
         <form id="checkout-form" onSubmit={submit} className="space-y-6">
+          <div className="flex items-center justify-between gap-3 rounded-2xl border border-primary/30 bg-primary/5 p-4 text-sm">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-wider text-primary">Your order</p>
+              <p className="mt-1 font-semibold">{describeContext(ctx ?? { mode, schedule_mode: scheduleMode, scheduled_for: scheduledFor, postcode: form.postcode })}</p>
+            </div>
+            <button
+              type="button"
+              onClick={() => setGateOpen(true)}
+              className="inline-flex items-center gap-1.5 rounded-full border border-primary/40 px-3 py-1.5 text-xs font-semibold text-primary hover:bg-primary/10"
+            >
+              <Settings2 className="h-3.5 w-3.5" /> Change
+            </button>
+          </div>
+          <OrderSetupGate open={gateOpen} onClose={() => setGateOpen(false)} />
           {!status.open && (
             <div className={`rounded-2xl border p-4 text-sm ${settings?.allow_preorder_when_closed ? "border-amber-500/40 bg-amber-500/10 text-amber-900" : "border-destructive/40 bg-destructive/10 text-destructive"}`}>
               <p className="font-semibold">
