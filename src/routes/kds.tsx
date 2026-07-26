@@ -9,8 +9,19 @@ import { useAlertOnIncrease, useNotificationPermission } from "@/hooks/use-order
 import { Bell, BellOff } from "lucide-react";
 
 type Item = { id: string; order_id: string; name: string; qty: number; notes: string | null };
-type Order = { id: string; order_number: number; status: string; type: string; customer_name: string; created_at: string };
+type Order = {
+  id: string; order_number: number; status: string; type: string; customer_name: string; created_at: string;
+  schedule_mode: string | null; scheduled_for: string | null; table_number: string | null;
+};
 type Ticket = Order & { items: Item[] };
+
+const TYPE_LABEL: Record<string, string> = { dine_in: "DINE IN", collection: "PICKUP", delivery: "DELIVERY" };
+
+function whenLabel(o: { schedule_mode: string | null; scheduled_for: string | null }) {
+  if (o.schedule_mode === "scheduled" && o.scheduled_for)
+    return new Date(o.scheduled_for).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+  return "ASAP";
+}
 
 export const Route = createFileRoute("/kds")({
   head: () => ({
@@ -33,7 +44,7 @@ function KDS() {
     async function load() {
       const { data: orders } = await supabase
         .from("orders")
-        .select("id, order_number, status, type, customer_name, created_at")
+        .select("id, order_number, status, type, customer_name, created_at, schedule_mode, scheduled_for, table_number")
         .in("status", ["preparing", "ready"])
         .order("created_at");
       const ids = (orders ?? []).map((o) => o.id);
@@ -88,9 +99,20 @@ function KDS() {
             <div key={t.id} className={`flex flex-col rounded-2xl border-2 bg-card p-4 ${hot ? "border-primary shadow-brand" : "border-border"}`}>
               <div className="flex items-center justify-between">
                 <p className="font-display text-2xl font-bold">#{t.order_number}</p>
-                <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">{t.type.replace("_", " ")}</span>
+                <span className="text-sm font-bold text-muted-foreground">{mins}m ago</span>
               </div>
-              <p className="text-sm text-muted-foreground">{t.customer_name} · {mins}m</p>
+              <div className="mt-2 rounded-xl bg-primary px-3 py-2 text-primary-foreground">
+                <p className="font-display text-2xl font-black uppercase leading-none tracking-wide">
+                  {TYPE_LABEL[t.type] ?? t.type.replace("_", " ").toUpperCase()}
+                </p>
+                <p className="mt-1 text-xl font-black leading-none">
+                  {whenLabel(t) === "ASAP" ? "ASAP" : `FOR ${whenLabel(t)}`}
+                </p>
+                {t.type === "dine_in" && t.table_number && (
+                  <p className="mt-1 text-sm font-bold">TABLE {t.table_number}</p>
+                )}
+              </div>
+              <p className="mt-2 text-sm text-muted-foreground">{t.customer_name}</p>
               <ul className="mt-3 flex-1 space-y-1 text-sm">
                 {t.items.map((i) => (
                   <li key={i.id}><span className="font-bold text-primary">{i.qty}×</span> {i.name}{i.notes ? <em className="text-muted-foreground"> — {i.notes}</em> : null}</li>
