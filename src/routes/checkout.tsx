@@ -445,6 +445,29 @@ function Checkout() {
               )}
             </div>
           )}
+          {!onTab && (
+            <div className="mt-4 border-t border-border pt-4">
+              <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Court voucher code</p>
+              {voucher ? (
+                <div className="mt-2 flex items-center justify-between gap-2 rounded-xl border border-primary/40 bg-primary/10 p-2 text-sm">
+                  <div>
+                    <span className="font-mono font-bold text-primary">{voucher.code}</span>
+                    <p className="text-xs text-muted-foreground">{money(voucher.remaining_cents)} left today</p>
+                  </div>
+                  <button type="button" onClick={() => { setVoucher(null); setVoucherInput(""); setVoucherError(null); }} className="text-xs font-semibold text-primary underline">Remove</button>
+                </div>
+              ) : (
+                <>
+                  <div className="mt-2 flex gap-2">
+                    <input value={voucherInput} onChange={(e) => { setVoucherInput(e.target.value.toUpperCase()); setVoucherError(null); }} placeholder="Enter court code" className="h-10 flex-1 rounded-lg border border-border bg-background px-3 font-mono text-sm uppercase" />
+                    <button type="button" onClick={applyVoucher} disabled={voucherBusy || !voucherInput.trim()} className="h-10 rounded-lg bg-primary px-4 text-sm font-semibold text-primary-foreground hover:bg-primary-hover disabled:opacity-50">Apply</button>
+                  </div>
+                  {voucherError && <p className="mt-1 text-xs text-destructive">{voucherError}</p>}
+                  <p className="mt-1 text-xs text-muted-foreground">If the court issued you a voucher code, enter it here to deduct today's allowance.</p>
+                </>
+              )}
+            </div>
+          )}
           <div className="mt-3 space-y-1 text-sm">
             <div className="flex justify-between"><span className="text-muted-foreground">Subtotal</span><span>{money(subtotal)}</span></div>
             {user && (
