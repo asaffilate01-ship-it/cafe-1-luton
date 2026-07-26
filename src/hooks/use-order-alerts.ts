@@ -53,9 +53,13 @@ export function useAlertOnIncrease(count: number, title: string, body: string) {
 }
 
 export function useNotificationPermission() {
-  const [perm, setPerm] = useState<NotificationPermission | "unsupported">(
-    typeof Notification === "undefined" ? "unsupported" : Notification.permission,
-  );
+  // Start with a value that matches SSR to avoid hydration mismatches,
+  // then sync to the real browser permission after mount.
+  const [perm, setPerm] = useState<NotificationPermission | "unsupported">("unsupported");
+  useEffect(() => {
+    if (typeof Notification === "undefined") setPerm("unsupported");
+    else setPerm(Notification.permission);
+  }, []);
   async function request() {
     if (typeof Notification === "undefined") return;
     const p = await Notification.requestPermission();
