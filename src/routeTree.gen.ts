@@ -25,6 +25,7 @@ import { Route as AboutRouteImport } from './routes/about'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as PrintOrderIdRouteImport } from './routes/print.$orderId'
 import { Route as OrderOrderIdRouteImport } from './routes/order.$orderId'
+import { Route as AdminUsersRouteImport } from './routes/admin.users'
 import { Route as AdminMenuRouteImport } from './routes/admin.menu'
 import { Route as AdminLoginRouteImport } from './routes/admin.login'
 import { Route as AdminBroadcastsRouteImport } from './routes/admin.broadcasts'
@@ -111,6 +112,11 @@ const OrderOrderIdRoute = OrderOrderIdRouteImport.update({
   path: '/order/$orderId',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminUsersRoute = AdminUsersRouteImport.update({
+  id: '/users',
+  path: '/users',
+  getParentRoute: () => AdminRoute,
+} as any)
 const AdminMenuRoute = AdminMenuRouteImport.update({
   id: '/menu',
   path: '/menu',
@@ -156,6 +162,7 @@ export interface FileRoutesByFullPath {
   '/admin/broadcasts': typeof AdminBroadcastsRoute
   '/admin/login': typeof AdminLoginRoute
   '/admin/menu': typeof AdminMenuRoute
+  '/admin/users': typeof AdminUsersRoute
   '/order/$orderId': typeof OrderOrderIdRoute
   '/print/$orderId': typeof PrintOrderIdRoute
   '/api/public/sumup-webhook': typeof ApiPublicSumupWebhookRoute
@@ -179,6 +186,7 @@ export interface FileRoutesByTo {
   '/admin/broadcasts': typeof AdminBroadcastsRoute
   '/admin/login': typeof AdminLoginRoute
   '/admin/menu': typeof AdminMenuRoute
+  '/admin/users': typeof AdminUsersRoute
   '/order/$orderId': typeof OrderOrderIdRoute
   '/print/$orderId': typeof PrintOrderIdRoute
   '/api/public/sumup-webhook': typeof ApiPublicSumupWebhookRoute
@@ -203,6 +211,7 @@ export interface FileRoutesById {
   '/admin/broadcasts': typeof AdminBroadcastsRoute
   '/admin/login': typeof AdminLoginRoute
   '/admin/menu': typeof AdminMenuRoute
+  '/admin/users': typeof AdminUsersRoute
   '/order/$orderId': typeof OrderOrderIdRoute
   '/print/$orderId': typeof PrintOrderIdRoute
   '/api/public/sumup-webhook': typeof ApiPublicSumupWebhookRoute
@@ -228,6 +237,7 @@ export interface FileRouteTypes {
     | '/admin/broadcasts'
     | '/admin/login'
     | '/admin/menu'
+    | '/admin/users'
     | '/order/$orderId'
     | '/print/$orderId'
     | '/api/public/sumup-webhook'
@@ -251,6 +261,7 @@ export interface FileRouteTypes {
     | '/admin/broadcasts'
     | '/admin/login'
     | '/admin/menu'
+    | '/admin/users'
     | '/order/$orderId'
     | '/print/$orderId'
     | '/api/public/sumup-webhook'
@@ -274,6 +285,7 @@ export interface FileRouteTypes {
     | '/admin/broadcasts'
     | '/admin/login'
     | '/admin/menu'
+    | '/admin/users'
     | '/order/$orderId'
     | '/print/$orderId'
     | '/api/public/sumup-webhook'
@@ -413,6 +425,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof OrderOrderIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin/users': {
+      id: '/admin/users'
+      path: '/users'
+      fullPath: '/admin/users'
+      preLoaderRoute: typeof AdminUsersRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/admin/menu': {
       id: '/admin/menu'
       path: '/menu'
@@ -456,6 +475,7 @@ interface AdminRouteChildren {
   AdminBroadcastsRoute: typeof AdminBroadcastsRoute
   AdminLoginRoute: typeof AdminLoginRoute
   AdminMenuRoute: typeof AdminMenuRoute
+  AdminUsersRoute: typeof AdminUsersRoute
 }
 
 const AdminRouteChildren: AdminRouteChildren = {
@@ -463,6 +483,7 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminBroadcastsRoute: AdminBroadcastsRoute,
   AdminLoginRoute: AdminLoginRoute,
   AdminMenuRoute: AdminMenuRoute,
+  AdminUsersRoute: AdminUsersRoute,
 }
 
 const AdminRouteWithChildren = AdminRoute._addFileChildren(AdminRouteChildren)
