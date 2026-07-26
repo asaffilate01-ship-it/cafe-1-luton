@@ -7,6 +7,8 @@ import { updateOrderStatus, markPaidManually, assignDriver, listDrivers } from "
 import { money } from "@/lib/format";
 import { toast } from "sonner";
 import { Printer, Check } from "lucide-react";
+import { useAlertOnIncrease, useNotificationPermission } from "@/hooks/use-order-alerts";
+import { Bell, BellOff } from "lucide-react";
 
 type OrderRow = {
   id: string; order_number: number; status: string; payment_status: string;
@@ -88,6 +90,8 @@ function Admin() {
   }
 
   const incoming = orders.filter((o) => o.status === "paid");
+  useAlertOnIncrease(incoming.length, "New order · Cafe1", `${incoming.length} order${incoming.length === 1 ? "" : "s"} awaiting acceptance`);
+  const { perm, request } = useNotificationPermission();
 
   return (
     <div className="min-h-screen bg-background">
@@ -95,6 +99,14 @@ function Admin() {
         <div className="flex items-center justify-between">
           <h1 className="font-display text-3xl font-bold">Orders</h1>
           <div className="flex gap-2 text-sm">
+            <button
+              onClick={request}
+              className="flex items-center gap-1 rounded-full border border-border bg-card px-3 py-2 font-semibold hover:border-primary"
+              title={perm === "granted" ? "Alerts on" : "Enable alerts"}
+            >
+              {perm === "granted" ? <Bell className="h-4 w-4 text-primary" /> : <BellOff className="h-4 w-4" />}
+              <span className="hidden sm:inline">{perm === "granted" ? "Alerts on" : perm === "unsupported" ? "No alerts" : "Enable alerts"}</span>
+            </button>
             <Link to="/kds" className="rounded-full border border-border bg-card px-4 py-2 font-semibold hover:border-primary">KDS</Link>
             <Link to="/driver" className="rounded-full border border-border bg-card px-4 py-2 font-semibold hover:border-primary">Driver</Link>
             <Link to="/admin/menu" className="rounded-full border border-border bg-card px-4 py-2 font-semibold hover:border-primary">Menu</Link>
