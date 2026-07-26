@@ -4,7 +4,22 @@ import { supabase } from "@/integrations/supabase/client";
 import { SiteHeader } from "@/components/site-header";
 import { money } from "@/lib/format";
 import { toast } from "sonner";
-import { Bell } from "lucide-react";
+import { Bell, Navigation } from "lucide-react";
+import { LiveMap } from "@/components/live-map";
+
+const STORE = { lat: 51.7486, lng: -0.3345 };
+
+type DriverLoc = { lat: number; lng: number; updated_at: string };
+
+function metresBetween(a: { lat: number; lng: number }, b: { lat: number; lng: number }) {
+  const R = 6371000;
+  const dLat = ((b.lat - a.lat) * Math.PI) / 180;
+  const dLng = ((b.lng - a.lng) * Math.PI) / 180;
+  const s =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos((a.lat * Math.PI) / 180) * Math.cos((b.lat * Math.PI) / 180) * Math.sin(dLng / 2) ** 2;
+  return 2 * R * Math.asin(Math.sqrt(s));
+}
 
 type Order = {
   id: string;
@@ -57,6 +72,7 @@ const STATUS_MESSAGES: Record<string, { title: string; body: string }> = {
 function OrderView() {
   const { orderId } = Route.useParams();
   const [order, setOrder] = useState<Order | null>(null);
+  const [driverLoc, setDriverLoc] = useState<DriverLoc | null>(null);
   const [items, setItems] = useState<Array<{ id: string; name: string; qty: number; unit_price_cents: number }>>([]);
   const lastStatus = useRef<string | null>(null);
   const [notifPerm, setNotifPerm] = useState<NotificationPermission | "unsupported">(
@@ -92,6 +108,34 @@ function OrderView() {
     return () => { supabase.removeChannel(ch); };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [orderId]);
+
+  const tracking = order?.type === "delivery" && order.status === "out_for_delivery";
+
+  useEffect(() => {
+    if (!tracking) { setDriverLoc(null); return; }
+    async function loadLoc() {
+      const { data } = await supabase
+        .from("driver_locations")
+        .select("lat, lng, updated_at")
+        .eq("order_id", orderId)
+        .maybeSingle();
+      setDriverLoc((data as DriverLoc | null) ?? null);
+    }
+    loadLoc();
+    const ch = supabase
+      .channel(`driver-loc-${orderId}`)
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "driver_locations", filter: `order_id=eq.${orderId}` },
+        (payload) => {
+          const row = payload.new as DriverLoc | undefined;
+          if (row?.lat != null) setDriverLoc(row);
+        },
+      )
+      .subscribe();
+    const poll = setInterval(loadLoc, 20000);
+    return () => { supabase.removeChannel(ch); clearInterval(poll); };
+  }, [orderId, tracking]);
 
   if (!order) return (
     <div className="min-h-screen bg-background">
