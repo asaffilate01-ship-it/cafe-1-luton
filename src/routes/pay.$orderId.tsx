@@ -1,6 +1,7 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { confirmPayment } from "@/lib/payments.functions";
 import { SiteHeader } from "@/components/site-header";
 import { money } from "@/lib/format";
 import { toast } from "sonner";
@@ -111,8 +112,17 @@ function PayView() {
             if (b?.status === "PAID" || type === "success") {
               setStatus("paid");
               toast.success("Payment received");
-              // Give the webhook a beat, then navigate.
-              setTimeout(() => navigate({ to: "/order/$orderId", params: { orderId }, replace: true }), 800);
+              // Confirm server-side with SumUp (independent of the webhook), then route.
+              try {
+                for (let i = 0; i < 5; i++) {
+                  const r = await confirmPayment({ data: { order_id: orderId } });
+                  if (r.paid) break;
+                  await new Promise((res) => setTimeout(res, 1000));
+                }
+              } catch (e) {
+                console.error("[pay] confirm failed", e);
+              }
+              navigate({ to: "/order/$orderId", params: { orderId }, replace: true });
             }
           }
           if (type === "error" || type === "invalid") {
