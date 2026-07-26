@@ -109,3 +109,17 @@ function KDS() {
     </div>
   );
 }
+
+function AlertsToggle() {
+  const { perm, request } = useNotificationPermission();
+  return (
+    <button
+      onClick={request}
+      className="flex items-center gap-1 rounded-full bg-primary-foreground/10 px-3 py-1.5 text-xs font-semibold hover:bg-primary-foreground/20"
+      title={perm === "granted" ? "Alerts on" : "Enable alerts"}
+    >
+      {perm === "granted" ? <Bell className="h-4 w-4" /> : <BellOff className="h-4 w-4" />}
+      <span>{perm === "granted" ? "Alerts on" : perm === "unsupported" ? "No alerts" : "Enable alerts"}</span>
+    </button>
+  );
+}
