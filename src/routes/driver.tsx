@@ -34,12 +34,14 @@ function Driver() {
   const { has } = useRoles(user);
 
   useEffect(() => {
+    if (!user) return;
     async function load() {
       const { data } = await supabase
         .from("orders")
         .select("id, order_number, status, total_cents, customer_name, customer_phone, address_line1, city, postcode, delivery_notes, company_name, scheduled_for, schedule_mode")
         .eq("type", "delivery")
-        .in("status", ["ready", "out_for_delivery"])
+        .eq("driver_id", user!.id)
+        .in("status", ["out_for_delivery"])
         .order("created_at");
       setJobs((data ?? []) as Job[]);
     }
@@ -49,15 +51,15 @@ function Driver() {
       .on("postgres_changes", { event: "*", schema: "public", table: "orders" }, () => load())
       .subscribe();
     return () => { supabase.removeChannel(ch); };
-  }, []);
+  }, [user]);
 
   if (user && !has("admin") && !has("driver"))
     return <div className="p-10 text-center text-muted-foreground">Not authorised.</div>;
 
-  async function set(id: string, status: "out_for_delivery" | "delivered") {
+  async function set(id: string, status: "delivered") {
     try {
       await update({ data: { order_id: id, status } });
-      toast.success(status === "delivered" ? "Delivered ✓" : "On the way");
+      toast.success("Delivered ✓");
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Failed");
     }
@@ -94,7 +96,6 @@ function Driver() {
               </a>
               {j.delivery_notes && <p className="mt-2 rounded-xl bg-secondary p-3 text-sm">{j.delivery_notes}</p>}
               <div className="mt-4">
-                {j.status === "ready" && <button onClick={() => set(j.id, "out_for_delivery")} className="h-12 w-full rounded-full bg-primary font-semibold text-primary-foreground hover:bg-primary-hover">Pick up & start delivery</button>}
                 {j.status === "out_for_delivery" && <button onClick={() => set(j.id, "delivered")} className="h-12 w-full rounded-full bg-primary font-semibold text-primary-foreground hover:bg-primary-hover">Mark delivered</button>}
               </div>
             </div>
