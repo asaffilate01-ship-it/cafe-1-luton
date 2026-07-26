@@ -58,9 +58,6 @@ function Driver() {
     return () => { supabase.removeChannel(ch); };
   }, [user]);
 
-  if (user && !has("admin") && !has("driver"))
-    return <div className="p-10 text-center text-muted-foreground">Not authorised.</div>;
-
   async function set(id: string, status: "delivered") {
     try {
       await update({ data: { order_id: id, status } });
@@ -76,6 +73,9 @@ function Driver() {
     user?.id,
     jobs.map((j) => j.id),
   );
+
+  if (user && !has("admin") && !has("driver"))
+    return <div className="p-10 text-center text-muted-foreground">Not authorised.</div>;
 
   return (
     <div className="min-h-screen bg-background">
