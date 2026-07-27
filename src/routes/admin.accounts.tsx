@@ -1,4 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { AdminNav } from "@/components/admin-nav";
 import { useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import {
@@ -56,6 +57,7 @@ function AccountsAdmin() {
 
   return (
     <div className="min-h-screen bg-secondary/40">
+      <AdminNav />
       <header className="border-b border-border bg-background">
         <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4">
           <div className="flex items-center gap-3">
