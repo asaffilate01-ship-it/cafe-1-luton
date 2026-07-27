@@ -24,6 +24,7 @@ import { Route as ContactRouteImport } from './routes/contact'
 import { Route as ComplaintsRouteImport } from './routes/complaints'
 import { Route as CheckoutRouteImport } from './routes/checkout'
 import { Route as CartRouteImport } from './routes/cart'
+import { Route as BlogRouteImport } from './routes/blog'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as AccountRouteImport } from './routes/account'
@@ -32,6 +33,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as PrintOrderIdRouteImport } from './routes/print.$orderId'
 import { Route as PayOrderIdRouteImport } from './routes/pay.$orderId'
 import { Route as OrderOrderIdRouteImport } from './routes/order.$orderId'
+import { Route as BlogSlugRouteImport } from './routes/blog.$slug'
 import { Route as AdminVouchersRouteImport } from './routes/admin.vouchers'
 import { Route as AdminUsersRouteImport } from './routes/admin.users'
 import { Route as AdminSettingsRouteImport } from './routes/admin.settings'
@@ -40,6 +42,7 @@ import { Route as AdminMenuRouteImport } from './routes/admin.menu'
 import { Route as AdminLoginRouteImport } from './routes/admin.login'
 import { Route as AdminCustomerDiscountsRouteImport } from './routes/admin.customer-discounts'
 import { Route as AdminBroadcastsRouteImport } from './routes/admin.broadcasts'
+import { Route as AdminBlogRouteImport } from './routes/admin.blog'
 import { Route as AdminBannersRouteImport } from './routes/admin.banners'
 import { Route as AdminAccountsRouteImport } from './routes/admin.accounts'
 import { Route as ApiPublicSumupWebhookRouteImport } from './routes/api/public/sumup-webhook'
@@ -119,6 +122,11 @@ const CartRoute = CartRouteImport.update({
   path: '/cart',
   getParentRoute: () => rootRouteImport,
 } as any)
+const BlogRoute = BlogRouteImport.update({
+  id: '/blog',
+  path: '/blog',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthRoute = AuthRouteImport.update({
   id: '/auth',
   path: '/auth',
@@ -158,6 +166,11 @@ const OrderOrderIdRoute = OrderOrderIdRouteImport.update({
   id: '/order/$orderId',
   path: '/order/$orderId',
   getParentRoute: () => rootRouteImport,
+} as any)
+const BlogSlugRoute = BlogSlugRouteImport.update({
+  id: '/$slug',
+  path: '/$slug',
+  getParentRoute: () => BlogRoute,
 } as any)
 const AdminVouchersRoute = AdminVouchersRouteImport.update({
   id: '/vouchers',
@@ -199,6 +212,11 @@ const AdminBroadcastsRoute = AdminBroadcastsRouteImport.update({
   path: '/broadcasts',
   getParentRoute: () => AdminRoute,
 } as any)
+const AdminBlogRoute = AdminBlogRouteImport.update({
+  id: '/blog',
+  path: '/blog',
+  getParentRoute: () => AdminRoute,
+} as any)
 const AdminBannersRoute = AdminBannersRouteImport.update({
   id: '/banners',
   path: '/banners',
@@ -221,6 +239,7 @@ export interface FileRoutesByFullPath {
   '/account': typeof AccountRoute
   '/admin': typeof AdminRouteWithChildren
   '/auth': typeof AuthRoute
+  '/blog': typeof BlogRouteWithChildren
   '/cart': typeof CartRoute
   '/checkout': typeof CheckoutRoute
   '/complaints': typeof ComplaintsRoute
@@ -238,6 +257,7 @@ export interface FileRoutesByFullPath {
   '/terms': typeof TermsRoute
   '/admin/accounts': typeof AdminAccountsRoute
   '/admin/banners': typeof AdminBannersRoute
+  '/admin/blog': typeof AdminBlogRoute
   '/admin/broadcasts': typeof AdminBroadcastsRoute
   '/admin/customer-discounts': typeof AdminCustomerDiscountsRoute
   '/admin/login': typeof AdminLoginRoute
@@ -246,6 +266,7 @@ export interface FileRoutesByFullPath {
   '/admin/settings': typeof AdminSettingsRoute
   '/admin/users': typeof AdminUsersRoute
   '/admin/vouchers': typeof AdminVouchersRoute
+  '/blog/$slug': typeof BlogSlugRoute
   '/order/$orderId': typeof OrderOrderIdRoute
   '/pay/$orderId': typeof PayOrderIdRoute
   '/print/$orderId': typeof PrintOrderIdRoute
@@ -257,6 +278,7 @@ export interface FileRoutesByTo {
   '/account': typeof AccountRoute
   '/admin': typeof AdminRouteWithChildren
   '/auth': typeof AuthRoute
+  '/blog': typeof BlogRouteWithChildren
   '/cart': typeof CartRoute
   '/checkout': typeof CheckoutRoute
   '/complaints': typeof ComplaintsRoute
@@ -274,6 +296,7 @@ export interface FileRoutesByTo {
   '/terms': typeof TermsRoute
   '/admin/accounts': typeof AdminAccountsRoute
   '/admin/banners': typeof AdminBannersRoute
+  '/admin/blog': typeof AdminBlogRoute
   '/admin/broadcasts': typeof AdminBroadcastsRoute
   '/admin/customer-discounts': typeof AdminCustomerDiscountsRoute
   '/admin/login': typeof AdminLoginRoute
@@ -282,6 +305,7 @@ export interface FileRoutesByTo {
   '/admin/settings': typeof AdminSettingsRoute
   '/admin/users': typeof AdminUsersRoute
   '/admin/vouchers': typeof AdminVouchersRoute
+  '/blog/$slug': typeof BlogSlugRoute
   '/order/$orderId': typeof OrderOrderIdRoute
   '/pay/$orderId': typeof PayOrderIdRoute
   '/print/$orderId': typeof PrintOrderIdRoute
@@ -294,6 +318,7 @@ export interface FileRoutesById {
   '/account': typeof AccountRoute
   '/admin': typeof AdminRouteWithChildren
   '/auth': typeof AuthRoute
+  '/blog': typeof BlogRouteWithChildren
   '/cart': typeof CartRoute
   '/checkout': typeof CheckoutRoute
   '/complaints': typeof ComplaintsRoute
@@ -311,6 +336,7 @@ export interface FileRoutesById {
   '/terms': typeof TermsRoute
   '/admin/accounts': typeof AdminAccountsRoute
   '/admin/banners': typeof AdminBannersRoute
+  '/admin/blog': typeof AdminBlogRoute
   '/admin/broadcasts': typeof AdminBroadcastsRoute
   '/admin/customer-discounts': typeof AdminCustomerDiscountsRoute
   '/admin/login': typeof AdminLoginRoute
@@ -319,6 +345,7 @@ export interface FileRoutesById {
   '/admin/settings': typeof AdminSettingsRoute
   '/admin/users': typeof AdminUsersRoute
   '/admin/vouchers': typeof AdminVouchersRoute
+  '/blog/$slug': typeof BlogSlugRoute
   '/order/$orderId': typeof OrderOrderIdRoute
   '/pay/$orderId': typeof PayOrderIdRoute
   '/print/$orderId': typeof PrintOrderIdRoute
@@ -332,6 +359,7 @@ export interface FileRouteTypes {
     | '/account'
     | '/admin'
     | '/auth'
+    | '/blog'
     | '/cart'
     | '/checkout'
     | '/complaints'
@@ -349,6 +377,7 @@ export interface FileRouteTypes {
     | '/terms'
     | '/admin/accounts'
     | '/admin/banners'
+    | '/admin/blog'
     | '/admin/broadcasts'
     | '/admin/customer-discounts'
     | '/admin/login'
@@ -357,6 +386,7 @@ export interface FileRouteTypes {
     | '/admin/settings'
     | '/admin/users'
     | '/admin/vouchers'
+    | '/blog/$slug'
     | '/order/$orderId'
     | '/pay/$orderId'
     | '/print/$orderId'
@@ -368,6 +398,7 @@ export interface FileRouteTypes {
     | '/account'
     | '/admin'
     | '/auth'
+    | '/blog'
     | '/cart'
     | '/checkout'
     | '/complaints'
@@ -385,6 +416,7 @@ export interface FileRouteTypes {
     | '/terms'
     | '/admin/accounts'
     | '/admin/banners'
+    | '/admin/blog'
     | '/admin/broadcasts'
     | '/admin/customer-discounts'
     | '/admin/login'
@@ -393,6 +425,7 @@ export interface FileRouteTypes {
     | '/admin/settings'
     | '/admin/users'
     | '/admin/vouchers'
+    | '/blog/$slug'
     | '/order/$orderId'
     | '/pay/$orderId'
     | '/print/$orderId'
@@ -404,6 +437,7 @@ export interface FileRouteTypes {
     | '/account'
     | '/admin'
     | '/auth'
+    | '/blog'
     | '/cart'
     | '/checkout'
     | '/complaints'
@@ -421,6 +455,7 @@ export interface FileRouteTypes {
     | '/terms'
     | '/admin/accounts'
     | '/admin/banners'
+    | '/admin/blog'
     | '/admin/broadcasts'
     | '/admin/customer-discounts'
     | '/admin/login'
@@ -429,6 +464,7 @@ export interface FileRouteTypes {
     | '/admin/settings'
     | '/admin/users'
     | '/admin/vouchers'
+    | '/blog/$slug'
     | '/order/$orderId'
     | '/pay/$orderId'
     | '/print/$orderId'
@@ -441,6 +477,7 @@ export interface RootRouteChildren {
   AccountRoute: typeof AccountRoute
   AdminRoute: typeof AdminRouteWithChildren
   AuthRoute: typeof AuthRoute
+  BlogRoute: typeof BlogRouteWithChildren
   CartRoute: typeof CartRoute
   CheckoutRoute: typeof CheckoutRoute
   ComplaintsRoute: typeof ComplaintsRoute
@@ -569,6 +606,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CartRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/blog': {
+      id: '/blog'
+      path: '/blog'
+      fullPath: '/blog'
+      preLoaderRoute: typeof BlogRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/auth': {
       id: '/auth'
       path: '/auth'
@@ -624,6 +668,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/order/$orderId'
       preLoaderRoute: typeof OrderOrderIdRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/blog/$slug': {
+      id: '/blog/$slug'
+      path: '/$slug'
+      fullPath: '/blog/$slug'
+      preLoaderRoute: typeof BlogSlugRouteImport
+      parentRoute: typeof BlogRoute
     }
     '/admin/vouchers': {
       id: '/admin/vouchers'
@@ -681,6 +732,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminBroadcastsRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/admin/blog': {
+      id: '/admin/blog'
+      path: '/blog'
+      fullPath: '/admin/blog'
+      preLoaderRoute: typeof AdminBlogRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/admin/banners': {
       id: '/admin/banners'
       path: '/banners'
@@ -708,6 +766,7 @@ declare module '@tanstack/react-router' {
 interface AdminRouteChildren {
   AdminAccountsRoute: typeof AdminAccountsRoute
   AdminBannersRoute: typeof AdminBannersRoute
+  AdminBlogRoute: typeof AdminBlogRoute
   AdminBroadcastsRoute: typeof AdminBroadcastsRoute
   AdminCustomerDiscountsRoute: typeof AdminCustomerDiscountsRoute
   AdminLoginRoute: typeof AdminLoginRoute
@@ -721,6 +780,7 @@ interface AdminRouteChildren {
 const AdminRouteChildren: AdminRouteChildren = {
   AdminAccountsRoute: AdminAccountsRoute,
   AdminBannersRoute: AdminBannersRoute,
+  AdminBlogRoute: AdminBlogRoute,
   AdminBroadcastsRoute: AdminBroadcastsRoute,
   AdminCustomerDiscountsRoute: AdminCustomerDiscountsRoute,
   AdminLoginRoute: AdminLoginRoute,
@@ -733,12 +793,23 @@ const AdminRouteChildren: AdminRouteChildren = {
 
 const AdminRouteWithChildren = AdminRoute._addFileChildren(AdminRouteChildren)
 
+interface BlogRouteChildren {
+  BlogSlugRoute: typeof BlogSlugRoute
+}
+
+const BlogRouteChildren: BlogRouteChildren = {
+  BlogSlugRoute: BlogSlugRoute,
+}
+
+const BlogRouteWithChildren = BlogRoute._addFileChildren(BlogRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AboutRoute: AboutRoute,
   AccountRoute: AccountRoute,
   AdminRoute: AdminRouteWithChildren,
   AuthRoute: AuthRoute,
+  BlogRoute: BlogRouteWithChildren,
   CartRoute: CartRoute,
   CheckoutRoute: CheckoutRoute,
   ComplaintsRoute: ComplaintsRoute,

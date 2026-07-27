@@ -32,6 +32,7 @@ export function SiteHeader() {
         <nav className="hidden items-center gap-6 text-sm font-medium sm:flex">
           <Link to="/" activeOptions={{ exact: true }} activeProps={{ className: "text-primary" }} className="hover:text-primary">Home</Link>
           <Link to="/menu" activeProps={{ className: "text-primary" }} className="hover:text-primary">Menu</Link>
+          <Link to="/blog" activeProps={{ className: "text-primary" }} className="hover:text-primary">Blog</Link>
           <Link to="/about" activeProps={{ className: "text-primary" }} className="hover:text-primary">About</Link>
           <Link to="/contact" activeProps={{ className: "text-primary" }} className="hover:text-primary">Contact</Link>
         </nav>
