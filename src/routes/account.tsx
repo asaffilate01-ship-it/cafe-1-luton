@@ -70,9 +70,9 @@ function Account() {
             <p className="mt-1 text-xs text-muted-foreground">Earn 1 point per £1 spent. Coming soon: redeem for free items.</p>
           </div>
           <div className="rounded-2xl border border-border bg-card p-5">
-            <p className="text-xs uppercase tracking-wider text-muted-foreground">Member perk</p>
-            <p className="mt-1 font-display text-2xl font-bold">10% off every order</p>
-            <p className="mt-1 text-xs text-muted-foreground">Automatically applied at checkout when signed in.</p>
+            <p className="text-xs uppercase tracking-wider text-muted-foreground">Member perks</p>
+            <p className="mt-1 font-display text-2xl font-bold">Exclusive offers</p>
+            <p className="mt-1 text-xs text-muted-foreground">Personal discounts are available on request and applied automatically at checkout once approved.</p>
           </div>
           <div className="rounded-2xl border border-primary/30 bg-primary/5 p-5 sm:col-span-2">
             <div className="flex items-center justify-between">
