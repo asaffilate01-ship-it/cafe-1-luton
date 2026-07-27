@@ -42,6 +42,7 @@ import { Route as AdminMenuRouteImport } from './routes/admin.menu'
 import { Route as AdminLoginRouteImport } from './routes/admin.login'
 import { Route as AdminCustomerDiscountsRouteImport } from './routes/admin.customer-discounts'
 import { Route as AdminBroadcastsRouteImport } from './routes/admin.broadcasts'
+import { Route as AdminBlogRouteImport } from './routes/admin.blog'
 import { Route as AdminBannersRouteImport } from './routes/admin.banners'
 import { Route as AdminAccountsRouteImport } from './routes/admin.accounts'
 import { Route as ApiPublicSumupWebhookRouteImport } from './routes/api/public/sumup-webhook'
@@ -211,6 +212,11 @@ const AdminBroadcastsRoute = AdminBroadcastsRouteImport.update({
   path: '/broadcasts',
   getParentRoute: () => AdminRoute,
 } as any)
+const AdminBlogRoute = AdminBlogRouteImport.update({
+  id: '/blog',
+  path: '/blog',
+  getParentRoute: () => AdminRoute,
+} as any)
 const AdminBannersRoute = AdminBannersRouteImport.update({
   id: '/banners',
   path: '/banners',
@@ -251,6 +257,7 @@ export interface FileRoutesByFullPath {
   '/terms': typeof TermsRoute
   '/admin/accounts': typeof AdminAccountsRoute
   '/admin/banners': typeof AdminBannersRoute
+  '/admin/blog': typeof AdminBlogRoute
   '/admin/broadcasts': typeof AdminBroadcastsRoute
   '/admin/customer-discounts': typeof AdminCustomerDiscountsRoute
   '/admin/login': typeof AdminLoginRoute
@@ -289,6 +296,7 @@ export interface FileRoutesByTo {
   '/terms': typeof TermsRoute
   '/admin/accounts': typeof AdminAccountsRoute
   '/admin/banners': typeof AdminBannersRoute
+  '/admin/blog': typeof AdminBlogRoute
   '/admin/broadcasts': typeof AdminBroadcastsRoute
   '/admin/customer-discounts': typeof AdminCustomerDiscountsRoute
   '/admin/login': typeof AdminLoginRoute
@@ -328,6 +336,7 @@ export interface FileRoutesById {
   '/terms': typeof TermsRoute
   '/admin/accounts': typeof AdminAccountsRoute
   '/admin/banners': typeof AdminBannersRoute
+  '/admin/blog': typeof AdminBlogRoute
   '/admin/broadcasts': typeof AdminBroadcastsRoute
   '/admin/customer-discounts': typeof AdminCustomerDiscountsRoute
   '/admin/login': typeof AdminLoginRoute
@@ -368,6 +377,7 @@ export interface FileRouteTypes {
     | '/terms'
     | '/admin/accounts'
     | '/admin/banners'
+    | '/admin/blog'
     | '/admin/broadcasts'
     | '/admin/customer-discounts'
     | '/admin/login'
@@ -406,6 +416,7 @@ export interface FileRouteTypes {
     | '/terms'
     | '/admin/accounts'
     | '/admin/banners'
+    | '/admin/blog'
     | '/admin/broadcasts'
     | '/admin/customer-discounts'
     | '/admin/login'
@@ -444,6 +455,7 @@ export interface FileRouteTypes {
     | '/terms'
     | '/admin/accounts'
     | '/admin/banners'
+    | '/admin/blog'
     | '/admin/broadcasts'
     | '/admin/customer-discounts'
     | '/admin/login'
@@ -720,6 +732,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminBroadcastsRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/admin/blog': {
+      id: '/admin/blog'
+      path: '/blog'
+      fullPath: '/admin/blog'
+      preLoaderRoute: typeof AdminBlogRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/admin/banners': {
       id: '/admin/banners'
       path: '/banners'
@@ -747,6 +766,7 @@ declare module '@tanstack/react-router' {
 interface AdminRouteChildren {
   AdminAccountsRoute: typeof AdminAccountsRoute
   AdminBannersRoute: typeof AdminBannersRoute
+  AdminBlogRoute: typeof AdminBlogRoute
   AdminBroadcastsRoute: typeof AdminBroadcastsRoute
   AdminCustomerDiscountsRoute: typeof AdminCustomerDiscountsRoute
   AdminLoginRoute: typeof AdminLoginRoute
@@ -760,6 +780,7 @@ interface AdminRouteChildren {
 const AdminRouteChildren: AdminRouteChildren = {
   AdminAccountsRoute: AdminAccountsRoute,
   AdminBannersRoute: AdminBannersRoute,
+  AdminBlogRoute: AdminBlogRoute,
   AdminBroadcastsRoute: AdminBroadcastsRoute,
   AdminCustomerDiscountsRoute: AdminCustomerDiscountsRoute,
   AdminLoginRoute: AdminLoginRoute,

@@ -100,12 +100,12 @@ function AdminBlog() {
     };
     let error;
     if (editingId) {
-      // preserve published_at if already published
-      const cleaned: Record<string, unknown> = { ...payload };
-      if (cleaned.published_at === undefined) delete cleaned.published_at;
+      const { published_at, ...rest } = payload;
+      const cleaned = published_at === undefined ? rest : { ...rest, published_at };
       ({ error } = await supabase.from("blog_posts").update(cleaned).eq("id", editingId));
     } else {
-      ({ error } = await supabase.from("blog_posts").insert(payload));
+      const insertPayload = { ...payload, published_at: payload.published_at ?? null };
+      ({ error } = await supabase.from("blog_posts").insert(insertPayload));
     }
     setBusy(false);
     if (error) return toast.error(error.message);
@@ -118,8 +118,9 @@ function AdminBlog() {
 
   async function togglePublish(r: Row) {
     const publish = !r.published;
-    const patch: Record<string, unknown> = { published: publish };
-    if (publish && !r.published_at) patch.published_at = new Date().toISOString();
+    const patch = publish && !r.published_at
+      ? { published: publish, published_at: new Date().toISOString() }
+      : { published: publish };
     await supabase.from("blog_posts").update(patch).eq("id", r.id);
     qc.invalidateQueries({ queryKey: ["admin-blog"] });
     qc.invalidateQueries({ queryKey: ["blog-posts"] });
