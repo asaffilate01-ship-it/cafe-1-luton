@@ -64,6 +64,11 @@ export function SiteFooter() {
           </address>
           <div className="mt-3 flex items-center gap-2">
             {[
+              {
+                href: "https://www.google.com/search?q=Cafe+1+St+Albans+Crown+Court+AL1+3JW",
+                label: "Café 1 on Google",
+                Icon: GoogleIcon,
+              },
               { href: "https://facebook.com", label: "Café 1 on Facebook", Icon: Facebook },
               { href: "https://instagram.com", label: "Café 1 on Instagram", Icon: Instagram },
               { href: "https://tiktok.com", label: "Café 1 on TikTok", Icon: Music2 },
