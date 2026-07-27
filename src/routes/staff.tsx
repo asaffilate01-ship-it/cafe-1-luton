@@ -1,4 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { AdminNav } from "@/components/admin-nav";
 import { useEffect } from "react";
 import { useSession, useRoles } from "@/hooks/use-auth";
 import { LayoutDashboard, MonitorPlay, Bike, BookOpen, Megaphone, ReceiptText, UserCog, Settings, Image as ImageIcon, Ticket, BadgePercent } from "lucide-react";
@@ -39,6 +40,7 @@ function StaffHub() {
 
   return (
     <div className="min-h-screen bg-background">
+      <AdminNav />
       <div className="mx-auto max-w-3xl px-4 py-16">
         <h1 className="font-display text-4xl font-bold">Staff tools</h1>
         <p className="mt-1 text-muted-foreground">Signed in as {user?.email} · roles: {roles.join(", ") || "customer"}</p>

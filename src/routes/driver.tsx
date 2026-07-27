@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { AdminNav } from "@/components/admin-nav";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useServerFn } from "@tanstack/react-start";
@@ -79,6 +80,7 @@ function Driver() {
 
   return (
     <div className="min-h-screen bg-background">
+      <AdminNav />
       <header className="border-b border-border bg-primary text-primary-foreground">
         <div className="mx-auto flex max-w-2xl items-center justify-between px-4 py-4">
           <h1 className="font-display text-2xl font-bold">Driver · Cafe1</h1>

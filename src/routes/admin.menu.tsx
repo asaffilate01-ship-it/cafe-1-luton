@@ -1,4 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { AdminNav } from "@/components/admin-nav";
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useSession, useRoles } from "@/hooks/use-auth";
@@ -74,6 +75,7 @@ function MenuManager() {
 
   return (
     <div className="min-h-screen bg-background">
+      <AdminNav />
       <div className="border-b border-border bg-card">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-4">
           <div>

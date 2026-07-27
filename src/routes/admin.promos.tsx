@@ -1,4 +1,5 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { AdminNav } from "@/components/admin-nav";
 import { useEffect, useState } from "react";
 import { useSession, useRoles } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
@@ -86,6 +87,7 @@ function AdminPromos() {
 
   return (
     <div className="min-h-screen bg-background">
+      <AdminNav />
       <div className="mx-auto max-w-3xl px-4 py-10">
         <div className="flex items-center gap-3">
           <span className="grid h-10 w-10 place-items-center rounded-xl bg-primary-soft text-primary"><Ticket className="h-5 w-5" /></span>
