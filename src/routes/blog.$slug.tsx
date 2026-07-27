@@ -103,7 +103,7 @@ function BlogPost() {
         <header className="mt-6">
           {post.tags?.length > 0 && (
             <div className="mb-3 flex flex-wrap gap-1.5">
-              {post.tags.map((t) => (
+              {post.tags.map((t: string) => (
                 <span key={t} className="rounded-full bg-primary-soft px-2.5 py-1 text-xs font-semibold text-primary">{t}</span>
               ))}
             </div>
