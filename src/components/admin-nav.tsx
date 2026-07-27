@@ -15,6 +15,7 @@ import {
   Bike,
   LogOut,
   Home,
+  Newspaper,
 } from "lucide-react";
 
 type Item = {
@@ -22,6 +23,7 @@ type Item = {
     | "/staff"
     | "/admin"
     | "/admin/menu"
+    | "/admin/blog"
     | "/admin/broadcasts"
     | "/admin/banners"
     | "/admin/promos"
@@ -43,6 +45,7 @@ const ITEMS: Item[] = [
   { to: "/kds", label: "Kitchen", icon: MonitorPlay, need: "any" },
   { to: "/driver", label: "Driver", icon: Bike, need: "driver" },
   { to: "/admin/menu", label: "Menu", icon: BookOpen, need: "any" },
+  { to: "/admin/blog", label: "Blog", icon: Newspaper, need: "any" },
   { to: "/admin/broadcasts", label: "Broadcasts", icon: Megaphone, need: "any" },
   { to: "/admin/banners", label: "Banners", icon: ImageIcon, need: "any" },
   { to: "/admin/promos", label: "Promos", icon: Ticket, need: "any" },
