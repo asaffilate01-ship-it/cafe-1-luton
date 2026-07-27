@@ -6,6 +6,17 @@ import { useCart } from "@/lib/cart";
 import { useSession } from "@/hooks/use-auth";
 import { useTab } from "@/lib/tab";
 
+function GoogleIcon({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" className={className} aria-hidden="true">
+      <path fill="#4285F4" d="M21.6 12.23c0-.67-.06-1.32-.17-1.95H12v3.7h5.38a4.6 4.6 0 0 1-2 3.02v2.5h3.23c1.9-1.75 2.99-4.32 2.99-7.27z"/>
+      <path fill="#34A853" d="M12 22c2.7 0 4.96-.9 6.61-2.44l-3.23-2.5c-.9.6-2.04.95-3.38.95-2.6 0-4.8-1.76-5.59-4.12H3.07v2.59A9.99 9.99 0 0 0 12 22z"/>
+      <path fill="#FBBC05" d="M6.41 13.89A6.02 6.02 0 0 1 6.09 12c0-.66.11-1.3.32-1.89V7.52H3.07A9.99 9.99 0 0 0 2 12c0 1.61.39 3.14 1.07 4.48l3.34-2.59z"/>
+      <path fill="#EA4335" d="M12 5.98c1.47 0 2.78.5 3.82 1.5l2.86-2.86C16.95 2.99 14.7 2 12 2A9.99 9.99 0 0 0 3.07 7.52l3.34 2.59C7.2 7.74 9.4 5.98 12 5.98z"/>
+    </svg>
+  );
+}
+
 export function SiteHeader() {
   const c = useCart();
   const { user } = useSession();
@@ -64,6 +75,11 @@ export function SiteFooter() {
           </address>
           <div className="mt-3 flex items-center gap-2">
             {[
+              {
+                href: "https://www.google.com/search?q=Cafe+1+St+Albans+Crown+Court+AL1+3JW",
+                label: "Café 1 on Google",
+                Icon: GoogleIcon,
+              },
               { href: "https://facebook.com", label: "Café 1 on Facebook", Icon: Facebook },
               { href: "https://instagram.com", label: "Café 1 on Instagram", Icon: Instagram },
               { href: "https://tiktok.com", label: "Café 1 on TikTok", Icon: Music2 },
