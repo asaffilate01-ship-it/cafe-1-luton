@@ -512,6 +512,7 @@ export type Database = {
           guest_token: string
           id: string
           order_number: number
+          payment_method: string
           payment_status: Database["public"]["Enums"]["payment_status"]
           picked_up_at: string | null
           points_earned: number
@@ -554,6 +555,7 @@ export type Database = {
           guest_token?: string
           id?: string
           order_number?: number
+          payment_method?: string
           payment_status?: Database["public"]["Enums"]["payment_status"]
           picked_up_at?: string | null
           points_earned?: number
@@ -596,6 +598,7 @@ export type Database = {
           guest_token?: string
           id?: string
           order_number?: number
+          payment_method?: string
           payment_status?: Database["public"]["Enums"]["payment_status"]
           picked_up_at?: string | null
           points_earned?: number
