@@ -170,6 +170,16 @@ function PayView() {
           <div className="mb-4 flex items-center gap-2 text-xs text-muted-foreground">
             <Lock className="h-3.5 w-3.5" /> Secure card payment powered by SumUp
           </div>
+          {status !== "error" && (
+            <div className="mb-4 flex items-start gap-2 rounded-xl border border-border bg-muted/40 p-3 text-xs text-muted-foreground">
+              <Smartphone className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+              <span>
+                On a phone? Pay in one tap with <strong>Apple&nbsp;Pay</strong> or{" "}
+                <strong>Google&nbsp;Pay</strong> — the wallet button appears above the card
+                form when your device supports it.
+              </span>
+            </div>
+          )}
           {status === "error" ? (
             <div className="rounded-xl border border-destructive/40 bg-destructive/5 p-4 text-sm text-destructive">{errorMsg}</div>
           ) : (
