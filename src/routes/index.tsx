@@ -30,6 +30,7 @@ export const Route = createFileRoute("/")({
           url: "https://cafe1stalbans.co.uk",
           image: `https://cafe1stalbans.co.uk${heroImage.url}`,
           email: "info@cafe1stalbans.co.uk",
+          telephone: "+441727400117",
           servesCuisine: ["Coffee", "Breakfast", "Halal", "Desi"],
           priceRange: "££",
           hasMenu: "https://cafe1stalbans.co.uk/menu",
@@ -44,7 +45,7 @@ export const Route = createFileRoute("/")({
             {
               "@type": "OpeningHoursSpecification",
               dayOfWeek: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"],
-              opens: "08:30",
+              opens: "08:00",
               closes: "17:00",
             },
           ],
