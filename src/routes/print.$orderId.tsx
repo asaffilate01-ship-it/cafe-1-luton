@@ -14,6 +14,7 @@ type Order = {
   voucher_cents: number;
   company_name: string | null; table_number: string | null;
   schedule_mode: string | null; scheduled_for: string | null;
+  source?: string | null;
 };
 type Item = { id: string; name: string; qty: number; notes: string | null; unit_price_cents: number };
 
@@ -54,6 +55,7 @@ function sampleOrder(type: "dine_in" | "collection" | "delivery", scheduled: boo
       table_number: type === "dine_in" ? "12" : null,
       schedule_mode: scheduled ? "scheduled" : "asap",
       scheduled_for: scheduled ? slot.toISOString() : null,
+      source: "web",
     },
     items: [
       { id: "t1", name: "Flat White", qty: 2, notes: "Oat milk, extra hot", unit_price_cents: 320 },
