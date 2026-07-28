@@ -70,21 +70,29 @@ function MenuPage() {
   const pillsRef = useRef<HTMLDivElement | null>(null);
   const stickyBarRef = useRef<HTMLDivElement | null>(null);
   const [stickyH, setStickyH] = useState(160);
+  const lockRef = useRef(0);
   useEffect(() => {
     const measure = () => {
-      const h = stickyBarRef.current?.getBoundingClientRect().height ?? 0;
-      // 56px site header + sticky bar height + small breathing room
-      setStickyH(56 + h + 8);
+      const r = stickyBarRef.current?.getBoundingClientRect();
+      if (!r) return;
+      // Distance from viewport top to the bottom of the sticky bar, once pinned.
+      const pinnedTop = Math.min(r.top, 56);
+      setStickyH(Math.max(0, pinnedTop) + r.height + 8);
     };
     measure();
     window.addEventListener("resize", measure);
-    return () => window.removeEventListener("resize", measure);
+    window.addEventListener("scroll", measure, { passive: true });
+    return () => {
+      window.removeEventListener("resize", measure);
+      window.removeEventListener("scroll", measure);
+    };
   }, [filtered?.cats.length]);
   useEffect(() => {
     if (!filtered?.cats.length) return;
     setActiveCat((prev) => (prev && filtered.cats.some((c) => c.id === prev) ? prev : filtered.cats[0].id));
     const obs = new IntersectionObserver(
       (entries) => {
+        if (Date.now() < lockRef.current) return; // ignore while a pill jump is animating
         const visible = entries
           .filter((e) => e.isIntersecting)
           .sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top)[0];
@@ -107,11 +115,29 @@ function MenuPage() {
   }, [activeCat]);
 
   function scrollToCat(id: string) {
-    const el = sectionRefs.current[id];
-    if (!el) return;
-    const y = el.getBoundingClientRect().top + window.scrollY - stickyH;
-    window.scrollTo({ top: y, behavior: "smooth" });
     setActiveCat(id);
+    lockRef.current = Date.now() + 1200;
+
+    const jump = (behavior: ScrollBehavior) => {
+      const el = sectionRefs.current[id];
+      if (!el) return false;
+      const bar = stickyBarRef.current?.getBoundingClientRect();
+      const offset = bar ? Math.max(0, Math.min(bar.top, 56)) + bar.height + 8 : stickyH;
+      const y = Math.max(0, el.getBoundingClientRect().top + window.scrollY - offset);
+      if (Math.abs(y - window.scrollY) < 2) return true;
+      window.scrollTo({ top: y, behavior });
+      return true;
+    };
+
+    if (!jump("smooth")) return;
+    // Images finishing loading can shift the page mid-animation: re-correct after it settles.
+    const t1 = window.setTimeout(() => jump("auto"), 450);
+    const t2 = window.setTimeout(() => {
+      jump("auto");
+      lockRef.current = 0;
+    }, 750);
+    void t1;
+    void t2;
   }
 
   return (
