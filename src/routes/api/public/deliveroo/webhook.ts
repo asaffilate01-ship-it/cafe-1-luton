@@ -66,7 +66,8 @@ export const Route = createFileRoute("/api/public/deliveroo/webhook")({
         // Status update (in_kitchen / ready / collected etc.) — best-effort mirror to our statuses.
         if (eventType.includes("status")) {
           const status = (payload.status ?? "").toLowerCase();
-          const map: Record<string, string> = {
+          type OrderStatus = "preparing" | "ready" | "completed" | "delivered" | "cancelled";
+          const map: Record<string, OrderStatus> = {
             accepted: "preparing",
             confirmed: "preparing",
             in_kitchen: "preparing",

@@ -46,6 +46,7 @@ import { Route as AdminBlogRouteImport } from './routes/admin.blog'
 import { Route as AdminBannersRouteImport } from './routes/admin.banners'
 import { Route as AdminAccountsRouteImport } from './routes/admin.accounts'
 import { Route as ApiPublicSumupWebhookRouteImport } from './routes/api/public/sumup-webhook'
+import { Route as ApiPublicDeliverooWebhookRouteImport } from './routes/api/public/deliveroo/webhook'
 
 const TermsRoute = TermsRouteImport.update({
   id: '/terms',
@@ -232,6 +233,12 @@ const ApiPublicSumupWebhookRoute = ApiPublicSumupWebhookRouteImport.update({
   path: '/api/public/sumup-webhook',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicDeliverooWebhookRoute =
+  ApiPublicDeliverooWebhookRouteImport.update({
+    id: '/api/public/deliveroo/webhook',
+    path: '/api/public/deliveroo/webhook',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -271,6 +278,7 @@ export interface FileRoutesByFullPath {
   '/pay/$orderId': typeof PayOrderIdRoute
   '/print/$orderId': typeof PrintOrderIdRoute
   '/api/public/sumup-webhook': typeof ApiPublicSumupWebhookRoute
+  '/api/public/deliveroo/webhook': typeof ApiPublicDeliverooWebhookRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -310,6 +318,7 @@ export interface FileRoutesByTo {
   '/pay/$orderId': typeof PayOrderIdRoute
   '/print/$orderId': typeof PrintOrderIdRoute
   '/api/public/sumup-webhook': typeof ApiPublicSumupWebhookRoute
+  '/api/public/deliveroo/webhook': typeof ApiPublicDeliverooWebhookRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -350,6 +359,7 @@ export interface FileRoutesById {
   '/pay/$orderId': typeof PayOrderIdRoute
   '/print/$orderId': typeof PrintOrderIdRoute
   '/api/public/sumup-webhook': typeof ApiPublicSumupWebhookRoute
+  '/api/public/deliveroo/webhook': typeof ApiPublicDeliverooWebhookRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -391,6 +401,7 @@ export interface FileRouteTypes {
     | '/pay/$orderId'
     | '/print/$orderId'
     | '/api/public/sumup-webhook'
+    | '/api/public/deliveroo/webhook'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -430,6 +441,7 @@ export interface FileRouteTypes {
     | '/pay/$orderId'
     | '/print/$orderId'
     | '/api/public/sumup-webhook'
+    | '/api/public/deliveroo/webhook'
   id:
     | '__root__'
     | '/'
@@ -469,6 +481,7 @@ export interface FileRouteTypes {
     | '/pay/$orderId'
     | '/print/$orderId'
     | '/api/public/sumup-webhook'
+    | '/api/public/deliveroo/webhook'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -497,6 +510,7 @@ export interface RootRouteChildren {
   PayOrderIdRoute: typeof PayOrderIdRoute
   PrintOrderIdRoute: typeof PrintOrderIdRoute
   ApiPublicSumupWebhookRoute: typeof ApiPublicSumupWebhookRoute
+  ApiPublicDeliverooWebhookRoute: typeof ApiPublicDeliverooWebhookRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -760,6 +774,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicSumupWebhookRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/deliveroo/webhook': {
+      id: '/api/public/deliveroo/webhook'
+      path: '/api/public/deliveroo/webhook'
+      fullPath: '/api/public/deliveroo/webhook'
+      preLoaderRoute: typeof ApiPublicDeliverooWebhookRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -829,6 +850,7 @@ const rootRouteChildren: RootRouteChildren = {
   PayOrderIdRoute: PayOrderIdRoute,
   PrintOrderIdRoute: PrintOrderIdRoute,
   ApiPublicSumupWebhookRoute: ApiPublicSumupWebhookRoute,
+  ApiPublicDeliverooWebhookRoute: ApiPublicDeliverooWebhookRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
