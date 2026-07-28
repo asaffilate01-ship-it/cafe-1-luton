@@ -1,6 +1,12 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { SiteHeader, SiteFooter } from "@/components/site-header";
 import { MapPin, Phone, Mail, Clock } from "lucide-react";
+import { LiveMap } from "@/components/live-map";
+
+const STORE = { lat: 51.7519, lng: -0.3374, label: "Café 1, St Albans Crown Court", kind: "store" as const };
+const DIRECTIONS_URL =
+  "https://www.google.com/maps/dir/?api=1&destination=" +
+  encodeURIComponent("St Albans Crown Court, Bricket Road, St Albans AL1 3JW");
 
 export const Route = createFileRoute("/contact")({
   head: () => ({
@@ -20,7 +26,6 @@ export const Route = createFileRoute("/contact")({
 
 function Contact() {
   const rows = [
-    { icon: MapPin, label: "Visit", value: "Cafe 1, St Albans Crown Court, AL1 3JW" },
     { icon: Phone, label: "Call", value: "01727 400117" },
     { icon: Mail, label: "Email", value: "info@cafe1stalbans.co.uk" },
     { icon: Clock, label: "Open", value: "Mon–Fri · 8:00–17:00 (deliveries 8:30–16:30)" },
@@ -32,6 +37,24 @@ function Contact() {
         <h1 className="font-display text-5xl font-bold">Say hello</h1>
         <p className="mt-3 text-lg text-muted-foreground">Pop in for a coffee, or reach out any time.</p>
         <div className="mt-10 grid gap-4 sm:grid-cols-2">
+          <div className="overflow-hidden rounded-2xl border border-border bg-card sm:col-span-2">
+            <div className="p-6 pb-4">
+              <span className="grid h-10 w-10 place-items-center rounded-xl bg-primary-soft text-primary">
+                <MapPin className="h-5 w-5" />
+              </span>
+              <p className="mt-3 text-xs uppercase tracking-wider text-muted-foreground">Visit</p>
+              <p className="mt-1 font-semibold">Cafe 1, St Albans Crown Court, AL1 3JW</p>
+              <a
+                href={DIRECTIONS_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="mt-2 inline-block text-sm font-semibold text-primary underline-offset-4 hover:underline"
+              >
+                Get directions
+              </a>
+            </div>
+            <LiveMap points={[STORE]} className="h-64 w-full rounded-none border-0 border-t border-border" />
+          </div>
           {rows.map((r) => (
             <div key={r.label} className="rounded-2xl border border-border bg-card p-6">
               <span className="grid h-10 w-10 place-items-center rounded-xl bg-primary-soft text-primary">
