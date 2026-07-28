@@ -183,6 +183,9 @@ function KDS() {
                   <span className="text-sm font-bold text-muted-foreground">{mins}m ago</span>
                 </div>
               </div>
+              <p className="mt-0.5 text-xs font-semibold text-muted-foreground">
+                {new Date(t.created_at).toLocaleString([], { weekday: "short", day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" })}
+              </p>
               <div className="mt-2 rounded-xl bg-primary px-3 py-2 text-primary-foreground">
                 <p className="font-display text-2xl font-black uppercase leading-none tracking-wide">
                   {TYPE_LABEL[t.type] ?? t.type.replace("_", " ").toUpperCase()}
