@@ -30,9 +30,9 @@ export const confirmPayment = createServerFn({ method: "POST" })
       .from("orders")
       .update({
         payment_status: "paid" as const,
-        status: "paid" as const,
+        status: "preparing" as const,
         sumup_transaction_id: co.transaction_id ?? null,
       })
       .eq("id", order.id);
-    return { paid: true, status: "paid" as const };
+    return { paid: true, status: "preparing" as const };
   });
