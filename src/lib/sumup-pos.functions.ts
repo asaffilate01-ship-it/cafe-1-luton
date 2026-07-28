@@ -13,7 +13,37 @@ type SumupTxn = {
   entry_mode?: string;
   card?: { last_4_digits?: string; type?: string };
   products?: Array<{ name: string; quantity?: number; price?: number }>;
+  internal_id?: string | number;
+  tip_amount?: number;
 };
+
+/**
+ * Derive the fulfilment type for a SumUp POS sale from whatever the terminal sends
+ * (product summary, line-item names, or the terminal's internal reference).
+ * Falls back to collection (counter sale) when the terminal gives no hint.
+ */
+function deriveFulfilment(t: SumupTxn, products: SumupTxn["products"]): {
+  type: "dine_in" | "collection" | "delivery";
+  table_number: string | null;
+} {
+  const haystack = [
+    t.product_summary ?? "",
+    String(t.internal_id ?? ""),
+    ...(products ?? []).map((p) => p?.name ?? ""),
+  ]
+    .join(" | ")
+    .toLowerCase();
+
+  const tableMatch = haystack.match(/\b(?:table|tbl)\s*#?\s*([a-z0-9-]{1,6})\b/i);
+  const isDineIn =
+    !!tableMatch ||
+    /\b(dine\s*-?\s*in|eat\s*-?\s*in|sit\s*-?\s*in|in\s*house)\b/.test(haystack);
+  const isDelivery = /\b(delivery|deliver)\b/.test(haystack);
+
+  if (isDineIn) return { type: "dine_in", table_number: tableMatch ? tableMatch[1].toUpperCase() : null };
+  if (isDelivery) return { type: "delivery", table_number: null };
+  return { type: "collection", table_number: null };
+}
 
 export const syncSumupPos = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
@@ -72,13 +102,15 @@ export const syncSumupPos = createServerFn({ method: "POST" })
 
       const totalCents = Math.round(Number(t.amount) * 100);
       const cardTail = t.card?.last_4_digits ? ` ••${t.card.last_4_digits}` : "";
+      const fulfilment = deriveFulfilment(t, products);
 
       const { data: inserted, error: insErr } = await supabaseAdmin
         .from("orders")
         .insert({
           customer_name: `SumUp POS${cardTail}`,
           customer_phone: "",
-          type: "collection",
+          type: fulfilment.type,
+          table_number: fulfilment.table_number,
           status: "preparing",
           payment_status: "paid",
           subtotal_cents: totalCents,
