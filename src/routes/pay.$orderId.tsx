@@ -1,6 +1,6 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import { getPublicOrder } from "@/lib/order-tracking.functions";
 import { confirmPayment } from "@/lib/payments.functions";
 import { SiteHeader } from "@/components/site-header";
 import { money } from "@/lib/format";
@@ -46,7 +46,7 @@ type Order = {
   order_number: number;
   total_cents: number;
   payment_status: string;
-  customer_email: string | null;
+  customer_email?: string | null;
   sumup_checkout_id: string | null;
 };
 
