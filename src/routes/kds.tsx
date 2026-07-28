@@ -25,6 +25,7 @@ type Order = {
   city: string | null;
   postcode: string | null;
   delivery_notes: string | null;
+  pos_terminal: string | null;
 };
 type Ticket = Order & { items: Item[]; needsCooking: boolean };
 
@@ -78,7 +79,7 @@ function KDS() {
     async function load() {
       const { data: orders } = await supabase
         .from("orders")
-        .select("id, order_number, status, type, customer_name, created_at, schedule_mode, scheduled_for, table_number, source, payment_method, payment_status, customer_phone, company_name, address_line1, address_line2, city, postcode, delivery_notes")
+        .select("id, order_number, status, type, customer_name, created_at, schedule_mode, scheduled_for, table_number, source, payment_method, payment_status, customer_phone, company_name, address_line1, address_line2, city, postcode, delivery_notes, pos_terminal")
         .in("status", ["preparing", "ready"])
         .order("created_at");
       const ids = (orders ?? []).map((o) => o.id);
@@ -254,6 +255,11 @@ function KDS() {
                   {t.source === "counter" && (
                     <span className="rounded-full bg-slate-700 px-2 py-0.5 text-[10px] font-black uppercase tracking-wide text-white">Counter</span>
                   )}
+                  {(t.pos_terminal === "jury" || t.pos_terminal === "public") && (
+                    <span className={`rounded-full px-2 py-0.5 text-[10px] font-black uppercase tracking-wide text-white ${t.pos_terminal === "jury" ? "bg-indigo-600" : "bg-teal-600"}`}>
+                      {t.pos_terminal} side
+                    </span>
+                  )}
                   {t.source !== "sumup_pos" && t.source !== "deliveroo" && t.source !== "counter" && (
                     <span className="rounded-full bg-purple-600 px-2 py-0.5 text-[10px] font-black uppercase tracking-wide text-white">Website</span>
                   )}
@@ -290,6 +296,11 @@ function KDS() {
                 </button>
               </div>
               <p className="mt-2 text-base font-black uppercase tracking-wide text-foreground">{t.customer_name}</p>
+              {(t.pos_terminal === "jury" || t.pos_terminal === "public") && (
+                <p className={`mt-2 rounded-xl px-3 py-2 text-center font-display text-xl font-black uppercase tracking-widest text-white ${t.pos_terminal === "jury" ? "bg-indigo-600" : "bg-teal-600"}`}>
+                  {t.pos_terminal} side
+                </p>
+              )}
               {t.source === "deliveroo" && (
                 <p className="mt-2 rounded-xl border-2 border-[#00CCBC] bg-[#00CCBC]/10 px-3 py-2 text-xs font-black uppercase tracking-wide text-[#007e75]">
                   Attach the Deliveroo receipt printed on the tablet to this order

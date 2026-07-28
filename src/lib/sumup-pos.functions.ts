@@ -15,7 +15,50 @@ type SumupTxn = {
   products?: Array<{ name: string; quantity?: number; price?: number }>;
   internal_id?: string | number;
   tip_amount?: number;
+  // Terminal / reader identity varies by SumUp product; we probe a few shapes.
+  reader_id?: string;
+  device?: { identifier?: string; id?: string; model?: string };
+  terminal?: { id?: string; name?: string };
+  local_time?: string;
 };
+
+/** Anything that could identify which physical terminal took the sale. */
+function deviceRefs(t: SumupTxn): string[] {
+  return [
+    t.reader_id,
+    t.device?.identifier,
+    t.device?.id,
+    t.terminal?.id,
+    t.terminal?.name,
+  ].filter((v): v is string => typeof v === "string" && v.trim() !== "");
+}
+
+/**
+ * Work out which counter (jury side or public side) rang the sale up:
+ * first by the mapped terminal reference, then by any keyword the terminal
+ * puts in the sale text. Null when we genuinely can't tell.
+ */
+function derivePosSide(
+  t: SumupTxn,
+  products: SumupTxn["products"],
+  mapping: Map<string, "jury" | "public">,
+): "jury" | "public" | null {
+  for (const ref of deviceRefs(t)) {
+    const hit = mapping.get(ref.toLowerCase());
+    if (hit) return hit;
+  }
+  const haystack = [
+    t.product_summary ?? "",
+    String(t.internal_id ?? ""),
+    ...deviceRefs(t),
+    ...(products ?? []).map((p) => p?.name ?? ""),
+  ]
+    .join(" | ")
+    .toLowerCase();
+  if (/\bjury\b/.test(haystack)) return "jury";
+  if (/\bpublic\b/.test(haystack)) return "public";
+  return null;
+}
 
 /**
  * Derive the fulfilment type for a SumUp POS sale from whatever the terminal sends
@@ -72,6 +115,15 @@ export const syncSumupPos = createServerFn({ method: "POST" })
 
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
+    // Terminal reference → jury/public mapping, configured by staff.
+    const { data: devices } = await supabaseAdmin
+      .from("pos_devices")
+      .select("device_ref, side, active")
+      .eq("active", true);
+    const mapping = new Map<string, "jury" | "public">(
+      (devices ?? []).map((d) => [String(d.device_ref).toLowerCase(), d.side as "jury" | "public"]),
+    );
+
     let imported = 0;
     let skipped = 0;
 
@@ -103,6 +155,7 @@ export const syncSumupPos = createServerFn({ method: "POST" })
       const totalCents = Math.round(Number(t.amount) * 100);
       const cardTail = t.card?.last_4_digits ? ` ••${t.card.last_4_digits}` : "";
       const fulfilment = deriveFulfilment(t, products);
+      const posSide = derivePosSide(t, products, mapping);
 
       const { data: inserted, error: insErr } = await supabaseAdmin
         .from("orders")
@@ -111,6 +164,7 @@ export const syncSumupPos = createServerFn({ method: "POST" })
           customer_phone: "",
           type: fulfilment.type,
           table_number: fulfilment.table_number,
+          pos_terminal: posSide,
           status: "preparing",
           payment_status: "paid",
           subtotal_cents: totalCents,

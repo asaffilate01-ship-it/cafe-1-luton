@@ -567,6 +567,7 @@ export type Database = {
           payment_status: Database["public"]["Enums"]["payment_status"]
           picked_up_at: string | null
           points_earned: number
+          pos_terminal: string | null
           postcode: string | null
           promo_code: string | null
           promo_discount_cents: number
@@ -611,6 +612,7 @@ export type Database = {
           payment_status?: Database["public"]["Enums"]["payment_status"]
           picked_up_at?: string | null
           points_earned?: number
+          pos_terminal?: string | null
           postcode?: string | null
           promo_code?: string | null
           promo_discount_cents?: number
@@ -655,6 +657,7 @@ export type Database = {
           payment_status?: Database["public"]["Enums"]["payment_status"]
           picked_up_at?: string | null
           points_earned?: number
+          pos_terminal?: string | null
           postcode?: string | null
           promo_code?: string | null
           promo_discount_cents?: number
@@ -691,6 +694,36 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      pos_devices: {
+        Row: {
+          active: boolean
+          created_at: string
+          device_ref: string
+          id: string
+          name: string
+          side: string
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          device_ref: string
+          id?: string
+          name: string
+          side: string
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          device_ref?: string
+          id?: string
+          name?: string
+          side?: string
+          updated_at?: string
+        }
+        Relationships: []
       }
       profiles: {
         Row: {

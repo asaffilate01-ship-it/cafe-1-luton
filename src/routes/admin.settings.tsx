@@ -1,6 +1,7 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { AdminNav } from "@/components/admin-nav";
 import { useEffect, useState } from "react";
+import { PosDevicesCard } from "@/components/pos-devices-card";
 import { useSession, useRoles } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -156,6 +157,8 @@ function AdminSettings() {
           <button disabled={busy} onClick={save} className="inline-flex h-11 items-center gap-2 rounded-full bg-primary px-6 font-semibold text-primary-foreground shadow-brand hover:bg-primary-hover disabled:opacity-60">
             <Save className="h-4 w-4" /> {busy ? "Saving…" : "Save settings"}
           </button>
+
+          <PosDevicesCard />
         </div>
       </div>
     </div>
