@@ -349,6 +349,7 @@ export type Database = {
           is_veg: boolean
           loyalty_drink: boolean
           name: string
+          needs_cooking: boolean
           price_cents: number
           sort_order: number
           updated_at: string
@@ -364,6 +365,7 @@ export type Database = {
           is_veg?: boolean
           loyalty_drink?: boolean
           name: string
+          needs_cooking?: boolean
           price_cents: number
           sort_order?: number
           updated_at?: string
@@ -379,6 +381,7 @@ export type Database = {
           is_veg?: boolean
           loyalty_drink?: boolean
           name?: string
+          needs_cooking?: boolean
           price_cents?: number
           sort_order?: number
           updated_at?: string

@@ -10,7 +10,7 @@ import { useAlertOnIncrease, useNotificationPermission, playChime } from "@/hook
 import { Bell, BellOff, RefreshCw } from "lucide-react";
 import { syncSumupPos } from "@/lib/sumup-pos.functions";
 
-type Item = { id: string; order_id: string; name: string; qty: number; notes: string | null };
+type Item = { id: string; order_id: string; menu_item_id: string | null; name: string; qty: number; notes: string | null; cook?: boolean };
 type Order = {
   id: string; order_number: number; status: string; type: string; customer_name: string; created_at: string;
   schedule_mode: string | null; scheduled_for: string | null; table_number: string | null;
@@ -18,7 +18,7 @@ type Order = {
   payment_method: string | null;
   payment_status: string | null;
 };
-type Ticket = Order & { items: Item[] };
+type Ticket = Order & { items: Item[]; needsCooking: boolean };
 
 const TYPE_LABEL: Record<string, string> = { dine_in: "DINE IN", collection: "PICKUP", delivery: "DELIVERY" };
 
@@ -67,12 +67,25 @@ function KDS() {
         .order("created_at");
       const ids = (orders ?? []).map((o) => o.id);
       const { data: items } = ids.length
-        ? await supabase.from("order_items").select("id, order_id, name, qty, notes").in("order_id", ids)
+        ? await supabase.from("order_items").select("id, order_id, menu_item_id, name, qty, notes").in("order_id", ids)
         : { data: [] as Item[] };
-      const grouped: Ticket[] = ((orders ?? []) as Order[]).map((o) => ({
-        ...o,
-        items: ((items ?? []) as Item[]).filter((i) => i.order_id === o.id),
-      }));
+      const { data: menu } = await supabase.from("menu_items").select("id, name, needs_cooking");
+      const byId = new Map<string, boolean>();
+      const byName = new Map<string, boolean>();
+      for (const m of (menu ?? []) as { id: string; name: string; needs_cooking: boolean }[]) {
+        byId.set(m.id, !!m.needs_cooking);
+        byName.set(m.name.trim().toLowerCase(), !!m.needs_cooking);
+      }
+      const cooks = (i: Item) =>
+        (i.menu_item_id ? byId.get(i.menu_item_id) : undefined) ??
+        byName.get(i.name.trim().toLowerCase()) ??
+        false;
+      const grouped: Ticket[] = ((orders ?? []) as Order[]).map((o) => {
+        const its = ((items ?? []) as Item[])
+          .filter((i) => i.order_id === o.id)
+          .map((i) => ({ ...i, cook: cooks(i) }));
+        return { ...o, items: its, needsCooking: its.some((i) => i.cook) };
+      });
       setTickets(grouped);
     }
     load();
@@ -169,13 +182,27 @@ function KDS() {
             <span className="text-sm opacity-80">{tickets.length} active</span>
           </div>
         </div>
+        <div className="mx-auto flex max-w-7xl items-center gap-3 px-4 pb-3 text-xs font-semibold">
+          <span className="inline-flex items-center gap-1.5"><span className="h-3 w-3 rounded-full bg-blue-600 ring-2 ring-white/60" /> Cooked / hot food</span>
+          <span className="inline-flex items-center gap-1.5"><span className="h-3 w-3 rounded-full bg-amber-400 ring-2 ring-white/60" /> No cooking (drinks &amp; cold)</span>
+          <span className="inline-flex items-center gap-1.5"><span className="h-3 w-3 rounded-full bg-emerald-500 ring-2 ring-white/60" /> Ready → complete</span>
+          </div>
       </header>
       <div className="mx-auto grid max-w-7xl gap-4 p-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
         {tickets.map((t) => {
           const mins = Math.floor((Date.now() - new Date(t.created_at).getTime()) / 60000);
           const hot = mins >= 10;
+          const cook = t.needsCooking;
           return (
-            <div key={t.id} className={`flex flex-col rounded-2xl border-2 bg-card p-4 ${hot ? "border-primary shadow-brand" : "border-border"}`}>
+            <div
+              key={t.id}
+              className={`flex flex-col rounded-2xl border-4 p-4 ${
+                cook ? "border-blue-600 bg-blue-50" : "border-amber-400 bg-amber-50"
+              } ${hot ? "shadow-brand" : ""}`}
+            >
+              <div className={`-mx-4 -mt-4 mb-3 rounded-t-xl px-4 py-1.5 text-center text-xs font-black uppercase tracking-widest text-white ${cook ? "bg-blue-600" : "bg-amber-500"}`}>
+                {cook ? "Cook / hot food" : "No cooking needed"}
+              </div>
               <div className="flex items-center justify-between">
                 <p className="font-display text-2xl font-bold">#{t.order_number}</p>
                 <div className="flex items-center gap-2">
@@ -211,11 +238,21 @@ function KDS() {
               <p className="mt-2 text-base font-black uppercase tracking-wide text-foreground">{t.customer_name}</p>
               <ul className="mt-3 flex-1 space-y-1 text-sm">
                 {t.items.map((i) => (
-                  <li key={i.id}><span className="font-bold text-primary">{i.qty}×</span> {i.name}{i.notes ? <em className="text-muted-foreground"> — {i.notes}</em> : null}</li>
+                  <li key={i.id} className="flex items-start gap-2">
+                    <span className={`mt-1.5 h-2.5 w-2.5 shrink-0 rounded-full ${i.cook ? "bg-blue-600" : "bg-amber-400"}`} />
+                    <span><span className="font-bold text-primary">{i.qty}×</span> {i.name}{i.notes ? <em className="text-muted-foreground"> — {i.notes}</em> : null}</span>
+                  </li>
                 ))}
               </ul>
               <div className="mt-3 flex gap-2">
-                {t.status === "preparing" && <button onClick={() => set(t.id, "ready")} className="h-9 flex-1 rounded-full bg-primary text-sm font-semibold text-primary-foreground hover:bg-primary-hover">Mark ready</button>}
+                {t.status === "preparing" && (
+                  <button
+                    onClick={() => set(t.id, "ready")}
+                    className={`h-9 flex-1 rounded-full text-sm font-bold ${cook ? "bg-blue-600 text-white hover:bg-blue-700" : "bg-amber-400 text-amber-950 hover:bg-amber-500"}`}
+                  >
+                    Mark ready
+                  </button>
+                )}
                 {t.status === "ready" && (
                   <button onClick={() => set(t.id, "completed")} className="h-9 flex-1 rounded-full bg-emerald-600 text-sm font-semibold text-white hover:bg-emerald-700">
                     Mark complete
