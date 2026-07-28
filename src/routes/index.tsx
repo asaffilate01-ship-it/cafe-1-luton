@@ -9,10 +9,47 @@ import heroImage from "@/assets/cafe1-hero.jpg.asset.json";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Cafe1 — Freshly brewed, delivered fast" },
-      { name: "description", content: "Order coffee, breakfast and sandwiches from Cafe1. Delivery, collection or dine-in — pay securely with SumUp." },
-      { property: "og:title", content: "Cafe1 — Freshly brewed, delivered fast" },
-      { property: "og:description", content: "Order coffee, breakfast and sandwiches from Cafe1." },
+      { title: "Café 1 St Albans — Halal Coffee & Food, Delivered" },
+      { name: "description", content: "Order halal coffee, breakfast and hot food from Café 1 at St Albans Crown Court. Free delivery within half a mile, collection or dine-in." },
+      { property: "og:title", content: "Café 1 St Albans — Halal Coffee & Food, Delivered" },
+      { property: "og:description", content: "Fresh Italian coffee and 100% halal food. Delivery, collection or dine-in from Café 1, AL1 3JW." },
+      { property: "og:type", content: "website" },
+      { property: "og:url", content: "https://cafe1stalbans.co.uk/" },
+      { property: "og:image", content: `https://cafe1stalbans.co.uk${heroImage.url}` },
+      { name: "twitter:card", content: "summary_large_image" },
+      { name: "twitter:image", content: `https://cafe1stalbans.co.uk${heroImage.url}` },
+    ],
+    links: [{ rel: "canonical", href: "https://cafe1stalbans.co.uk/" }],
+    scripts: [
+      {
+        type: "application/ld+json",
+        children: JSON.stringify({
+          "@context": "https://schema.org",
+          "@type": "Restaurant",
+          name: "Café 1 St Albans",
+          url: "https://cafe1stalbans.co.uk",
+          image: `https://cafe1stalbans.co.uk${heroImage.url}`,
+          email: "info@cafe1stalbans.co.uk",
+          servesCuisine: ["Coffee", "Breakfast", "Halal", "Desi"],
+          priceRange: "££",
+          hasMenu: "https://cafe1stalbans.co.uk/menu",
+          address: {
+            "@type": "PostalAddress",
+            streetAddress: "St Albans Crown Court",
+            addressLocality: "St Albans",
+            postalCode: "AL1 3JW",
+            addressCountry: "GB",
+          },
+          openingHoursSpecification: [
+            {
+              "@type": "OpeningHoursSpecification",
+              dayOfWeek: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"],
+              opens: "08:30",
+              closes: "17:00",
+            },
+          ],
+        }),
+      },
     ],
   }),
   component: Home,

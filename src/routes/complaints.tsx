@@ -9,10 +9,10 @@ export const Route = createFileRoute("/complaints")({
       { property: "og:title", content: "Complaints Policy — Café 1" },
       { property: "og:description", content: "How to raise a complaint with Café 1 and how quickly we respond." },
       { property: "og:type", content: "article" },
-      { property: "og:url", content: "/complaints" },
+      { property: "og:url", content: "https://cafe1stalbans.co.uk/complaints" },
       { name: "twitter:card", content: "summary" },
     ],
-    links: [{ rel: "canonical", href: "/complaints" }],
+    links: [{ rel: "canonical", href: "https://cafe1stalbans.co.uk/complaints" }],
   }),
   component: () => (
     <LegalPage

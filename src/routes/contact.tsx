@@ -5,11 +5,15 @@ import { MapPin, Phone, Mail, Clock } from "lucide-react";
 export const Route = createFileRoute("/contact")({
   head: () => ({
     meta: [
-      { title: "Contact Cafe1 — Visit or get in touch" },
-      { name: "description", content: "Cafe1 opening hours, address and contact details." },
-      { property: "og:title", content: "Contact Cafe1" },
-      { property: "og:description", content: "Cafe1 opening hours, address and contact details." },
+      { title: "Contact Café 1 St Albans — Hours & Address" },
+      { name: "description", content: "Café 1 opening hours, address and contact details. St Albans Crown Court, AL1 3JW. Open Monday to Friday, 8:30am–5pm." },
+      { property: "og:title", content: "Contact Café 1 St Albans" },
+      { property: "og:description", content: "Opening hours, address and contact details for Café 1, St Albans Crown Court, AL1 3JW." },
+      { property: "og:type", content: "website" },
+      { property: "og:url", content: "https://cafe1stalbans.co.uk/contact" },
+      { name: "twitter:card", content: "summary" },
     ],
+    links: [{ rel: "canonical", href: "https://cafe1stalbans.co.uk/contact" }],
   }),
   component: Contact,
 });

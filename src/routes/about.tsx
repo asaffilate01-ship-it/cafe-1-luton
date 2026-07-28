@@ -4,11 +4,15 @@ import { SiteHeader, SiteFooter } from "@/components/site-header";
 export const Route = createFileRoute("/about")({
   head: () => ({
     meta: [
-      { title: "About Cafe1 — Our story" },
-      { name: "description", content: "Cafe1 is an independent neighbourhood café serving speciality coffee and honest food." },
-      { property: "og:title", content: "About Cafe1" },
-      { property: "og:description", content: "An independent neighbourhood café serving speciality coffee and honest food." },
+      { title: "About Café 1 St Albans — Our Story" },
+      { name: "description", content: "Café 1 is an independent café at St Albans Crown Court serving fresh Italian coffee and 100% halal food, made to order every weekday." },
+      { property: "og:title", content: "About Café 1 St Albans" },
+      { property: "og:description", content: "An independent café at St Albans Crown Court serving Italian coffee and 100% halal food." },
+      { property: "og:type", content: "website" },
+      { property: "og:url", content: "https://cafe1stalbans.co.uk/about" },
+      { name: "twitter:card", content: "summary" },
     ],
+    links: [{ rel: "canonical", href: "https://cafe1stalbans.co.uk/about" }],
   }),
   component: About,
 });

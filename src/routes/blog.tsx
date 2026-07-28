@@ -12,9 +12,9 @@ export const Route = createFileRoute("/blog")({
       { property: "og:title", content: "Blog — Café 1 St Albans" },
       { property: "og:description", content: "Stories, recipes and news from Café 1 at St Albans Crown Court." },
       { property: "og:type", content: "website" },
-      { property: "og:url", content: "/blog" },
+      { property: "og:url", content: "https://cafe1stalbans.co.uk/blog" },
     ],
-    links: [{ rel: "canonical", href: "/blog" }],
+    links: [{ rel: "canonical", href: "https://cafe1stalbans.co.uk/blog" }],
   }),
   component: BlogIndex,
 });

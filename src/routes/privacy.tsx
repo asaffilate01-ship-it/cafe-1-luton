@@ -9,10 +9,10 @@ export const Route = createFileRoute("/privacy")({
       { property: "og:title", content: "Privacy Policy — Café 1" },
       { property: "og:description", content: "How Café 1 collects, uses and protects your personal data." },
       { property: "og:type", content: "article" },
-      { property: "og:url", content: "/privacy" },
+      { property: "og:url", content: "https://cafe1stalbans.co.uk/privacy" },
       { name: "twitter:card", content: "summary" },
     ],
-    links: [{ rel: "canonical", href: "/privacy" }],
+    links: [{ rel: "canonical", href: "https://cafe1stalbans.co.uk/privacy" }],
   }),
   component: () => (
     <LegalPage
