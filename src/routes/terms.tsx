@@ -9,10 +9,10 @@ export const Route = createFileRoute("/terms")({
       { property: "og:title", content: "Terms & Conditions — Café 1" },
       { property: "og:description", content: "Ordering, payment, delivery and cancellation terms for Café 1." },
       { property: "og:type", content: "article" },
-      { property: "og:url", content: "/terms" },
+      { property: "og:url", content: "https://cafe1stalbans.co.uk/terms" },
       { name: "twitter:card", content: "summary" },
     ],
-    links: [{ rel: "canonical", href: "/terms" }],
+    links: [{ rel: "canonical", href: "https://cafe1stalbans.co.uk/terms" }],
   }),
   component: () => (
     <LegalPage

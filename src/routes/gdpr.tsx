@@ -9,10 +9,10 @@ export const Route = createFileRoute("/gdpr")({
       { property: "og:title", content: "GDPR & Your Data Rights — Café 1" },
       { property: "og:description", content: "How to exercise your UK GDPR rights with Café 1." },
       { property: "og:type", content: "article" },
-      { property: "og:url", content: "/gdpr" },
+      { property: "og:url", content: "https://cafe1stalbans.co.uk/gdpr" },
       { name: "twitter:card", content: "summary" },
     ],
-    links: [{ rel: "canonical", href: "/gdpr" }],
+    links: [{ rel: "canonical", href: "https://cafe1stalbans.co.uk/gdpr" }],
   }),
   component: () => (
     <LegalPage

@@ -10,10 +10,10 @@ export const Route = createFileRoute("/cookies")({
       { property: "og:title", content: "Cookie Policy — Café 1" },
       { property: "og:description", content: "Which cookies Café 1 uses and how to change your preferences." },
       { property: "og:type", content: "article" },
-      { property: "og:url", content: "/cookies" },
+      { property: "og:url", content: "https://cafe1stalbans.co.uk/cookies" },
       { name: "twitter:card", content: "summary" },
     ],
-    links: [{ rel: "canonical", href: "/cookies" }],
+    links: [{ rel: "canonical", href: "https://cafe1stalbans.co.uk/cookies" }],
   }),
   component: CookiePolicy,
 });
