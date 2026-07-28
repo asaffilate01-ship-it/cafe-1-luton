@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { SiteHeader, SiteFooter } from "@/components/site-header";
-import { MapPin, Phone, Mail, Clock } from "lucide-react";
+import { MapPin, Phone, Mail, Clock, ArrowUpRight } from "lucide-react";
 import { LiveMap } from "@/components/live-map";
 
 const STORE = { lat: 51.7519, lng: -0.3374, label: "Café 1, St Albans Crown Court", kind: "store" as const };
