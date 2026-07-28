@@ -486,6 +486,36 @@ export const updateOrderStatus = createServerFn({ method: "POST" })
 export const markPaidManually = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) =>
+    z.object({ order_id: z.string().uuid() }).parse(d),
+  )
+  .handler(async () => ({ ok: true }));
+
+export const setOrderFulfilment = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) =>
+    z
+      .object({
+        order_id: z.string().uuid(),
+        type: z.enum(["dine_in", "collection", "delivery"]),
+        table_number: z.string().max(10).nullable().optional(),
+      })
+      .parse(d),
+  )
+  .handler(async ({ data, context }) => {
+    const { error } = await context.supabase
+      .from("orders")
+      .update({
+        type: data.type,
+        table_number: data.type === "dine_in" ? (data.table_number ?? null) : null,
+      })
+      .eq("id", data.order_id);
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
+
+export const _markPaidManually = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) =>
     z
       .object({ order_id: z.string().uuid(), sumup_transaction_id: z.string().optional() })
       .parse(d),
