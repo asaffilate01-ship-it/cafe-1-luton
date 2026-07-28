@@ -202,6 +202,11 @@ function PrintPage() {
           </div>
           <p className="text-[15px] font-black uppercase leading-tight">{order.customer_name}</p>
           <p className="text-[11px]">{order.customer_phone}</p>
+          {order.source === "deliveroo" && (
+            <p className="mt-1 border-2 border-black px-1 py-1 text-center text-[13px] font-black uppercase leading-tight">
+              Attach Deliveroo receipt from tablet
+            </p>
+          )}
           {order.type === "delivery" && (
             <div className="mt-1 border border-black px-1 py-1 text-xs">
               <p className="text-[10px] font-bold">DELIVER TO</p>
