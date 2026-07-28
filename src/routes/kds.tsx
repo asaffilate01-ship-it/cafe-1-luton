@@ -7,12 +7,14 @@ import { updateOrderStatus } from "@/lib/orders.functions";
 import { toast } from "sonner";
 import { useSession, useRoles } from "@/hooks/use-auth";
 import { useAlertOnIncrease, useNotificationPermission } from "@/hooks/use-order-alerts";
-import { Bell, BellOff } from "lucide-react";
+import { Bell, BellOff, RefreshCw } from "lucide-react";
+import { syncSumupPos } from "@/lib/sumup-pos.functions";
 
 type Item = { id: string; order_id: string; name: string; qty: number; notes: string | null };
 type Order = {
   id: string; order_number: number; status: string; type: string; customer_name: string; created_at: string;
   schedule_mode: string | null; scheduled_for: string | null; table_number: string | null;
+  source: string | null;
 };
 type Ticket = Order & { items: Item[] };
 
@@ -39,6 +41,8 @@ function KDS() {
   const [tickets, setTickets] = useState<Ticket[]>([]);
   const [kdsPaper, setKdsPaper] = useState<58 | 80>(80);
   const update = useServerFn(updateOrderStatus);
+  const sync = useServerFn(syncSumupPos);
+  const [syncing, setSyncing] = useState(false);
   const { user } = useSession();
   const { has } = useRoles(user);
 
@@ -56,7 +60,7 @@ function KDS() {
     async function load() {
       const { data: orders } = await supabase
         .from("orders")
-        .select("id, order_number, status, type, customer_name, created_at, schedule_mode, scheduled_for, table_number")
+        .select("id, order_number, status, type, customer_name, created_at, schedule_mode, scheduled_for, table_number, source")
         .in("status", ["preparing", "ready"])
         .order("created_at");
       const ids = (orders ?? []).map((o) => o.id);
@@ -77,6 +81,36 @@ function KDS() {
       .subscribe();
     return () => { supabase.removeChannel(ch); };
   }, []);
+
+  // Auto-poll SumUp POS every 30s while KDS is open (staff/admin only)
+  useEffect(() => {
+    if (!user || (!has("admin") && !has("staff"))) return;
+    let cancelled = false;
+    async function tick() {
+      try {
+        const r = await sync({ data: undefined as never });
+        if (!cancelled && r?.imported && r.imported > 0) {
+          toast.success(`${r.imported} SumUp POS ${r.imported === 1 ? "order" : "orders"} imported`);
+        }
+      } catch { /* silent */ }
+    }
+    tick();
+    const iv = window.setInterval(tick, 30000);
+    return () => { cancelled = true; window.clearInterval(iv); };
+  }, [user, has, sync]);
+
+  async function manualSync() {
+    setSyncing(true);
+    try {
+      const r = await sync({ data: undefined as never });
+      if (r?.error) toast.error(`SumUp: ${r.error}`);
+      else toast.success(`SumUp sync: ${r?.imported ?? 0} imported, ${r?.skipped ?? 0} skipped`);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Sync failed");
+    } finally {
+      setSyncing(false);
+    }
+  }
 
   async function set(id: string, status: "preparing" | "ready") {
     try {
@@ -100,6 +134,15 @@ function KDS() {
           <h1 className="font-display text-2xl font-bold">Kitchen Display · Cafe1</h1>
           <div className="flex items-center gap-3">
             <AlertsToggle />
+            <button
+              onClick={manualSync}
+              disabled={syncing}
+              className="flex items-center gap-1 rounded-full bg-primary-foreground/10 px-3 py-1.5 text-xs font-semibold hover:bg-primary-foreground/20 disabled:opacity-50"
+              title="Pull latest transactions from your SumUp terminal"
+            >
+              <RefreshCw className={`h-4 w-4 ${syncing ? "animate-spin" : ""}`} />
+              <span>{syncing ? "Syncing…" : "Sync SumUp POS"}</span>
+            </button>
             <a
               href={`/print/test?paper=${kdsPaper}&preview=1`}
               target="_blank"
@@ -133,7 +176,12 @@ function KDS() {
             <div key={t.id} className={`flex flex-col rounded-2xl border-2 bg-card p-4 ${hot ? "border-primary shadow-brand" : "border-border"}`}>
               <div className="flex items-center justify-between">
                 <p className="font-display text-2xl font-bold">#{t.order_number}</p>
-                <span className="text-sm font-bold text-muted-foreground">{mins}m ago</span>
+                <div className="flex items-center gap-2">
+                  {t.source === "sumup_pos" && (
+                    <span className="rounded-full bg-blue-600 px-2 py-0.5 text-[10px] font-black uppercase tracking-wide text-white">SumUp POS</span>
+                  )}
+                  <span className="text-sm font-bold text-muted-foreground">{mins}m ago</span>
+                </div>
               </div>
               <div className="mt-2 rounded-xl bg-primary px-3 py-2 text-primary-foreground">
                 <p className="font-display text-2xl font-black uppercase leading-none tracking-wide">
