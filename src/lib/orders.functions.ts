@@ -226,7 +226,7 @@ export const createOrder = createServerFn({ method: "POST" })
     const free_drinks_after = free_drinks_available - free_drinks_used + new_free_drinks;
     const total = Math.max(0, subtotal - discount) + delivery_fee;
     const points_earned = userId ? Math.floor(Math.max(0, subtotal - discount) / 100) * POINTS_PER_POUND : 0;
-    const reference = `cafe1-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+    const reference = `WEBSITE-ORDER-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 
     // Court vouchers: a daily allowance held against a person's email/phone.
     // Any amount above the remaining allowance is paid by the customer.
@@ -301,11 +301,18 @@ export const createOrder = createServerFn({ method: "POST" })
     let checkout_id: string | null = null;
     if (!account_id && payable > 0) {
       const { createSumUpCheckout } = await import("./sumup.server");
+      const itemSummary = lines
+        .map((l) => `${l.qty}x ${l.name}${l.notes ? ` (${l.notes})` : ""}`)
+        .join("; ");
+      const sumupDescription = `WEBSITE ORDER — ${data.customer_name} — ${itemSummary}`;
+      const compactSumupDescription = sumupDescription.length > 500
+        ? `${sumupDescription.slice(0, 497)}...`
+        : sumupDescription;
       try {
         const co = await createSumUpCheckout({
           reference,
           amount_cents: payable,
-          description: `Cafe1 order — ${data.customer_name}`,
+          description: compactSumupDescription,
           customer_email: data.customer_email || undefined,
         });
         checkout_id = co.id;
