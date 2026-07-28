@@ -1,4 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
+import { getRequestHeader } from "@tanstack/react-start/server";
+import { isDevHost } from "./dev-env";
 
 type Role = "admin" | "staff" | "driver" | "customer";
 
@@ -9,11 +11,20 @@ const ACCOUNTS: { email: string; password: string; name: string; role: Role }[] 
   { email: "dev-customer@cafe1.test", password: "DevCustomer!2026", name: "Dev Customer", role: "customer" },
 ];
 
+function assertDevEnvironment() {
+  const host = getRequestHeader("host") ?? getRequestHeader("x-forwarded-host");
+  if (!isDevHost(host)) {
+    throw new Error("Dev logins are disabled on this environment.");
+  }
+}
+
 export const listDevAccounts = createServerFn({ method: "GET" }).handler(async () => {
+  assertDevEnvironment();
   return ACCOUNTS.map(({ email, password, name, role }) => ({ email, password, name, role }));
 });
 
 export const ensureDevAccounts = createServerFn({ method: "POST" }).handler(async () => {
+  assertDevEnvironment();
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
   const results: { email: string; role: Role; status: string }[] = [];
 
