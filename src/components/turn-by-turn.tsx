@@ -63,8 +63,11 @@ export function TurnByTurn({
   const [stepIndex, setStepIndex] = useState(0);
   const [showAll, setShowAll] = useState(false);
   const lastFetch = useRef(0);
+  const posRef = useRef(position);
+  posRef.current = position;
 
   const load = useCallback(async () => {
+    const position = posRef.current;
     if (!position) {
       setError("Turn on live location to get directions.");
       return;
@@ -84,7 +87,7 @@ export function TurnByTurn({
     } finally {
       setLoading(false);
     }
-  }, [directions, destination, position]);
+  }, [directions, destination]);
 
   // Advance the current step once the driver reaches its end point.
   useEffect(() => {
@@ -98,12 +101,12 @@ export function TurnByTurn({
 
   // Light re-route: refresh at most every 60s while navigating.
   useEffect(() => {
-    if (!route || !position) return;
+    if (!route) return;
     const t = setInterval(() => {
-      if (Date.now() - lastFetch.current > 60000) void load();
+      if (posRef.current && Date.now() - lastFetch.current > 60000) void load();
     }, 15000);
     return () => clearInterval(t);
-  }, [route, position, load]);
+  }, [route, load]);
 
   const current = route?.steps[stepIndex];
   const remaining = route?.steps.slice(stepIndex + 1) ?? [];
