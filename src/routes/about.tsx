@@ -24,10 +24,13 @@ function About() {
       <div className="mx-auto max-w-3xl px-4 py-16">
         <h1 className="font-display text-5xl font-bold">Our story</h1>
         <p className="mt-6 text-lg text-muted-foreground">
-          Cafe1 opened at St Albans Crown Court, AL1 3JW with one simple idea: proper coffee and honest food, served fast. We roast the same blend we've poured since day one, bake our pastries in-house every morning, and put every order together as if it were our own.
+          Cafe 1 has been proudly serving the Luton community since 2008, with two successful and popular locations. In May 2026, we opened our newest café at St Albans Crown Court, bringing our well-loved combination of good food, great value and friendly service to St Albans.
         </p>
         <p className="mt-4 text-lg text-muted-foreground">
-          Whether you dine in, collect on your way to work, or have one of our drivers bring it to your door — thanks for choosing us.
+          Open to court visitors, local workers, residents and the general public, Cafe 1 offers a welcoming atmosphere where everyone can enjoy freshly prepared food at affordable prices.
+        </p>
+        <p className="mt-4 text-lg text-muted-foreground">
+          Whether you dine in, collect on the go or order for delivery, we look forward to welcoming you to Cafe 1.
         </p>
       </div>
       <SiteFooter />
