@@ -305,7 +305,7 @@ export const createOrder = createServerFn({ method: "POST" })
         const co = await createSumUpCheckout({
           reference,
           amount_cents: payable,
-          description: `Cafe1 order`,
+          description: `Cafe1 order — ${data.customer_name}`,
           customer_email: data.customer_email || undefined,
         });
         checkout_id = co.id;
