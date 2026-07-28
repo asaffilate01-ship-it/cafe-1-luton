@@ -3,7 +3,7 @@ import { AdminNav } from "@/components/admin-nav";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useServerFn } from "@tanstack/react-start";
-import { updateOrderStatus } from "@/lib/orders.functions";
+import { updateOrderStatus, setOrderFulfilment } from "@/lib/orders.functions";
 import { toast } from "sonner";
 import { useSession, useRoles } from "@/hooks/use-auth";
 import { useAlertOnIncrease, useNotificationPermission, playChime } from "@/hooks/use-order-alerts";
@@ -43,6 +43,7 @@ function KDS() {
   const [tickets, setTickets] = useState<Ticket[]>([]);
   const [kdsPaper, setKdsPaper] = useState<58 | 80>(80);
   const update = useServerFn(updateOrderStatus);
+  const setFulfil = useServerFn(setOrderFulfilment);
   const sync = useServerFn(syncSumupPos);
   const [syncing, setSyncing] = useState(false);
   const { user } = useSession();
@@ -130,6 +131,23 @@ function KDS() {
   async function set(id: string, status: "preparing" | "ready" | "completed") {
     try {
       await update({ data: { order_id: id, status } });
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Failed");
+    }
+  }
+
+  async function markDineIn(id: string, current: string) {
+    try {
+      if (current === "dine_in") {
+        await setFulfil({ data: { order_id: id, type: "collection", table_number: null } });
+        toast.success("Marked as pickup");
+      } else {
+        const table = window.prompt("Table number (optional)") ?? "";
+        await setFulfil({
+          data: { order_id: id, type: "dine_in", table_number: table.trim() || null },
+        });
+        toast.success("Marked as dine in");
+      }
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Failed");
     }
