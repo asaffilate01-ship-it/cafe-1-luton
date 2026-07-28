@@ -91,31 +91,40 @@ function MenuPage() {
       window.removeEventListener("scroll", measure);
     };
   }, [filtered?.cats.length]);
+  const catIds = filtered?.cats.map((c) => c.id).join(",") ?? "";
   useEffect(() => {
-    if (!filtered?.cats.length) return;
-    setActiveCat((prev) => (prev && filtered.cats.some((c) => c.id === prev) ? prev : filtered.cats[0].id));
-    const obs = new IntersectionObserver(
-      (entries) => {
-        if (Date.now() < lockRef.current) return; // ignore while a pill jump is animating
-        const visible = entries
-          .filter((e) => e.isIntersecting)
-          .sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top)[0];
-        if (visible) setActiveCat(visible.target.id.replace(/^cat-/, ""));
-      },
-      { rootMargin: `-${stickyH}px 0px -60% 0px`, threshold: 0 }
-    );
-    for (const c of filtered.cats) {
-      const el = sectionRefs.current[c.id];
-      if (el) obs.observe(el);
-    }
-    return () => obs.disconnect();
-  }, [filtered?.cats.map((c) => c.id).join(","), stickyH]);
+    const ids = catIds ? catIds.split(",") : [];
+    if (!ids.length) return;
+    setActiveCat((prev) => (prev && ids.includes(prev) ? prev : ids[0]));
+    // Deterministic scrollspy: the active category is the last section whose
+    // top has passed just under the sticky bar. (An IntersectionObserver ties
+    // when a section header sits exactly on the boundary line.)
+    const onScroll = () => {
+      if (Date.now() < lockRef.current) return; // ignore while a pill jump animates
+      const line = stickyH + 8;
+      let current = ids[0];
+      for (const id of ids) {
+        const el = sectionRefs.current[id];
+        if (el && el.getBoundingClientRect().top <= line) current = id;
+      }
+      setActiveCat(current);
+    };
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, [catIds, stickyH]);
 
-  // Auto-scroll pill row to active
+  // Auto-scroll pill row to active.
+  // NOTE: never use scrollIntoView here — it also scrolls the window, which
+  // fights with (and cancels) the vertical jump triggered by tapping a pill.
   useEffect(() => {
-    if (!activeCat || !pillsRef.current) return;
-    const el = pillsRef.current.querySelector<HTMLButtonElement>(`[data-cat="${activeCat}"]`);
-    if (el) el.scrollIntoView({ behavior: "smooth", inline: "center", block: "nearest" });
+    const row = pillsRef.current;
+    if (!activeCat || !row) return;
+    const el = row.querySelector<HTMLButtonElement>(`[data-cat="${activeCat}"]`);
+    if (!el) return;
+    const target = el.offsetLeft - row.clientWidth / 2 + el.offsetWidth / 2;
+    const left = Math.max(0, Math.min(target, row.scrollWidth - row.clientWidth));
+    if (Math.abs(left - row.scrollLeft) > 2) row.scrollTo({ left, behavior: "smooth" });
   }, [activeCat]);
 
   function scrollToCat(id: string) {
