@@ -208,7 +208,7 @@ function KDS() {
                   <p className="mt-1 text-sm font-bold">TABLE {t.table_number}</p>
                 )}
               </div>
-              <p className="mt-2 text-sm text-muted-foreground">{t.customer_name}</p>
+              <p className="mt-2 text-base font-black uppercase tracking-wide text-foreground">{t.customer_name}</p>
               <ul className="mt-3 flex-1 space-y-1 text-sm">
                 {t.items.map((i) => (
                   <li key={i.id}><span className="font-bold text-primary">{i.qty}×</span> {i.name}{i.notes ? <em className="text-muted-foreground"> — {i.notes}</em> : null}</li>
