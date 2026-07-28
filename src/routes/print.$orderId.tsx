@@ -198,7 +198,8 @@ function PrintPage() {
               <p className="text-[16px] font-black leading-tight">TABLE {order.table_number}</p>
             )}
           </div>
-          <p>{order.customer_name} · {order.customer_phone}</p>
+          <p className="text-[15px] font-black uppercase leading-tight">{order.customer_name}</p>
+          <p className="text-[11px]">{order.customer_phone}</p>
           {order.type === "delivery" && (
             <p className="mt-1 text-xs">
               {order.company_name && <>{order.company_name}<br /></>}
