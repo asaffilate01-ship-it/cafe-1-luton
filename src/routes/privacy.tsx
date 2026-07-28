@@ -20,7 +20,7 @@ export const Route = createFileRoute("/privacy")({
       intro="This page explains what personal information Café 1 collects when you use our ordering site, why we collect it, and the choices you have."
     >
       <Section heading="Who we are">
-        <p>Café 1, St Albans Crown Court, AL1 3JW is the data controller for personal data collected through this site. Contact us at hello@cafe1.example.</p>
+        <p>Café 1, St Albans Crown Court, AL1 3JW is the data controller for personal data collected through this site. Contact us at info@cafe1stalbans.co.uk.</p>
       </Section>
       <Section heading="What we collect">
         <ul className="list-disc space-y-1 pl-5">
@@ -48,7 +48,7 @@ export const Route = createFileRoute("/privacy")({
         <p>Order and transaction records are kept for six years for tax purposes. Account data is kept until you ask us to delete it. Marketing consent records are kept until you withdraw consent.</p>
       </Section>
       <Section heading="Your rights">
-        <p>You can request access, correction, deletion, restriction or a copy of your data, and object to processing. See our GDPR page for how to make a request, or contact hello@cafe1.example. You can also complain to the Information Commissioner's Office (ico.org.uk).</p>
+        <p>You can request access, correction, deletion, restriction or a copy of your data, and object to processing. See our GDPR page for how to make a request, or contact info@cafe1stalbans.co.uk. You can also complain to the Information Commissioner's Office (ico.org.uk).</p>
       </Section>
     </LegalPage>
   ),

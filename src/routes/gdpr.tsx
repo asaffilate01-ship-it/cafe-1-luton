@@ -31,7 +31,7 @@ export const Route = createFileRoute("/gdpr")({
         </ul>
       </Section>
       <Section heading="How to make a request">
-        <p>Email hello@cafe1.example with the subject "Data request", telling us which right you want to use and the name, phone number or email you used when ordering. We may ask for proof of identity to protect your data.</p>
+        <p>Email info@cafe1stalbans.co.uk with the subject "Data request", telling us which right you want to use and the name, phone number or email you used when ordering. We may ask for proof of identity to protect your data.</p>
       </Section>
       <Section heading="How long it takes">
         <p>We respond within one calendar month. If a request is complex we may extend this by up to two further months and will explain why. Requests are free unless clearly unfounded or excessive.</p>
