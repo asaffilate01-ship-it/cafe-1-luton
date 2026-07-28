@@ -5,6 +5,9 @@ import { useQuery } from "@tanstack/react-query";
 import { SiteHeader } from "@/components/site-header";
 import { money } from "@/lib/format";
 import { useEffect } from "react";
+import { cart } from "@/lib/cart";
+import { toast } from "sonner";
+import { RotateCcw } from "lucide-react";
 
 export const Route = createFileRoute("/account")({
   head: () => ({
@@ -94,7 +97,7 @@ function Account() {
         <h2 className="mt-10 font-display text-2xl font-bold">Recent orders</h2>
         <ul className="mt-4 space-y-3">
           {(orders ?? []).map((o) => (
-            <li key={o.id}>
+            <li key={o.id} className="relative">
               <Link to="/order/$orderId" params={{ orderId: o.id }} className="flex items-center justify-between rounded-2xl border border-border bg-card p-4 hover:border-primary">
                 <div>
                   <p className="font-semibold">#{o.order_number} · {o.type}</p>
@@ -105,6 +108,12 @@ function Account() {
                   <p className="text-xs uppercase tracking-wider text-muted-foreground">{o.status.replace(/_/g, " ")}</p>
                 </div>
               </Link>
+              <button
+                onClick={() => reorder(o.id)}
+                className="mt-2 inline-flex items-center gap-1.5 rounded-full border border-border bg-card px-3 py-1.5 text-xs font-semibold hover:border-primary hover:text-primary"
+              >
+                <RotateCcw className="h-3.5 w-3.5" /> Order this again
+              </button>
             </li>
           ))}
           {orders && orders.length === 0 && <p className="text-muted-foreground">No orders yet.</p>}
