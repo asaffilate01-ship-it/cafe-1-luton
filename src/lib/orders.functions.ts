@@ -483,13 +483,6 @@ export const updateOrderStatus = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
-export const markPaidManually = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
-  .inputValidator((d: unknown) =>
-    z.object({ order_id: z.string().uuid() }).parse(d),
-  )
-  .handler(async () => ({ ok: true }));
-
 export const setOrderFulfilment = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) =>
@@ -513,7 +506,7 @@ export const setOrderFulfilment = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
-export const _markPaidManually = createServerFn({ method: "POST" })
+export const markPaidManually = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) =>
     z
