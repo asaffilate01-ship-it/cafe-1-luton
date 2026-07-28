@@ -1,7 +1,7 @@
 {
-  "name": "Cafe1 — Order, Collect, Deliver",
-  "short_name": "Cafe1",
-  "description": "Order Cafe1 for delivery, pickup or dine-in.",
+  "name": "Café 1 St Albans — Order, Collect, Deliver",
+  "short_name": "Café 1",
+  "description": "Order halal coffee and food from Café 1 St Albans for delivery, collection or dine-in.",
   "start_url": "/",
   "scope": "/",
   "id": "/",
@@ -9,14 +9,48 @@
   "orientation": "portrait",
   "background_color": "#ffffff",
   "theme_color": "#dc2626",
-  "categories": ["food", "shopping", "lifestyle"],
+  "categories": [
+    "food",
+    "shopping",
+    "lifestyle"
+  ],
   "icons": [
-    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
-    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" },
-    { "src": "/apple-touch-icon.png", "sizes": "512x512", "type": "image/png" }
+    {
+      "src": "/favicon.png",
+      "sizes": "256x256",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/apple-touch-icon.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
   ],
   "shortcuts": [
-    { "name": "Menu", "url": "/menu" },
-    { "name": "My orders", "url": "/account" }
+    {
+      "name": "Menu",
+      "url": "/menu"
+    },
+    {
+      "name": "My orders",
+      "url": "/account"
+    },
+    {
+      "name": "Kitchen display",
+      "url": "/kds"
+    }
   ]
 }
