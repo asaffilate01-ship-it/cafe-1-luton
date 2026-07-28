@@ -109,7 +109,6 @@ export function SiteFooter() {
           <Link to="/gdpr" className="hover:text-primary">GDPR</Link>
           <Link to="/complaints" className="hover:text-primary">Complaints</Link>
           <button onClick={openCookieSettings} className="text-left hover:text-primary">Cookie settings</button>
-          <Link to="/staff" className="hover:text-primary">Staff</Link>
         </nav>
       </div>
     </footer>
