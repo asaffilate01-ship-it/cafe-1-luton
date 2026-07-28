@@ -9,6 +9,7 @@ import { useSession, useRoles } from "@/hooks/use-auth";
 import { useAlertOnIncrease, useNotificationPermission, playChime } from "@/hooks/use-order-alerts";
 import { Bell, BellOff, RefreshCw } from "lucide-react";
 import { syncSumupPos } from "@/lib/sumup-pos.functions";
+import { orderCode } from "@/lib/order-code";
 
 type Item = { id: string; order_id: string; menu_item_id: string | null; name: string; qty: number; notes: string | null; cook?: boolean };
 type Order = {
@@ -17,6 +18,13 @@ type Order = {
   source: string | null;
   payment_method: string | null;
   payment_status: string | null;
+  customer_phone: string | null;
+  company_name: string | null;
+  address_line1: string | null;
+  address_line2: string | null;
+  city: string | null;
+  postcode: string | null;
+  delivery_notes: string | null;
 };
 type Ticket = Order & { items: Item[]; needsCooking: boolean };
 
@@ -70,7 +78,7 @@ function KDS() {
     async function load() {
       const { data: orders } = await supabase
         .from("orders")
-        .select("id, order_number, status, type, customer_name, created_at, schedule_mode, scheduled_for, table_number, source, payment_method, payment_status")
+        .select("id, order_number, status, type, customer_name, created_at, schedule_mode, scheduled_for, table_number, source, payment_method, payment_status, customer_phone, company_name, address_line1, address_line2, city, postcode, delivery_notes")
         .in("status", ["preparing", "ready"])
         .order("created_at");
       const ids = (orders ?? []).map((o) => o.id);
@@ -282,6 +290,27 @@ function KDS() {
                 </button>
               </div>
               <p className="mt-2 text-base font-black uppercase tracking-wide text-foreground">{t.customer_name}</p>
+              <p className="mt-1 inline-block rounded-md bg-slate-900 px-2 py-0.5 font-mono text-sm font-black tracking-widest text-white">
+                {orderCode(t)}
+              </p>
+              {t.type === "delivery" && (
+                <div className="mt-2 rounded-xl border-2 border-slate-900 bg-white p-2 text-sm">
+                  <p className="text-[10px] font-black uppercase tracking-widest text-slate-500">Deliver to</p>
+                  {t.postcode && (
+                    <p className="font-display text-xl font-black uppercase leading-none">{t.postcode}</p>
+                  )}
+                  {t.company_name && <p className="mt-1 font-bold">{t.company_name}</p>}
+                  {t.address_line1 && <p className="font-semibold">{t.address_line1}</p>}
+                  {t.address_line2 && <p className="font-semibold">{t.address_line2}</p>}
+                  {t.city && <p className="text-muted-foreground">{t.city}</p>}
+                  {t.customer_phone && <p className="mt-1 font-bold">☎ {t.customer_phone}</p>}
+                  {t.delivery_notes && (
+                    <p className="mt-1 rounded bg-amber-100 px-1.5 py-1 text-xs font-semibold text-amber-900">
+                      NOTE: {t.delivery_notes}
+                    </p>
+                  )}
+                </div>
+              )}
               <ul className="mt-3 flex-1 space-y-1 text-sm">
                 {t.items.map((i) => (
                   <li key={i.id} className="flex items-start gap-2">
