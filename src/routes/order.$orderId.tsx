@@ -6,6 +6,7 @@ import { money } from "@/lib/format";
 import { toast } from "sonner";
 import { Bell, Navigation } from "lucide-react";
 import { LiveMap } from "@/components/live-map";
+import { orderCode } from "@/lib/order-code";
 
 const STORE = { lat: 51.7486, lng: -0.3345 };
 
@@ -152,6 +153,10 @@ function OrderView() {
       <div className="mx-auto max-w-2xl px-4 py-12">
         <p className="text-sm uppercase tracking-wider text-muted-foreground">Order</p>
         <h1 className="font-display text-4xl font-bold">#{order.order_number}</h1>
+        <p className="mt-2 inline-block rounded-lg bg-foreground px-3 py-1 font-mono text-lg font-black tracking-widest text-background">
+          {orderCode(order)}
+        </p>
+        <p className="mt-1 text-xs text-muted-foreground">Show this code when you collect, or give it to the driver.</p>
         <p className="mt-1 text-muted-foreground">
           {order.customer_name} · {order.type === "collection" ? "Pickup" : order.type.replace("_", " ")}
           {" · "}
