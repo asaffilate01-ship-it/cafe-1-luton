@@ -238,11 +238,21 @@ function KDS() {
               <p className="mt-2 text-base font-black uppercase tracking-wide text-foreground">{t.customer_name}</p>
               <ul className="mt-3 flex-1 space-y-1 text-sm">
                 {t.items.map((i) => (
-                  <li key={i.id}><span className="font-bold text-primary">{i.qty}×</span> {i.name}{i.notes ? <em className="text-muted-foreground"> — {i.notes}</em> : null}</li>
+                  <li key={i.id} className="flex items-start gap-2">
+                    <span className={`mt-1.5 h-2.5 w-2.5 shrink-0 rounded-full ${i.cook ? "bg-blue-600" : "bg-amber-400"}`} />
+                    <span><span className="font-bold text-primary">{i.qty}×</span> {i.name}{i.notes ? <em className="text-muted-foreground"> — {i.notes}</em> : null}</span>
+                  </li>
                 ))}
               </ul>
               <div className="mt-3 flex gap-2">
-                {t.status === "preparing" && <button onClick={() => set(t.id, "ready")} className="h-9 flex-1 rounded-full bg-primary text-sm font-semibold text-primary-foreground hover:bg-primary-hover">Mark ready</button>}
+                {t.status === "preparing" && (
+                  <button
+                    onClick={() => set(t.id, "ready")}
+                    className={`h-9 flex-1 rounded-full text-sm font-bold ${cook ? "bg-blue-600 text-white hover:bg-blue-700" : "bg-amber-400 text-amber-950 hover:bg-amber-500"}`}
+                  >
+                    Mark ready
+                  </button>
+                )}
                 {t.status === "ready" && (
                   <button onClick={() => set(t.id, "completed")} className="h-9 flex-1 rounded-full bg-emerald-600 text-sm font-semibold text-white hover:bg-emerald-700">
                     Mark complete
