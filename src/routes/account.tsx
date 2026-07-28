@@ -56,6 +56,38 @@ function Account() {
     },
   });
 
+  async function reorder(orderId: string) {
+    const { data: lines, error } = await supabase
+      .from("order_items")
+      .select("menu_item_id, name, qty, unit_price_cents")
+      .eq("order_id", orderId);
+    if (error || !lines?.length) {
+      toast.error("Could not load that order");
+      return;
+    }
+    const ids = lines.map((l) => l.menu_item_id).filter(Boolean) as string[];
+    const { data: live } = await supabase
+      .from("menu_items")
+      .select("id, name, price_cents, active")
+      .in("id", ids.length ? ids : ["00000000-0000-0000-0000-000000000000"]);
+    const byId = new Map((live ?? []).map((m) => [m.id, m]));
+
+    let added = 0;
+    let skipped = 0;
+    for (const l of lines) {
+      const m = l.menu_item_id ? byId.get(l.menu_item_id) : undefined;
+      if (!m || !m.active) { skipped++; continue; }
+      cart.add({ menu_item_id: m.id, name: m.name, base_price_cents: m.price_cents }, l.qty);
+      added++;
+    }
+    if (!added) {
+      toast.error("None of those items are available right now");
+      return;
+    }
+    toast.success(skipped ? `Added ${added} item(s) — ${skipped} unavailable` : "Added to your basket");
+    navigate({ to: "/cart" });
+  }
+
   return (
     <div className="min-h-screen bg-background">
       <SiteHeader />
