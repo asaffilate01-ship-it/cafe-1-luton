@@ -80,13 +80,10 @@ function PayView() {
   useEffect(() => {
     let cancelled = false;
     (async () => {
-      const { data, error } = await supabase
-        .from("orders")
-        .select("id, order_number, total_cents, payment_status, customer_email, sumup_checkout_id")
-        .eq("id", orderId)
-        .maybeSingle();
+      const res = await getPublicOrder({ data: { order_id: orderId } });
+      const data = res.order as (Order & { sumup_checkout_id: string | null }) | null;
       if (cancelled) return;
-      if (error || !data) { setStatus("error"); setErrorMsg("Order not found."); return; }
+      if (!data) { setStatus("error"); setErrorMsg("Order not found."); return; }
       setOrder(data as Order);
       if (data.payment_status === "paid") {
         navigate({ to: "/order/$orderId", params: { orderId }, replace: true });
