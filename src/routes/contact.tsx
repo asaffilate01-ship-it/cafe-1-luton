@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { SiteHeader, SiteFooter } from "@/components/site-header";
-import { MapPin, Phone, Mail, Clock } from "lucide-react";
+import { MapPin, Phone, Mail, Clock, ArrowUpRight } from "lucide-react";
 import { LiveMap } from "@/components/live-map";
 
 const STORE = { lat: 51.7519, lng: -0.3374, label: "Café 1, St Albans Crown Court", kind: "store" as const };
@@ -36,32 +36,39 @@ function Contact() {
       <div className="mx-auto max-w-3xl px-4 py-16">
         <h1 className="font-display text-5xl font-bold">Say hello</h1>
         <p className="mt-3 text-lg text-muted-foreground">Pop in for a coffee, or reach out any time.</p>
-        <div className="mt-10 grid gap-4 sm:grid-cols-2">
-          <div className="overflow-hidden rounded-2xl border border-border bg-card sm:col-span-2">
-            <div className="p-6 pb-4">
-              <span className="grid h-10 w-10 place-items-center rounded-xl bg-primary-soft text-primary">
+        <div className="mt-10 grid gap-5 sm:grid-cols-2">
+          <div className="card-3d card-3d-hover overflow-hidden sm:col-span-2">
+            <div className="flex flex-wrap items-start gap-4 p-6 pb-5">
+              <span className="icon-3d h-12 w-12 shrink-0">
                 <MapPin className="h-5 w-5" />
               </span>
-              <p className="mt-3 text-xs uppercase tracking-wider text-muted-foreground">Visit</p>
-              <p className="mt-1 font-semibold">Cafe 1, St Albans Crown Court, AL1 3JW</p>
-              <a
-                href={DIRECTIONS_URL}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="mt-2 inline-block text-sm font-semibold text-primary underline-offset-4 hover:underline"
-              >
-                Get directions
-              </a>
+              <div className="min-w-0 flex-1">
+                <p className="text-[0.7rem] font-semibold uppercase tracking-[0.14em] text-muted-foreground">Visit</p>
+                <p className="mt-1 text-lg font-semibold leading-snug">Cafe 1, St Albans Crown Court, AL1 3JW</p>
+                <a
+                  href={DIRECTIONS_URL}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-primary-soft px-3.5 py-1.5 text-sm font-semibold text-primary transition-colors hover:bg-accent"
+                >
+                  Get directions
+                  <ArrowUpRight className="h-4 w-4" />
+                </a>
+              </div>
             </div>
-            <LiveMap points={[STORE]} className="h-64 w-full rounded-none border-0 border-t border-border" />
+            <div className="px-3 pb-3">
+              <LiveMap points={[STORE]} className="h-64 w-full rounded-xl" />
+            </div>
           </div>
           {rows.map((r) => (
-            <div key={r.label} className="rounded-2xl border border-border bg-card p-6">
-              <span className="grid h-10 w-10 place-items-center rounded-xl bg-primary-soft text-primary">
+            <div key={r.label} className="card-3d card-3d-hover flex items-start gap-4 p-6">
+              <span className="icon-3d-soft h-12 w-12 shrink-0">
                 <r.icon className="h-5 w-5" />
               </span>
-              <p className="mt-3 text-xs uppercase tracking-wider text-muted-foreground">{r.label}</p>
-              <p className="mt-1 font-semibold">{r.value}</p>
+              <div className="min-w-0">
+                <p className="text-[0.7rem] font-semibold uppercase tracking-[0.14em] text-muted-foreground">{r.label}</p>
+                <p className="mt-1 font-semibold leading-snug">{r.value}</p>
+              </div>
             </div>
           ))}
         </div>
