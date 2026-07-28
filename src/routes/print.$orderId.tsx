@@ -15,6 +15,7 @@ type Order = {
   company_name: string | null; table_number: string | null;
   schedule_mode: string | null; scheduled_for: string | null;
   source?: string | null;
+  pos_terminal?: string | null;
 };
 type Item = { id: string; name: string; qty: number; notes: string | null; unit_price_cents: number };
 
@@ -56,6 +57,7 @@ function sampleOrder(type: "dine_in" | "collection" | "delivery", scheduled: boo
       schedule_mode: scheduled ? "scheduled" : "asap",
       scheduled_for: scheduled ? slot.toISOString() : null,
       source: "web",
+      pos_terminal: null,
     },
     items: [
       { id: "t1", name: "Flat White", qty: 2, notes: "Oat milk, extra hot", unit_price_cents: 320 },
@@ -203,6 +205,11 @@ function PrintPage() {
             )}
           </div>
           <p className="text-[15px] font-black uppercase leading-tight">{order.customer_name}</p>
+          {(order.pos_terminal === "jury" || order.pos_terminal === "public") && (
+            <p className="mt-1 border-2 border-black px-1 py-1 text-center text-[20px] font-black uppercase tracking-widest leading-tight">
+              {order.pos_terminal} SIDE
+            </p>
+          )}
           <p className="text-[11px]">{order.customer_phone}</p>
           {order.source === "deliveroo" && (
             <p className="mt-1 border-2 border-black px-1 py-1 text-center text-[13px] font-black uppercase leading-tight">
