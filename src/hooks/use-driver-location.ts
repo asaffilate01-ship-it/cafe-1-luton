@@ -6,6 +6,27 @@ import { supabase } from "@/integrations/supabase/client";
  * Positions are written to `driver_locations` (one row per order) and stream
  * to the customer's tracking page over realtime.
  */
+function friendlyGeoError(err: GeolocationPositionError): string {
+  const inIframe = typeof window !== "undefined" && window.self !== window.top;
+  const insecure =
+    typeof window !== "undefined" &&
+    window.location.protocol !== "https:" &&
+    !["localhost", "127.0.0.1"].includes(window.location.hostname);
+  switch (err.code) {
+    case err.PERMISSION_DENIED:
+      if (inIframe)
+        return "Location is blocked inside the editor preview. Open the driver app in its own browser tab (/driver) and allow location.";
+      if (insecure) return "Location needs a secure (https) connection. Open the driver app over https.";
+      return "Location permission was denied. Enable location for this site in your browser settings (tap the padlock / site settings → Location → Allow), then try again.";
+    case err.POSITION_UNAVAILABLE:
+      return "Couldn't get a GPS fix. Check that location services are on for your device.";
+    case err.TIMEOUT:
+      return "Timed out getting your location. Move to a spot with better signal and try again.";
+    default:
+      return err.message || "Could not access your location.";
+  }
+}
+
 export function useDriverLocationSharing(driverId: string | undefined, orderIds: string[]) {
   const [sharing, setSharing] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -59,7 +80,7 @@ export function useDriverLocationSharing(driverId: string | undefined, orderIds:
     watchId.current = navigator.geolocation.watchPosition(
       (pos) => void push(pos),
       (err) => {
-        setError(err.message);
+        setError(friendlyGeoError(err));
         stop();
       },
       { enableHighAccuracy: true, maximumAge: 5000, timeout: 20000 },
