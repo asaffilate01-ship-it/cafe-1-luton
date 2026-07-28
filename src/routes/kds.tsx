@@ -15,6 +15,8 @@ type Order = {
   id: string; order_number: number; status: string; type: string; customer_name: string; created_at: string;
   schedule_mode: string | null; scheduled_for: string | null; table_number: string | null;
   source: string | null;
+  payment_method: string | null;
+  payment_status: string | null;
 };
 type Ticket = Order & { items: Item[] };
 
@@ -60,7 +62,7 @@ function KDS() {
     async function load() {
       const { data: orders } = await supabase
         .from("orders")
-        .select("id, order_number, status, type, customer_name, created_at, schedule_mode, scheduled_for, table_number, source")
+        .select("id, order_number, status, type, customer_name, created_at, schedule_mode, scheduled_for, table_number, source, payment_method, payment_status")
         .in("status", ["preparing", "ready"])
         .order("created_at");
       const ids = (orders ?? []).map((o) => o.id);
@@ -112,7 +114,7 @@ function KDS() {
     }
   }
 
-  async function set(id: string, status: "preparing" | "ready") {
+  async function set(id: string, status: "preparing" | "ready" | "completed") {
     try {
       await update({ data: { order_id: id, status } });
     } catch (e) {
@@ -180,6 +182,9 @@ function KDS() {
                   {t.source === "sumup_pos" && (
                     <span className="rounded-full bg-blue-600 px-2 py-0.5 text-[10px] font-black uppercase tracking-wide text-white">SumUp POS</span>
                   )}
+                  <span className={`rounded-full px-2 py-0.5 text-[10px] font-black uppercase tracking-wide ${t.payment_method === "cash" ? "bg-emerald-600 text-white" : "bg-slate-800 text-white"}`}>
+                    {t.payment_method === "cash" ? "Cash" : "Card"}
+                  </span>
                   <span className="text-sm font-bold text-muted-foreground">{mins}m ago</span>
                 </div>
               </div>
@@ -205,7 +210,11 @@ function KDS() {
               </ul>
               <div className="mt-3 flex gap-2">
                 {t.status === "preparing" && <button onClick={() => set(t.id, "ready")} className="h-9 flex-1 rounded-full bg-primary text-sm font-semibold text-primary-foreground hover:bg-primary-hover">Mark ready</button>}
-                {t.status === "ready" && <span className="h-9 flex-1 rounded-full bg-primary-soft text-center text-sm font-semibold leading-9 text-primary">Ready</span>}
+                {t.status === "ready" && (
+                  <button onClick={() => set(t.id, "completed")} className="h-9 flex-1 rounded-full bg-emerald-600 text-sm font-semibold text-white hover:bg-emerald-700">
+                    Mark complete
+                  </button>
+                )}
                 <a href={`/print/${t.id}?paper=${kdsPaper}&preview=1`} target="_blank" rel="noreferrer" className="grid h-9 w-9 place-items-center rounded-full border border-border hover:border-primary hover:text-primary" aria-label="Print preview" title="Preview then print">👁</a>
                 <a href={`/print/${t.id}?paper=${kdsPaper}`} target="_blank" rel="noreferrer" className="grid h-9 w-9 place-items-center rounded-full border border-border hover:border-primary hover:text-primary" aria-label="Print" title="Print now">🖨</a>
               </div>
