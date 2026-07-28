@@ -252,6 +252,13 @@ function KDS() {
                 {t.type === "dine_in" && t.table_number && (
                   <p className="mt-1 text-sm font-bold">TABLE {t.table_number}</p>
                 )}
+                <button
+                  onClick={() => markDineIn(t.id, t.type)}
+                  className="mt-2 rounded-full bg-primary-foreground/20 px-2.5 py-1 text-[11px] font-bold uppercase tracking-wide hover:bg-primary-foreground/30"
+                  title="Switch this ticket between dine in and pickup"
+                >
+                  {t.type === "dine_in" ? "Change to pickup" : "Mark as dine in"}
+                </button>
               </div>
               <p className="mt-2 text-base font-black uppercase tracking-wide text-foreground">{t.customer_name}</p>
               <ul className="mt-3 flex-1 space-y-1 text-sm">
