@@ -93,20 +93,17 @@ function OrderView() {
 
   useEffect(() => {
     async function load() {
-      const { data } = await supabase.from("orders").select("*").eq("id", orderId).maybeSingle();
-      const o = (data as unknown) as Order | null;
+      const res = await getPublicOrder({ data: { order_id: orderId } });
+      const o = (res.order as unknown) as Order | null;
       if (o && lastStatus.current && lastStatus.current !== o.status) notify(o.status);
       if (o) lastStatus.current = o.status;
       setOrder(o);
-      const { data: its } = await supabase.from("order_items").select("*").eq("order_id", orderId);
-      setItems(its ?? []);
+      setItems(res.items ?? []);
+      setDriverLoc((res.driver as DriverLoc | null) ?? null);
     }
     load();
-    const ch = supabase
-      .channel(`order-${orderId}`)
-      .on("postgres_changes", { event: "UPDATE", schema: "public", table: "orders", filter: `id=eq.${orderId}` }, () => load())
-      .subscribe();
-    return () => { supabase.removeChannel(ch); };
+    const poll = setInterval(load, 10000);
+    return () => clearInterval(poll);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [orderId]);
 
@@ -115,27 +112,12 @@ function OrderView() {
   useEffect(() => {
     if (!tracking) { setDriverLoc(null); return; }
     async function loadLoc() {
-      const { data } = await supabase
-        .from("driver_locations")
-        .select("lat, lng, updated_at")
-        .eq("order_id", orderId)
-        .maybeSingle();
-      setDriverLoc((data as DriverLoc | null) ?? null);
+      const res = await getPublicOrder({ data: { order_id: orderId } });
+      setDriverLoc((res.driver as DriverLoc | null) ?? null);
     }
     loadLoc();
-    const ch = supabase
-      .channel(`driver-loc-${orderId}`)
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "driver_locations", filter: `order_id=eq.${orderId}` },
-        (payload) => {
-          const row = payload.new as DriverLoc | undefined;
-          if (row?.lat != null) setDriverLoc(row);
-        },
-      )
-      .subscribe();
-    const poll = setInterval(loadLoc, 20000);
-    return () => { supabase.removeChannel(ch); clearInterval(poll); };
+    const poll = setInterval(loadLoc, 15000);
+    return () => clearInterval(poll);
   }, [orderId, tracking]);
 
   if (!order) return (
