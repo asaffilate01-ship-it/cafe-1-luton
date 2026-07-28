@@ -1,6 +1,7 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { AdminNav } from "@/components/admin-nav";
 import { useEffect, useState } from "react";
+import { PosDevicesCard } from "@/components/pos-devices-card";
 import { useSession, useRoles } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
