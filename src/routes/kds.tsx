@@ -6,7 +6,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { updateOrderStatus } from "@/lib/orders.functions";
 import { toast } from "sonner";
 import { useSession, useRoles } from "@/hooks/use-auth";
-import { useAlertOnIncrease, useNotificationPermission } from "@/hooks/use-order-alerts";
+import { useAlertOnIncrease, useNotificationPermission, playChime } from "@/hooks/use-order-alerts";
 import { Bell, BellOff, RefreshCw } from "lucide-react";
 import { syncSumupPos } from "@/lib/sumup-pos.functions";
 
@@ -236,13 +236,22 @@ function KDS() {
 function AlertsToggle() {
   const { perm, request } = useNotificationPermission();
   return (
-    <button
-      onClick={request}
-      className="flex items-center gap-1 rounded-full bg-primary-foreground/10 px-3 py-1.5 text-xs font-semibold hover:bg-primary-foreground/20"
-      title={perm === "granted" ? "Alerts on" : "Enable alerts"}
-    >
-      {perm === "granted" ? <Bell className="h-4 w-4" /> : <BellOff className="h-4 w-4" />}
-      <span>{perm === "granted" ? "Alerts on" : perm === "unsupported" ? "No alerts" : "Enable alerts"}</span>
-    </button>
+    <div className="flex items-center gap-1">
+      <button
+        onClick={request}
+        className="flex items-center gap-1 rounded-full bg-primary-foreground/10 px-3 py-1.5 text-xs font-semibold hover:bg-primary-foreground/20"
+        title={perm === "granted" ? "Alerts on" : "Enable alerts"}
+      >
+        {perm === "granted" ? <Bell className="h-4 w-4" /> : <BellOff className="h-4 w-4" />}
+        <span>{perm === "granted" ? "Alerts on" : perm === "unsupported" ? "No alerts" : "Enable alerts"}</span>
+      </button>
+      <button
+        onClick={() => playChime()}
+        className="rounded-full bg-primary-foreground/10 px-3 py-1.5 text-xs font-semibold hover:bg-primary-foreground/20"
+        title="Play the new-order chime"
+      >
+        Test sound
+      </button>
+    </div>
   );
 }
