@@ -12,10 +12,12 @@ export const Route = createFileRoute("/auth")({
   validateSearch: search,
   head: () => ({
     meta: [
-      { title: "Sign in — Cafe1" },
-      { name: "description", content: "Sign in or create an account to order from Cafe1." },
-      { property: "og:title", content: "Sign in — Cafe1" },
-      { property: "og:description", content: "Sign in or create an account to order from Cafe1." },
+      { title: "Sign in — Café 1 St Albans" },
+      { name: "description", content: "Sign in or create an account to order from Café 1 St Albans." },
+      { property: "og:title", content: "Sign in — Café 1 St Albans" },
+      { property: "og:description", content: "Sign in or create an account to order from Café 1 St Albans." },
+      { property: "og:type", content: "website" },
+      { name: "robots", content: "noindex" },
     ],
   }),
   component: AuthPage,
