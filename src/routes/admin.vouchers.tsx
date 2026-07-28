@@ -108,17 +108,22 @@ function AdminVouchers() {
     ));
     if (!codes.length) return toast.error("Paste at least one code.");
     setBusy(true);
-    const { data: inserted, error } = await supabase
+    const { error } = await supabase
       .from("voucher_holders")
-      .upsert(codes.map((code) => ({ code, active: true })), { onConflict: "code", ignoreDuplicates: true })
-      .select("id, code");
+      .upsert(codes.map((code) => ({ code, active: true })), { onConflict: "code", ignoreDuplicates: true });
     if (error) { setBusy(false); return toast.error(error.message); }
-    // Set today's default allowance for every code we just added.
+    // Set today's default allowance for every pasted code (new or existing).
     const cents = Math.round(parseFloat(defaultAllowance || "0") * 100);
-    if (Number.isFinite(cents) && cents > 0 && (inserted ?? []).length) {
-      const { data: all } = await supabase.from("voucher_holders").select("id, code").in("code", codes);
+    if (Number.isFinite(cents) && cents > 0) {
+      const { data: all, error: selErr } = await supabase.from("voucher_holders").select("id, code").in("code", codes);
+      if (selErr) { setBusy(false); return toast.error(selErr.message); }
       const rows = (all ?? []).map((h) => ({ holder_id: h.id, for_date: date, amount_cents: cents }));
-      await supabase.from("voucher_allocations").upsert(rows, { onConflict: "holder_id,for_date" });
+      if (rows.length) {
+        const { error: allocErr } = await supabase
+          .from("voucher_allocations")
+          .upsert(rows, { onConflict: "holder_id,for_date" });
+        if (allocErr) { setBusy(false); return toast.error(allocErr.message); }
+      }
     }
     setBusy(false);
     toast.success(`${codes.length} code${codes.length === 1 ? "" : "s"} activated`);
