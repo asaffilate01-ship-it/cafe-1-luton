@@ -37,7 +37,11 @@ export default defineConfig({
           skipWaiting: true,
           runtimeCaching: [
             {
-              urlPattern: ({ request }: { request: Request }) => request.mode === "navigate",
+              // Never intercept the OAuth broker or API paths — sign-in must always hit the network.
+              urlPattern: ({ request, url }: { request: Request; url: URL }) =>
+                request.mode === "navigate" &&
+                !url.pathname.startsWith("/~oauth") &&
+                !url.pathname.startsWith("/api/"),
               handler: "NetworkFirst",
               options: {
                 cacheName: "cafe1-pages",
