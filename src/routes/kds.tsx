@@ -182,13 +182,27 @@ function KDS() {
             <span className="text-sm opacity-80">{tickets.length} active</span>
           </div>
         </div>
+        <div className="mx-auto flex max-w-7xl items-center gap-3 px-4 pb-3 text-xs font-semibold">
+          <span className="inline-flex items-center gap-1.5"><span className="h-3 w-3 rounded-full bg-blue-600 ring-2 ring-white/60" /> Cooked / hot food</span>
+          <span className="inline-flex items-center gap-1.5"><span className="h-3 w-3 rounded-full bg-amber-400 ring-2 ring-white/60" /> No cooking (drinks &amp; cold)</span>
+          <span className="inline-flex items-center gap-1.5"><span className="h-3 w-3 rounded-full bg-emerald-500 ring-2 ring-white/60" /> Ready → complete</span>
+          </div>
       </header>
       <div className="mx-auto grid max-w-7xl gap-4 p-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
         {tickets.map((t) => {
           const mins = Math.floor((Date.now() - new Date(t.created_at).getTime()) / 60000);
           const hot = mins >= 10;
+          const cook = t.needsCooking;
           return (
-            <div key={t.id} className={`flex flex-col rounded-2xl border-2 bg-card p-4 ${hot ? "border-primary shadow-brand" : "border-border"}`}>
+            <div
+              key={t.id}
+              className={`flex flex-col rounded-2xl border-4 p-4 ${
+                cook ? "border-blue-600 bg-blue-50" : "border-amber-400 bg-amber-50"
+              } ${hot ? "shadow-brand" : ""}`}
+            >
+              <div className={`-mx-4 -mt-4 mb-3 rounded-t-xl px-4 py-1.5 text-center text-xs font-black uppercase tracking-widest text-white ${cook ? "bg-blue-600" : "bg-amber-500"}`}>
+                {cook ? "Cook / hot food" : "No cooking needed"}
+              </div>
               <div className="flex items-center justify-between">
                 <p className="font-display text-2xl font-bold">#{t.order_number}</p>
                 <div className="flex items-center gap-2">
