@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { AdminNav } from "@/components/admin-nav";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useServerFn } from "@tanstack/react-start";
 import { updateOrderStatus, claimDeliveryJob } from "@/lib/orders.functions";
@@ -41,9 +41,12 @@ function Driver() {
   const claim = useServerFn(claimDeliveryJob);
   const { user } = useSession();
   const { has } = useRoles(user);
+  const userId = user?.id;
 
   useEffect(() => {
-    if (!user) return;
+    if (!userId) return;
+    let cancelled = false;
+    let timer: ReturnType<typeof setTimeout> | null = null;
     async function load() {
       const cols =
         "id, order_number, status, total_cents, customer_name, customer_phone, address_line1, city, postcode, delivery_notes, company_name, scheduled_for, schedule_mode";
@@ -51,10 +54,11 @@ function Driver() {
         .from("orders")
         .select(cols)
         .eq("type", "delivery")
-        .eq("driver_id", user!.id)
+        .eq("driver_id", userId!)
         .in("status", ["out_for_delivery"])
         .order("created_at");
-      setJobs((data ?? []) as Job[]);
+      if (cancelled) return;
+      setJobs((prev) => sameIds(prev, (data ?? []) as Job[]) ? prev : ((data ?? []) as Job[]));
 
       const { data: open } = await supabase
         .from("orders")
@@ -63,15 +67,25 @@ function Driver() {
         .is("driver_id", null)
         .in("status", ["ready", "preparing"])
         .order("created_at");
-      setAvailable((open ?? []) as Job[]);
+      if (cancelled) return;
+      setAvailable((prev) => sameIds(prev, (open ?? []) as Job[]) ? prev : ((open ?? []) as Job[]));
     }
     load();
+    // Coalesce bursts of realtime events into one refetch.
+    const schedule = () => {
+      if (timer) clearTimeout(timer);
+      timer = setTimeout(() => void load(), 400);
+    };
     const ch = supabase
       .channel("driver")
-      .on("postgres_changes", { event: "*", schema: "public", table: "orders" }, () => load())
+      .on("postgres_changes", { event: "*", schema: "public", table: "orders" }, schedule)
       .subscribe();
-    return () => { supabase.removeChannel(ch); };
-  }, [user]);
+    return () => {
+      cancelled = true;
+      if (timer) clearTimeout(timer);
+      supabase.removeChannel(ch);
+    };
+  }, [userId]);
 
   async function set(id: string, status: "delivered") {
     try {
@@ -96,9 +110,19 @@ function Driver() {
 
   useAlertOnIncrease(jobs.length, "New delivery · Cafe1", "A new job was assigned to you.");
   const { perm, request } = useNotificationPermission();
+  const jobIds = useMemo(() => jobs.map((j) => j.id), [jobs]);
   const { sharing, start, stop, error: locError, last } = useDriverLocationSharing(
-    user?.id,
-    jobs.map((j) => j.id),
+    userId,
+    jobIds,
+  );
+  // Stable object identity so child effects don't re-run on every render.
+  const position = useMemo(
+    () => (last ? { lat: last.lat, lng: last.lng } : null),
+    [last?.lat, last?.lng],
+  );
+  const mapPoints = useMemo(
+    () => (position ? [{ ...position, label: "You", kind: "driver" as const }] : []),
+    [position],
   );
 
   if (user && !has("admin") && !has("driver"))
@@ -145,10 +169,10 @@ function Driver() {
             </button>
           </div>
           {locError && <p className="mt-2 text-xs text-destructive">{locError}</p>}
-          {sharing && last && (
+          {sharing && position && mapPoints.length > 0 && (
             <LiveMap
               className="mt-4 h-48 w-full"
-              points={[{ lat: last.lat, lng: last.lng, label: "You", kind: "driver" }]}
+              points={mapPoints}
             />
           )}
         </div>
@@ -201,7 +225,7 @@ function Driver() {
                 <MapPin className="mt-0.5 h-4 w-4 shrink-0" /> {addr || "No address"}
               </a>
               {j.delivery_notes && <p className="mt-2 rounded-xl bg-secondary p-3 text-sm">{j.delivery_notes}</p>}
-              {addr && <TurnByTurn destination={addr} position={last ? { lat: last.lat, lng: last.lng } : null} />}
+              {addr && <TurnByTurn destination={addr} position={position} />}
               <div className="mt-4">
                 {j.status === "out_for_delivery" && <button onClick={() => set(j.id, "delivered")} className="h-12 w-full rounded-full bg-primary font-semibold text-primary-foreground hover:bg-primary-hover">Mark delivered</button>}
               </div>
