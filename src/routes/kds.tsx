@@ -3,7 +3,7 @@ import { AdminNav } from "@/components/admin-nav";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useServerFn } from "@tanstack/react-start";
-import { updateOrderStatus } from "@/lib/orders.functions";
+import { updateOrderStatus, setOrderFulfilment } from "@/lib/orders.functions";
 import { toast } from "sonner";
 import { useSession, useRoles } from "@/hooks/use-auth";
 import { useAlertOnIncrease, useNotificationPermission, playChime } from "@/hooks/use-order-alerts";
@@ -43,6 +43,7 @@ function KDS() {
   const [tickets, setTickets] = useState<Ticket[]>([]);
   const [kdsPaper, setKdsPaper] = useState<58 | 80>(80);
   const update = useServerFn(updateOrderStatus);
+  const setFulfil = useServerFn(setOrderFulfilment);
   const sync = useServerFn(syncSumupPos);
   const [syncing, setSyncing] = useState(false);
   const { user } = useSession();
@@ -130,6 +131,23 @@ function KDS() {
   async function set(id: string, status: "preparing" | "ready" | "completed") {
     try {
       await update({ data: { order_id: id, status } });
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Failed");
+    }
+  }
+
+  async function markDineIn(id: string, current: string) {
+    try {
+      if (current === "dine_in") {
+        await setFulfil({ data: { order_id: id, type: "collection", table_number: null } });
+        toast.success("Marked as pickup");
+      } else {
+        const table = window.prompt("Table number (optional)") ?? "";
+        await setFulfil({
+          data: { order_id: id, type: "dine_in", table_number: table.trim() || null },
+        });
+        toast.success("Marked as dine in");
+      }
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Failed");
     }
@@ -234,6 +252,13 @@ function KDS() {
                 {t.type === "dine_in" && t.table_number && (
                   <p className="mt-1 text-sm font-bold">TABLE {t.table_number}</p>
                 )}
+                <button
+                  onClick={() => markDineIn(t.id, t.type)}
+                  className="mt-2 rounded-full bg-primary-foreground/20 px-2.5 py-1 text-[11px] font-bold uppercase tracking-wide hover:bg-primary-foreground/30"
+                  title="Switch this ticket between dine in and pickup"
+                >
+                  {t.type === "dine_in" ? "Change to pickup" : "Mark as dine in"}
+                </button>
               </div>
               <p className="mt-2 text-base font-black uppercase tracking-wide text-foreground">{t.customer_name}</p>
               <ul className="mt-3 flex-1 space-y-1 text-sm">
