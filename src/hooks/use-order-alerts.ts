@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 
 // Simple WebAudio beep — no asset required. Two-tone chime for new events.
-function playChime() {
+export function playChime() {
   try {
     type Ctor = typeof AudioContext;
     const w = window as unknown as { AudioContext?: Ctor; webkitAudioContext?: Ctor };
