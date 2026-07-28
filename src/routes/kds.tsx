@@ -46,8 +46,15 @@ function KDS() {
   const setFulfil = useServerFn(setOrderFulfilment);
   const sync = useServerFn(syncSumupPos);
   const [syncing, setSyncing] = useState(false);
+  const [now, setNow] = useState(() => Date.now());
   const { user } = useSession();
   const { has } = useRoles(user);
+
+  // Live kitchen timer — ticks every second
+  useEffect(() => {
+    const iv = window.setInterval(() => setNow(Date.now()), 1000);
+    return () => window.clearInterval(iv);
+  }, []);
 
   useEffect(() => {
     const saved = window.localStorage.getItem("cafe1_kds_paper_mm");
@@ -208,8 +215,14 @@ function KDS() {
       </header>
       <div className="mx-auto grid max-w-7xl gap-4 p-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
         {tickets.map((t) => {
-          const mins = Math.floor((Date.now() - new Date(t.created_at).getTime()) / 60000);
+          const elapsedSec = Math.max(0, Math.floor((now - new Date(t.created_at).getTime()) / 1000));
+          const mins = Math.floor(elapsedSec / 60);
+          const clock = `${mins}:${String(elapsedSec % 60).padStart(2, "0")}`;
           const hot = mins >= 10;
+          const timerTone =
+            mins >= 20 ? "bg-red-600 text-white animate-pulse"
+            : mins >= 10 ? "bg-amber-500 text-white"
+            : "bg-slate-800 text-white";
           const cook = t.needsCooking;
           return (
             <div
@@ -239,7 +252,12 @@ function KDS() {
                   <span className={`rounded-full px-2 py-0.5 text-[10px] font-black uppercase tracking-wide ${t.payment_method === "cash" ? "bg-emerald-600 text-white" : "bg-slate-800 text-white"}`}>
                     {t.payment_method === "cash" ? "Cash" : "Card"}
                   </span>
-                  <span className="text-sm font-bold text-muted-foreground">{mins}m ago</span>
+                  <span
+                    className={`rounded-full px-2.5 py-0.5 font-mono text-base font-black tabular-nums ${timerTone}`}
+                    title="Time in kitchen since the order was accepted"
+                  >
+                    {clock}
+                  </span>
                 </div>
               </div>
               <p className="mt-0.5 text-xs font-semibold text-muted-foreground">
