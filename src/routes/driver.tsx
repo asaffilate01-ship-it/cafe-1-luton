@@ -34,6 +34,14 @@ export const Route = createFileRoute("/driver")({
 });
 
 function Driver() {
+  return <DriverInner />;
+}
+
+function sameIds(a: Job[], b: Job[]) {
+  return a.length === b.length && a.every((x, i) => x.id === b[i].id && x.status === b[i].status);
+}
+
+function DriverInner() {
   const [jobs, setJobs] = useState<Job[]>([]);
   const [available, setAvailable] = useState<Job[]>([]);
   const [claiming, setClaiming] = useState<string | null>(null);
