@@ -456,6 +456,23 @@ export const updateOrderStatus = createServerFn({ method: "POST" })
       .update(patch)
       .eq("id", data.order_id);
     if (error) throw new Error(error.message);
+
+    // If this ticket originated on Deliveroo, mirror the status back to their
+    // Orders API so the courier + customer app stay in sync.
+    try {
+      const { data: o } = await context.supabase
+        .from("orders")
+        .select("source, deliveroo_order_id")
+        .eq("id", data.order_id)
+        .maybeSingle();
+      if (o?.source === "deliveroo" && o.deliveroo_order_id) {
+        const { pushDeliverooStatus } = await import("./deliveroo-sync.server");
+        await pushDeliverooStatus(o.deliveroo_order_id, data.status);
+      }
+    } catch (e) {
+      console.error("[deliveroo] mirror status failed", e);
+    }
+
     return { ok: true };
   });
 
