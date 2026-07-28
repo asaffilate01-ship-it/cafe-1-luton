@@ -21,6 +21,7 @@ export const createCounterOrder = createServerFn({ method: "POST" })
         type: z.enum(["dine_in", "collection", "delivery"]),
         table_number: z.string().max(20).optional(),
         payment_method: z.enum(["cash", "card"]),
+        pos_terminal: z.enum(["jury", "public"]).optional(),
         items: z.array(Line).min(1).max(60),
       })
       .parse(d),
@@ -68,6 +69,7 @@ export const createCounterOrder = createServerFn({ method: "POST" })
         status: "preparing" as const,
         payment_status: "paid" as const,
         payment_method: data.payment_method,
+        pos_terminal: data.pos_terminal ?? null,
         source: "counter",
         schedule_mode: "asap",
       })
