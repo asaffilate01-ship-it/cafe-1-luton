@@ -290,6 +290,11 @@ function KDS() {
                 </button>
               </div>
               <p className="mt-2 text-base font-black uppercase tracking-wide text-foreground">{t.customer_name}</p>
+              {t.source === "deliveroo" && (
+                <p className="mt-2 rounded-xl border-2 border-[#00CCBC] bg-[#00CCBC]/10 px-3 py-2 text-xs font-black uppercase tracking-wide text-[#007e75]">
+                  Attach the Deliveroo receipt printed on the tablet to this order
+                </p>
+              )}
               <p className="mt-1 inline-block rounded-md bg-slate-900 px-2 py-0.5 font-mono text-sm font-black tracking-widest text-white">
                 {orderCode(t)}
               </p>
