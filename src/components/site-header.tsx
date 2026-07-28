@@ -83,7 +83,7 @@ export function SiteFooter() {
               },
               { href: "https://facebook.com", label: "Café 1 on Facebook", Icon: Facebook },
               { href: "https://instagram.com", label: "Café 1 on Instagram", Icon: Instagram },
-              { href: "https://tiktok.com", label: "Café 1 on TikTok", Icon: Music2 },
+              { href: "https://www.tiktok.com/@cafe1_stalbans", label: "Café 1 on TikTok (@cafe1_stalbans)", Icon: Music2 },
               { href: "https://youtube.com", label: "Café 1 on YouTube", Icon: Youtube },
             ].map(({ href, label, Icon }) => (
               <a
