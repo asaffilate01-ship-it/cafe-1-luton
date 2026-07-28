@@ -9,7 +9,7 @@ import { EmailChangeEmail } from '@/lib/email-templates/email-change'
 import { ReauthenticationEmail } from '@/lib/email-templates/reauthentication'
 
 // Configuration
-const SITE_NAME = "cafe1-connect-dash"
+const SITE_NAME = "Cafe 1 St Albans"
 const SENDER_DOMAIN = "notify.cafe1stalbans.co.uk"
 const ROOT_DOMAIN = "cafe1stalbans.co.uk"
 const FROM_DOMAIN = "notify.cafe1stalbans.co.uk"
