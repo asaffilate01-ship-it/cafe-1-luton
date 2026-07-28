@@ -16,7 +16,7 @@ import { describeContext, useOrderContext, orderContext } from "@/lib/order-cont
 export const Route = createFileRoute("/menu")({
   head: () => ({
     meta: [
-      { title: "Menu — Cafe1" },
+      { title: "Menu — Café 1 St Albans" },
       { name: "description", content: "Browse the full Café 1 St Albans menu: Italian coffee, halal breakfasts, hot food, sandwiches and sweet treats. Order for delivery, collection or dine-in." },
       { property: "og:title", content: "Menu — Café 1 St Albans" },
       { property: "og:description", content: "Italian coffee, halal hot food, sandwiches and treats — order for delivery, collection or dine-in." },
@@ -25,13 +25,6 @@ export const Route = createFileRoute("/menu")({
       { name: "twitter:card", content: "summary_large_image" },
     ],
     links: [{ rel: "canonical", href: "https://cafe1stalbans.co.uk/menu" }],
-  }),
-  component: MenuPage,
-});
-
-const __unused_head = () => ({
-  meta: [
-    ],
   }),
   component: MenuPage,
 });
