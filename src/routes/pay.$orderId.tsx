@@ -5,7 +5,7 @@ import { confirmPayment } from "@/lib/payments.functions";
 import { SiteHeader } from "@/components/site-header";
 import { money } from "@/lib/format";
 import { toast } from "sonner";
-import { Lock, ShieldCheck } from "lucide-react";
+import { Lock, ShieldCheck, Smartphone } from "lucide-react";
 
 export const Route = createFileRoute("/pay/$orderId")({
   head: () => ({
@@ -26,8 +26,16 @@ declare global {
         checkoutId: string;
         email?: string;
         locale?: string;
+        country?: string;
+        currency?: string;
+        amount?: string;
+        showSubmitButton?: boolean;
+        showFooter?: boolean;
+        googlePay?: boolean;
+        applePay?: boolean;
         onResponse?: (type: string, body: unknown) => void;
         onLoad?: () => void;
+        onPaymentMethodsLoad?: (methods: unknown) => void;
       }) => { unmount: () => void };
     };
   }
@@ -104,6 +112,14 @@ function PayView() {
         checkoutId: data.sumup_checkout_id,
         email: data.customer_email ?? undefined,
         locale: "en-GB",
+        country: "GB",
+        currency: "GBP",
+        amount: (data.total_cents / 100).toFixed(2),
+        // Show Apple Pay (Safari/iOS) and Google Pay (Chrome/Android) wallet
+        // buttons above the card form when the device + merchant support them.
+        applePay: true,
+        googlePay: true,
+        showSubmitButton: true,
         onResponse: async (type, body) => {
           if (type === "sent") setStatus("processing");
           if (type === "success" || type === "auth-screen") {
