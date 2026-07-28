@@ -8,20 +8,33 @@ export function playChime() {
     const Ctx = w.AudioContext ?? w.webkitAudioContext;
     if (!Ctx) return;
     const ctx = new Ctx();
+    void ctx.resume?.();
     const now = ctx.currentTime;
-    const tones = [880, 1320];
+    // Master bus with soft clipping so it's loud without distorting
+    const master = ctx.createGain();
+    master.gain.value = 1;
+    const comp = ctx.createDynamicsCompressor();
+    master.connect(comp).connect(ctx.destination);
+    // Repeat the two-tone chime 3× for a louder, more attention-grabbing alert
+    const tones = [880, 1320, 880, 1320, 880, 1320];
     tones.forEach((freq, i) => {
-      const o = ctx.createOscillator();
-      const g = ctx.createGain();
-      o.type = "sine";
-      o.frequency.value = freq;
-      g.gain.setValueAtTime(0.0001, now + i * 0.22);
-      g.gain.exponentialRampToValueAtTime(0.35, now + i * 0.22 + 0.02);
-      g.gain.exponentialRampToValueAtTime(0.0001, now + i * 0.22 + 0.35);
-      o.connect(g).connect(ctx.destination);
-      o.start(now + i * 0.22);
-      o.stop(now + i * 0.22 + 0.4);
+      const t = now + i * 0.22;
+      // Sine + square blend = much more perceived loudness
+      (["sine", "square"] as OscillatorType[]).forEach((type) => {
+        const o = ctx.createOscillator();
+        const g = ctx.createGain();
+        o.type = type;
+        o.frequency.value = freq;
+        const peak = type === "square" ? 0.35 : 0.9;
+        g.gain.setValueAtTime(0.0001, t);
+        g.gain.exponentialRampToValueAtTime(peak, t + 0.015);
+        g.gain.exponentialRampToValueAtTime(0.0001, t + 0.38);
+        o.connect(g).connect(master);
+        o.start(t);
+        o.stop(t + 0.42);
+      });
     });
+    setTimeout(() => { try { ctx.close(); } catch { /* noop */ } }, 2500);
   } catch { /* noop */ }
 }
 
