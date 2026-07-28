@@ -36,6 +36,7 @@ export function LiveMap({ points, className = "" }: { points: MapPoint[]; classN
   const el = useRef<HTMLDivElement | null>(null);
   const map = useRef<any>(null);
   const markers = useRef<any[]>([]);
+  const infos = useRef<any[]>([]);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -58,8 +59,10 @@ export function LiveMap({ points, className = "" }: { points: MapPoint[]; classN
   useEffect(() => {
     if (!map.current || !window.google?.maps) return;
     markers.current.forEach((m) => m.setMap(null));
-    markers.current = points.map((p) =>
-      new window.google.maps.Marker({
+    infos.current.forEach((i) => i.close());
+    infos.current = [];
+    markers.current = points.map((p) => {
+      const marker = new window.google.maps.Marker({
         position: { lat: p.lat, lng: p.lng },
         map: map.current,
         title: p.label,
@@ -71,8 +74,17 @@ export function LiveMap({ points, className = "" }: { points: MapPoint[]; classN
           strokeColor: "#ffffff",
           strokeWeight: 3,
         },
-      }),
-    );
+      });
+      if (p.kind === "store") {
+        const info = new window.google.maps.InfoWindow({
+          content: `<div style="font:600 13px/1.3 system-ui,sans-serif;color:#111827;padding:2px 4px">${p.label}</div>`,
+          disableAutoPan: true,
+        });
+        info.open({ map: map.current, anchor: marker });
+        infos.current.push(info);
+      }
+      return marker;
+    });
     if (points.length === 1) {
       map.current.setCenter(points[0]);
     } else if (points.length > 1) {
