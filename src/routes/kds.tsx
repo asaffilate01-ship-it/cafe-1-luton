@@ -230,7 +230,10 @@ function KDS() {
                   {t.source === "deliveroo" && (
                     <span className="rounded-full bg-[#00CCBC] px-2 py-0.5 text-[10px] font-black uppercase tracking-wide text-white">Deliveroo</span>
                   )}
-                  {t.source !== "sumup_pos" && t.source !== "deliveroo" && (
+                  {t.source === "counter" && (
+                    <span className="rounded-full bg-slate-700 px-2 py-0.5 text-[10px] font-black uppercase tracking-wide text-white">Counter</span>
+                  )}
+                  {t.source !== "sumup_pos" && t.source !== "deliveroo" && t.source !== "counter" && (
                     <span className="rounded-full bg-purple-600 px-2 py-0.5 text-[10px] font-black uppercase tracking-wide text-white">Website</span>
                   )}
                   <span className={`rounded-full px-2 py-0.5 text-[10px] font-black uppercase tracking-wide ${t.payment_method === "cash" ? "bg-emerald-600 text-white" : "bg-slate-800 text-white"}`}>

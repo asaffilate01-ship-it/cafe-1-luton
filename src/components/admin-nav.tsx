@@ -16,6 +16,8 @@ import {
   LogOut,
   Home,
   Newspaper,
+  BarChart3,
+  Calculator,
 } from "lucide-react";
 
 type Item = {
@@ -23,6 +25,8 @@ type Item = {
     | "/staff"
     | "/admin"
     | "/admin/menu"
+    | "/admin/pos"
+    | "/admin/reports"
     | "/admin/blog"
     | "/admin/broadcasts"
     | "/admin/banners"
@@ -43,8 +47,10 @@ const ITEMS: Item[] = [
   { to: "/staff", label: "Hub", icon: Home, need: "any" },
   { to: "/admin", label: "Orders", icon: LayoutDashboard, need: "any" },
   { to: "/kds", label: "Kitchen", icon: MonitorPlay, need: "any" },
+  { to: "/admin/pos", label: "Till", icon: Calculator, need: "any" },
   { to: "/driver", label: "Driver", icon: Bike, need: "driver" },
   { to: "/admin/menu", label: "Menu", icon: BookOpen, need: "any" },
+  { to: "/admin/reports", label: "Reports", icon: BarChart3, need: "any" },
   { to: "/admin/blog", label: "Blog", icon: Newspaper, need: "any" },
   { to: "/admin/broadcasts", label: "Broadcasts", icon: Megaphone, need: "any" },
   { to: "/admin/banners", label: "Banners", icon: ImageIcon, need: "any" },

@@ -5,6 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useSession, useRoles } from "@/hooks/use-auth";
 import { useServerFn } from "@tanstack/react-start";
 import { updateOrderStatus, markPaidManually, assignDriver, listDrivers } from "@/lib/orders.functions";
+import { refundOrder } from "@/lib/payments.functions";
 import { money } from "@/lib/format";
 import { toast } from "sonner";
 import { Printer, Check } from "lucide-react";
@@ -40,6 +41,7 @@ function Admin() {
   const markPaid = useServerFn(markPaidManually);
   const assign = useServerFn(assignDriver);
   const fetchDrivers = useServerFn(listDrivers);
+  const refund = useServerFn(refundOrder);
 
   useEffect(() => {
     if (!loading && !user) navigate({ to: "/admin/login", search: { next: "/admin" } });
@@ -83,6 +85,27 @@ function Admin() {
       toast.success("Driver assigned · out for delivery");
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Failed");
+    }
+  }
+
+  async function doRefund(o: OrderRow) {
+    const raw = window.prompt(
+      `Refund order #${o.order_number}. Leave blank for the full ${money(o.total_cents)}, or enter a partial amount in £.`,
+      "",
+    );
+    if (raw === null) return;
+    const trimmed = raw.trim();
+    let amount_cents: number | undefined;
+    if (trimmed) {
+      const parsed = Math.round(Number(trimmed) * 100);
+      if (!Number.isFinite(parsed) || parsed <= 0) return toast.error("Enter a valid amount");
+      amount_cents = parsed;
+    }
+    try {
+      const res = await refund({ data: { order_id: o.id, ...(amount_cents ? { amount_cents } : {}) } });
+      toast.success(`Refunded ${money(res.amount_cents)} · ${res.note}`);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Refund failed");
     }
   }
 
@@ -205,6 +228,14 @@ function Admin() {
                       )}
                       {o.status === "out_for_delivery" && (
                         <span className="text-xs text-muted-foreground">Driver en route</span>
+                      )}
+                      {(o.payment_status === "paid" || o.payment_status === "on_account") && (
+                        <button
+                          onClick={() => doRefund(o)}
+                          className="rounded-full border border-border px-3 py-1 text-xs font-semibold text-muted-foreground hover:border-primary hover:text-primary"
+                        >
+                          Refund
+                        </button>
                       )}
                       <a href={`/print/${o.id}`} target="_blank" rel="noreferrer" className="grid h-7 w-7 place-items-center rounded-full border border-border hover:border-primary hover:text-primary" aria-label="Print">
                         <Printer className="h-3.5 w-3.5" />

@@ -556,3 +556,33 @@ export const listDrivers = createServerFn({ method: "GET" })
       .in("id", ids);
     return (profs ?? []) as { id: string; full_name: string | null; email: string | null }[];
   });
+
+/**
+ * A driver picks up an unassigned delivery job themselves (shift working).
+ * Fails if another driver claimed it first.
+ */
+export const claimDeliveryJob = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({ order_id: z.string().uuid() }).parse(d))
+  .handler(async ({ data, context }) => {
+    const [{ data: isDriver }, { data: isAdmin }] = await Promise.all([
+      context.supabase.rpc("has_role", { _user_id: context.userId, _role: "driver" }),
+      context.supabase.rpc("has_role", { _user_id: context.userId, _role: "admin" }),
+    ]);
+    if (!isDriver && !isAdmin) throw new Error("Forbidden");
+
+    const { data: rows, error } = await context.supabase
+      .from("orders")
+      .update({
+        driver_id: context.userId,
+        status: "out_for_delivery" as const,
+        picked_up_at: new Date().toISOString(),
+      })
+      .eq("id", data.order_id)
+      .is("driver_id", null)
+      .eq("type", "delivery")
+      .select("id");
+    if (error) throw new Error(error.message);
+    if (!rows?.length) throw new Error("Another driver already took that job.");
+    return { ok: true };
+  });
