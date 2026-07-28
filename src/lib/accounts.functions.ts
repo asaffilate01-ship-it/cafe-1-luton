@@ -53,7 +53,8 @@ export const listAccounts = createServerFn({ method: "GET" })
       .not("account_id", "is", null);
     const { data: payments } = await context.supabase
       .from("account_payments")
-      .select("account_id,amount_cents");
+      .select("account_id,amount_cents")
+      .is("settled_at", null);
     const bal = new Map<string, number>();
     for (const o of orders ?? []) {
       if (o.payment_status === "on_account" && o.account_id)
@@ -203,5 +204,13 @@ export const settleAccount = createServerFn({ method: "POST" })
       .eq("account_id", data.account_id)
       .eq("payment_status", "on_account");
     if (error) throw new Error(error.message);
+    // Roll any recorded part-payments into this settlement so they stop
+    // counting against the (now zero) balance, while staying in history.
+    const { error: pErr } = await context.supabase
+      .from("account_payments")
+      .update({ settled_at: new Date().toISOString() })
+      .eq("account_id", data.account_id)
+      .is("settled_at", null);
+    if (pErr) throw new Error(pErr.message);
     return { ok: true };
   });
