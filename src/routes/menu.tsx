@@ -68,6 +68,18 @@ function MenuPage() {
   // Scrollspy: watch section headers to update active pill.
   const sectionRefs = useRef<Record<string, HTMLElement | null>>({});
   const pillsRef = useRef<HTMLDivElement | null>(null);
+  const stickyBarRef = useRef<HTMLDivElement | null>(null);
+  const [stickyH, setStickyH] = useState(160);
+  useEffect(() => {
+    const measure = () => {
+      const h = stickyBarRef.current?.getBoundingClientRect().height ?? 0;
+      // 56px site header + sticky bar height + small breathing room
+      setStickyH(56 + h + 8);
+    };
+    measure();
+    window.addEventListener("resize", measure);
+    return () => window.removeEventListener("resize", measure);
+  }, [filtered?.cats.length]);
   useEffect(() => {
     if (!filtered?.cats.length) return;
     setActiveCat((prev) => (prev && filtered.cats.some((c) => c.id === prev) ? prev : filtered.cats[0].id));
@@ -78,14 +90,14 @@ function MenuPage() {
           .sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top)[0];
         if (visible) setActiveCat(visible.target.id.replace(/^cat-/, ""));
       },
-      { rootMargin: "-160px 0px -60% 0px", threshold: 0 }
+      { rootMargin: `-${stickyH}px 0px -60% 0px`, threshold: 0 }
     );
     for (const c of filtered.cats) {
       const el = sectionRefs.current[c.id];
       if (el) obs.observe(el);
     }
     return () => obs.disconnect();
-  }, [filtered?.cats.map((c) => c.id).join(",")]);
+  }, [filtered?.cats.map((c) => c.id).join(","), stickyH]);
 
   // Auto-scroll pill row to active
   useEffect(() => {
@@ -97,8 +109,9 @@ function MenuPage() {
   function scrollToCat(id: string) {
     const el = sectionRefs.current[id];
     if (!el) return;
-    const y = el.getBoundingClientRect().top + window.scrollY - 140;
+    const y = el.getBoundingClientRect().top + window.scrollY - stickyH;
     window.scrollTo({ top: y, behavior: "smooth" });
+    setActiveCat(id);
   }
 
   return (
@@ -134,7 +147,10 @@ function MenuPage() {
       />
 
       {/* Sticky search + category pills */}
-      <div className="sticky top-14 z-30 border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80">
+      <div
+        ref={stickyBarRef}
+        className="sticky top-14 z-30 border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80"
+      >
         <div className="mx-auto max-w-6xl px-4 py-3">
           <div className="flex items-center gap-2">
             <label className="relative flex-1">
