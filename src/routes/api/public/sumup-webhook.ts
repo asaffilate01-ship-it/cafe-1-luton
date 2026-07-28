@@ -27,7 +27,8 @@ export const Route = createFileRoute("/api/public/sumup-webhook")({
           // Staff accept from the Admin dashboard, which advances to "preparing".
           const patch = {
             payment_status: paid ? ("paid" as const) : ("failed" as const),
-            status: paid ? ("paid" as const) : ("pending_payment" as const),
+            // Auto-accept website orders straight into the kitchen
+            status: paid ? ("preparing" as const) : ("pending_payment" as const),
             sumup_transaction_id: txId ?? null,
           };
           const q = supabaseAdmin.from("orders").update(patch);
