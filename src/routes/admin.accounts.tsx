@@ -186,8 +186,17 @@ function CreateAccountModal({ onClose, onCreated, create }: { onClose: () => voi
 function StatementModal({ account, onClose, onSettled }: { account: Account; onClose: () => void; onSettled: () => void }) {
   const load = useServerFn(getAccountStatement);
   const settle = useServerFn(settleAccount);
+  const pay = useServerFn(recordAccountPayment);
+  const delPay = useServerFn(deleteAccountPayment);
   const [data, setData] = useState<Statement | null>(null);
-  useEffect(() => { (async () => setData(await load({ data: { account_id: account.id } })))(); }, [account.id, load]);
+  const [payOpen, setPayOpen] = useState(false);
+  const [payForm, setPayForm] = useState({ amount: "", method: "bank_transfer", reference: "" });
+  const [busy, setBusy] = useState(false);
+
+  async function reload() {
+    setData(await load({ data: { account_id: account.id } }));
+  }
+  useEffect(() => { void reload(); }, [account.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
   if (!data) return (
     <div className="fixed inset-0 z-50 grid place-items-center bg-black/40 p-4">
@@ -197,7 +206,10 @@ function StatementModal({ account, onClose, onSettled }: { account: Account; onC
 
   const onTab = data.orders.filter((o) => o.payment_status === "on_account");
   const paid = data.orders.filter((o) => o.payment_status !== "on_account");
-  const outstanding = onTab.reduce((s, o) => s + o.total_cents, 0);
+  const charges = onTab.reduce((s, o) => s + o.total_cents, 0);
+  const unsettledPayments = data.payments.filter((p) => !p.settled_at);
+  const paidOff = unsettledPayments.reduce((s, p) => s + p.amount_cents, 0);
+  const outstanding = Math.max(charges - paidOff, 0);
   const itemsByOrder = new Map<string, typeof data.items>();
   for (const it of data.items) {
     const arr = itemsByOrder.get(it.order_id) ?? [];
@@ -205,12 +217,41 @@ function StatementModal({ account, onClose, onSettled }: { account: Account; onC
   }
 
   async function doSettle() {
-    if (!confirm(`Mark ${money(outstanding)} of tab charges as paid?`)) return;
+    if (!confirm(`Mark the remaining ${money(outstanding)} of tab charges as paid?`)) return;
     try {
       await settle({ data: { account_id: account.id } });
       toast.success("Tab settled");
       onSettled();
     } catch (e) { toast.error(e instanceof Error ? e.message : "Settle failed"); }
+  }
+
+  async function submitPayment(e: React.FormEvent) {
+    e.preventDefault();
+    const cents = Math.round(parseFloat(payForm.amount || "0") * 100);
+    if (!cents || cents <= 0) { toast.error("Enter an amount"); return; }
+    setBusy(true);
+    try {
+      await pay({ data: {
+        account_id: account.id,
+        amount_cents: cents,
+        method: payForm.method as "cash" | "card" | "bank_transfer" | "other",
+        reference: payForm.reference || undefined,
+      } });
+      toast.success(`Payment of ${money(cents)} recorded`);
+      setPayForm({ amount: "", method: "bank_transfer", reference: "" });
+      setPayOpen(false);
+      await reload();
+    } catch (e) { toast.error(e instanceof Error ? e.message : "Could not record payment"); }
+    finally { setBusy(false); }
+  }
+
+  function downloadPdf() {
+    buildStatementPdf({
+      account,
+      orders: data!.orders,
+      items: data!.items,
+      payments: unsettledPayments,
+    });
   }
 
   return (
@@ -225,17 +266,82 @@ function StatementModal({ account, onClose, onSettled }: { account: Account; onC
             <p className="mt-1 text-sm text-muted-foreground">Code <span className="font-mono">{account.access_code}</span> · {new Date().toLocaleDateString()}</p>
           </div>
           <div className="flex gap-2 print:hidden">
+            <button onClick={downloadPdf} className="inline-flex h-10 items-center gap-2 rounded-full border border-border px-4 text-sm font-semibold hover:border-primary hover:text-primary"><FileDown className="h-4 w-4" />PDF</button>
             <button onClick={() => window.print()} className="inline-flex h-10 items-center gap-2 rounded-full border border-border px-4 text-sm font-semibold hover:border-primary hover:text-primary"><Printer className="h-4 w-4" />Print</button>
+            {outstanding > 0 && (
+              <button onClick={() => setPayOpen((v) => !v)} className="inline-flex h-10 items-center gap-2 rounded-full border border-border px-4 text-sm font-semibold hover:border-primary hover:text-primary"><Banknote className="h-4 w-4" />Record payment</button>
+            )}
             {outstanding > 0 && (
               <button onClick={doSettle} className="inline-flex h-10 items-center gap-2 rounded-full bg-primary px-4 text-sm font-semibold text-primary-foreground shadow-brand"><CheckCircle2 className="h-4 w-4" />Settle {money(outstanding)}</button>
             )}
           </div>
         </div>
 
+        {payOpen && (
+          <form onSubmit={submitPayment} className="mt-4 grid gap-2 rounded-xl border border-border bg-secondary/40 p-4 sm:grid-cols-4 print:hidden">
+            <input
+              type="number" min="0.01" step="0.01" required autoFocus
+              placeholder="Amount £"
+              value={payForm.amount}
+              onChange={(e) => setPayForm({ ...payForm, amount: e.target.value })}
+              className="h-10 rounded-xl border border-border bg-background px-3 text-sm"
+            />
+            <select
+              value={payForm.method}
+              onChange={(e) => setPayForm({ ...payForm, method: e.target.value })}
+              className="h-10 rounded-xl border border-border bg-background px-3 text-sm"
+            >
+              <option value="bank_transfer">Bank transfer</option>
+              <option value="cash">Cash</option>
+              <option value="card">Card</option>
+              <option value="other">Other</option>
+            </select>
+            <input
+              placeholder="Reference (optional)"
+              value={payForm.reference}
+              onChange={(e) => setPayForm({ ...payForm, reference: e.target.value })}
+              className="h-10 rounded-xl border border-border bg-background px-3 text-sm"
+            />
+            <button disabled={busy} className="h-10 rounded-full bg-foreground text-sm font-semibold text-background disabled:opacity-60">
+              {busy ? "Saving…" : "Add part-payment"}
+            </button>
+          </form>
+        )}
+
         <div className="mt-6 rounded-xl border border-primary/30 bg-primary/5 p-4 text-sm">
-          <div className="flex justify-between"><span>Outstanding balance</span><span className="font-display text-xl font-bold text-primary">{money(outstanding)}</span></div>
+          <div className="flex justify-between text-muted-foreground"><span>Charges on tab</span><span>{money(charges)}</span></div>
+          {paidOff > 0 && <div className="mt-1 flex justify-between text-muted-foreground"><span>Payments received</span><span>− {money(paidOff)}</span></div>}
+          <div className="mt-2 flex justify-between border-t border-primary/20 pt-2"><span className="font-semibold">Balance due</span><span className="font-display text-xl font-bold text-primary">{money(outstanding)}</span></div>
           <div className="mt-1 flex justify-between text-muted-foreground"><span>{onTab.length} unsettled orders</span>{account.credit_limit_cents ? <span>Credit limit {money(account.credit_limit_cents)}</span> : null}</div>
         </div>
+
+        {unsettledPayments.length > 0 && (
+          <section className="mt-6">
+            <h3 className="font-display text-lg font-bold">Payments received</h3>
+            <ul className="mt-2 divide-y divide-border text-sm">
+              {unsettledPayments.map((p) => (
+                <li key={p.id} className="flex items-center justify-between py-2">
+                  <span>
+                    {new Date(p.created_at).toLocaleDateString()} · {p.method.replace("_", " ")}
+                    {p.reference && <span className="text-muted-foreground"> · {p.reference}</span>}
+                  </span>
+                  <span className="flex items-center gap-3">
+                    <span className="font-semibold">− {money(p.amount_cents)}</span>
+                    <button
+                      className="text-muted-foreground hover:text-primary print:hidden"
+                      title="Remove payment"
+                      onClick={async () => {
+                        if (!confirm("Remove this payment record?")) return;
+                        try { await delPay({ data: { id: p.id } }); await reload(); }
+                        catch (e) { toast.error(e instanceof Error ? e.message : "Delete failed"); }
+                      }}
+                    ><Trash2 className="h-3.5 w-3.5" /></button>
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </section>
+        )}
 
         <section className="mt-6">
           <h3 className="font-display text-lg font-bold">Unsettled charges</h3>
