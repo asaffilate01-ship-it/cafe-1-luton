@@ -111,11 +111,17 @@ function MenuPage() {
     return () => obs.disconnect();
   }, [filtered?.cats.map((c) => c.id).join(","), stickyH]);
 
-  // Auto-scroll pill row to active
+  // Auto-scroll pill row to active.
+  // NOTE: never use scrollIntoView here — it also scrolls the window, which
+  // fights with (and cancels) the vertical jump triggered by tapping a pill.
   useEffect(() => {
-    if (!activeCat || !pillsRef.current) return;
-    const el = pillsRef.current.querySelector<HTMLButtonElement>(`[data-cat="${activeCat}"]`);
-    if (el) el.scrollIntoView({ behavior: "smooth", inline: "center", block: "nearest" });
+    const row = pillsRef.current;
+    if (!activeCat || !row) return;
+    const el = row.querySelector<HTMLButtonElement>(`[data-cat="${activeCat}"]`);
+    if (!el) return;
+    const target = el.offsetLeft - row.clientWidth / 2 + el.offsetWidth / 2;
+    const left = Math.max(0, Math.min(target, row.scrollWidth - row.clientWidth));
+    if (Math.abs(left - row.scrollLeft) > 2) row.scrollTo({ left, behavior: "smooth" });
   }, [activeCat]);
 
   function scrollToCat(id: string) {
