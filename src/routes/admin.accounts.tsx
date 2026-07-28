@@ -9,11 +9,14 @@ import {
   regenerateAccountCode,
   getAccountStatement,
   settleAccount,
+  recordAccountPayment,
+  deleteAccountPayment,
 } from "@/lib/accounts.functions";
 import { useSession, useRoles } from "@/hooks/use-auth";
 import { money } from "@/lib/format";
+import { buildStatementPdf } from "@/lib/account-statement-pdf";
 import { toast } from "sonner";
-import { ArrowLeft, Copy, RefreshCw, Printer, CheckCircle2, Plus } from "lucide-react";
+import { ArrowLeft, Copy, RefreshCw, Printer, CheckCircle2, Plus, FileDown, Trash2, Banknote } from "lucide-react";
 
 export const Route = createFileRoute("/admin/accounts")({
   head: () => ({
