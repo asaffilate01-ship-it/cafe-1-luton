@@ -38,10 +38,15 @@ async function getAccessToken(): Promise<string | null> {
   return cached.token;
 }
 
-/** Map our internal order status to Deliveroo's Orders API status vocabulary. */
+/** Map our internal order status to Deliveroo's Orders API status vocabulary.
+ *
+ * NOTE: we deliberately do NOT push the acceptance / "in_kitchen" transition.
+ * Acceptance stays with the Deliveroo tablet so it prints its own order
+ * receipt, which staff attach to the bag alongside our kitchen ticket.
+ */
 function mapStatusToDeliveroo(status: string): string | null {
   switch (status) {
-    case "preparing": return "in_kitchen";
+    case "preparing": return null; // tablet accepts + prints; don't pre-empt it
     case "ready": return "ready_for_collection";
     case "out_for_delivery": return "collected";
     case "delivered":
