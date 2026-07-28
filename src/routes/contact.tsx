@@ -3,10 +3,10 @@ import { SiteHeader, SiteFooter } from "@/components/site-header";
 import { MapPin, Phone, Mail, Clock, ArrowUpRight } from "lucide-react";
 import { LiveMap } from "@/components/live-map";
 
-const STORE = { lat: 51.7519375, lng: -0.3354965, label: "Café 1, St Albans Crown Court", kind: "store" as const };
+const STORE = { lat: 51.7522619, lng: -0.3352086, label: "Café 1, St Albans Crown Court", kind: "store" as const };
 const DIRECTIONS_URL =
   "https://www.google.com/maps/dir/?api=1&destination=" +
-  encodeURIComponent("St Albans Crown Court, Bricket Road, St Albans AL1 3JW");
+  encodeURIComponent("St Albans Crown Court, Bricket Road, St Albans AL1 3JU");
 
 export const Route = createFileRoute("/contact")({
   head: () => ({
