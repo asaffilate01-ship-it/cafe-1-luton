@@ -5,6 +5,9 @@ import { useQuery } from "@tanstack/react-query";
 import { SiteHeader } from "@/components/site-header";
 import { money } from "@/lib/format";
 import { useEffect } from "react";
+import { cart } from "@/lib/cart";
+import { toast } from "sonner";
+import { RotateCcw } from "lucide-react";
 
 export const Route = createFileRoute("/account")({
   head: () => ({
@@ -53,6 +56,38 @@ function Account() {
     },
   });
 
+  async function reorder(orderId: string) {
+    const { data: lines, error } = await supabase
+      .from("order_items")
+      .select("menu_item_id, name, qty, unit_price_cents")
+      .eq("order_id", orderId);
+    if (error || !lines?.length) {
+      toast.error("Could not load that order");
+      return;
+    }
+    const ids = lines.map((l) => l.menu_item_id).filter(Boolean) as string[];
+    const { data: live } = await supabase
+      .from("menu_items")
+      .select("id, name, price_cents, active")
+      .in("id", ids.length ? ids : ["00000000-0000-0000-0000-000000000000"]);
+    const byId = new Map((live ?? []).map((m) => [m.id, m]));
+
+    let added = 0;
+    let skipped = 0;
+    for (const l of lines) {
+      const m = l.menu_item_id ? byId.get(l.menu_item_id) : undefined;
+      if (!m || !m.active) { skipped++; continue; }
+      cart.add({ menu_item_id: m.id, name: m.name, base_price_cents: m.price_cents }, l.qty);
+      added++;
+    }
+    if (!added) {
+      toast.error("None of those items are available right now");
+      return;
+    }
+    toast.success(skipped ? `Added ${added} item(s) — ${skipped} unavailable` : "Added to your basket");
+    navigate({ to: "/cart" });
+  }
+
   return (
     <div className="min-h-screen bg-background">
       <SiteHeader />
@@ -94,7 +129,7 @@ function Account() {
         <h2 className="mt-10 font-display text-2xl font-bold">Recent orders</h2>
         <ul className="mt-4 space-y-3">
           {(orders ?? []).map((o) => (
-            <li key={o.id}>
+            <li key={o.id} className="relative">
               <Link to="/order/$orderId" params={{ orderId: o.id }} className="flex items-center justify-between rounded-2xl border border-border bg-card p-4 hover:border-primary">
                 <div>
                   <p className="font-semibold">#{o.order_number} · {o.type}</p>
@@ -105,6 +140,12 @@ function Account() {
                   <p className="text-xs uppercase tracking-wider text-muted-foreground">{o.status.replace(/_/g, " ")}</p>
                 </div>
               </Link>
+              <button
+                onClick={() => reorder(o.id)}
+                className="mt-2 inline-flex items-center gap-1.5 rounded-full border border-border bg-card px-3 py-1.5 text-xs font-semibold hover:border-primary hover:text-primary"
+              >
+                <RotateCcw className="h-3.5 w-3.5" /> Order this again
+              </button>
             </li>
           ))}
           {orders && orders.length === 0 && <p className="text-muted-foreground">No orders yet.</p>}

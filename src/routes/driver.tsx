@@ -3,7 +3,7 @@ import { AdminNav } from "@/components/admin-nav";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useServerFn } from "@tanstack/react-start";
-import { updateOrderStatus } from "@/lib/orders.functions";
+import { updateOrderStatus, claimDeliveryJob } from "@/lib/orders.functions";
 import { useSession, useRoles } from "@/hooks/use-auth";
 import { toast } from "sonner";
 import { MapPin, Phone, Navigation } from "lucide-react";
@@ -35,21 +35,35 @@ export const Route = createFileRoute("/driver")({
 
 function Driver() {
   const [jobs, setJobs] = useState<Job[]>([]);
+  const [available, setAvailable] = useState<Job[]>([]);
+  const [claiming, setClaiming] = useState<string | null>(null);
   const update = useServerFn(updateOrderStatus);
+  const claim = useServerFn(claimDeliveryJob);
   const { user } = useSession();
   const { has } = useRoles(user);
 
   useEffect(() => {
     if (!user) return;
     async function load() {
+      const cols =
+        "id, order_number, status, total_cents, customer_name, customer_phone, address_line1, city, postcode, delivery_notes, company_name, scheduled_for, schedule_mode";
       const { data } = await supabase
         .from("orders")
-        .select("id, order_number, status, total_cents, customer_name, customer_phone, address_line1, city, postcode, delivery_notes, company_name, scheduled_for, schedule_mode")
+        .select(cols)
         .eq("type", "delivery")
         .eq("driver_id", user!.id)
         .in("status", ["out_for_delivery"])
         .order("created_at");
       setJobs((data ?? []) as Job[]);
+
+      const { data: open } = await supabase
+        .from("orders")
+        .select(cols)
+        .eq("type", "delivery")
+        .is("driver_id", null)
+        .in("status", ["ready", "preparing"])
+        .order("created_at");
+      setAvailable((open ?? []) as Job[]);
     }
     load();
     const ch = supabase
@@ -65,6 +79,18 @@ function Driver() {
       toast.success("Delivered ✓");
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Failed");
+    }
+  }
+
+  async function take(id: string) {
+    setClaiming(id);
+    try {
+      await claim({ data: { order_id: id } });
+      toast.success("Job is yours — out for delivery");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Could not take that job");
+    } finally {
+      setClaiming(null);
     }
   }
 
@@ -126,6 +152,34 @@ function Driver() {
             />
           )}
         </div>
+        {available.length > 0 && (
+          <section className="rounded-2xl border border-dashed border-primary/50 bg-primary-soft/30 p-4">
+            <h2 className="font-display text-lg font-bold">Available jobs</h2>
+            <p className="text-xs text-muted-foreground">First driver to take it gets it.</p>
+            <ul className="mt-3 space-y-2">
+              {available.map((a) => (
+                <li key={a.id} className="flex items-center justify-between gap-3 rounded-xl border border-border bg-card p-3">
+                  <div className="min-w-0">
+                    <p className="font-semibold">#{a.order_number} · {money(a.total_cents)}</p>
+                    <p className="truncate text-xs text-muted-foreground">
+                      {[a.company_name, a.address_line1, a.postcode].filter(Boolean).join(", ") || "No address"}
+                    </p>
+                    <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+                      {a.status === "ready" ? "Ready now" : "Still cooking"}
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => take(a.id)}
+                    disabled={claiming !== null}
+                    className="shrink-0 rounded-full bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground hover:bg-primary-hover disabled:opacity-50"
+                  >
+                    {claiming === a.id ? "Taking…" : "Take job"}
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </section>
+        )}
         {jobs.map((j) => {
           const addr = [j.address_line1, j.city, j.postcode].filter(Boolean).join(", ");
           return (

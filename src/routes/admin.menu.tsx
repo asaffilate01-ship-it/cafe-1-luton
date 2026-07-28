@@ -323,10 +323,14 @@ function ItemRow({ it, onChanged }: { it: Item; onChanged: () => void }) {
           placeholder="Sub-group label (optional)"
         />
         <div className="flex items-center gap-4 text-sm text-muted-foreground">
-          <label className="inline-flex items-center gap-1">
-            <input type="checkbox" checked={form.active} onChange={(e)=>{ setForm({...form, active:e.target.checked}); save({ active:e.target.checked }); }} />
-            Active
-          </label>
+          <button
+            type="button"
+            onClick={()=>{ const next = !form.active; setForm({...form, active: next}); save({ active: next }); }}
+            className={`rounded-full px-3 py-1 text-xs font-bold uppercase tracking-wide ${form.active ? "bg-emerald-600 text-white" : "bg-destructive text-destructive-foreground"}`}
+            title="Hide this item from the menu when you run out"
+          >
+            {form.active ? "Available" : "Sold out"}
+          </button>
           <label className="inline-flex items-center gap-1">
             <input type="checkbox" checked={form.is_veg} onChange={(e)=>{ setForm({...form, is_veg:e.target.checked}); save({ is_veg:e.target.checked }); }} />
             Veg

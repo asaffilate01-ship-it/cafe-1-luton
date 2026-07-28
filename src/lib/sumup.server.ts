@@ -61,3 +61,24 @@ export async function getSumUpCheckout(id: string): Promise<SumUpCheckout> {
   if (!res.ok) throw new Error(`SumUp checkout fetch failed [${res.status}]: ${await res.text()}`);
   return (await res.json()) as SumUpCheckout;
 }
+
+/**
+ * Refunds a SumUp transaction, fully or partially.
+ * Omit `amount_cents` for a full refund.
+ */
+export async function refundSumUpTransaction(
+  transactionId: string,
+  amount_cents?: number,
+): Promise<void> {
+  const apiKey = requireEnv("SUMUP_API_KEY");
+  const res = await fetch(`${BASE}/v0.1/me/refund/${transactionId}`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Authorization: `Bearer ${apiKey}` },
+    body: JSON.stringify(
+      amount_cents ? { amount: Number((amount_cents / 100).toFixed(2)) } : {},
+    ),
+  });
+  if (!res.ok && res.status !== 204) {
+    throw new Error(`SumUp refund failed [${res.status}]: ${await res.text()}`);
+  }
+}
