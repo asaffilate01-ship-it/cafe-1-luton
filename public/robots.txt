@@ -10,4 +10,4 @@ Disallow: /print/
 Disallow: /checkout
 Disallow: /api/
 
-Sitemap: https://project--4e8d727f-9796-42a7-9a37-e92941913d6a.lovable.app/sitemap.xml
+Sitemap: https://cafe1stalbans.co.uk/sitemap.xml

@@ -20,7 +20,7 @@ export const Route = createFileRoute("/complaints")({
       intro="If something isn't right, we want to know. Most issues are sorted the same day."
     >
       <Section heading="How to complain">
-        <p>Speak to a member of the team in the café, call us, or email hello@cafe1.example with your order number, the date and what went wrong. Photos help for food quality or missing item issues.</p>
+        <p>Speak to a member of the team in the café, call us, or email info@cafe1stalbans.co.uk with your order number, the date and what went wrong. Photos help for food quality or missing item issues.</p>
       </Section>
       <Section heading="Our response times">
         <ul className="list-disc space-y-1 pl-5">

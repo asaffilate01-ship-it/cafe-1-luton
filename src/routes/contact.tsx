@@ -18,7 +18,7 @@ function Contact() {
   const rows = [
     { icon: MapPin, label: "Visit", value: "Cafe 1, St Albans Crown Court, AL1 3JW" },
     { icon: Phone, label: "Call", value: "020 7000 0000" },
-    { icon: Mail, label: "Email", value: "hello@cafe1.example" },
+    { icon: Mail, label: "Email", value: "info@cafe1stalbans.co.uk" },
     { icon: Clock, label: "Open", value: "Mon–Sun · 8:30–17:00 (delivery until 16:30)" },
   ];
   return (
