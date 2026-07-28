@@ -3,8 +3,9 @@ import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { ensureDevAccounts, listDevAccounts } from "@/lib/dev-login.functions";
+import { isDevHost } from "@/lib/dev-env";
 import { toast } from "sonner";
-import { KeyRound, LogIn, ShieldCheck, Truck, User, UtensilsCrossed, RefreshCcw } from "lucide-react";
+import { KeyRound, LogIn, Lock, ShieldCheck, Truck, User, UtensilsCrossed, RefreshCcw } from "lucide-react";
 
 export const Route = createFileRoute("/dev-login")({
   head: () => ({
@@ -40,10 +41,16 @@ function DevLoginPage() {
   const [accounts, setAccounts] = useState<Account[]>([]);
   const [seeding, setSeeding] = useState(false);
   const [signingIn, setSigningIn] = useState<string | null>(null);
+  const [allowed, setAllowed] = useState<boolean | null>(null);
 
   useEffect(() => {
+    setAllowed(isDevHost(window.location.host));
+  }, []);
+
+  useEffect(() => {
+    if (allowed !== true) return;
     listFn().then(setAccounts).catch(() => setAccounts([]));
-  }, [listFn]);
+  }, [listFn, allowed]);
 
   async function seed() {
     setSeeding(true);
@@ -83,6 +90,19 @@ function DevLoginPage() {
 
   return (
     <div className="min-h-screen bg-background">
+      {allowed === false ? (
+        <div className="mx-auto max-w-md px-4 py-24 text-center">
+          <span className="mx-auto grid h-12 w-12 place-items-center rounded-xl bg-primary-soft text-primary">
+            <Lock className="h-6 w-6" />
+          </span>
+          <h1 className="mt-4 font-display text-2xl font-bold">Not available</h1>
+          <p className="mt-2 text-sm text-muted-foreground">
+            Dev logins are disabled on the live site. Sign in at{" "}
+            <Link to="/auth" className="underline">/auth</Link> or{" "}
+            <Link to="/admin/login" className="underline">/admin/login</Link>.
+          </p>
+        </div>
+      ) : allowed === null ? null : (
       <div className="mx-auto max-w-3xl px-4 py-10">
         <div className="flex items-center gap-3">
           <span className="grid h-10 w-10 place-items-center rounded-xl bg-primary-soft text-primary">
@@ -151,6 +171,7 @@ function DevLoginPage() {
           Prefer to sign in manually? Head to <Link to="/auth" className="underline">/auth</Link> or <Link to="/admin/login" className="underline">/admin/login</Link>.
         </p>
       </div>
+      )}
     </div>
   );
 }
