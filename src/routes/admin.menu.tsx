@@ -21,7 +21,7 @@ export const Route = createFileRoute("/admin/menu")({
 type Cat = { id: string; name: string; description: string | null; sort_order: number; active: boolean };
 type Item = {
   id: string; category_id: string | null; name: string; description: string | null;
-  price_cents: number; image_url: string | null; is_veg: boolean; loyalty_drink?: boolean;
+  price_cents: number; image_url: string | null; is_veg: boolean; loyalty_drink?: boolean; needs_cooking?: boolean;
   group_label: string | null; sort_order: number; active: boolean;
 };
 type Mod = {
@@ -334,6 +334,10 @@ function ItemRow({ it, onChanged }: { it: Item; onChanged: () => void }) {
           <label className="inline-flex items-center gap-1" title="Counts towards the buy 10 get the 11th free coffee/tea card">
             <input type="checkbox" checked={!!form.loyalty_drink} onChange={(e)=>{ setForm({...form, loyalty_drink:e.target.checked}); save({ loyalty_drink:e.target.checked }); }} />
             Loyalty drink
+          </label>
+          <label className="inline-flex items-center gap-1" title="Hot/cooked item — kitchen tickets containing it show BLUE">
+            <input type="checkbox" checked={!!form.needs_cooking} onChange={(e)=>{ setForm({...form, needs_cooking:e.target.checked}); save({ needs_cooking:e.target.checked }); }} />
+            Needs cooking
           </label>
           <span>{money(form.price_cents)}</span>
         </div>
