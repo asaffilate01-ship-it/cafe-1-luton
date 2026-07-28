@@ -2,11 +2,12 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { money } from "@/lib/format";
+import { orderCode } from "@/lib/order-code";
 
 type Order = {
   id: string; order_number: number; type: string; status: string;
   customer_name: string; customer_phone: string; created_at: string;
-  address_line1: string | null; city: string | null; postcode: string | null;
+  address_line1: string | null; address_line2: string | null; city: string | null; postcode: string | null;
   delivery_notes: string | null; total_cents: number; subtotal_cents: number;
   delivery_fee_cents: number;
   discount_cents: number;
@@ -45,7 +46,7 @@ function sampleOrder(type: "dine_in" | "collection" | "delivery", scheduled: boo
       id: "test", order_number: 9999, type, status: "preparing",
       customer_name: "TEST PRINT", customer_phone: "07000 000000",
       created_at: now.toISOString(),
-      address_line1: "Crown Court, Civic Close", city: "St Albans", postcode: "AL1 3JW",
+      address_line1: "Crown Court, Civic Close", address_line2: "Office 4, 2nd floor", city: "St Albans", postcode: "AL1 3JW",
       delivery_notes: type === "delivery" ? "Reception desk, ask for Sam" : null,
       subtotal_cents: 1490, delivery_fee_cents: type === "delivery" ? 0 : 0, total_cents: 1490,
       discount_cents: 0, voucher_cents: 0,
@@ -182,6 +183,7 @@ function PrintPage() {
           </div>
           <div className="my-2 border-t border-dashed border-black" />
           <p><b>Order #{order.order_number}</b></p>
+          <p className="text-center text-[16px] font-black tracking-widest">CODE {orderCode(order)}</p>
           <div className="my-1 border-2 border-black px-1 py-1 text-center">
             <p className="text-[22px] font-black leading-tight">
               {order.type === "dine_in" ? "DINE IN" : order.type === "collection" ? "PICKUP" : "DELIVERY"}
@@ -201,11 +203,15 @@ function PrintPage() {
           <p className="text-[15px] font-black uppercase leading-tight">{order.customer_name}</p>
           <p className="text-[11px]">{order.customer_phone}</p>
           {order.type === "delivery" && (
-            <p className="mt-1 text-xs">
-              {order.company_name && <>{order.company_name}<br /></>}
-              {[order.address_line1, order.city, order.postcode].filter(Boolean).join(", ")}
-              {order.delivery_notes && <><br />NOTE: {order.delivery_notes}</>}
-            </p>
+            <div className="mt-1 border border-black px-1 py-1 text-xs">
+              <p className="text-[10px] font-bold">DELIVER TO</p>
+              {order.postcode && <p className="text-[18px] font-black leading-tight">{order.postcode}</p>}
+              {order.company_name && <p className="font-bold">{order.company_name}</p>}
+              {order.address_line1 && <p>{order.address_line1}</p>}
+              {order.address_line2 && <p>{order.address_line2}</p>}
+              {order.city && <p>{order.city}</p>}
+              {order.delivery_notes && <p className="font-bold">NOTE: {order.delivery_notes}</p>}
+            </div>
           )}
           <div className="my-2 border-t border-dashed border-black" />
           <ul>
