@@ -51,12 +51,22 @@ export const listAccounts = createServerFn({ method: "GET" })
       .from("orders")
       .select("account_id,total_cents,payment_status")
       .not("account_id", "is", null);
+    const { data: payments } = await context.supabase
+      .from("account_payments")
+      .select("account_id,amount_cents")
+      .is("settled_at", null);
     const bal = new Map<string, number>();
     for (const o of orders ?? []) {
       if (o.payment_status === "on_account" && o.account_id)
         bal.set(o.account_id, (bal.get(o.account_id) ?? 0) + o.total_cents);
     }
-    return (accounts ?? []).map((a) => ({ ...a, outstanding_cents: bal.get(a.id) ?? 0 }));
+    for (const p of payments ?? []) {
+      bal.set(p.account_id, (bal.get(p.account_id) ?? 0) - p.amount_cents);
+    }
+    return (accounts ?? []).map((a) => ({
+      ...a,
+      outstanding_cents: Math.max(bal.get(a.id) ?? 0, 0),
+    }));
   });
 
 export const createAccount = createServerFn({ method: "POST" })
@@ -138,7 +148,49 @@ export const getAccountStatement = createServerFn({ method: "GET" })
       .select("order_id,name,qty,unit_price_cents")
       .in("order_id", (orders ?? []).map((o) => o.id).length ? (orders ?? []).map((o) => o.id) : ["00000000-0000-0000-0000-000000000000"]);
     if (iErr) throw new Error(iErr.message);
-    return { account, orders: orders ?? [], items: items ?? [] };
+    const { data: payments, error: pErr } = await context.supabase
+      .from("account_payments")
+      .select("*")
+      .eq("account_id", data.account_id)
+      .order("created_at", { ascending: false });
+    if (pErr) throw new Error(pErr.message);
+    return { account, orders: orders ?? [], items: items ?? [], payments: payments ?? [] };
+  });
+
+/** Record a part-payment (or full payment) against a house account. */
+export const recordAccountPayment = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({
+    account_id: z.string().uuid(),
+    amount_cents: z.number().int().positive(),
+    method: z.enum(["cash", "card", "bank_transfer", "other"]).default("bank_transfer"),
+    reference: z.string().max(120).optional(),
+    note: z.string().max(300).optional(),
+  }).parse(d))
+  .handler(async ({ data, context }) => {
+    const { data: row, error } = await context.supabase
+      .from("account_payments")
+      .insert({
+        account_id: data.account_id,
+        amount_cents: data.amount_cents,
+        method: data.method,
+        reference: data.reference || null,
+        note: data.note || null,
+        recorded_by: context.userId,
+      })
+      .select()
+      .single();
+    if (error) throw new Error(error.message);
+    return row;
+  });
+
+export const deleteAccountPayment = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({ id: z.string().uuid() }).parse(d))
+  .handler(async ({ data, context }) => {
+    const { error } = await context.supabase.from("account_payments").delete().eq("id", data.id);
+    if (error) throw new Error(error.message);
+    return { ok: true };
   });
 
 /** Mark all currently-on-tab orders for an account as paid (settlement). */
@@ -152,5 +204,13 @@ export const settleAccount = createServerFn({ method: "POST" })
       .eq("account_id", data.account_id)
       .eq("payment_status", "on_account");
     if (error) throw new Error(error.message);
+    // Roll any recorded part-payments into this settlement so they stop
+    // counting against the (now zero) balance, while staying in history.
+    const { error: pErr } = await context.supabase
+      .from("account_payments")
+      .update({ settled_at: new Date().toISOString() })
+      .eq("account_id", data.account_id)
+      .is("settled_at", null);
+    if (pErr) throw new Error(pErr.message);
     return { ok: true };
   });
