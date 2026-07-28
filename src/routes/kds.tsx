@@ -25,6 +25,7 @@ type Order = {
   city: string | null;
   postcode: string | null;
   delivery_notes: string | null;
+  pos_terminal: string | null;
 };
 type Ticket = Order & { items: Item[]; needsCooking: boolean };
 
