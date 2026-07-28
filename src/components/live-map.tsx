@@ -38,6 +38,7 @@ export function LiveMap({ points, className = "" }: { points: MapPoint[]; classN
   const markers = useRef<any[]>([]);
   const infos = useRef<any[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [ready, setReady] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -50,6 +51,7 @@ export function LiveMap({ points, className = "" }: { points: MapPoint[]; classN
           disableDefaultUI: true,
           zoomControl: true,
         });
+        setReady(true);
       })
       .catch((e) => !cancelled && setError(e instanceof Error ? e.message : "Map unavailable"));
     return () => { cancelled = true; };
@@ -57,7 +59,7 @@ export function LiveMap({ points, className = "" }: { points: MapPoint[]; classN
   }, []);
 
   useEffect(() => {
-    if (!map.current || !window.google?.maps) return;
+    if (!ready || !map.current || !window.google?.maps) return;
     markers.current.forEach((m) => m.setMap(null));
     infos.current.forEach((i) => i.close());
     infos.current = [];
@@ -92,7 +94,7 @@ export function LiveMap({ points, className = "" }: { points: MapPoint[]; classN
       points.forEach((p) => b.extend({ lat: p.lat, lng: p.lng }));
       map.current.fitBounds(b, 64);
     }
-  }, [points]);
+  }, [points, ready]);
 
   if (error) {
     return (
