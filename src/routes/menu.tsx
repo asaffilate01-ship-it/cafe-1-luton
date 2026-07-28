@@ -17,9 +17,20 @@ export const Route = createFileRoute("/menu")({
   head: () => ({
     meta: [
       { title: "Menu — Cafe1" },
-      { name: "description", content: "Browse the full Cafe1 menu: coffee, breakfast, sandwiches, sweet treats." },
-      { property: "og:title", content: "Cafe1 Menu" },
-      { property: "og:description", content: "Coffee, breakfast, sandwiches and treats — order for delivery or collection." },
+      { name: "description", content: "Browse the full Café 1 St Albans menu: Italian coffee, halal breakfasts, hot food, sandwiches and sweet treats. Order for delivery, collection or dine-in." },
+      { property: "og:title", content: "Menu — Café 1 St Albans" },
+      { property: "og:description", content: "Italian coffee, halal hot food, sandwiches and treats — order for delivery, collection or dine-in." },
+      { property: "og:type", content: "website" },
+      { property: "og:url", content: "https://cafe1stalbans.co.uk/menu" },
+      { name: "twitter:card", content: "summary_large_image" },
+    ],
+    links: [{ rel: "canonical", href: "https://cafe1stalbans.co.uk/menu" }],
+  }),
+  component: MenuPage,
+});
+
+const __unused_head = () => ({
+  meta: [
     ],
   }),
   component: MenuPage,
