@@ -38,7 +38,15 @@ function Till() {
   const [name, setName] = useState("");
   const [type, setType] = useState<"dine_in" | "collection" | "delivery">("dine_in");
   const [table, setTable] = useState("");
+  const [side, setSide] = useState<"jury" | "public">(() => {
+    if (typeof window === "undefined") return "public";
+    return (window.localStorage.getItem("cafe1-pos-side") as "jury" | "public") || "public";
+  });
   const [busy, setBusy] = useState(false);
+
+  useEffect(() => {
+    window.localStorage.setItem("cafe1-pos-side", side);
+  }, [side]);
 
   useEffect(() => {
     if (!loading && !user) navigate({ to: "/admin/login", search: { next: "/admin/pos" } });
@@ -91,6 +99,7 @@ function Till() {
           type,
           table_number: table.trim() || undefined,
           payment_method,
+          pos_terminal: side,
           items: lines.map((l) => ({ menu_item_id: l.id, qty: l.qty })),
         },
       });
@@ -159,6 +168,26 @@ function Till() {
           <h2 className="font-display text-xl font-bold">Current order</h2>
 
           <div className="mt-3 space-y-2">
+            <div>
+              <p className="mb-1 text-[11px] font-bold uppercase tracking-wide text-muted-foreground">This till / POS side</p>
+              <div className="flex gap-2">
+                {(["jury", "public"] as const).map((s) => (
+                  <button
+                    key={s}
+                    onClick={() => setSide(s)}
+                    className={`flex-1 rounded-xl px-2 py-2 text-xs font-black uppercase tracking-wide ${
+                      side === s
+                        ? s === "jury"
+                          ? "bg-indigo-600 text-white"
+                          : "bg-teal-600 text-white"
+                        : "border border-border hover:border-primary"
+                    }`}
+                  >
+                    {s} side
+                  </button>
+                ))}
+              </div>
+            </div>
             <input
               value={name}
               onChange={(e) => setName(e.target.value)}
