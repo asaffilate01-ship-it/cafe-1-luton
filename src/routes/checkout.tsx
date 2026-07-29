@@ -363,7 +363,10 @@ function Checkout() {
           )}
           {user && !tabSession && (
             <div className="rounded-2xl border border-primary/40 bg-primary/10 p-4 text-sm">
-              <span className="font-semibold text-primary">Member perks applied</span> — 10% off this order and you'll earn {pointsEarn} points.
+              <span className="font-semibold text-primary">
+                {emailDiscount ? `${emailDiscount.label || "Approved member discount"} applied` : "Signed in"}
+              </span>{" "}
+              — {emailDiscount ? `${emailDiscount.percent}% off this order and ` : ""}you'll earn {pointsEarn} points.
             </div>
           )}
           <div className="rounded-2xl border border-border bg-card p-5">
