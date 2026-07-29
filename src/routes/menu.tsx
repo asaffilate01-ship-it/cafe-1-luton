@@ -601,9 +601,9 @@ function CustomiseSheet({
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 sm:items-center" role="dialog" aria-modal="true">
+    <div className="fixed inset-0 z-[70] flex items-end justify-center bg-black/50 sm:items-center" role="dialog" aria-modal="true">
       <button className="absolute inset-0" aria-label="Close" onClick={onClose} />
-      <div className="relative flex max-h-[88vh] w-full max-w-lg flex-col overflow-hidden rounded-t-3xl border border-border bg-card sm:rounded-3xl">
+      <div className="relative flex max-h-[85dvh] w-full max-w-lg flex-col overflow-hidden rounded-t-3xl border border-border bg-card sm:max-h-[88dvh] sm:rounded-3xl">
         <div className="flex items-start gap-3 border-b border-border p-4">
           <div className="min-w-0 flex-1">
             <h3 className="font-display text-xl font-bold">{item.name}</h3>
@@ -689,7 +689,10 @@ function CustomiseSheet({
           </label>
         </div>
 
-        <div className="flex items-center gap-3 border-t border-border p-4">
+        <div
+          className="sticky bottom-0 flex items-center gap-3 border-t border-border bg-card p-4"
+          style={{ paddingBottom: "calc(1rem + env(safe-area-inset-bottom))" }}
+        >
           <div className="flex items-center gap-1 rounded-full border border-border">
             <button onClick={() => setQty((q) => Math.max(1, q - 1))} className="grid h-10 w-10 place-items-center rounded-full hover:bg-muted" aria-label="Decrease quantity">
               <Minus className="h-4 w-4" />
