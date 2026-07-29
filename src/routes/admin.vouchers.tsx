@@ -98,7 +98,7 @@ function AdminVouchers() {
   const reportTotal = (report ?? []).reduce((s, r) => s + r.amount_cents, 0);
 
   const [bulkCodes, setBulkCodes] = useState("");
-  const [defaultAllowance, setDefaultAllowance] = useState("15.00");
+  const [defaultAllowance, setDefaultAllowance] = useState("5.71");
   const [busy, setBusy] = useState(false);
   const [genCount, setGenCount] = useState("20");
 
