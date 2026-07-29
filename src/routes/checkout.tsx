@@ -316,6 +316,7 @@ function Checkout() {
       <SiteHeader />
       <div className="mx-auto grid max-w-4xl gap-8 px-4 py-12 lg:grid-cols-[1fr_360px]">
         <form id="checkout-form" onSubmit={submit} className="space-y-6">
+          <h1 className="font-display text-4xl font-bold">Checkout</h1>
           <div className="flex items-center justify-between gap-3 rounded-2xl border border-primary/30 bg-primary/5 p-4 text-sm">
             <div>
               <p className="text-xs font-semibold uppercase tracking-wider text-primary">Your order</p>

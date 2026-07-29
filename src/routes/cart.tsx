@@ -49,12 +49,12 @@ function CartPage() {
                     <p className="text-sm text-muted-foreground">{money(i.price_cents)} each</p>
                   </div>
                   <div className="flex items-center gap-1 rounded-full border border-border">
-                    <button onClick={() => cart.setQty(i.id, i.qty - 1)} className="grid h-8 w-8 place-items-center rounded-full hover:bg-primary-soft"><Minus className="h-4 w-4" /></button>
+                    <button type="button" aria-label={`Decrease quantity of ${i.name}`} onClick={() => cart.setQty(i.id, i.qty - 1)} className="grid h-8 w-8 place-items-center rounded-full hover:bg-primary-soft"><Minus className="h-4 w-4" /></button>
                     <span className="w-6 text-center text-sm font-semibold">{i.qty}</span>
-                    <button onClick={() => cart.setQty(i.id, i.qty + 1)} className="grid h-8 w-8 place-items-center rounded-full hover:bg-primary-soft"><Plus className="h-4 w-4" /></button>
+                    <button type="button" aria-label={`Increase quantity of ${i.name}`} onClick={() => cart.setQty(i.id, i.qty + 1)} className="grid h-8 w-8 place-items-center rounded-full hover:bg-primary-soft"><Plus className="h-4 w-4" /></button>
                   </div>
                   <p className="w-20 text-right font-semibold">{money(i.price_cents * i.qty)}</p>
-                  <button onClick={() => cart.remove(i.id)} className="text-muted-foreground hover:text-primary"><Trash2 className="h-4 w-4" /></button>
+                  <button type="button" aria-label={`Remove ${i.name} from basket`} onClick={() => cart.remove(i.id)} className="text-muted-foreground hover:text-primary"><Trash2 className="h-4 w-4" /></button>
                 </li>
               ))}
             </ul>
