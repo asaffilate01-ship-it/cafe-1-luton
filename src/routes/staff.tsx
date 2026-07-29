@@ -1,6 +1,6 @@
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { AdminNav } from "@/components/admin-nav";
-import { useEffect } from "react";
+import { RequireRole } from "@/components/require-role";
 import { useSession, useRoles } from "@/hooks/use-auth";
 import { LayoutDashboard, MonitorPlay, Bike, BookOpen, Megaphone, ReceiptText, UserCog, Settings, Image as ImageIcon, Ticket, BadgePercent } from "lucide-react";
 
@@ -12,16 +12,21 @@ export const Route = createFileRoute("/staff")({
       { name: "robots", content: "noindex" },
     ],
   }),
-  component: StaffHub,
+  component: StaffPage,
 });
+
+function StaffPage() {
+  return (
+    <RequireRole roles={["admin", "staff", "driver"]} next="/staff">
+      <StaffHub />
+    </RequireRole>
+  );
+}
 
 function StaffHub() {
   const { user, loading } = useSession();
   const { roles, has } = useRoles(user);
-  const navigate = useNavigate();
-  useEffect(() => {
-    if (!loading && !user) navigate({ to: "/admin/login", search: { next: "/staff" } });
-  }, [loading, user, navigate]);
+  void loading;
 
   const cards = [
     { to: "/admin" as const, icon: LayoutDashboard, title: "Admin dashboard", desc: "Orders, menu, drivers.", show: has("admin") || has("staff") },
