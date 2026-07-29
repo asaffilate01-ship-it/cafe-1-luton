@@ -171,6 +171,7 @@ export const createOrder = createServerFn({ method: "POST" })
         _code: data.promo_code.trim().toUpperCase(),
         _subtotal_cents: subtotal,
         _order_type: data.type,
+        _email: (data.customer_email || authEmail || "").trim() || undefined,
       });
       if (pErr) throw new Error(pErr.message);
       const row = (rows ?? [])[0];
@@ -335,6 +336,16 @@ export const createOrder = createServerFn({ method: "POST" })
     // the row is written with the privileged server client after all validation.
     const { supabaseAdmin: sbWrite } = await import("@/integrations/supabase/client.server");
 
+    // Claim the promo use atomically BEFORE the order exists, so a limited code
+    // can never go past max_uses when several people check out at once.
+    if (applied_promo) {
+      const { data: claimed, error: claimErr } = await sbWrite.rpc("consume_promo_use", {
+        _code: applied_promo,
+      });
+      if (claimErr) throw new Error(claimErr.message);
+      if (!claimed) throw new Error("That promo code has just reached its usage limit.");
+    }
+
     const { data: order, error: orderErr } = await sbWrite
       .from("orders")
       .insert({
@@ -390,15 +401,7 @@ export const createOrder = createServerFn({ method: "POST" })
       .insert(lines.map((l) => ({ ...l, order_id: order.id })));
     if (itemsErr) throw new Error(itemsErr.message);
 
-    // Increment promo usage counter (service_role only).
-    if (applied_promo) {
-      try {
-        const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-        await supabaseAdmin.rpc("increment_promo_use", { _code: applied_promo });
-      } catch (e) {
-        console.error("[promo] increment failed", e);
-      }
-    }
+    // Promo usage was already claimed atomically above (consume_promo_use).
 
     // Award loyalty points + drink stamps immediately for authed customers.
     if (userId && (points_earned > 0 || drinkUnitPrices.length > 0 || free_drinks_used > 0)) {

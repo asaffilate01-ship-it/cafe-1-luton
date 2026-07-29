@@ -283,6 +283,30 @@ export type Database = {
         }
         Relationships: []
       }
+      code_attempts: {
+        Row: {
+          created_at: string
+          id: string
+          ident: string
+          kind: string
+          ok: boolean
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          ident: string
+          kind: string
+          ok?: boolean
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          ident?: string
+          kind?: string
+          ok?: boolean
+        }
+        Relationships: []
+      }
       customer_discounts: {
         Row: {
           active: boolean
@@ -1018,6 +1042,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      consume_promo_use: { Args: { _code: string }; Returns: boolean }
       get_customer_discount: {
         Args: { _email: string }
         Returns: {
@@ -1059,7 +1084,12 @@ export type Database = {
         Returns: number
       }
       validate_promo_code: {
-        Args: { _code: string; _order_type: string; _subtotal_cents: number }
+        Args: {
+          _code: string
+          _email?: string
+          _order_type: string
+          _subtotal_cents: number
+        }
         Returns: {
           code: string
           discount_cents: number

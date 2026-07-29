@@ -207,7 +207,9 @@ function Checkout() {
       const res = await findVoucher({ data: { code } });
       if (!res.found) {
         setVoucher(null);
-        setVoucherError("That voucher code isn't recognised or is inactive.");
+        setVoucherError(
+          ("message" in res && res.message) || "That voucher code isn't recognised or is inactive.",
+        );
       } else if (res.remaining_cents <= 0) {
         setVoucher(null);
         setVoucherError("This voucher has no allowance left for today.");
@@ -234,7 +236,9 @@ function Checkout() {
     if (!code) return;
     setPromoBusy(true);
     try {
-      const row = await checkPromo({ data: { code, subtotal_cents: subtotal, order_type: mode } });
+      const row = await checkPromo({
+        data: { code, subtotal_cents: subtotal, order_type: mode, email: emailForDiscount || undefined },
+      });
       if (!row.valid) {
         toast.error(row.message || "That code isn't valid.");
         setPromo(null);

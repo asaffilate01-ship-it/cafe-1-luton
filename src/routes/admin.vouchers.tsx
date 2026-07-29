@@ -100,6 +100,28 @@ function AdminVouchers() {
   const [bulkCodes, setBulkCodes] = useState("");
   const [defaultAllowance, setDefaultAllowance] = useState("15.00");
   const [busy, setBusy] = useState(false);
+  const [genCount, setGenCount] = useState("20");
+
+  // Unambiguous alphabet (no O/0, I/1) — 10 chars ≈ 50 bits of entropy, so
+  // court codes can never be guessed or walked sequentially.
+  function generateCodes(n: number): string[] {
+    const alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+    const out = new Set<string>();
+    while (out.size < n) {
+      const bytes = new Uint8Array(10);
+      crypto.getRandomValues(bytes);
+      const raw = Array.from(bytes, (b) => alphabet[b % alphabet.length]).join("");
+      out.add(`CV-${raw.slice(0, 5)}-${raw.slice(5)}`);
+    }
+    return Array.from(out);
+  }
+
+  function addGenerated() {
+    const n = Math.min(Math.max(parseInt(genCount || "0", 10) || 0, 1), 200);
+    const codes = generateCodes(n);
+    setBulkCodes((prev) => (prev.trim() ? `${prev.trim()}\n` : "") + codes.join("\n"));
+    toast.success(`${n} secure code${n === 1 ? "" : "s"} generated — review, then activate`);
+  }
 
   async function addCodes(e: React.FormEvent) {
     e.preventDefault();
@@ -107,6 +129,10 @@ function AdminVouchers() {
       bulkCodes.split(/[\s,;]+/).map((c) => c.trim().toUpperCase()).filter(Boolean),
     ));
     if (!codes.length) return toast.error("Paste at least one code.");
+    const weak = codes.filter((c) => c.replace(/[^A-Z0-9]/g, "").length < 8);
+    if (weak.length) {
+      return toast.error(`Codes must be at least 8 characters: ${weak.slice(0, 3).join(", ")}${weak.length > 3 ? "…" : ""}`);
+    }
     setBusy(true);
     const { error } = await supabase
       .from("voucher_holders")
@@ -197,7 +223,12 @@ function AdminVouchers() {
               <input type="number" step="0.01" min="0" value={defaultAllowance} onChange={(e) => setDefaultAllowance(e.target.value)} className="h-10 w-24 rounded-xl border border-border bg-background px-3 text-sm" />
             </label>
             <button disabled={busy} className="h-11 rounded-xl bg-primary px-5 font-semibold text-primary-foreground hover:bg-primary-hover disabled:opacity-60">Activate codes</button>
+            <span className="ml-auto flex items-center gap-2 text-sm">
+              <input type="number" min="1" max="200" value={genCount} onChange={(e) => setGenCount(e.target.value)} className="h-10 w-20 rounded-xl border border-border bg-background px-3 text-sm" />
+              <button type="button" onClick={addGenerated} className="h-10 rounded-xl border border-border px-4 text-sm font-semibold hover:bg-muted">Generate secure codes</button>
+            </span>
           </div>
+          <p className="text-xs text-muted-foreground">Generated codes are 10 random characters (no lookalikes) — send this list to the court. Codes shorter than 8 characters are rejected.</p>
         </form>
 
         <div className="mt-8 rounded-2xl border border-border bg-card p-5">
