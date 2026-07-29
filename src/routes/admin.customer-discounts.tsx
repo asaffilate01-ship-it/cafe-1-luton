@@ -117,15 +117,16 @@ function AdminCustomerDiscounts() {
             <BadgePercent className="h-5 w-5" />
           </span>
           <div>
-            <h1 className="font-display text-3xl font-bold">Customer discounts</h1>
+            <h1 className="font-display text-3xl font-bold">Approved members</h1>
             <p className="text-sm text-muted-foreground">
-              Automatic % off for specific email addresses — applied at checkout with no code needed.
+              Only people on this list get a member discount. It applies automatically at checkout when they
+              use their approved email address — no code needed. Everyone else pays full price.
             </p>
           </div>
         </div>
 
         <form onSubmit={create} className="mt-8 space-y-3 rounded-2xl border border-border bg-card p-5">
-          <p className="font-semibold">Add a customer</p>
+          <p className="font-semibold">Approve a member</p>
           <div className="grid gap-3 sm:grid-cols-3">
             <input
               required
@@ -156,11 +157,33 @@ function AdminCustomerDiscounts() {
             disabled={busy}
             className="h-11 rounded-full bg-primary px-6 font-semibold text-primary-foreground shadow-brand hover:bg-primary-hover disabled:opacity-60"
           >
-            {busy ? "Saving…" : "Add discount"}
+            {busy ? "Saving…" : "Approve member"}
           </button>
+
+          <div className="rounded-xl border border-dashed border-border p-4">
+            <p className="text-sm font-semibold">Approve several at once</p>
+            <p className="mt-1 text-xs text-muted-foreground">
+              Paste emails separated by commas, spaces or new lines. They'll all get the % and label above.
+            </p>
+            <textarea
+              rows={3}
+              value={bulk}
+              onChange={(e) => setBulk(e.target.value)}
+              placeholder="one@court.gov.uk, two@court.gov.uk"
+              className="mt-2 w-full rounded-xl border border-border bg-background p-3 text-sm"
+            />
+            <button
+              type="button"
+              onClick={addBulk}
+              disabled={bulkBusy}
+              className="mt-2 h-10 rounded-full border border-primary px-5 text-sm font-semibold text-primary hover:bg-primary-soft disabled:opacity-60"
+            >
+              {bulkBusy ? "Approving…" : "Approve list"}
+            </button>
+          </div>
         </form>
 
-        <h2 className="mt-10 font-display text-xl font-bold">Discounted customers</h2>
+        <h2 className="mt-10 font-display text-xl font-bold">Approved members</h2>
         <ul className="mt-3 space-y-2">
           {(rows ?? []).map((r) => (
             <li key={r.id} className="flex flex-wrap items-center gap-3 rounded-2xl border border-border bg-card p-4">
@@ -198,7 +221,7 @@ function AdminCustomerDiscounts() {
           ))}
           {rows && rows.length === 0 && (
             <li className="rounded-2xl border border-dashed border-border p-6 text-center text-sm text-muted-foreground">
-              No customer discounts yet.
+              No approved members yet — nobody is receiving a discount.
             </li>
           )}
         </ul>
