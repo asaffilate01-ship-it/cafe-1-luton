@@ -12,7 +12,6 @@ import { useSession } from "@/hooks/use-auth";
 import { tab, useTab } from "@/lib/tab";
 import { toast } from "sonner";
 import { useStoreStatus } from "@/hooks/use-store-status";
-import { supabase } from "@/integrations/supabase/client";
 import { useOrderContext, describeContext } from "@/lib/order-context";
 import { OrderSetupGate } from "@/components/order-setup-gate";
 import { Settings2 } from "lucide-react";
