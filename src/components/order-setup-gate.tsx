@@ -259,6 +259,7 @@ export function OrderSetupGate({
                   className="h-12 w-full rounded-xl border border-border bg-background px-4"
                 >
                   <option value="">Select a time slot…</option>
+                  {timeSlots.length === 0 && <option disabled>No slots available</option>}
                   {timeSlots.map((s) => (
                     <option key={s.value} value={s.value}>
                       {s.label}
