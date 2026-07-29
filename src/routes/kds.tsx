@@ -186,6 +186,13 @@ function KDS() {
             <AlertsToggle />
             <WakeToggle />
             <button
+              onClick={() => void signOutAndRedirect()}
+              className="flex items-center gap-1 rounded-full bg-primary-foreground px-3 py-1.5 text-xs font-bold text-primary hover:opacity-90"
+              title="Sign out of this device"
+            >
+              Sign out
+            </button>
+            <button
               onClick={manualSync}
               disabled={syncing}
               className="flex items-center gap-1 rounded-full bg-primary-foreground/10 px-3 py-1.5 text-xs font-semibold hover:bg-primary-foreground/20 disabled:opacity-50"
