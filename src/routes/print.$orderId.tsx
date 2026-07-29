@@ -48,7 +48,7 @@ function sampleOrder(type: "dine_in" | "collection" | "delivery", scheduled: boo
       id: "test", order_number: 9999, type, status: "preparing",
       customer_name: "TEST PRINT", customer_phone: "07000 000000",
       created_at: now.toISOString(),
-      address_line1: "Crown Court, Civic Close", address_line2: "Office 4, 2nd floor", city: "St Albans", postcode: "AL1 3JW",
+      address_line1: "Crown Court, Civic Close", address_line2: "Office 4, 2nd floor", city: "St Albans", postcode: "AL1 3JU",
       delivery_notes: type === "delivery" ? "Reception desk, ask for Sam" : null,
       subtotal_cents: 1490, delivery_fee_cents: type === "delivery" ? 0 : 0, total_cents: 1490,
       discount_cents: 0, voucher_cents: 0,

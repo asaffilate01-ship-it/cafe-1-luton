@@ -23,7 +23,7 @@ export function LegalPage({
         <div className="mt-12 rounded-2xl border border-border bg-secondary/40 p-5 text-sm">
           <p className="font-semibold">Contact us</p>
           <p className="mt-1 text-muted-foreground">
-            Cafe 1, St Albans Crown Court, AL1 3JW · <a className="text-primary underline underline-offset-2" href="mailto:info@cafe1stalbans.co.uk">info@cafe1stalbans.co.uk</a>
+            Cafe 1, St Albans Crown Court, AL1 3JU · <a className="text-primary underline underline-offset-2" href="mailto:info@cafe1stalbans.co.uk">info@cafe1stalbans.co.uk</a>
           </p>
         </div>
       </main>

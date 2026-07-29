@@ -12,9 +12,9 @@ export const Route = createFileRoute("/contact")({
   head: () => ({
     meta: [
       { title: "Contact Café 1 St Albans — Hours & Address" },
-      { name: "description", content: "Café 1 opening hours, address and contact details. St Albans Crown Court, AL1 3JW. Open Monday to Friday, 8am–5pm. Call 01727 400117." },
+      { name: "description", content: "Café 1 opening hours, address and contact details. St Albans Crown Court, AL1 3JU. Open Monday to Friday, 8am–5pm. Call 01727 400117." },
       { property: "og:title", content: "Contact Café 1 St Albans" },
-      { property: "og:description", content: "Opening hours, address and contact details for Café 1, St Albans Crown Court, AL1 3JW." },
+      { property: "og:description", content: "Opening hours, address and contact details for Café 1, St Albans Crown Court, AL1 3JU." },
       { property: "og:type", content: "website" },
       { property: "og:url", content: "https://cafe1stalbans.co.uk/contact" },
       { name: "twitter:card", content: "summary" },
@@ -44,7 +44,7 @@ function Contact() {
               </span>
               <div className="min-w-0 flex-1">
                 <p className="text-[0.7rem] font-semibold uppercase tracking-[0.14em] text-muted-foreground">Visit</p>
-                <p className="mt-1 text-lg font-semibold leading-snug">Cafe 1, St Albans Crown Court, AL1 3JW</p>
+                <p className="mt-1 text-lg font-semibold leading-snug">Cafe 1, St Albans Crown Court, AL1 3JU</p>
                 <a
                   href={DIRECTIONS_URL}
                   target="_blank"
