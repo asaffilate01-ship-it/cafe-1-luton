@@ -7,7 +7,8 @@ import { updateOrderStatus, setOrderFulfilment } from "@/lib/orders.functions";
 import { toast } from "sonner";
 import { useSession, useRoles } from "@/hooks/use-auth";
 import { useAlertOnIncrease, useNotificationPermission, playChime } from "@/hooks/use-order-alerts";
-import { Bell, BellOff, RefreshCw } from "lucide-react";
+import { Bell, BellOff, RefreshCw, Sun, SunDim } from "lucide-react";
+import { useWakeLock } from "@/hooks/use-wake-lock";
 import { syncSumupPos } from "@/lib/sumup-pos.functions";
 import { orderCode } from "@/lib/order-code";
 
@@ -183,6 +184,7 @@ function KDS() {
           <h1 className="font-display text-2xl font-bold">Kitchen Display · Cafe1</h1>
           <div className="flex items-center gap-3">
             <AlertsToggle />
+            <WakeToggle />
             <button
               onClick={manualSync}
               disabled={syncing}
