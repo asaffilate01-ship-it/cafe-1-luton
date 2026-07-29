@@ -397,10 +397,17 @@ function Checkout() {
                 className="mt-3 h-11 w-full rounded-xl border border-border bg-background px-4"
               >
                 <option value="">Select a time slot…</option>
+                {timeSlots.length === 0 && <option disabled>No slots available</option>}
                 {timeSlots.map((s) => (
                   <option key={s.value} value={s.value}>{s.label}</option>
                 ))}
               </select>
+            )}
+            {scheduleMode === "scheduled" && (
+              <p className="mt-2 text-xs text-muted-foreground">
+                Slots follow our opening hours (Mon–Fri, closed weekends and bank holidays)
+                {mode === "delivery" ? " and the delivery window." : "."}
+              </p>
             )}
           </div>
 
