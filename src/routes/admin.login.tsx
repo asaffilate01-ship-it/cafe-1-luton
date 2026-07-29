@@ -1,8 +1,9 @@
 import { createFileRoute, Link, useNavigate, useSearch } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { z } from "zod";
 import { supabase } from "@/integrations/supabase/client";
 import { useSession, useRoles } from "@/hooks/use-auth";
+import { signOutAndRedirect } from "@/lib/sign-out";
 import { toast } from "sonner";
 import { ShieldCheck, ChevronLeft } from "lucide-react";
 
@@ -32,13 +33,8 @@ function AdminLogin() {
 
   const dest = next && next.startsWith("/") ? next : "/admin";
 
-  // If already signed in with a staff role, go straight through.
-  useEffect(() => {
-    if (loading || rolesLoading || !user) return;
-    if (has("admin") || has("staff") || has("driver")) {
-      navigate({ to: dest });
-    }
-  }, [loading, rolesLoading, user, roles.join(","), dest, navigate, has]);
+  const alreadyStaff =
+    !loading && !rolesLoading && !!user && (has("admin") || has("staff") || has("driver"));
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -75,6 +71,28 @@ function AdminLogin() {
         <Link to="/" className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
           <ChevronLeft className="h-4 w-4" /> Back to site
         </Link>
+        {alreadyStaff && (
+          <div className="mt-6 rounded-2xl border border-border bg-card p-5 shadow-brand">
+            <p className="text-sm">
+              Already signed in as <span className="font-semibold">{user?.email}</span>
+              {roles.length ? ` (${roles.join(", ")})` : ""}.
+            </p>
+            <div className="mt-4 flex flex-wrap gap-2">
+              <button
+                onClick={() => navigate({ to: dest })}
+                className="h-10 rounded-full bg-primary px-5 text-sm font-semibold text-primary-foreground hover:bg-primary-hover"
+              >
+                Continue
+              </button>
+              <button
+                onClick={() => signOutAndRedirect("/admin/login")}
+                className="h-10 rounded-full border border-border px-5 text-sm font-semibold hover:bg-muted"
+              >
+                Sign out
+              </button>
+            </div>
+          </div>
+        )}
         <div className="mt-6 rounded-3xl border border-border bg-card p-8 shadow-brand">
           <div className="grid h-12 w-12 place-items-center rounded-2xl bg-primary text-primary-foreground">
             <ShieldCheck className="h-6 w-6" />
