@@ -331,7 +331,11 @@ export const createOrder = createServerFn({ method: "POST" })
     // Voucher covers the whole order (and it isn't on a tab) — nothing to charge.
     const fully_covered = !account_id && payable === 0 && voucher_cents > 0;
 
-    const { data: order, error: orderErr } = await supabase
+    // Guest checkout: anon can INSERT but not SELECT orders (PII protection), so
+    // the row is written with the privileged server client after all validation.
+    const { supabaseAdmin: sbWrite } = await import("@/integrations/supabase/client.server");
+
+    const { data: order, error: orderErr } = await sbWrite
       .from("orders")
       .insert({
         customer_id: userId,
@@ -381,7 +385,7 @@ export const createOrder = createServerFn({ method: "POST" })
       }
     }
 
-    const { error: itemsErr } = await supabase
+    const { error: itemsErr } = await sbWrite
       .from("order_items")
       .insert(lines.map((l) => ({ ...l, order_id: order.id })));
     if (itemsErr) throw new Error(itemsErr.message);
