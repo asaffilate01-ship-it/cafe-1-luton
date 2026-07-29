@@ -20,7 +20,7 @@ type OrderRow = {
 };
 type Driver = { id: string; full_name: string | null; email: string | null };
 
-export const Route = createFileRoute("/admin")({
+export const Route = createFileRoute("/admin/")({
   head: () => ({
     meta: [
       { title: "Admin — Cafe1" },
