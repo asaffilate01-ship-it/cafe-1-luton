@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { ArrowRight, Bike, Coffee, Croissant, MapPin, BadgeCheck } from "lucide-react";
+import { ArrowRight, Bike, Coffee, Croissant, MapPin, BadgeCheck, UtensilsCrossed } from "lucide-react";
 import { SiteHeader, SiteFooter } from "@/components/site-header";
 import { PromoBanner } from "@/components/promo-banner";
 import { PromoCarousel } from "@/components/promo-carousel";
@@ -86,7 +86,7 @@ function Home() {
             <div className="card-3d absolute -bottom-6 -left-6 hidden max-w-xs p-5 sm:block">
               <div className="flex items-center gap-3">
                 <span className="icon-3d h-11 w-11">
-                  <Coffee className="h-5 w-5" />
+                  <UtensilsCrossed className="h-5 w-5" />
                 </span>
                 <div>
                   <p className="text-xs uppercase tracking-wider text-muted-foreground">Customer favourite</p>
