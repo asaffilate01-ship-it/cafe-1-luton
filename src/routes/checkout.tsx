@@ -4,6 +4,8 @@ import { useServerFn } from "@tanstack/react-start";
 import { createOrder } from "@/lib/orders.functions";
 import { lookupVoucher } from "@/lib/vouchers.functions";
 import { checkDeliveryPostcode } from "@/lib/delivery.functions";
+import { supabase } from "@/integrations/supabase/client";
+import { getEmailDiscount, validatePromo } from "@/lib/checkout.functions";
 import { cart, useCart } from "@/lib/cart";
 import { money } from "@/lib/format";
 import { SiteHeader } from "@/components/site-header";
@@ -11,7 +13,6 @@ import { useSession } from "@/hooks/use-auth";
 import { tab, useTab } from "@/lib/tab";
 import { toast } from "sonner";
 import { useStoreStatus } from "@/hooks/use-store-status";
-import { supabase } from "@/integrations/supabase/client";
 import { useOrderContext, describeContext } from "@/lib/order-context";
 import { OrderSetupGate } from "@/components/order-setup-gate";
 import { Settings2 } from "lucide-react";
@@ -58,6 +59,8 @@ function Checkout() {
   const place = useServerFn(createOrder);
   const findVoucher = useServerFn(lookupVoucher);
   const checkArea = useServerFn(checkDeliveryPostcode);
+  const fetchEmailDiscount = useServerFn(getEmailDiscount);
+  const checkPromo = useServerFn(validatePromo);
   const ctx = useOrderContext();
   const [gateOpen, setGateOpen] = useState(false);
   const [mode, setMode] = useState<Mode>(ctx?.mode ?? "collection");
@@ -135,10 +138,13 @@ function Checkout() {
     }
     let cancelled = false;
     const t = setTimeout(async () => {
-      const { data } = await supabase.rpc("get_customer_discount", { _email: emailForDiscount });
-      if (cancelled) return;
-      const row = (data ?? [])[0];
-      setEmailDiscount(row ? { percent: row.percent, label: row.label ?? null } : null);
+      try {
+        const row = await fetchEmailDiscount({ data: { email: emailForDiscount } });
+        if (cancelled) return;
+        setEmailDiscount(row);
+      } catch {
+        if (!cancelled) setEmailDiscount(null);
+      }
     }, 400);
     return () => { cancelled = true; clearTimeout(t); };
   }, [emailForDiscount]);
@@ -233,18 +239,21 @@ function Checkout() {
     const code = promoInput.trim().toUpperCase();
     if (!code) return;
     setPromoBusy(true);
-    const { data, error } = await supabase.rpc("validate_promo_code", {
-      _code: code, _subtotal_cents: subtotal, _order_type: mode,
-    });
-    setPromoBusy(false);
-    const row = (data ?? [])[0];
-    if (error || !row || !row.valid) {
-      toast.error(row?.message || error?.message || "That code isn't valid.");
+    try {
+      const row = await checkPromo({ data: { code, subtotal_cents: subtotal, order_type: mode } });
+      if (!row.valid) {
+        toast.error(row.message || "That code isn't valid.");
+        setPromo(null);
+        return;
+      }
+      setPromo({ code: row.code, discount_cents: row.discount_cents, discount_type: row.discount_type, message: row.message });
+      toast.success(row.message || "Promo applied");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "That code isn't valid.");
       setPromo(null);
-      return;
+    } finally {
+      setPromoBusy(false);
     }
-    setPromo({ code: row.code, discount_cents: row.discount_cents ?? 0, discount_type: row.discount_type, message: row.message });
-    toast.success(row.message || "Promo applied");
   }
 
   async function submit(e: React.FormEvent) {
