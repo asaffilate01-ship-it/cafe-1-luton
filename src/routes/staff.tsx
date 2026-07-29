@@ -34,7 +34,7 @@ function StaffHub() {
     { to: "/admin/broadcasts" as const, icon: Megaphone, title: "Broadcasts", desc: "Publish offers and announcements.", show: has("admin") || has("staff") },
     { to: "/admin/banners" as const, icon: ImageIcon, title: "Promo banners", desc: "Hero carousel for home & menu.", show: has("admin") || has("staff") },
     { to: "/admin/promos" as const, icon: Ticket, title: "Promo codes", desc: "Discount codes for checkout.", show: has("admin") || has("staff") },
-    { to: "/admin/customer-discounts" as const, icon: BadgePercent, title: "Customer discounts", desc: "Automatic % off by email address.", show: has("admin") || has("staff") },
+    { to: "/admin/customer-discounts" as const, icon: BadgePercent, title: "Approved members", desc: "Who gets the member discount, by email.", show: has("admin") || has("staff") },
     { to: "/admin/vouchers" as const, icon: Ticket, title: "Court vouchers", desc: "Daily allowances & weekly reimbursement report.", show: has("admin") || has("staff") },
     { to: "/admin/settings" as const, icon: Settings, title: "Store settings", desc: "Hours, fees, minimum order.", show: has("admin") || has("staff") },
     { to: "/admin/accounts" as const, icon: ReceiptText, title: "Tab accounts", desc: "Business tabs, access codes and bills.", show: has("admin") || has("staff") },

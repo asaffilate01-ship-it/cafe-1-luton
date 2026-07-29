@@ -1,7 +1,7 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 import { AdminNav } from "@/components/admin-nav";
-import { useEffect, useState } from "react";
-import { useSession, useRoles } from "@/hooks/use-auth";
+import { useState } from "react";
+import { RequireRole } from "@/components/require-role";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -10,16 +10,20 @@ import { BadgePercent, Trash2 } from "lucide-react";
 export const Route = createFileRoute("/admin/customer-discounts")({
   head: () => ({
     meta: [
-      { title: "Customer discounts — Cafe1 Admin" },
-      { name: "description", content: "Set automatic percentage discounts for specific customer email addresses at Cafe1." },
-      { property: "og:title", content: "Customer discounts — Cafe1 Admin" },
-      { property: "og:description", content: "Set automatic percentage discounts for specific customer email addresses at Cafe1." },
+      { title: "Approved members — Cafe1 Admin" },
+      { name: "description", content: "Approve individual customers for an automatic member discount at Cafe1." },
+      { property: "og:title", content: "Approved members — Cafe1 Admin" },
+      { property: "og:description", content: "Approve individual customers for an automatic member discount at Cafe1." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
       { name: "robots", content: "noindex" },
     ],
   }),
-  component: AdminCustomerDiscounts,
+  component: () => (
+    <RequireRole roles={["admin", "staff"]} next="/admin/customer-discounts">
+      <AdminCustomerDiscounts />
+    </RequireRole>
+  ),
 });
 
 type Row = {
@@ -32,18 +36,10 @@ type Row = {
 };
 
 function AdminCustomerDiscounts() {
-  const { user, loading } = useSession();
-  const { has, loading: rl } = useRoles(user);
-  const navigate = useNavigate();
   const qc = useQueryClient();
-  useEffect(() => {
-    if (!loading && !user) navigate({ to: "/admin/login", search: { next: "/admin/customer-discounts" } });
-  }, [loading, user, navigate]);
-  const allowed = has("admin") || has("staff");
 
   const { data: rows } = useQuery({
     queryKey: ["admin-customer-discounts"],
-    enabled: !!user && allowed,
     queryFn: async () => {
       const { data, error } = await supabase
         .from("customer_discounts")
@@ -56,6 +52,8 @@ function AdminCustomerDiscounts() {
 
   const [form, setForm] = useState({ email: "", percent: 10, label: "" });
   const [busy, setBusy] = useState(false);
+  const [bulk, setBulk] = useState("");
+  const [bulkBusy, setBulkBusy] = useState(false);
 
   async function create(e: React.FormEvent) {
     e.preventDefault();
@@ -80,14 +78,35 @@ function AdminCustomerDiscounts() {
   }
 
   async function remove(id: string) {
-    if (!confirm("Remove this customer discount?")) return;
+    if (!confirm("Remove this member's approval?")) return;
     const { error } = await supabase.from("customer_discounts").delete().eq("id", id);
     if (error) return toast.error(error.message);
     qc.invalidateQueries({ queryKey: ["admin-customer-discounts"] });
   }
 
-  if (loading || rl) return null;
-  if (!allowed) return <div className="p-12 text-center text-muted-foreground">Staff access required.</div>;
+  async function addBulk() {
+    const emails = Array.from(
+      new Set(
+        bulk
+          .split(/[\s,;]+/)
+          .map((e) => e.trim().toLowerCase())
+          .filter((e) => /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(e)),
+      ),
+    );
+    if (!emails.length) return toast.error("No valid email addresses found");
+    setBulkBusy(true);
+    const { error } = await supabase
+      .from("customer_discounts")
+      .upsert(
+        emails.map((email) => ({ email, percent: form.percent, label: form.label.trim() || null, active: true })),
+        { onConflict: "email" },
+      );
+    setBulkBusy(false);
+    if (error) return toast.error(error.message);
+    toast.success(`${emails.length} member${emails.length === 1 ? "" : "s"} approved at ${form.percent}%`);
+    setBulk("");
+    qc.invalidateQueries({ queryKey: ["admin-customer-discounts"] });
+  }
 
   return (
     <div className="min-h-screen bg-background">
@@ -98,15 +117,16 @@ function AdminCustomerDiscounts() {
             <BadgePercent className="h-5 w-5" />
           </span>
           <div>
-            <h1 className="font-display text-3xl font-bold">Customer discounts</h1>
+            <h1 className="font-display text-3xl font-bold">Approved members</h1>
             <p className="text-sm text-muted-foreground">
-              Automatic % off for specific email addresses — applied at checkout with no code needed.
+              Only people on this list get a member discount. It applies automatically at checkout when they
+              use their approved email address — no code needed. Everyone else pays full price.
             </p>
           </div>
         </div>
 
         <form onSubmit={create} className="mt-8 space-y-3 rounded-2xl border border-border bg-card p-5">
-          <p className="font-semibold">Add a customer</p>
+          <p className="font-semibold">Approve a member</p>
           <div className="grid gap-3 sm:grid-cols-3">
             <input
               required
@@ -137,11 +157,33 @@ function AdminCustomerDiscounts() {
             disabled={busy}
             className="h-11 rounded-full bg-primary px-6 font-semibold text-primary-foreground shadow-brand hover:bg-primary-hover disabled:opacity-60"
           >
-            {busy ? "Saving…" : "Add discount"}
+            {busy ? "Saving…" : "Approve member"}
           </button>
+
+          <div className="rounded-xl border border-dashed border-border p-4">
+            <p className="text-sm font-semibold">Approve several at once</p>
+            <p className="mt-1 text-xs text-muted-foreground">
+              Paste emails separated by commas, spaces or new lines. They'll all get the % and label above.
+            </p>
+            <textarea
+              rows={3}
+              value={bulk}
+              onChange={(e) => setBulk(e.target.value)}
+              placeholder="one@court.gov.uk, two@court.gov.uk"
+              className="mt-2 w-full rounded-xl border border-border bg-background p-3 text-sm"
+            />
+            <button
+              type="button"
+              onClick={addBulk}
+              disabled={bulkBusy}
+              className="mt-2 h-10 rounded-full border border-primary px-5 text-sm font-semibold text-primary hover:bg-primary-soft disabled:opacity-60"
+            >
+              {bulkBusy ? "Approving…" : "Approve list"}
+            </button>
+          </div>
         </form>
 
-        <h2 className="mt-10 font-display text-xl font-bold">Discounted customers</h2>
+        <h2 className="mt-10 font-display text-xl font-bold">Approved members</h2>
         <ul className="mt-3 space-y-2">
           {(rows ?? []).map((r) => (
             <li key={r.id} className="flex flex-wrap items-center gap-3 rounded-2xl border border-border bg-card p-4">
@@ -179,7 +221,7 @@ function AdminCustomerDiscounts() {
           ))}
           {rows && rows.length === 0 && (
             <li className="rounded-2xl border border-dashed border-border p-6 text-center text-sm text-muted-foreground">
-              No customer discounts yet.
+              No approved members yet — nobody is receiving a discount.
             </li>
           )}
         </ul>

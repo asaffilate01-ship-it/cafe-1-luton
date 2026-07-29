@@ -180,7 +180,8 @@ function Checkout() {
   const freeDeliveryByPromo = promo?.discount_type === "free_delivery";
   const delivery = mode === "delivery" && !freeDeliveryByThreshold && !freeDeliveryByPromo ? baseDelivery : 0;
   const onTab = !!tabSession;
-  const discountPercent = Math.max(user && !onTab ? 10 : 0, emailDiscount?.percent ?? 0);
+  // Discounts are only for approved members set up in the admin dashboard.
+  const discountPercent = emailDiscount?.percent ?? 0;
   const loyaltyDiscount = Math.round(subtotal * (discountPercent / 100));
   const promoDiscount = promo && !freeDeliveryByPromo ? Math.min(promo.discount_cents, subtotal) : 0;
   // Free drinks earned (every 11th) auto-apply to the cheapest eligible drinks.
@@ -354,7 +355,7 @@ function Checkout() {
               <p className="font-semibold text-primary">Earn loyalty points & get access to offers</p>
               <p className="mt-1 text-sm text-muted-foreground">
                 <Link to="/auth" search={{ next: "/checkout" }} className="font-semibold text-primary underline">Sign in or create an account</Link>{" "}
-                to unlock member pricing and earn 1 point per £1 — or continue as guest below.
+                to earn 1 point per £1 and save your details — or continue as guest below.
               </p>
               <p className="mt-2 text-xs text-muted-foreground">
                 Got a business tab code? <Link to="/tab" className="font-semibold text-primary underline">Sign in with your account code</Link>.
@@ -363,7 +364,10 @@ function Checkout() {
           )}
           {user && !tabSession && (
             <div className="rounded-2xl border border-primary/40 bg-primary/10 p-4 text-sm">
-              <span className="font-semibold text-primary">Member perks applied</span> — 10% off this order and you'll earn {pointsEarn} points.
+              <span className="font-semibold text-primary">
+                {emailDiscount ? `${emailDiscount.label || "Approved member discount"} applied` : "Signed in"}
+              </span>{" "}
+              — {emailDiscount ? `${emailDiscount.percent}% off this order and ` : ""}you'll earn {pointsEarn} points.
             </div>
           )}
           <div className="rounded-2xl border border-border bg-card p-5">
@@ -541,9 +545,7 @@ function Checkout() {
             {loyaltyDiscount > 0 && (
               <div className="flex justify-between text-primary">
                 <span>
-                  {emailDiscount && emailDiscount.percent >= (user && !onTab ? 10 : 0)
-                    ? `${emailDiscount.label || "Customer discount"} (${discountPercent}%)`
-                    : `Member discount (${discountPercent}%)`}
+                  {`${emailDiscount?.label || "Approved member discount"} (${discountPercent}%)`}
                 </span>
                 <span>−{money(loyaltyDiscount)}</span>
               </div>

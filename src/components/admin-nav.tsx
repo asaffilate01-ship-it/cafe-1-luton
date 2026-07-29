@@ -55,7 +55,7 @@ const ITEMS: Item[] = [
   { to: "/admin/broadcasts", label: "Broadcasts", icon: Megaphone, need: "any" },
   { to: "/admin/banners", label: "Banners", icon: ImageIcon, need: "any" },
   { to: "/admin/promos", label: "Promos", icon: Ticket, need: "any" },
-  { to: "/admin/customer-discounts", label: "Discounts", icon: BadgePercent, need: "any" },
+  { to: "/admin/customer-discounts", label: "Members", icon: BadgePercent, need: "any" },
   { to: "/admin/vouchers", label: "Vouchers", icon: Ticket, need: "any" },
   { to: "/admin/accounts", label: "Tabs", icon: ReceiptText, need: "any" },
   { to: "/admin/settings", label: "Settings", icon: Settings, need: "any" },
