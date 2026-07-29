@@ -181,7 +181,7 @@ function Checkout() {
   const delivery = mode === "delivery" && !freeDeliveryByThreshold && !freeDeliveryByPromo ? baseDelivery : 0;
   const onTab = !!tabSession;
   // Discounts are only for approved members set up in the admin dashboard.
-  const discountPercent = onTab ? 0 : (emailDiscount?.percent ?? 0);
+  const discountPercent = emailDiscount?.percent ?? 0;
   const loyaltyDiscount = Math.round(subtotal * (discountPercent / 100));
   const promoDiscount = promo && !freeDeliveryByPromo ? Math.min(promo.discount_cents, subtotal) : 0;
   // Free drinks earned (every 11th) auto-apply to the cheapest eligible drinks.
