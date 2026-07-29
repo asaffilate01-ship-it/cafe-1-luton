@@ -19,7 +19,10 @@ export const Route = createFileRoute("/")({
       { name: "twitter:card", content: "summary_large_image" },
       { name: "twitter:image", content: `https://cafe1stalbans.co.uk${heroImage.url}` },
     ],
-    links: [{ rel: "canonical", href: "https://cafe1stalbans.co.uk/" }],
+    links: [
+      { rel: "canonical", href: "https://cafe1stalbans.co.uk/" },
+      { rel: "preload", as: "image", href: heroImage.url, fetchpriority: "high" },
+    ],
     scripts: [
       {
         type: "application/ld+json",
@@ -95,6 +98,11 @@ function Home() {
             <img
               src={heroImage.url}
               alt="Café 1 spread: full English breakfast, fish and chips, jacket potato, loaded fries and a mug of tea"
+              width={1024}
+              height={1024}
+              loading="eager"
+              decoding="async"
+              fetchPriority="high"
               className="aspect-square w-full rounded-[2rem] object-cover shadow-brand-lg"
             />
             <div className="card-3d absolute -bottom-6 -left-6 hidden max-w-xs p-5 sm:block">
