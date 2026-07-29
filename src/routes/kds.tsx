@@ -47,8 +47,16 @@ export const Route = createFileRoute("/kds")({
       { name: "robots", content: "noindex" },
     ],
   }),
-  component: KDS,
+  component: KdsPage,
 });
+
+function KdsPage() {
+  return (
+    <RequireRole roles={["admin", "staff"]} next="/kds">
+      <KDS />
+    </RequireRole>
+  );
+}
 
 function KDS() {
   const [tickets, setTickets] = useState<Ticket[]>([]);
