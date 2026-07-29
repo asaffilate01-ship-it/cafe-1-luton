@@ -1,3 +1,4 @@
+import { NAP } from "@/lib/nap";
 import { Link } from "@tanstack/react-router";
 import { ShoppingBag, ReceiptText, MapPin, Facebook, Instagram, Youtube, Music2 } from "lucide-react";
 import { openCookieSettings } from "@/lib/cookie-consent";
@@ -70,9 +71,19 @@ export function SiteFooter() {
             <img src={logo.url} alt="Café 1 logo" className="h-10 w-auto" width={40} height={40} loading="lazy" />
             <span>© {new Date().getFullYear()}</span>
           </div>
-          <address className="flex items-center gap-1.5 not-italic">
-            <MapPin className="h-3.5 w-3.5 text-primary" />
-            Cafe 1, St Albans Crown Court, AL1 3JU
+          <address className="flex flex-col gap-1 not-italic">
+            <span className="flex items-center gap-1.5">
+              <MapPin className="h-3.5 w-3.5 text-primary" />
+              {NAP.name}, {NAP.streetAddress}, {NAP.addressLocality}, {NAP.addressRegion} {NAP.postalCode}
+            </span>
+            <span className="flex flex-wrap items-center gap-x-3">
+              <a href={`tel:${NAP.telephone.replace(/\s/g, "")}`} className="hover:text-primary">
+                {NAP.telephone}
+              </a>
+              <a href={`mailto:${NAP.email}`} className="hover:text-primary">
+                {NAP.email}
+              </a>
+            </span>
           </address>
           <div className="mt-3 flex items-center gap-2">
             {[
