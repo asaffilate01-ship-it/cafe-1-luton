@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import type { Session, User } from "@supabase/supabase-js";
+import { cart } from "@/lib/cart";
 
 export type Role = "admin" | "staff" | "driver" | "customer";
 
@@ -10,10 +11,12 @@ export function useSession() {
   useEffect(() => {
     const { data: sub } = supabase.auth.onAuthStateChange((_e, s) => {
       setSession(s);
+      cart.syncOwner(s?.user?.id ?? null);
       setLoading(false);
     });
     supabase.auth.getSession().then(({ data }) => {
       setSession(data.session);
+      cart.syncOwner(data.session?.user?.id ?? null);
       setLoading(false);
     });
     return () => sub.subscription.unsubscribe();
