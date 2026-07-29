@@ -78,3 +78,65 @@ function findNextOpen(hours: HourRow[], fromDow: number, holidays: BankHoliday[]
 export function formatHHMM(t: string) {
   return t.slice(0, 5);
 }
+
+export type ScheduleSlot = { value: string; label: string; day: string };
+
+/**
+ * Build selectable "schedule for later" slots that only fall inside real
+ * trading hours (skips closed days and bank holidays). Delivery orders are
+ * further constrained to the delivery window in business settings.
+ */
+export function buildScheduleSlots(opts: {
+  hours: HourRow[];
+  holidays?: BankHoliday[];
+  settings?: BusinessSettings | null;
+  mode?: "delivery" | "collection" | "dine_in";
+  now?: Date;
+  daysAhead?: number;
+  intervalMinutes?: number;
+}): ScheduleSlot[] {
+  const { hours, holidays = [], settings = null, mode = "collection", now = new Date() } = opts;
+  const daysAhead = opts.daysAhead ?? 7;
+  const step = opts.intervalMinutes ?? 15;
+  if (!hours.length) return [];
+
+  const leadMinutes = mode === "delivery" ? (settings?.delivery_minutes ?? 45) : (settings?.prep_minutes ?? 20);
+  const earliest = new Date(now.getTime() + leadMinutes * 60 * 1000);
+  const holidaySet = new Set(holidays.map((h) => h.holiday_date));
+  const slots: ScheduleSlot[] = [];
+
+  for (let i = 0; i < daysAhead && slots.length < 96; i++) {
+    const day = new Date(now);
+    day.setDate(now.getDate() + i);
+    day.setHours(0, 0, 0, 0);
+    const iso = `${day.getFullYear()}-${String(day.getMonth() + 1).padStart(2, "0")}-${String(day.getDate()).padStart(2, "0")}`;
+    if (holidaySet.has(iso)) continue;
+    const row = hours.find((h) => h.day_of_week === day.getDay());
+    if (!row || row.closed) continue;
+
+    let openMin = toMinutes(row.open_time);
+    let closeMin = toMinutes(row.close_time);
+    if (mode === "delivery") {
+      if (settings?.delivery_open_time) openMin = Math.max(openMin, toMinutes(settings.delivery_open_time));
+      if (settings?.delivery_close_time) closeMin = Math.min(closeMin, toMinutes(settings.delivery_close_time));
+    }
+    if (closeMin <= openMin) continue;
+
+    // align first slot to the interval grid
+    let startMin = Math.ceil(openMin / step) * step;
+    for (let m = startMin; m <= closeMin - step; m += step) {
+      const d = new Date(day);
+      d.setMinutes(m);
+      if (d < earliest) continue;
+      const dayLabel =
+        i === 0 ? "Today" : i === 1 ? "Tomorrow" : d.toLocaleDateString([], { weekday: "short", day: "numeric", month: "short" });
+      slots.push({
+        value: d.toISOString(),
+        day: dayLabel,
+        label: `${dayLabel} · ${d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}`,
+      });
+      if (slots.length >= 96) break;
+    }
+  }
+  return slots;
+}
