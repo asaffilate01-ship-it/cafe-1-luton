@@ -8,15 +8,21 @@ export const lookupVoucher = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     const code = (data.code ?? "").trim();
     if (!code) return { found: false as const };
+    const { checkThrottle, recordAttempt, requestIdentity } = await import("./rate-limit.server");
+    const ident = requestIdentity();
+    const gate = await checkThrottle("voucher", ident);
+    if (!gate.allowed) return { found: false as const, throttled: true as const, message: gate.message };
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data: rows, error } = await supabaseAdmin.rpc("get_voucher_balance_by_code", {
       _code: code,
     });
     if (error) {
       console.error("[vouchers] lookup failed", error);
+      await recordAttempt("voucher", ident, false);
       return { found: false as const };
     }
     const row = (rows ?? [])[0];
+    await recordAttempt("voucher", ident, !!row);
     if (!row) return { found: false as const };
     return {
       found: true as const,
