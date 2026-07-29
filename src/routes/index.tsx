@@ -5,6 +5,7 @@ import { PromoBanner } from "@/components/promo-banner";
 import { PromoCarousel } from "@/components/promo-carousel";
 import { StoreStatus } from "@/components/store-status";
 import heroImage from "@/assets/cafe1-hero.jpg.asset.json";
+import { localBusinessJsonLd } from "@/lib/nap";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -26,33 +27,9 @@ export const Route = createFileRoute("/")({
     scripts: [
       {
         type: "application/ld+json",
-        children: JSON.stringify({
-          "@context": "https://schema.org",
-          "@type": "Restaurant",
-          name: "Café 1 St Albans",
-          url: "https://cafe1stalbans.co.uk",
-          image: `https://cafe1stalbans.co.uk${heroImage.url}`,
-          email: "info@cafe1stalbans.co.uk",
-          telephone: "+441727400117",
-          servesCuisine: ["Coffee", "Breakfast", "Halal", "Desi"],
-          priceRange: "££",
-          hasMenu: "https://cafe1stalbans.co.uk/menu",
-          address: {
-            "@type": "PostalAddress",
-            streetAddress: "St Albans Crown Court",
-            addressLocality: "St Albans",
-            postalCode: "AL1 3JU",
-            addressCountry: "GB",
-          },
-          openingHoursSpecification: [
-            {
-              "@type": "OpeningHoursSpecification",
-              dayOfWeek: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"],
-              opens: "08:00",
-              closes: "17:00",
-            },
-          ],
-        }),
+        children: JSON.stringify(
+          localBusinessJsonLd(`https://cafe1stalbans.co.uk${heroImage.url}`),
+        ),
       },
     ],
   }),
