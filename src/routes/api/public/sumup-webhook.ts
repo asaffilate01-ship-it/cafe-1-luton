@@ -16,25 +16,40 @@ export const Route = createFileRoute("/api/public/sumup-webhook")({
           const { getSumUpCheckout } = await import("@/lib/sumup.server");
           const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
-          let paid = false;
-          let txId: string | undefined;
-          if (checkoutId) {
-            const c = await getSumUpCheckout(checkoutId);
-            paid = c.status === "PAID";
-            txId = c.transaction_id;
+          // Never trust the webhook body: always re-verify against SumUp.
+          // Resolve the checkout id from our own record when it isn't supplied.
+          let resolvedId = checkoutId;
+          if (!resolvedId && reference) {
+            const { data: ord } = await supabaseAdmin
+              .from("orders")
+              .select("sumup_checkout_id")
+              .eq("sumup_reference", reference)
+              .maybeSingle();
+            resolvedId = ord?.sumup_checkout_id ?? undefined;
           }
+          if (!resolvedId) return new Response("unknown checkout", { status: 404 });
+
+          const c = await getSumUpCheckout(resolvedId);
+          const paid = c.status === "PAID";
+          const txId = c.transaction_id;
+          // Only act on a confirmed PAID result; ignore anything else so a
+          // spoofed call can never downgrade or cancel a real order.
+          if (!paid) return Response.json({ ok: true, ignored: true });
           // Payment lands the order in "paid" (awaiting staff acceptance).
           // Staff accept from the Admin dashboard, which advances to "preparing".
           const patch = {
-            payment_status: paid ? ("paid" as const) : ("failed" as const),
+            payment_status: "paid" as const,
             // Auto-accept website orders straight into the kitchen
-            status: paid ? ("preparing" as const) : ("pending_payment" as const),
+            status: "preparing" as const,
             sumup_transaction_id: txId ?? null,
           };
-          const q = supabaseAdmin.from("orders").update(patch);
+          const q = supabaseAdmin
+            .from("orders")
+            .update(patch)
+            .eq("status", "pending_payment");
           const { error } = reference
             ? await q.eq("sumup_reference", reference)
-            : await q.eq("sumup_checkout_id", checkoutId!);
+            : await q.eq("sumup_checkout_id", resolvedId);
           if (error) console.error("[sumup-webhook] update", error);
 
           return Response.json({ ok: true });
