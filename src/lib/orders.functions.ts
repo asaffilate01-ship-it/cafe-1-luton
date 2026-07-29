@@ -171,6 +171,7 @@ export const createOrder = createServerFn({ method: "POST" })
         _code: data.promo_code.trim().toUpperCase(),
         _subtotal_cents: subtotal,
         _order_type: data.type,
+        _email: (data.customer_email || authEmail || "").trim() || undefined,
       });
       if (pErr) throw new Error(pErr.message);
       const row = (rows ?? [])[0];
