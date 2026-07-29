@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { AdminNav } from "@/components/admin-nav";
+import { signOutAndRedirect } from "@/lib/sign-out";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useServerFn } from "@tanstack/react-start";
@@ -185,6 +186,13 @@ function KDS() {
           <div className="flex items-center gap-3">
             <AlertsToggle />
             <WakeToggle />
+            <button
+              onClick={() => void signOutAndRedirect()}
+              className="flex items-center gap-1 rounded-full bg-primary-foreground px-3 py-1.5 text-xs font-bold text-primary hover:opacity-90"
+              title="Sign out of this device"
+            >
+              Sign out
+            </button>
             <button
               onClick={manualSync}
               disabled={syncing}

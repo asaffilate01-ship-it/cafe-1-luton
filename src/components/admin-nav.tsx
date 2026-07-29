@@ -1,6 +1,6 @@
 import { Link, useRouterState } from "@tanstack/react-router";
 import { useSession, useRoles } from "@/hooks/use-auth";
-import { supabase } from "@/integrations/supabase/client";
+import { signOutAndRedirect } from "@/lib/sign-out";
 import {
   LayoutDashboard,
   BookOpen,
@@ -110,10 +110,7 @@ export function AdminNav() {
             {user.email}
           </span>
           <button
-            onClick={async () => {
-              await supabase.auth.signOut();
-              window.location.href = "/admin/login";
-            }}
+            onClick={() => void signOutAndRedirect()}
             className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-primary px-3 py-1.5 text-xs font-bold text-primary-foreground shadow-brand transition hover:opacity-90"
             title="Sign out"
           >
