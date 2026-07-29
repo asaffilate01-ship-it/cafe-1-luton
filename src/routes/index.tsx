@@ -11,9 +11,9 @@ export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
       { title: "Café 1 St Albans — Coffee & Food, Delivered" },
-      { name: "description", content: "Order coffee, breakfast and hot food from Café 1 at St Albans Crown Court. Free delivery within half a mile, collection or dine-in." },
+      { name: "description", content: "Order coffee, breakfast and hot food from Café 1 at St Albans Crown Court. Open to the public, with free delivery within half a mile, collection or dine-in." },
       { property: "og:title", content: "Café 1 St Albans — Coffee & Food, Delivered" },
-      { property: "og:description", content: "Order coffee, breakfast and hot food from Café 1 at St Albans Crown Court. Free delivery within half a mile, collection or dine-in." },
+      { property: "og:description", content: "Order coffee, breakfast and hot food from Café 1 at St Albans Crown Court. Open to the public, with free delivery within half a mile, collection or dine-in." },
       { property: "og:type", content: "website" },
       { property: "og:url", content: "https://cafe1stalbans.co.uk/" },
       { property: "og:image", content: `https://cafe1stalbans.co.uk${heroImage.url}` },
