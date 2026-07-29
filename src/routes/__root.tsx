@@ -82,6 +82,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { title: "Café 1 St Albans — Coffee & Food, Delivered" },
       { name: "description", content: "Order coffee, breakfast and hot food from Café 1 at St Albans Crown Court. Free delivery within half a mile, collection or dine-in." },
       { name: "author", content: "Cafe1" },
+      { name: "google-site-verification", content: "NoUffm8Qa2gTyc2dGJ6FFtKs0hjsOSm9z2UX72WRVDQ" },
       { property: "og:title", content: "Café 1 St Albans — Coffee & Food, Delivered" },
       { property: "og:description", content: "Order coffee, breakfast and hot food from Café 1 at St Albans Crown Court. Free delivery within half a mile, collection or dine-in." },
       { property: "og:type", content: "website" },
