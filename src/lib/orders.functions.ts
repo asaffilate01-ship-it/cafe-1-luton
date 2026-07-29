@@ -185,9 +185,10 @@ export const createOrder = createServerFn({ method: "POST" })
       }
     }
 
-    // Percentage discount: signed-in member rate, or a fixed per-customer rate
-    // set in the backend against their email address (whichever is higher).
-    let discount_percent = userId ? LOYALTY_DISCOUNT_RATE * 100 : 0;
+    // Percentage discount: ONLY for approved members listed in the backend
+    // (Admin → Approved members). Simply being signed in earns points, not a
+    // discount.
+    let discount_percent = 0;
     const discountEmail = (data.customer_email || authEmail || "").trim();
     if (discountEmail) {
       const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
