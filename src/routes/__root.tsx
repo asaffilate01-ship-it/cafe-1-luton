@@ -79,11 +79,11 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Cafe1 — Order, Collect, Deliver" },
-      { name: "description", content: "Cafe1: fresh coffee, breakfast and sandwiches. Order online for delivery or collection." },
+      { title: "Café 1 St Albans — Coffee & Food, Delivered" },
+      { name: "description", content: "Order coffee, breakfast and hot food from Café 1 at St Albans Crown Court. Free delivery within half a mile, collection or dine-in." },
       { name: "author", content: "Cafe1" },
-      { property: "og:title", content: "Cafe1 — Order, Collect, Deliver" },
-      { property: "og:description", content: "Cafe1: fresh coffee, breakfast and sandwiches. Order online for delivery or collection." },
+      { property: "og:title", content: "Café 1 St Albans — Coffee & Food, Delivered" },
+      { property: "og:description", content: "Order coffee, breakfast and hot food from Café 1 at St Albans Crown Court. Free delivery within half a mile, collection or dine-in." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
       { name: "viewport", content: "width=device-width, initial-scale=1, viewport-fit=cover" },
@@ -93,6 +93,10 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { name: "apple-mobile-web-app-status-bar-style", content: "black-translucent" },
       { name: "apple-mobile-web-app-title", content: "Cafe1" },
       { name: "format-detection", content: "telephone=no" },
+      { name: "twitter:title", content: "Café 1 St Albans — Coffee & Food, Delivered" },
+      { name: "twitter:description", content: "Order coffee, breakfast and hot food from Café 1 at St Albans Crown Court. Free delivery within half a mile, collection or dine-in." },
+      { property: "og:image", content: "https://storage.googleapis.com/gpt-engineer-file-uploads/attachments/og-images/9691609a-4b91-4178-9bb5-f8e965bae5f5" },
+      { name: "twitter:image", content: "https://storage.googleapis.com/gpt-engineer-file-uploads/attachments/og-images/9691609a-4b91-4178-9bb5-f8e965bae5f5" },
     ],
     links: [
       {
