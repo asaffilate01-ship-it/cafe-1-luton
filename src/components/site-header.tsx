@@ -1,3 +1,4 @@
+import { NAP } from "@/lib/nap";
 import { Link } from "@tanstack/react-router";
 import { ShoppingBag, ReceiptText, MapPin, Facebook, Instagram, Youtube, Music2 } from "lucide-react";
 import { openCookieSettings } from "@/lib/cookie-consent";
