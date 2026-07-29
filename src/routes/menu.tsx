@@ -420,7 +420,33 @@ type Modifier = {
   name: string;
   description: string | null;
   price_cents: number;
+  group_name: string | null;
+  group_type: string | null;
+  required: boolean | null;
 };
+
+type ModGroup = {
+  name: string;
+  single: boolean;
+  required: boolean;
+  mods: Modifier[];
+};
+
+function groupMods(mods: Modifier[]): ModGroup[] {
+  const out: ModGroup[] = [];
+  for (const m of mods) {
+    const name = m.group_name?.trim() || "Extras";
+    let g = out.find((x) => x.name === name);
+    if (!g) {
+      g = { name, single: m.group_type === "single", required: !!m.required, mods: [] };
+      out.push(g);
+    }
+    if (m.required) g.required = true;
+    g.mods.push(m);
+  }
+  // Required choices first so the customer sees them immediately.
+  return out.sort((a, b) => Number(b.required) - Number(a.required));
+}
 
 function ItemCard({ item, mods }: { item: MenuItem; mods: Modifier[] }) {
   const cartState = useCart();
@@ -536,12 +562,30 @@ function CustomiseSheet({
   const [note, setNote] = useState("");
   const [qty, setQty] = useState(1);
 
+  const groups = useMemo(() => groupMods(mods), [mods]);
+  const missing = groups.filter(
+    (g) => g.required && !g.mods.some((m) => chosen[m.id]),
+  );
+
+  function pick(group: ModGroup, id: string, on: boolean) {
+    setChosen((c) => {
+      const next = { ...c };
+      if (group.single) for (const m of group.mods) delete next[m.id];
+      if (on) next[id] = true;
+      return next;
+    });
+  }
+
   const selected: CartModifier[] = mods
     .filter((m) => chosen[m.id])
     .map((m) => ({ id: m.id, name: m.name, price_cents: m.price_cents }));
   const unit = item.price_cents + selected.reduce((s, m) => s + m.price_cents, 0);
 
   function add() {
+    if (missing.length) {
+      toast.error(`Please choose: ${missing.map((g) => g.name).join(", ")}`);
+      return;
+    }
     cart.add(
       {
         menu_item_id: item.id,
@@ -573,36 +617,63 @@ function CustomiseSheet({
         </div>
 
         <div className="flex-1 overflow-y-auto p-4">
-          <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
-            Add-ons & options
-          </p>
-          <p className="mt-0.5 text-xs text-muted-foreground">Optional — pick as many as you like.</p>
-          <ul className="mt-3 divide-y divide-border rounded-2xl border border-border">
-            {mods.map((m) => {
-              const on = !!chosen[m.id];
-              return (
-                <li key={m.id}>
-                  <label className="flex cursor-pointer items-center gap-3 p-3">
-                    <input
-                      type="checkbox"
-                      checked={on}
-                      onChange={(e) => setChosen((c) => ({ ...c, [m.id]: e.target.checked }))}
-                      className="h-5 w-5 accent-[var(--color-primary,red)]"
-                    />
-                    <span className="min-w-0 flex-1">
-                      <span className="block font-medium">{m.name}</span>
-                      {m.description && (
-                        <span className="block text-xs text-muted-foreground">{m.description}</span>
-                      )}
-                    </span>
-                    <span className="text-sm font-semibold text-primary">
-                      {m.price_cents ? `+${money(m.price_cents)}` : "Free"}
-                    </span>
-                  </label>
-                </li>
-              );
-            })}
-          </ul>
+          {groups.map((g) => {
+            const needs = g.required && !g.mods.some((m) => chosen[m.id]);
+            return (
+              <section key={g.name} className="mb-5">
+                <div className="flex items-center justify-between gap-2">
+                  <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
+                    {g.name}
+                  </p>
+                  <span
+                    className={`rounded-full px-2 py-0.5 text-[11px] font-bold uppercase ${
+                      g.required
+                        ? needs
+                          ? "bg-primary text-primary-foreground"
+                          : "bg-primary-soft text-primary"
+                        : "bg-muted text-muted-foreground"
+                    }`}
+                  >
+                    {g.required ? "Required" : "Optional"}
+                  </span>
+                </div>
+                <p className="mt-0.5 text-xs text-muted-foreground">
+                  {g.single ? "Choose one" : "Pick as many as you like"}
+                </p>
+                <ul className="mt-2 divide-y divide-border rounded-2xl border border-border">
+                  {g.mods.map((m) => {
+                    const on = !!chosen[m.id];
+                    return (
+                      <li key={m.id}>
+                        <label className="flex cursor-pointer items-center gap-3 p-3">
+                          <input
+                            type={g.single ? "radio" : "checkbox"}
+                            name={g.single ? `${item.id}-${g.name}` : undefined}
+                            checked={on}
+                            onChange={(e) => pick(g, m.id, e.target.checked)}
+                            onClick={() => {
+                              // Radios in an optional group can be unpicked by re-clicking.
+                              if (g.single && !g.required && chosen[m.id]) pick(g, m.id, false);
+                            }}
+                            className="h-5 w-5 accent-[var(--color-primary,red)]"
+                          />
+                          <span className="min-w-0 flex-1">
+                            <span className="block font-medium">{m.name}</span>
+                            {m.description && (
+                              <span className="block text-xs text-muted-foreground">{m.description}</span>
+                            )}
+                          </span>
+                          <span className="text-sm font-semibold text-primary">
+                            {m.price_cents ? `+${money(m.price_cents)}` : "Free"}
+                          </span>
+                        </label>
+                      </li>
+                    );
+                  })}
+                </ul>
+              </section>
+            );
+          })}
 
           <label className="mt-4 block">
             <span className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
@@ -630,9 +701,14 @@ function CustomiseSheet({
           </div>
           <button
             onClick={add}
-            className="h-12 flex-1 rounded-full bg-primary font-semibold text-primary-foreground shadow-brand transition hover:bg-primary-hover"
+            aria-disabled={missing.length > 0}
+            className={`h-12 flex-1 rounded-full font-semibold shadow-brand transition ${
+              missing.length
+                ? "cursor-not-allowed bg-muted text-muted-foreground"
+                : "bg-primary text-primary-foreground hover:bg-primary-hover"
+            }`}
           >
-            Add to basket · {money(unit * qty)}
+            {missing.length ? `Choose ${missing[0].name}` : `Add to basket · ${money(unit * qty)}`}
           </button>
         </div>
       </div>

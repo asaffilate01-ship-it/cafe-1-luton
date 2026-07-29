@@ -28,6 +28,7 @@ type Mod = {
   id: string; category_id: string | null; item_id: string | null;
   name: string; description: string | null; price_cents: number;
   sort_order: number; active: boolean;
+  group_name: string | null; group_type: string; required: boolean;
 };
 
 function MenuManager() {
@@ -375,13 +376,23 @@ function ModRow({ m, onChanged }: { m: Mod; onChanged: () => void }) {
   }
 
   return (
-    <div className="grid items-center gap-2 rounded-lg border border-border bg-background p-2 md:grid-cols-[1fr_1fr_120px_auto_auto]">
+    <div className="grid items-center gap-2 rounded-lg border border-border bg-background p-2 md:grid-cols-[1fr_1fr_1fr_120px_auto_auto_auto]">
       <input
         value={form.name}
         onChange={(e)=>setForm({...form, name:e.target.value})}
         onBlur={()=>form.name!==m.name && save({ name: form.name })}
         className="rounded-lg border border-input bg-background px-3 py-2 text-sm font-medium"
         placeholder="Name"
+      />
+      <input
+        value={form.group_name ?? ""}
+        onChange={(e)=>setForm({...form, group_name:e.target.value})}
+        onBlur={()=>{
+          const v = form.group_name?.trim() || null;
+          if (v !== m.group_name) save({ group_name: v });
+        }}
+        className="rounded-lg border border-input bg-background px-3 py-2 text-sm"
+        placeholder="Group e.g. Choose your flavour"
       />
       <input
         value={form.description ?? ""}
@@ -411,6 +422,19 @@ function ModRow({ m, onChanged }: { m: Mod; onChanged: () => void }) {
       <label className="inline-flex items-center gap-1 text-sm text-muted-foreground">
         <input type="checkbox" checked={form.active} onChange={(e)=>{ setForm({...form, active:e.target.checked}); save({ active:e.target.checked }); }} />
         Active
+      </label>
+      <select
+        value={form.group_type ?? "multi"}
+        onChange={(e)=>{ setForm({...form, group_type:e.target.value}); save({ group_type: e.target.value }); }}
+        className="rounded-lg border border-input bg-background px-2 py-2 text-sm"
+        aria-label="Selection type"
+      >
+        <option value="multi">Multi-pick</option>
+        <option value="single">Choose one</option>
+      </select>
+      <label className="inline-flex items-center gap-1 text-sm text-muted-foreground">
+        <input type="checkbox" checked={!!form.required} onChange={(e)=>{ setForm({...form, required:e.target.checked}); save({ required:e.target.checked }); }} />
+        Required
       </label>
       <button
         onClick={async ()=>{

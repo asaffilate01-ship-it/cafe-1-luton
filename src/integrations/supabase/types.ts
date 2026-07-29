@@ -473,10 +473,13 @@ export type Database = {
           category_id: string | null
           created_at: string
           description: string | null
+          group_name: string | null
+          group_type: string
           id: string
           item_id: string | null
           name: string
           price_cents: number
+          required: boolean
           sort_order: number
         }
         Insert: {
@@ -484,10 +487,13 @@ export type Database = {
           category_id?: string | null
           created_at?: string
           description?: string | null
+          group_name?: string | null
+          group_type?: string
           id?: string
           item_id?: string | null
           name: string
           price_cents?: number
+          required?: boolean
           sort_order?: number
         }
         Update: {
@@ -495,10 +501,13 @@ export type Database = {
           category_id?: string | null
           created_at?: string
           description?: string | null
+          group_name?: string | null
+          group_type?: string
           id?: string
           item_id?: string | null
           name?: string
           price_cents?: number
+          required?: boolean
           sort_order?: number
         }
         Relationships: [
