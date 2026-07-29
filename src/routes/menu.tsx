@@ -8,7 +8,7 @@ import { PromoCarousel } from "@/components/promo-carousel";
 import { StoreStatus } from "@/components/store-status";
 import { cart, useCart, type CartModifier } from "@/lib/cart";
 import { money } from "@/lib/format";
-import { Plus, Minus, Search, Leaf, ShoppingBag, X, Settings2 } from "lucide-react";
+import { Plus, Minus, Search, Leaf, ShoppingBag, X, Settings2, ChevronLeft, ChevronRight } from "lucide-react";
 import { toast } from "sonner";
 import { OrderSetupGate } from "@/components/order-setup-gate";
 import { describeContext, useOrderContext, orderContext } from "@/lib/order-context";
@@ -127,6 +127,32 @@ function MenuPage() {
     if (Math.abs(left - row.scrollLeft) > 2) row.scrollTo({ left, behavior: "smooth" });
   }, [activeCat]);
 
+  // Track whether the pill row can scroll further, to show fades/arrows.
+  const [canScroll, setCanScroll] = useState({ left: false, right: false });
+  useEffect(() => {
+    const row = pillsRef.current;
+    if (!row) return;
+    const update = () => {
+      setCanScroll({
+        left: row.scrollLeft > 4,
+        right: row.scrollLeft + row.clientWidth < row.scrollWidth - 4,
+      });
+    };
+    update();
+    row.addEventListener("scroll", update, { passive: true });
+    window.addEventListener("resize", update);
+    return () => {
+      row.removeEventListener("scroll", update);
+      window.removeEventListener("resize", update);
+    };
+  }, [catIds]);
+
+  function nudgePills(dir: 1 | -1) {
+    const row = pillsRef.current;
+    if (!row) return;
+    row.scrollBy({ left: dir * Math.max(200, row.clientWidth * 0.7), behavior: "smooth" });
+  }
+
   function scrollToCat(id: string) {
     setActiveCat(id);
     lockRef.current = Date.now() + 1200;
@@ -225,27 +251,59 @@ function MenuPage() {
 
           {/* Category pills */}
           {filtered && filtered.cats.length > 0 && (
-            <div
-              ref={pillsRef}
-              className="mt-3 flex gap-2 overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
-            >
-              {filtered.cats.map((c) => {
-                const active = c.id === activeCat;
-                return (
-                  <button
-                    key={c.id}
-                    data-cat={c.id}
-                    onClick={() => scrollToCat(c.id)}
-                    className={`shrink-0 rounded-full border px-4 py-1.5 text-sm font-medium transition ${
-                      active
-                        ? "border-primary bg-primary text-primary-foreground shadow-brand"
-                        : "border-border bg-card text-foreground hover:border-primary/50"
-                    }`}
-                  >
-                    {c.name}
-                  </button>
-                );
-              })}
+            <div className="relative mt-3">
+              <div
+                aria-hidden
+                className={`pointer-events-none absolute inset-y-0 left-0 z-10 w-8 bg-gradient-to-r from-background to-transparent transition-opacity ${canScroll.left ? "opacity-100" : "opacity-0"}`}
+              />
+              <div
+                aria-hidden
+                className={`pointer-events-none absolute inset-y-0 right-0 z-10 w-8 bg-gradient-to-l from-background to-transparent transition-opacity ${canScroll.right ? "opacity-100" : "opacity-0"}`}
+              />
+              <button
+                type="button"
+                aria-label="Scroll categories left"
+                onClick={() => nudgePills(-1)}
+                disabled={!canScroll.left}
+                className="absolute -left-3 top-1/2 z-20 hidden h-9 w-9 -translate-y-1/2 place-items-center rounded-full border border-border bg-card shadow-sm transition hover:border-primary hover:text-primary disabled:pointer-events-none disabled:opacity-0 md:grid"
+              >
+                <ChevronLeft className="h-5 w-5" />
+              </button>
+              <button
+                type="button"
+                aria-label="Scroll categories right"
+                onClick={() => nudgePills(1)}
+                disabled={!canScroll.right}
+                className="absolute -right-3 top-1/2 z-20 hidden h-9 w-9 -translate-y-1/2 place-items-center rounded-full border border-border bg-card shadow-sm transition hover:border-primary hover:text-primary disabled:pointer-events-none disabled:opacity-0 md:grid"
+              >
+                <ChevronRight className="h-5 w-5" />
+              </button>
+              <div
+                ref={pillsRef}
+                role="tablist"
+                aria-label="Menu categories"
+                className="flex snap-x gap-2 overflow-x-auto scroll-smooth pb-1.5 [-ms-overflow-style:none] [scrollbar-width:none] md:px-1 [&::-webkit-scrollbar]:hidden"
+              >
+                {filtered.cats.map((c) => {
+                  const active = c.id === activeCat;
+                  return (
+                    <button
+                      key={c.id}
+                      data-cat={c.id}
+                      role="tab"
+                      aria-selected={active}
+                      onClick={() => scrollToCat(c.id)}
+                      className={`shrink-0 snap-start whitespace-nowrap rounded-full border-2 px-4 py-2.5 text-[15px] font-semibold transition ${
+                        active
+                          ? "border-primary bg-primary text-primary-foreground shadow-brand"
+                          : "border-border bg-card text-foreground hover:border-primary/60 hover:bg-primary-soft/40"
+                      }`}
+                    >
+                      {c.name}
+                    </button>
+                  );
+                })}
+              </div>
             </div>
           )}
         </div>
