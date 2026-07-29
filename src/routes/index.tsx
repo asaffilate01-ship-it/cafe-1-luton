@@ -103,8 +103,8 @@ function Home() {
                   <Coffee className="h-5 w-5" />
                 </span>
                 <div>
-                  <p className="text-xs uppercase tracking-wider text-muted-foreground">Barista pick</p>
-                  <p className="font-semibold">Flat White · £3.60</p>
+                  <p className="text-xs uppercase tracking-wider text-muted-foreground">Customer favourite</p>
+                  <p className="font-semibold">Flat White · £2.99</p>
                 </div>
               </div>
             </div>
