@@ -1,4 +1,5 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { useEffect, useRef } from "react";
 import { SiteHeader, SiteFooter } from "@/components/site-header";
 import { cart, useCart } from "@/lib/cart";
 import { money } from "@/lib/format";
@@ -20,6 +21,16 @@ export const Route = createFileRoute("/cart")({
 
 function CartPage() {
   const c = useCart();
+  const navigate = useNavigate();
+  const hadItems = useRef(false);
+  useEffect(() => {
+    if (c.items.length > 0) {
+      hadItems.current = true;
+    } else if (hadItems.current) {
+      hadItems.current = false;
+      navigate({ to: "/menu" });
+    }
+  }, [c.items.length, navigate]);
   const subtotal = c.items.reduce((s, i) => s + i.price_cents * i.qty, 0);
   return (
     <div className="min-h-screen bg-background">
