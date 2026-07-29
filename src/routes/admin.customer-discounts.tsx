@@ -1,7 +1,7 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 import { AdminNav } from "@/components/admin-nav";
-import { useEffect, useState } from "react";
-import { useSession, useRoles } from "@/hooks/use-auth";
+import { useState } from "react";
+import { RequireRole } from "@/components/require-role";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -10,16 +10,20 @@ import { BadgePercent, Trash2 } from "lucide-react";
 export const Route = createFileRoute("/admin/customer-discounts")({
   head: () => ({
     meta: [
-      { title: "Customer discounts — Cafe1 Admin" },
-      { name: "description", content: "Set automatic percentage discounts for specific customer email addresses at Cafe1." },
-      { property: "og:title", content: "Customer discounts — Cafe1 Admin" },
-      { property: "og:description", content: "Set automatic percentage discounts for specific customer email addresses at Cafe1." },
+      { title: "Approved members — Cafe1 Admin" },
+      { name: "description", content: "Approve individual customers for an automatic member discount at Cafe1." },
+      { property: "og:title", content: "Approved members — Cafe1 Admin" },
+      { property: "og:description", content: "Approve individual customers for an automatic member discount at Cafe1." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
       { name: "robots", content: "noindex" },
     ],
   }),
-  component: AdminCustomerDiscounts,
+  component: () => (
+    <RequireRole roles={["admin", "staff"]} next="/admin/customer-discounts">
+      <AdminCustomerDiscounts />
+    </RequireRole>
+  ),
 });
 
 type Row = {
@@ -32,18 +36,10 @@ type Row = {
 };
 
 function AdminCustomerDiscounts() {
-  const { user, loading } = useSession();
-  const { has, loading: rl } = useRoles(user);
-  const navigate = useNavigate();
   const qc = useQueryClient();
-  useEffect(() => {
-    if (!loading && !user) navigate({ to: "/admin/login", search: { next: "/admin/customer-discounts" } });
-  }, [loading, user, navigate]);
-  const allowed = has("admin") || has("staff");
 
   const { data: rows } = useQuery({
     queryKey: ["admin-customer-discounts"],
-    enabled: !!user && allowed,
     queryFn: async () => {
       const { data, error } = await supabase
         .from("customer_discounts")
@@ -56,6 +52,8 @@ function AdminCustomerDiscounts() {
 
   const [form, setForm] = useState({ email: "", percent: 10, label: "" });
   const [busy, setBusy] = useState(false);
+  const [bulk, setBulk] = useState("");
+  const [bulkBusy, setBulkBusy] = useState(false);
 
   async function create(e: React.FormEvent) {
     e.preventDefault();
@@ -80,14 +78,35 @@ function AdminCustomerDiscounts() {
   }
 
   async function remove(id: string) {
-    if (!confirm("Remove this customer discount?")) return;
+    if (!confirm("Remove this member's approval?")) return;
     const { error } = await supabase.from("customer_discounts").delete().eq("id", id);
     if (error) return toast.error(error.message);
     qc.invalidateQueries({ queryKey: ["admin-customer-discounts"] });
   }
 
-  if (loading || rl) return null;
-  if (!allowed) return <div className="p-12 text-center text-muted-foreground">Staff access required.</div>;
+  async function addBulk() {
+    const emails = Array.from(
+      new Set(
+        bulk
+          .split(/[\s,;]+/)
+          .map((e) => e.trim().toLowerCase())
+          .filter((e) => /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(e)),
+      ),
+    );
+    if (!emails.length) return toast.error("No valid email addresses found");
+    setBulkBusy(true);
+    const { error } = await supabase
+      .from("customer_discounts")
+      .upsert(
+        emails.map((email) => ({ email, percent: form.percent, label: form.label.trim() || null, active: true })),
+        { onConflict: "email" },
+      );
+    setBulkBusy(false);
+    if (error) return toast.error(error.message);
+    toast.success(`${emails.length} member${emails.length === 1 ? "" : "s"} approved at ${form.percent}%`);
+    setBulk("");
+    qc.invalidateQueries({ queryKey: ["admin-customer-discounts"] });
+  }
 
   return (
     <div className="min-h-screen bg-background">
