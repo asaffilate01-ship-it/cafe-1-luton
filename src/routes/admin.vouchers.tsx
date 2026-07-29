@@ -223,7 +223,12 @@ function AdminVouchers() {
               <input type="number" step="0.01" min="0" value={defaultAllowance} onChange={(e) => setDefaultAllowance(e.target.value)} className="h-10 w-24 rounded-xl border border-border bg-background px-3 text-sm" />
             </label>
             <button disabled={busy} className="h-11 rounded-xl bg-primary px-5 font-semibold text-primary-foreground hover:bg-primary-hover disabled:opacity-60">Activate codes</button>
+            <span className="ml-auto flex items-center gap-2 text-sm">
+              <input type="number" min="1" max="200" value={genCount} onChange={(e) => setGenCount(e.target.value)} className="h-10 w-20 rounded-xl border border-border bg-background px-3 text-sm" />
+              <button type="button" onClick={addGenerated} className="h-10 rounded-xl border border-border px-4 text-sm font-semibold hover:bg-muted">Generate secure codes</button>
+            </span>
           </div>
+          <p className="text-xs text-muted-foreground">Generated codes are 10 random characters (no lookalikes) — send this list to the court. Codes shorter than 8 characters are rejected.</p>
         </form>
 
         <div className="mt-8 rounded-2xl border border-border bg-card p-5">
