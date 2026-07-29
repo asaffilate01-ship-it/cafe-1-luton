@@ -8,9 +8,9 @@ export const Route = createFileRoute("/cart")({
   head: () => ({
     meta: [
       { title: "Your basket — Café 1 St Albans" },
-      { name: "description", content: "Review your Café 1 order before checkout." },
+      { name: "description", content: "Review your Café 1 St Albans basket, adjust quantities and add-ons, then head to checkout for delivery, collection or dine-in." },
       { property: "og:title", content: "Your basket — Café 1 St Albans" },
-      { property: "og:description", content: "Review your Café 1 order before checkout." },
+      { property: "og:description", content: "Review your Café 1 St Albans basket, adjust quantities and add-ons, then head to checkout for delivery, collection or dine-in." },
       { property: "og:type", content: "website" },
       { name: "robots", content: "noindex" },
     ],

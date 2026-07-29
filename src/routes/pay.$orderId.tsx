@@ -10,8 +10,11 @@ import { Lock, ShieldCheck, Smartphone } from "lucide-react";
 export const Route = createFileRoute("/pay/$orderId")({
   head: () => ({
     meta: [
-      { title: "Pay for your order — Cafe1" },
-      { name: "description", content: "Securely pay for your Cafe1 order with card." },
+      { title: "Pay for your order — Café 1 St Albans" },
+      { name: "description", content: "Securely pay for your Café 1 St Albans order by card, Apple Pay or Google Pay, with confirmation sent straight to our kitchen." },
+      { property: "og:title", content: "Pay for your order — Café 1 St Albans" },
+      { property: "og:description", content: "Securely pay for your Café 1 St Albans order by card, Apple Pay or Google Pay, with confirmation sent straight to our kitchen." },
+      { property: "og:type", content: "website" },
       { name: "robots", content: "noindex" },
     ],
   }),
