@@ -166,7 +166,8 @@ export const createOrder = createServerFn({ method: "POST" })
     let applied_promo: string | null = null;
     let free_delivery_promo = false;
     if (data.promo_code) {
-      const { data: rows, error: pErr } = await supabase.rpc("validate_promo_code", {
+      const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+      const { data: rows, error: pErr } = await supabaseAdmin.rpc("validate_promo_code", {
         _code: data.promo_code.trim().toUpperCase(),
         _subtotal_cents: subtotal,
         _order_type: data.type,
@@ -188,7 +189,8 @@ export const createOrder = createServerFn({ method: "POST" })
     let discount_percent = userId ? LOYALTY_DISCOUNT_RATE * 100 : 0;
     const discountEmail = (data.customer_email || authEmail || "").trim();
     if (discountEmail) {
-      const { data: dRows } = await supabase.rpc("get_customer_discount", { _email: discountEmail });
+      const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+      const { data: dRows } = await supabaseAdmin.rpc("get_customer_discount", { _email: discountEmail });
       const p = (dRows ?? [])[0]?.percent ?? 0;
       if (p > discount_percent) discount_percent = p;
     }
@@ -273,7 +275,8 @@ export const createOrder = createServerFn({ method: "POST" })
     // Charge to a house-account tab if a valid code is supplied.
     let account_id: string | null = null;
     if (data.account_code) {
-      const { data: rows, error: acctErr } = await supabase
+      const { supabaseAdmin: sbAdmin } = await import("@/integrations/supabase/client.server");
+      const { data: rows, error: acctErr } = await sbAdmin
         .rpc("verify_account_code", { _code: data.account_code.trim() });
       if (acctErr) { await releaseVoucher(); throw new Error(acctErr.message); }
       const row = (rows ?? [])[0];
