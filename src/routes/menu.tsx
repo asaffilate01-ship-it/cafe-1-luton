@@ -127,6 +127,32 @@ function MenuPage() {
     if (Math.abs(left - row.scrollLeft) > 2) row.scrollTo({ left, behavior: "smooth" });
   }, [activeCat]);
 
+  // Track whether the pill row can scroll further, to show fades/arrows.
+  const [canScroll, setCanScroll] = useState({ left: false, right: false });
+  useEffect(() => {
+    const row = pillsRef.current;
+    if (!row) return;
+    const update = () => {
+      setCanScroll({
+        left: row.scrollLeft > 4,
+        right: row.scrollLeft + row.clientWidth < row.scrollWidth - 4,
+      });
+    };
+    update();
+    row.addEventListener("scroll", update, { passive: true });
+    window.addEventListener("resize", update);
+    return () => {
+      row.removeEventListener("scroll", update);
+      window.removeEventListener("resize", update);
+    };
+  }, [catIds]);
+
+  function nudgePills(dir: 1 | -1) {
+    const row = pillsRef.current;
+    if (!row) return;
+    row.scrollBy({ left: dir * Math.max(200, row.clientWidth * 0.7), behavior: "smooth" });
+  }
+
   function scrollToCat(id: string) {
     setActiveCat(id);
     lockRef.current = Date.now() + 1200;
