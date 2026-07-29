@@ -711,7 +711,11 @@ function CustomiseSheet({
                 : "bg-primary text-primary-foreground hover:bg-primary-hover"
             }`}
           >
-            {missing.length ? `Choose ${missing[0].name}` : `Add to basket · ${money(unit * qty)}`}
+            {missing.length
+              ? /^choose/i.test(missing[0].name)
+                ? missing[0].name
+                : `Choose ${missing[0].name}`
+              : `Add to basket · ${money(unit * qty)}`}
           </button>
         </div>
       </div>
