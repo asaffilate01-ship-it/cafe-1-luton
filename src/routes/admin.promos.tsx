@@ -1,7 +1,7 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 import { AdminNav } from "@/components/admin-nav";
-import { useEffect, useState } from "react";
-import { useSession, useRoles } from "@/hooks/use-auth";
+import { useState } from "react";
+import { RequireRole } from "@/components/require-role";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -9,7 +9,11 @@ import { Ticket, Trash2 } from "lucide-react";
 
 export const Route = createFileRoute("/admin/promos")({
   head: () => ({ meta: [{ title: "Promo codes — Cafe1 Admin" }, { name: "robots", content: "noindex" }] }),
-  component: AdminPromos,
+  component: () => (
+    <RequireRole roles={["admin", "staff"]} next="/admin/promos">
+      <AdminPromos />
+    </RequireRole>
+  ),
 });
 
 type Row = {
@@ -18,20 +22,14 @@ type Row = {
   discount_value: number; min_subtotal_cents: number;
   max_uses: number | null; uses: number; active: boolean;
   applies_to: "all" | "delivery" | "collection" | "dine_in";
-  expires_at: string | null;
+  expires_at: string | null; starts_at: string | null; first_order_only: boolean;
 };
 
 function AdminPromos() {
-  const { user, loading } = useSession();
-  const { has, loading: rl } = useRoles(user);
-  const navigate = useNavigate();
   const qc = useQueryClient();
-  useEffect(() => { if (!loading && !user) navigate({ to: "/admin/login", search: { next: "/admin/promos" } }); }, [loading, user, navigate]);
-  const allowed = has("admin") || has("staff");
 
   const { data: rows } = useQuery({
     queryKey: ["admin-promos"],
-    enabled: !!user && allowed,
     queryFn: async () => {
       const { data } = await supabase.from("promo_codes").select("*").order("created_at", { ascending: false });
       return (data ?? []) as Row[];
@@ -40,27 +38,40 @@ function AdminPromos() {
 
   const [form, setForm] = useState({
     code: "", description: "",
-    discount_type: "percent" as Row["discount_type"], discount_value: 10,
-    min_subtotal_cents: 0, max_uses: "", applies_to: "all" as Row["applies_to"], expires_at: "",
+    discount_type: "percent" as Row["discount_type"], discount_value: "10",
+    min_subtotal: "", max_uses: "", applies_to: "all" as Row["applies_to"],
+    starts_at: "", expires_at: "", first_order_only: false,
   });
   const [busy, setBusy] = useState(false);
 
+  const poundsToPence = (v: string) => Math.round(parseFloat(v || "0") * 100) || 0;
+
   async function create(e: React.FormEvent) {
     e.preventDefault();
+    const code = form.code.trim().toUpperCase();
+    if (code.length < 3) return toast.error("Code must be at least 3 characters");
+    const value =
+      form.discount_type === "free_delivery" ? 0
+      : form.discount_type === "percent" ? Math.round(parseFloat(form.discount_value || "0"))
+      : poundsToPence(form.discount_value);
+    if (form.discount_type === "percent" && (value < 1 || value > 100)) return toast.error("Percentage must be between 1 and 100");
+    if (form.discount_type !== "free_delivery" && value <= 0) return toast.error("Enter a discount amount");
     setBusy(true);
     const { error } = await supabase.from("promo_codes").insert({
-      code: form.code.trim().toUpperCase(),
+      code,
       description: form.description || null,
       discount_type: form.discount_type,
-      discount_value: form.discount_value,
-      min_subtotal_cents: form.min_subtotal_cents,
+      discount_value: value,
+      min_subtotal_cents: poundsToPence(form.min_subtotal),
       max_uses: form.max_uses ? parseInt(form.max_uses, 10) : null,
       applies_to: form.applies_to,
+      first_order_only: form.first_order_only,
+      starts_at: form.starts_at ? new Date(form.starts_at).toISOString() : null,
       expires_at: form.expires_at ? new Date(form.expires_at).toISOString() : null,
       active: true,
     });
     setBusy(false);
-    if (error) return toast.error(error.message);
+    if (error) return toast.error(error.message.includes("duplicate") ? "That code already exists" : error.message);
     toast.success("Promo code created");
     setForm({ ...form, code: "", description: "" });
     qc.invalidateQueries({ queryKey: ["admin-promos"] });
@@ -81,9 +92,6 @@ function AdminPromos() {
     if (r.discount_type === "fixed_amount") return `£${(r.discount_value/100).toFixed(2)} off`;
     return "Free delivery";
   }
-
-  if (loading || rl) return null;
-  if (!allowed) return <div className="p-12 text-center text-muted-foreground">Staff access required.</div>;
 
   return (
     <div className="min-h-screen bg-background">
@@ -109,8 +117,8 @@ function AdminPromos() {
               <option value="fixed_amount">Fixed amount off</option>
               <option value="free_delivery">Free delivery</option>
             </select>
-            <input type="number" placeholder={form.discount_type === "percent" ? "%" : "pence"} value={form.discount_value} onChange={(e) => setForm({ ...form, discount_value: parseInt(e.target.value || "0", 10) })} className="h-11 rounded-xl border border-border bg-background px-4" disabled={form.discount_type === "free_delivery"} />
-            <input type="number" placeholder="Min subtotal (pence)" value={form.min_subtotal_cents} onChange={(e) => setForm({ ...form, min_subtotal_cents: parseInt(e.target.value || "0", 10) })} className="h-11 rounded-xl border border-border bg-background px-4" />
+            <input type="number" step="0.01" min="0" placeholder={form.discount_type === "percent" ? "Discount %" : "Discount £"} value={form.discount_value} onChange={(e) => setForm({ ...form, discount_value: e.target.value })} className="h-11 rounded-xl border border-border bg-background px-4" disabled={form.discount_type === "free_delivery"} />
+            <input type="number" step="0.01" min="0" placeholder="Min spend £ (optional)" value={form.min_subtotal} onChange={(e) => setForm({ ...form, min_subtotal: e.target.value })} className="h-11 rounded-xl border border-border bg-background px-4" />
           </div>
           <div className="grid gap-3 sm:grid-cols-3">
             <select value={form.applies_to} onChange={(e) => setForm({ ...form, applies_to: e.target.value as Row["applies_to"] })} className="h-11 rounded-xl border border-border bg-background px-3">
@@ -120,7 +128,20 @@ function AdminPromos() {
               <option value="dine_in">Dine-in only</option>
             </select>
             <input type="number" placeholder="Max uses (blank = ∞)" value={form.max_uses} onChange={(e) => setForm({ ...form, max_uses: e.target.value })} className="h-11 rounded-xl border border-border bg-background px-4" />
-            <input type="datetime-local" placeholder="Expires" value={form.expires_at} onChange={(e) => setForm({ ...form, expires_at: e.target.value })} className="h-11 rounded-xl border border-border bg-background px-3" />
+            <label className="flex h-11 items-center gap-2 rounded-xl border border-border bg-background px-4 text-sm">
+              <input type="checkbox" checked={form.first_order_only} onChange={(e) => setForm({ ...form, first_order_only: e.target.checked })} />
+              First order only
+            </label>
+          </div>
+          <div className="grid gap-3 sm:grid-cols-2">
+            <label className="text-xs text-muted-foreground">
+              Starts (optional)
+              <input type="datetime-local" value={form.starts_at} onChange={(e) => setForm({ ...form, starts_at: e.target.value })} className="mt-1 h-11 w-full rounded-xl border border-border bg-background px-3 text-sm text-foreground" />
+            </label>
+            <label className="text-xs text-muted-foreground">
+              Expires (optional)
+              <input type="datetime-local" value={form.expires_at} onChange={(e) => setForm({ ...form, expires_at: e.target.value })} className="mt-1 h-11 w-full rounded-xl border border-border bg-background px-3 text-sm text-foreground" />
+            </label>
           </div>
           <button disabled={busy} className="h-11 rounded-full bg-primary px-6 font-semibold text-primary-foreground shadow-brand hover:bg-primary-hover disabled:opacity-60">
             {busy ? "Saving…" : "Create code"}
@@ -138,6 +159,8 @@ function AdminPromos() {
                 <p className="text-xs text-muted-foreground">
                   Used {r.uses}{r.max_uses ? `/${r.max_uses}` : ""}
                   {r.min_subtotal_cents > 0 && ` · min £${(r.min_subtotal_cents/100).toFixed(2)}`}
+                  {r.first_order_only && " · first order only"}
+                  {r.starts_at && ` · from ${new Date(r.starts_at).toLocaleDateString()}`}
                   {r.expires_at && ` · expires ${new Date(r.expires_at).toLocaleDateString()}`}
                 </p>
               </div>
