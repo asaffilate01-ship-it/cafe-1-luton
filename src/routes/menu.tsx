@@ -80,7 +80,7 @@ function MenuPage() {
       const r = stickyBarRef.current?.getBoundingClientRect();
       if (!r) return;
       // Distance from viewport top to the bottom of the sticky bar, once pinned.
-      const pinnedTop = Math.min(r.top, 56);
+      const pinnedTop = Math.min(r.top, 80);
       setStickyH(Math.max(0, pinnedTop) + r.height + 8);
     };
     measure();
@@ -161,7 +161,7 @@ function MenuPage() {
       const el = sectionRefs.current[id];
       if (!el) return false;
       const bar = stickyBarRef.current?.getBoundingClientRect();
-      const offset = bar ? Math.max(0, Math.min(bar.top, 56)) + bar.height + 8 : stickyH;
+      const offset = bar ? Math.max(0, Math.min(bar.top, 80)) + bar.height + 8 : stickyH;
       const y = Math.max(0, el.getBoundingClientRect().top + window.scrollY - offset);
       if (Math.abs(y - window.scrollY) < 2) return true;
       window.scrollTo({ top: y, behavior });
@@ -186,18 +186,18 @@ function MenuPage() {
 
       {/* Restaurant hero */}
       <div className="bg-gradient-to-b from-primary-soft/40 to-transparent">
-        <div className="mx-auto max-w-6xl px-4 pt-8 pb-4 sm:pt-10">
+        <div className="mx-auto max-w-6xl px-4 pt-4 pb-3 sm:pt-10 sm:pb-4">
           <PromoCarousel />
-          <p className="text-xs font-medium uppercase tracking-widest text-primary">Cafe1 · St Albans</p>
-          <h1 className="mt-1 font-display text-4xl font-bold sm:text-5xl">Menu</h1>
-          <p className="mt-2 max-w-xl text-sm text-muted-foreground">
+          <p className="text-[11px] font-medium uppercase tracking-widest text-primary sm:text-xs">Cafe1 · St Albans</p>
+          <h1 className="mt-0.5 font-display text-2xl font-bold sm:mt-1 sm:text-5xl">Menu</h1>
+          <p className="mt-1 hidden max-w-xl text-sm text-muted-foreground sm:mt-2 sm:block">
             Freshly made all day. Delivery, collection or dine-in.
           </p>
-          <div className="mt-3"><StoreStatus /></div>
+          <div className="mt-2 sm:mt-3"><StoreStatus /></div>
           <button
             type="button"
             onClick={() => setGateOpen(true)}
-            className="mt-3 inline-flex items-center gap-2 rounded-full border border-primary/40 bg-primary/10 px-4 py-2 text-sm font-semibold text-primary hover:bg-primary/20"
+            className="mt-2 inline-flex items-center gap-2 rounded-full border border-primary/40 bg-primary/10 px-4 py-2 text-sm font-semibold text-primary hover:bg-primary/20 sm:mt-3"
           >
             <Settings2 className="h-4 w-4" />
             {describeContext(ctx)}
@@ -214,7 +214,7 @@ function MenuPage() {
       {/* Sticky search + category pills */}
       <div
         ref={stickyBarRef}
-        className="sticky top-14 z-30 border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80"
+        className="sticky top-20 z-30 border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80"
       >
         <div className="mx-auto max-w-6xl px-4 py-3">
           <div className="flex items-center gap-2">
@@ -382,7 +382,10 @@ function MenuPage() {
 
       {/* Floating basket bar */}
       {cartCount > 0 && (
-        <div className="fixed inset-x-0 bottom-4 z-40 mx-auto flex max-w-md justify-center px-4">
+        <div
+          className="fixed inset-x-0 z-40 mx-auto flex max-w-md justify-center px-4"
+          style={{ bottom: "calc(4.75rem + env(safe-area-inset-bottom))" }}
+        >
           <Link
             to="/cart"
             className="group flex w-full items-center justify-between gap-3 rounded-full bg-primary px-4 py-3 text-primary-foreground shadow-brand transition hover:bg-primary-hover"
