@@ -9,23 +9,8 @@ import {
   useOrderContext,
 } from "@/lib/order-context";
 import { useStoreStatus } from "@/hooks/use-store-status";
+import { buildScheduleSlots } from "@/lib/business";
 import { X, MapPin, Clock, Store, Bike, Utensils } from "lucide-react";
-
-function buildTimeSlots(): { value: string; label: string }[] {
-  const slots: { value: string; label: string }[] = [];
-  const now = new Date();
-  const start = new Date(now.getTime() + 30 * 60 * 1000);
-  const m = start.getMinutes();
-  start.setMinutes(m + ((15 - (m % 15)) % 15), 0, 0);
-  for (let i = 0; i < 24; i++) {
-    const d = new Date(start.getTime() + i * 15 * 60 * 1000);
-    slots.push({
-      value: d.toISOString(),
-      label: d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
-    });
-  }
-  return slots;
-}
 
 export function OrderSetupGate({
   open,
@@ -37,7 +22,7 @@ export function OrderSetupGate({
   dismissible?: boolean;
 }) {
   const existing = useOrderContext();
-  const { status, settings } = useStoreStatus();
+  const { status, settings, hours, holidays } = useStoreStatus();
   const checkArea = useServerFn(checkDeliveryPostcode);
 
   const [step, setStep] = useState<1 | 2>(1);
@@ -47,7 +32,15 @@ export function OrderSetupGate({
   const [areaBusy, setAreaBusy] = useState(false);
   const [scheduleMode, setScheduleMode] = useState<ScheduleMode>(existing?.schedule_mode ?? "asap");
   const [scheduledFor, setScheduledFor] = useState<string>(existing?.scheduled_for ?? "");
-  const timeSlots = useMemo(() => buildTimeSlots(), []);
+  const timeSlots = useMemo(
+    () => buildScheduleSlots({ hours, holidays, settings, mode }),
+    [hours, holidays, settings, mode],
+  );
+
+  // Drop a previously chosen slot if it's no longer valid for this mode/day.
+  useEffect(() => {
+    if (scheduledFor && !timeSlots.some((s) => s.value === scheduledFor)) setScheduledFor("");
+  }, [timeSlots, scheduledFor]);
 
   useEffect(() => {
     if (!open) setStep(1);
@@ -266,6 +259,7 @@ export function OrderSetupGate({
                   className="h-12 w-full rounded-xl border border-border bg-background px-4"
                 >
                   <option value="">Select a time slot…</option>
+                  {timeSlots.length === 0 && <option disabled>No slots available</option>}
                   {timeSlots.map((s) => (
                     <option key={s.value} value={s.value}>
                       {s.label}

@@ -1,5 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { createOrder } from "@/lib/orders.functions";
 import { lookupVoucher } from "@/lib/vouchers.functions";
@@ -13,6 +13,7 @@ import { useSession } from "@/hooks/use-auth";
 import { tab, useTab } from "@/lib/tab";
 import { toast } from "sonner";
 import { useStoreStatus } from "@/hooks/use-store-status";
+import { buildScheduleSlots } from "@/lib/business";
 import { useOrderContext, describeContext } from "@/lib/order-context";
 import { OrderSetupGate } from "@/components/order-setup-gate";
 import { Settings2 } from "lucide-react";
@@ -33,29 +34,12 @@ export const Route = createFileRoute("/checkout")({
 type Mode = "delivery" | "collection" | "dine_in";
 type ScheduleMode = "asap" | "scheduled";
 
-function buildTimeSlots(): { value: string; label: string }[] {
-  const slots: { value: string; label: string }[] = [];
-  const now = new Date();
-  const start = new Date(now.getTime() + 30 * 60 * 1000);
-  // round up to next 15 minutes
-  const m = start.getMinutes();
-  start.setMinutes(m + ((15 - (m % 15)) % 15), 0, 0);
-  for (let i = 0; i < 24; i++) {
-    const d = new Date(start.getTime() + i * 15 * 60 * 1000);
-    slots.push({
-      value: d.toISOString(),
-      label: d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
-    });
-  }
-  return slots;
-}
-
 function Checkout() {
   const c = useCart();
   const navigate = useNavigate();
   const { user, loading } = useSession();
   const tabSession = useTab();
-  const { status, settings } = useStoreStatus();
+  const { status, settings, hours, holidays } = useStoreStatus();
   const place = useServerFn(createOrder);
   const findVoucher = useServerFn(lookupVoucher);
   const checkArea = useServerFn(checkDeliveryPostcode);
@@ -66,7 +50,10 @@ function Checkout() {
   const [mode, setMode] = useState<Mode>(ctx?.mode ?? "collection");
   const [scheduleMode, setScheduleMode] = useState<ScheduleMode>(ctx?.schedule_mode ?? "asap");
   const [scheduledFor, setScheduledFor] = useState<string>(ctx?.scheduled_for ?? "");
-  const timeSlots = useState(() => buildTimeSlots())[0];
+  const timeSlots = useMemo(
+    () => buildScheduleSlots({ hours, holidays, settings, mode }),
+    [hours, holidays, settings, mode],
+  );
   const [promoInput, setPromoInput] = useState("");
   const [promo, setPromo] = useState<null | { code: string; discount_cents: number; discount_type: string; message: string | null }>(null);
   const [promoBusy, setPromoBusy] = useState(false);
@@ -88,6 +75,13 @@ function Checkout() {
       : null,
   );
   const [areaBusy, setAreaBusy] = useState(false);
+
+  // Clear a scheduled slot that no longer matches opening hours / delivery window.
+  useEffect(() => {
+    if (scheduledFor && timeSlots.length && !timeSlots.some((s) => s.value === scheduledFor)) {
+      setScheduledFor("");
+    }
+  }, [timeSlots, scheduledFor]);
 
   // Keep local state in sync when the setup gate updates the shared context.
   useEffect(() => {
@@ -410,10 +404,17 @@ function Checkout() {
                 className="mt-3 h-11 w-full rounded-xl border border-border bg-background px-4"
               >
                 <option value="">Select a time slot…</option>
+                {timeSlots.length === 0 && <option disabled>No slots available</option>}
                 {timeSlots.map((s) => (
                   <option key={s.value} value={s.value}>{s.label}</option>
                 ))}
               </select>
+            )}
+            {scheduleMode === "scheduled" && (
+              <p className="mt-2 text-xs text-muted-foreground">
+                Slots follow our opening hours (Mon–Fri, closed weekends and bank holidays)
+                {mode === "delivery" ? " and the delivery window." : "."}
+              </p>
             )}
           </div>
 
