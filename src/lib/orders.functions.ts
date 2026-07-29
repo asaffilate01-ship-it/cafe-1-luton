@@ -401,15 +401,7 @@ export const createOrder = createServerFn({ method: "POST" })
       .insert(lines.map((l) => ({ ...l, order_id: order.id })));
     if (itemsErr) throw new Error(itemsErr.message);
 
-    // Increment promo usage counter (service_role only).
-    if (applied_promo) {
-      try {
-        const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-        await supabaseAdmin.rpc("increment_promo_use", { _code: applied_promo });
-      } catch (e) {
-        console.error("[promo] increment failed", e);
-      }
-    }
+    // Promo usage was already claimed atomically above (consume_promo_use).
 
     // Award loyalty points + drink stamps immediately for authed customers.
     if (userId && (points_earned > 0 || drinkUnitPrices.length > 0 || free_drinks_used > 0)) {
