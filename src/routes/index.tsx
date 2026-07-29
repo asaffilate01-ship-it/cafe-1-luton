@@ -54,7 +54,7 @@ function Home() {
               <span className="text-primary">One Great Menu.</span>
             </h1>
             <p className="mt-5 max-w-lg text-lg text-muted-foreground">
-              Enjoy all-day breakfasts, hot meals, paninis, parathas, cakes, coffees and more from Café 1 at St Albans Crown Court.
+              Enjoy all-day breakfasts, hot meals, paninis, parathas, cakes, coffees and more from Café 1 at St Albans Crown Court. Open to the public — everyone welcome.
             </p>
             <div className="mt-8 flex flex-wrap gap-3">
               <Link to="/menu" className="inline-flex h-12 items-center gap-2 rounded-full bg-primary px-6 font-semibold text-primary-foreground shadow-brand transition hover:bg-primary-hover">
@@ -66,6 +66,7 @@ function Home() {
             </div>
             <div className="mt-8 flex flex-wrap gap-6 text-sm text-muted-foreground">
               <div className="flex items-center gap-2"><BadgeCheck className="h-4 w-4 text-primary" /> All food is halal</div>
+              <div className="flex items-center gap-2"><BadgeCheck className="h-4 w-4 text-primary" /> Open to the public</div>
               <div className="flex items-center gap-2"><Bike className="h-4 w-4 text-primary" /> Local delivery</div>
               <div className="flex items-center gap-2"><MapPin className="h-4 w-4 text-primary" /> Cafe 1, St Albans Crown Court, AL1 3JU</div>
             </div>
