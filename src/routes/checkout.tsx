@@ -76,6 +76,13 @@ function Checkout() {
   );
   const [areaBusy, setAreaBusy] = useState(false);
 
+  // Clear a scheduled slot that no longer matches opening hours / delivery window.
+  useEffect(() => {
+    if (scheduledFor && timeSlots.length && !timeSlots.some((s) => s.value === scheduledFor)) {
+      setScheduledFor("");
+    }
+  }, [timeSlots, scheduledFor]);
+
   // Keep local state in sync when the setup gate updates the shared context.
   useEffect(() => {
     if (!ctx) return;
