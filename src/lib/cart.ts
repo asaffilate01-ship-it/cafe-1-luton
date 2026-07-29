@@ -78,8 +78,11 @@ export const cart = {
    */
   syncOwner(userId: string | null) {
     if (owner === (userId ?? null)) return;
+    // A guest basket is adopted by the person who signs in on this browser.
+    // Anything else (different user, or signing out of an owned basket) is dropped.
+    const adopt = owner === null && !!userId;
     owner = userId ?? null;
-    state = { items: [] };
+    if (!adopt) state = { items: [] };
     persist();
   },
   subscribe(cb: () => void) {
