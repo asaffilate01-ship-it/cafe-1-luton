@@ -336,6 +336,16 @@ export const createOrder = createServerFn({ method: "POST" })
     // the row is written with the privileged server client after all validation.
     const { supabaseAdmin: sbWrite } = await import("@/integrations/supabase/client.server");
 
+    // Claim the promo use atomically BEFORE the order exists, so a limited code
+    // can never go past max_uses when several people check out at once.
+    if (applied_promo) {
+      const { data: claimed, error: claimErr } = await sbWrite.rpc("consume_promo_use", {
+        _code: applied_promo,
+      });
+      if (claimErr) throw new Error(claimErr.message);
+      if (!claimed) throw new Error("That promo code has just reached its usage limit.");
+    }
+
     const { data: order, error: orderErr } = await sbWrite
       .from("orders")
       .insert({
