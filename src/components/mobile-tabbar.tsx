@@ -1,5 +1,5 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import { Home, UtensilsCrossed, ShoppingBag, ReceiptText, User } from "lucide-react";
+import { Home, UtensilsCrossed, ShoppingBag, User } from "lucide-react";
 import { useCart } from "@/lib/cart";
 import { useSession } from "@/hooks/use-auth";
 
@@ -20,7 +20,6 @@ export function MobileTabBar() {
     { to: "/", label: "Home", Icon: Home, exact: true },
     { to: "/menu", label: "Menu", Icon: UtensilsCrossed },
     { to: "/cart", label: "Basket", Icon: ShoppingBag, badge: count },
-    { to: "/orders", label: "Orders", Icon: ReceiptText },
     { to: user ? "/account" : "/auth", label: user ? "Account" : "Sign in", Icon: User },
   ] as const;
 

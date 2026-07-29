@@ -12,6 +12,7 @@ import { useEffect, type ReactNode } from "react";
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { CookieBanner } from "../components/cookie-banner";
+import { MobileTabBar } from "../components/mobile-tabbar";
 import { registerServiceWorker } from "../lib/register-sw";
 
 function NotFoundComponent() {
@@ -152,6 +153,7 @@ function RootComponent() {
       {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
       <Outlet />
       <CookieBanner />
+      <MobileTabBar />
     </QueryClientProvider>
   );
 }
