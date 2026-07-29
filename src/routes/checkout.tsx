@@ -4,6 +4,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { createOrder } from "@/lib/orders.functions";
 import { lookupVoucher } from "@/lib/vouchers.functions";
 import { checkDeliveryPostcode } from "@/lib/delivery.functions";
+import { getEmailDiscount, validatePromo } from "@/lib/checkout.functions";
 import { cart, useCart } from "@/lib/cart";
 import { money } from "@/lib/format";
 import { SiteHeader } from "@/components/site-header";
