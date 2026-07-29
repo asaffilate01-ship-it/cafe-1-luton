@@ -171,7 +171,7 @@ export function OrderSetupGate({
                           void verify();
                         }
                       }}
-                      placeholder="e.g. AL1 3JW"
+                      placeholder="e.g. AL1 3JU"
                       className="h-11 flex-1 rounded-xl border border-border bg-card px-4 uppercase"
                     />
                     <button
@@ -219,7 +219,7 @@ export function OrderSetupGate({
                     </div>
                   )}
                   <p className="mt-2 text-xs text-muted-foreground">
-                    We deliver up to ½ mile from {settings?.delivery_origin_postcode ?? "AL1 3JW"}, {(settings?.delivery_open_time ?? "08:30").slice(0, 5)}–{(settings?.delivery_close_time ?? "16:30").slice(0, 5)}.
+                    We deliver up to ½ mile from {settings?.delivery_origin_postcode ?? "AL1 3JU"}, {(settings?.delivery_open_time ?? "08:30").slice(0, 5)}–{(settings?.delivery_close_time ?? "16:30").slice(0, 5)}.
                   </p>
                 </div>
               )}

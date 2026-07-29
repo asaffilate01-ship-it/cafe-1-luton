@@ -429,7 +429,7 @@ function Checkout() {
                 <textarea placeholder="Delivery notes — buzzer, floor, gate code (optional)" value={form.delivery_notes} onChange={(e) => setForm({ ...form, delivery_notes: e.target.value })} className="min-h-20 rounded-xl border border-border bg-background p-3 sm:col-span-2" />
               </div>
               <p className="mt-3 text-xs text-muted-foreground">
-                We deliver up to ½ mile from {settings?.delivery_origin_postcode ?? "AL1 3JW"}, between{" "}
+                We deliver up to ½ mile from {settings?.delivery_origin_postcode ?? "AL1 3JU"}, between{" "}
                 {(settings?.delivery_open_time ?? "08:30").slice(0, 5)}–{(settings?.delivery_close_time ?? "16:30").slice(0, 5)}.
                 Typical delivery time {settings?.delivery_minutes ?? 45} min.
               </p>

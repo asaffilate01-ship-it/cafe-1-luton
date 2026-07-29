@@ -12,7 +12,7 @@ export const Route = createFileRoute("/")({
       { title: "Café 1 St Albans — Halal Coffee & Food, Delivered" },
       { name: "description", content: "Order halal coffee, breakfast and hot food from Café 1 at St Albans Crown Court. Free delivery within half a mile, collection or dine-in." },
       { property: "og:title", content: "Café 1 St Albans — Halal Coffee & Food, Delivered" },
-      { property: "og:description", content: "Fresh Italian coffee and 100% halal food. Delivery, collection or dine-in from Café 1, AL1 3JW." },
+      { property: "og:description", content: "Fresh Italian coffee and 100% halal food. Delivery, collection or dine-in from Café 1, AL1 3JU." },
       { property: "og:type", content: "website" },
       { property: "og:url", content: "https://cafe1stalbans.co.uk/" },
       { property: "og:image", content: `https://cafe1stalbans.co.uk${heroImage.url}` },
@@ -38,7 +38,7 @@ export const Route = createFileRoute("/")({
             "@type": "PostalAddress",
             streetAddress: "St Albans Crown Court",
             addressLocality: "St Albans",
-            postalCode: "AL1 3JW",
+            postalCode: "AL1 3JU",
             addressCountry: "GB",
           },
           openingHoursSpecification: [
@@ -87,7 +87,7 @@ function Home() {
             <div className="mt-8 flex flex-wrap gap-6 text-sm text-muted-foreground">
               <div className="flex items-center gap-2"><BadgeCheck className="h-4 w-4 text-primary" /> All food is halal</div>
               <div className="flex items-center gap-2"><Bike className="h-4 w-4 text-primary" /> Local delivery</div>
-              <div className="flex items-center gap-2"><MapPin className="h-4 w-4 text-primary" /> Cafe 1, St Albans Crown Court, AL1 3JW</div>
+              <div className="flex items-center gap-2"><MapPin className="h-4 w-4 text-primary" /> Cafe 1, St Albans Crown Court, AL1 3JU</div>
             </div>
           </div>
 

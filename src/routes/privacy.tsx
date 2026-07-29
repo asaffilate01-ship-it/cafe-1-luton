@@ -20,7 +20,7 @@ export const Route = createFileRoute("/privacy")({
       intro="This page explains what personal information Café 1 collects when you use our ordering site, why we collect it, and the choices you have."
     >
       <Section heading="Who we are">
-        <p>Café 1, St Albans Crown Court, AL1 3JW is the data controller for personal data collected through this site. Contact us at info@cafe1stalbans.co.uk.</p>
+        <p>Café 1, St Albans Crown Court, AL1 3JU is the data controller for personal data collected through this site. Contact us at info@cafe1stalbans.co.uk.</p>
       </Section>
       <Section heading="What we collect">
         <ul className="list-disc space-y-1 pl-5">

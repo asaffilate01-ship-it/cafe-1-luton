@@ -26,7 +26,7 @@ export const Route = createFileRoute("/terms")({
         <p>The café is open until 5:00pm. Delivery orders are accepted between 8:30am and 4:30pm. Pre-orders can be placed outside these hours for a later slot.</p>
       </Section>
       <Section heading="Delivery area and minimum order">
-        <p>We deliver within half a mile of AL1 3JW. Delivery is free within that radius with a minimum order of £10. Estimated times are indicative and may vary at busy periods.</p>
+        <p>We deliver within half a mile of AL1 3JU. Delivery is free within that radius with a minimum order of £10. Estimated times are indicative and may vary at busy periods.</p>
       </Section>
       <Section heading="Prices and payment">
         <p>Prices include VAT where applicable. Card payments are taken securely through SumUp at the time of ordering. House account (tab) orders are invoiced to the account holder and must be settled within the agreed terms.</p>

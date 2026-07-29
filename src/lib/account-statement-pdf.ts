@@ -55,7 +55,7 @@ export function buildStatementPdf(opts: {
   rightText("TAB STATEMENT", 14, true);
   y += 16;
   doc.setTextColor(110, 110, 110);
-  line("St Albans Crown Court, AL1 3JW", left, 9);
+  line("St Albans Crown Court, AL1 3JU", left, 9);
   rightText(new Date().toLocaleDateString("en-GB"), 9);
   doc.setTextColor(30, 30, 30);
   y += 24;
