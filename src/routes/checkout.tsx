@@ -180,7 +180,8 @@ function Checkout() {
   const freeDeliveryByPromo = promo?.discount_type === "free_delivery";
   const delivery = mode === "delivery" && !freeDeliveryByThreshold && !freeDeliveryByPromo ? baseDelivery : 0;
   const onTab = !!tabSession;
-  const discountPercent = Math.max(user && !onTab ? 10 : 0, emailDiscount?.percent ?? 0);
+  // Discounts are only for approved members set up in the admin dashboard.
+  const discountPercent = onTab ? 0 : (emailDiscount?.percent ?? 0);
   const loyaltyDiscount = Math.round(subtotal * (discountPercent / 100));
   const promoDiscount = promo && !freeDeliveryByPromo ? Math.min(promo.discount_cents, subtotal) : 0;
   // Free drinks earned (every 11th) auto-apply to the cheapest eligible drinks.
@@ -544,9 +545,7 @@ function Checkout() {
             {loyaltyDiscount > 0 && (
               <div className="flex justify-between text-primary">
                 <span>
-                  {emailDiscount && emailDiscount.percent >= (user && !onTab ? 10 : 0)
-                    ? `${emailDiscount.label || "Customer discount"} (${discountPercent}%)`
-                    : `Member discount (${discountPercent}%)`}
+                  {`${emailDiscount?.label || "Approved member discount"} (${discountPercent}%)`}
                 </span>
                 <span>−{money(loyaltyDiscount)}</span>
               </div>
