@@ -24,8 +24,8 @@ function publicClient() {
 export const verifyTabCode = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) => z.object({ code: z.string().min(3).max(40) }).parse(d))
   .handler(async ({ data }) => {
-    const supabase = publicClient();
-    const { data: rows, error } = await supabase.rpc("verify_account_code", { _code: data.code.trim() });
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: rows, error } = await supabaseAdmin.rpc("verify_account_code", { _code: data.code.trim() });
     if (error) throw new Error(error.message);
     const row = (rows ?? [])[0];
     if (!row) return { ok: false as const };
