@@ -1,4 +1,5 @@
 import { useSyncExternalStore } from "react";
+import { orderContext } from "./order-context";
 
 export type CartModifier = { id: string; name: string; price_cents: number };
 
@@ -63,6 +64,9 @@ function persist() {
     KEY,
     JSON.stringify({ ...state, owner, updated_at: Date.now() } satisfies Stored),
   );
+  // An empty basket means the order setup (dine in / pickup / delivery + time
+  // slot) no longer applies — drop it so the next person starts clean.
+  if (state.items.length === 0) orderContext.clear();
   listeners.forEach((l) => l());
 }
 load();
