@@ -21,7 +21,14 @@ export function lineId(menuItemId: string, modifiers: { id: string }[]) {
 }
 
 const KEY = "cafe1_cart_v1";
+/** Carts are dropped after this much inactivity so a shared/kiosk device never
+ *  shows the previous person's basket. */
+const TTL_MS = 2 * 60 * 60 * 1000;
 type State = { items: CartItem[] };
+type Stored = State & { owner?: string | null; updated_at?: number };
+/** null = guest. Set from the auth session so one person's basket never
+ *  carries over to another account on the same browser. */
+let owner: string | null = null;
 let state: State = { items: [] };
 const listeners = new Set<() => void>();
 
@@ -30,7 +37,14 @@ function load() {
   try {
     const raw = localStorage.getItem(KEY);
     if (raw) {
-      const parsed = JSON.parse(raw) as State;
+      const parsed = JSON.parse(raw) as Stored;
+      const stale =
+        typeof parsed.updated_at === "number" && Date.now() - parsed.updated_at > TTL_MS;
+      if (stale) {
+        localStorage.removeItem(KEY);
+        return;
+      }
+      owner = parsed.owner ?? null;
       // Migrate older carts that predate modifier support.
       state = {
         items: (parsed.items ?? []).map((i) => ({
@@ -45,7 +59,10 @@ function load() {
 }
 function persist() {
   if (typeof window === "undefined") return;
-  localStorage.setItem(KEY, JSON.stringify(state));
+  localStorage.setItem(
+    KEY,
+    JSON.stringify({ ...state, owner, updated_at: Date.now() } satisfies Stored),
+  );
   listeners.forEach((l) => l());
 }
 load();
@@ -54,6 +71,20 @@ const EMPTY: State = { items: [] };
 
 export const cart = {
   get: () => state,
+  /**
+   * Attach the basket to the current identity. If the stored basket belongs to
+   * a different person (previous signed-in user, or a guest basket left on a
+   * shared device before someone signs in), it is discarded.
+   */
+  syncOwner(userId: string | null) {
+    if (owner === (userId ?? null)) return;
+    // A guest basket is adopted by the person who signs in on this browser.
+    // Anything else (different user, or signing out of an owned basket) is dropped.
+    const adopt = owner === null && !!userId;
+    owner = userId ?? null;
+    if (!adopt) state = { items: [] };
+    persist();
+  },
   subscribe(cb: () => void) {
     listeners.add(cb);
     return () => listeners.delete(cb);

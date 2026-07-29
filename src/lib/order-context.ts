@@ -12,6 +12,8 @@ export type OrderContext = {
 };
 
 const KEY = "cafe1_order_ctx_v1";
+/** Matches the cart TTL — a stale setup on a shared device is discarded. */
+const TTL_MS = 2 * 60 * 60 * 1000;
 let state: OrderContext | null = null;
 const listeners = new Set<() => void>();
 
@@ -19,12 +21,19 @@ function load() {
   if (typeof window === "undefined") return;
   try {
     const raw = localStorage.getItem(KEY);
-    if (raw) state = JSON.parse(raw) as OrderContext;
+    if (raw) {
+      const parsed = JSON.parse(raw) as OrderContext & { updated_at?: number };
+      if (typeof parsed.updated_at === "number" && Date.now() - parsed.updated_at > TTL_MS) {
+        localStorage.removeItem(KEY);
+      } else {
+        state = parsed;
+      }
+    }
   } catch {}
 }
 function persist() {
   if (typeof window === "undefined") return;
-  if (state) localStorage.setItem(KEY, JSON.stringify(state));
+  if (state) localStorage.setItem(KEY, JSON.stringify({ ...state, updated_at: Date.now() }));
   else localStorage.removeItem(KEY);
   listeners.forEach((l) => l());
 }
