@@ -382,10 +382,7 @@ function MenuPage() {
 
       {/* Floating basket bar */}
       {cartCount > 0 && (
-        <div
-          className="fixed inset-x-0 z-40 mx-auto flex max-w-md justify-center px-4"
-          style={{ bottom: "calc(4.75rem + env(safe-area-inset-bottom))" }}
-        >
+        <div className="fixed inset-x-0 bottom-[calc(4.75rem+env(safe-area-inset-bottom))] z-40 mx-auto flex max-w-md justify-center px-4 md:bottom-4">
           <Link
             to="/cart"
             className="group flex w-full items-center justify-between gap-3 rounded-full bg-primary px-4 py-3 text-primary-foreground shadow-brand transition hover:bg-primary-hover"
