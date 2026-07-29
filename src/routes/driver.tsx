@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { AdminNav } from "@/components/admin-nav";
+import { RequireRole } from "@/components/require-role";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useServerFn } from "@tanstack/react-start";
@@ -30,8 +31,16 @@ export const Route = createFileRoute("/driver")({
       { name: "robots", content: "noindex" },
     ],
   }),
-  component: Driver,
+  component: DriverPage,
 });
+
+function DriverPage() {
+  return (
+    <RequireRole roles={["admin", "driver"]} next="/driver">
+      <Driver />
+    </RequireRole>
+  );
+}
 
 function sameIds(a: Job[], b: Job[]) {
   return a.length === b.length && a.every((x, i) => x.id === b[i].id && x.status === b[i].status);

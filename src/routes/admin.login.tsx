@@ -31,7 +31,13 @@ function AdminLogin() {
   const [password, setPassword] = useState("");
   const [busy, setBusy] = useState(false);
 
-  const dest = next && next.startsWith("/") ? next : "/admin";
+  function homeForRoles(rs: string[]) {
+    if (rs.includes("admin") || rs.includes("staff")) return "/staff";
+    if (rs.includes("driver")) return "/driver";
+    return "/staff";
+  }
+  const safeNext = next && next.startsWith("/") && !next.startsWith("//") ? next : null;
+  const dest = safeNext ?? homeForRoles(roles);
 
   const alreadyStaff =
     !loading && !rolesLoading && !!user && (has("admin") || has("staff") || has("driver"));
@@ -57,7 +63,7 @@ function AdminLogin() {
         throw new Error("This account has no staff access.");
       }
       toast.success("Signed in");
-      navigate({ to: dest });
+      navigate({ to: safeNext ?? homeForRoles(rs) });
     } catch (err: unknown) {
       toast.error(err instanceof Error ? err.message : "Sign in failed");
     } finally {

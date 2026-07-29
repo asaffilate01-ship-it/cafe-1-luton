@@ -1,5 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { AdminNav } from "@/components/admin-nav";
+import { RequireRole } from "@/components/require-role";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useSession, useRoles } from "@/hooks/use-auth";
@@ -20,7 +21,7 @@ type OrderRow = {
 };
 type Driver = { id: string; full_name: string | null; email: string | null };
 
-export const Route = createFileRoute("/admin")({
+export const Route = createFileRoute("/admin/")({
   head: () => ({
     meta: [
       { title: "Admin — Cafe1" },
@@ -28,8 +29,16 @@ export const Route = createFileRoute("/admin")({
       { name: "robots", content: "noindex" },
     ],
   }),
-  component: Admin,
+  component: AdminPage,
 });
+
+function AdminPage() {
+  return (
+    <RequireRole roles={["admin", "staff"]} next="/admin">
+      <Admin />
+    </RequireRole>
+  );
+}
 
 function Admin() {
   const { user, loading } = useSession();
