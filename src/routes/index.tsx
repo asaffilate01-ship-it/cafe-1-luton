@@ -9,9 +9,9 @@ import heroImage from "@/assets/cafe1-hero.jpg.asset.json";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Café 1 St Albans — Halal Coffee & Food, Delivered" },
-      { name: "description", content: "Order halal coffee, breakfast and hot food from Café 1 at St Albans Crown Court. Free delivery within half a mile, collection or dine-in." },
-      { property: "og:title", content: "Café 1 St Albans — Halal Coffee & Food, Delivered" },
+      { title: "Café 1 St Albans — Halal Food & Fresh Coffee, Delivered" },
+      { name: "description", content: "Order fresh coffee, all-day breakfast and 100% halal hot food from Café 1 at St Albans Crown Court. Free delivery within half a mile, collection or dine-in." },
+      { property: "og:title", content: "Café 1 St Albans — Halal Food & Fresh Coffee, Delivered" },
       { property: "og:description", content: "Fresh Italian coffee and 100% halal food. Delivery, collection or dine-in from Café 1, AL1 3JU." },
       { property: "og:type", content: "website" },
       { property: "og:url", content: "https://cafe1stalbans.co.uk/" },
