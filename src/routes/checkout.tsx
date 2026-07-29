@@ -355,7 +355,7 @@ function Checkout() {
               <p className="font-semibold text-primary">Earn loyalty points & get access to offers</p>
               <p className="mt-1 text-sm text-muted-foreground">
                 <Link to="/auth" search={{ next: "/checkout" }} className="font-semibold text-primary underline">Sign in or create an account</Link>{" "}
-                to unlock member pricing and earn 1 point per £1 — or continue as guest below.
+                to earn 1 point per £1 and save your details — or continue as guest below.
               </p>
               <p className="mt-2 text-xs text-muted-foreground">
                 Got a business tab code? <Link to="/tab" className="font-semibold text-primary underline">Sign in with your account code</Link>.
