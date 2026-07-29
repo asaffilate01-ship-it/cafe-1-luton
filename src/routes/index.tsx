@@ -21,7 +21,7 @@ export const Route = createFileRoute("/")({
     ],
     links: [
       { rel: "canonical", href: "https://cafe1stalbans.co.uk/" },
-      { rel: "preload", as: "image", href: heroImage.url, fetchpriority: "high" },
+      { rel: "preload", as: "image", href: heroImage.url, fetchPriority: "high" },
     ],
     scripts: [
       {
