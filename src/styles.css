@@ -331,3 +331,23 @@
   }
   .ticket-page:last-child { page-break-after: auto; }
 }
+
+/* Metric-matched local fallbacks so the LCP headline paints instantly
+   with near-identical metrics while the web fonts load (font-display: swap). */
+@font-face {
+  font-family: "Fraunces Fallback";
+  src: local("Georgia"), local("Times New Roman");
+  size-adjust: 103%;
+  ascent-override: 92%;
+  descent-override: 24%;
+  line-gap-override: 0%;
+}
+
+@font-face {
+  font-family: "Inter Fallback";
+  src: local("Helvetica Neue"), local("Arial");
+  size-adjust: 107%;
+  ascent-override: 90%;
+  descent-override: 22%;
+  line-gap-override: 0%;
+}
