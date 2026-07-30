@@ -243,6 +243,23 @@ function Checkout() {
       setVoucherBusy(false);
     }
   }
+  // Jurors who opted in on the /juror page carry their code with them.
+  useEffect(() => {
+    if (voucher || voucherInput || onTab) return;
+    const stored = typeof window === "undefined" ? null : window.localStorage.getItem(JUROR_CODE_KEY);
+    if (!stored) return;
+    let cancelled = false;
+    findVoucher({ data: { code: stored } })
+      .then((res) => {
+        if (cancelled || !res.found || !res.usable || res.remaining_cents <= 0) return;
+        setVoucherInput(res.code);
+        setVoucher({ code: res.code, remaining_cents: res.remaining_cents, allocated_cents: res.allocated_cents });
+      })
+      .catch(() => {});
+    return () => { cancelled = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [onTab]);
+
   const voucherApplied = voucher ? Math.min(voucher.remaining_cents, grossTotal) : 0;
   const foodSubtotal = c.items.reduce((s, i) => s + (beverageIds.includes(i.menu_item_id) ? 0 : i.price_cents * i.qty), 0);
   const jurorDiscount = voucher ? jurorFoodDiscount(Math.max(0, grossTotal - voucherApplied), foodSubtotal) : 0;
