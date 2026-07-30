@@ -8,7 +8,7 @@ import { PromoCarousel } from "@/components/promo-carousel";
 import { StoreStatus } from "@/components/store-status";
 import { cart, useCart, type CartModifier } from "@/lib/cart";
 import { money } from "@/lib/format";
-import { Plus, Minus, Search, Leaf, ShoppingBag, X, Settings2, ChevronLeft, ChevronRight } from "lucide-react";
+import { Plus, Minus, Search, Leaf, ShoppingBag, X, Settings2, ChevronLeft, ChevronRight, Flame, Snowflake, Tag } from "lucide-react";
 import { toast } from "sonner";
 import { OrderSetupGate } from "@/components/order-setup-gate";
 import { describeContext, useOrderContext, orderContext } from "@/lib/order-context";
@@ -49,6 +49,8 @@ function MenuPage() {
 
   const [q, setQ] = useState("");
   const [vegOnly, setVegOnly] = useState(false);
+  const [temp, setTemp] = useState<"any" | "hot" | "cold">("any");
+  const [under5, setUnder5] = useState(false);
   const [activeCat, setActiveCat] = useState<string | null>(null);
   const cartState = useCart();
   const cartCount = cartState.items.reduce((a, i) => a + i.qty, 0);
@@ -59,6 +61,9 @@ function MenuPage() {
     const ql = q.trim().toLowerCase();
     const items = data.items.filter((i) => {
       if (vegOnly && !i.is_veg) return false;
+      if (temp === "hot" && !i.needs_cooking) return false;
+      if (temp === "cold" && i.needs_cooking) return false;
+      if (under5 && i.price_cents >= 500) return false;
       if (!ql) return true;
       return (
         i.name.toLowerCase().includes(ql) ||
@@ -67,7 +72,15 @@ function MenuPage() {
     });
     const cats = data.cats.filter((c) => items.some((i) => i.category_id === c.id));
     return { cats, items, mods: data.mods };
-  }, [data, q, vegOnly]);
+  }, [data, q, vegOnly, temp, under5]);
+
+  const filtersOn = vegOnly || under5 || temp !== "any";
+  function clearFilters() {
+    setQ("");
+    setVegOnly(false);
+    setUnder5(false);
+    setTemp("any");
+  }
 
   // Scrollspy: watch section headers to update active pill.
   const sectionRefs = useRef<Record<string, HTMLElement | null>>({});
@@ -217,7 +230,7 @@ function MenuPage() {
         className="sticky top-20 z-30 border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80"
       >
         <div className="mx-auto max-w-6xl px-4 py-3">
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 lg:max-w-md">
             <label className="relative flex-1">
               <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <input
@@ -236,22 +249,38 @@ function MenuPage() {
                 </button>
               )}
             </label>
-            <button
-              onClick={() => setVegOnly((v) => !v)}
-              aria-pressed={vegOnly}
-              className={`inline-flex h-11 shrink-0 items-center gap-1.5 rounded-full border px-3 text-sm font-medium transition ${
-                vegOnly
-                  ? "border-green-600 bg-green-50 text-green-700"
-                  : "border-border bg-card text-muted-foreground hover:border-foreground/30 hover:text-foreground"
-              }`}
-            >
-              <Leaf className="h-4 w-4" /> Veg
-            </button>
           </div>
 
-          {/* Category pills */}
+          {/* Dietary & quick filters */}
+          <div className="mt-2.5 flex items-center gap-2 overflow-x-auto pb-0.5 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            <span className="hidden shrink-0 text-xs font-semibold uppercase tracking-widest text-muted-foreground lg:inline">
+              Filters
+            </span>
+            <FilterChip active={vegOnly} onClick={() => setVegOnly((v) => !v)} icon={<Leaf className="h-4 w-4" />}>
+              Vegetarian
+            </FilterChip>
+            <FilterChip active={temp === "hot"} onClick={() => setTemp((t) => (t === "hot" ? "any" : "hot"))} icon={<Flame className="h-4 w-4" />}>
+              Hot food
+            </FilterChip>
+            <FilterChip active={temp === "cold"} onClick={() => setTemp((t) => (t === "cold" ? "any" : "cold"))} icon={<Snowflake className="h-4 w-4" />}>
+              Cold & drinks
+            </FilterChip>
+            <FilterChip active={under5} onClick={() => setUnder5((v) => !v)} icon={<Tag className="h-4 w-4" />}>
+              Under £5
+            </FilterChip>
+            {(filtersOn || q) && (
+              <button
+                onClick={clearFilters}
+                className="ml-1 shrink-0 whitespace-nowrap rounded-full px-3 py-2 text-sm font-medium text-muted-foreground underline-offset-4 hover:text-primary hover:underline"
+              >
+                Clear
+              </button>
+            )}
+          </div>
+
+          {/* Category pills (mobile/tablet — desktop uses the sidebar) */}
           {filtered && filtered.cats.length > 0 && (
-            <div className="relative mt-3">
+            <div className="relative mt-3 lg:hidden">
               <div
                 aria-hidden
                 className={`pointer-events-none absolute inset-y-0 left-0 z-10 w-8 bg-gradient-to-r from-background to-transparent transition-opacity ${canScroll.left ? "opacity-100" : "opacity-0"}`}
@@ -309,7 +338,35 @@ function MenuPage() {
         </div>
       </div>
 
-      <div className="mx-auto max-w-6xl px-4">
+      <div className="mx-auto max-w-6xl gap-10 px-4 lg:grid lg:grid-cols-[15rem_minmax(0,1fr)] lg:items-start">
+        {/* Desktop category sidebar */}
+        <aside className="sticky top-[11.5rem] hidden max-h-[calc(100vh-13rem)] overflow-y-auto pt-8 pr-2 lg:block">
+          <p className="px-3 text-xs font-semibold uppercase tracking-widest text-muted-foreground">Categories</p>
+          <nav aria-label="Menu categories" className="mt-3 flex flex-col gap-1">
+            {filtered?.cats.map((c) => {
+              const active = c.id === activeCat;
+              const count = filtered.items.filter((i) => i.category_id === c.id).length;
+              return (
+                <button
+                  key={c.id}
+                  type="button"
+                  aria-current={active ? "true" : undefined}
+                  onClick={() => scrollToCat(c.id)}
+                  className={`flex items-center justify-between gap-2 rounded-xl border-l-4 px-3 py-2.5 text-left text-[15px] font-semibold transition ${
+                    active
+                      ? "border-primary bg-primary-soft/50 text-primary"
+                      : "border-transparent text-foreground hover:border-primary/40 hover:bg-muted"
+                  }`}
+                >
+                  <span className="truncate">{c.name}</span>
+                  <span className={`shrink-0 text-xs font-medium ${active ? "text-primary/70" : "text-muted-foreground"}`}>{count}</span>
+                </button>
+              );
+            })}
+          </nav>
+        </aside>
+
+        <div className="min-w-0">
         {isLoading && (
           <div className="mt-10 grid gap-3 sm:grid-cols-2">
             {Array.from({ length: 6 }).map((_, i) => (
@@ -325,7 +382,7 @@ function MenuPage() {
               Nothing matches “{q}”{vegOnly ? " with veg filter on" : ""}.
             </p>
             <button
-              onClick={() => { setQ(""); setVegOnly(false); }}
+              onClick={clearFilters}
               className="mt-4 rounded-full border border-border px-4 py-1.5 text-sm font-medium hover:border-primary hover:text-primary"
             >
               Clear filters
@@ -378,6 +435,7 @@ function MenuPage() {
             </section>
           );
         })}
+        </div>
       </div>
 
       {/* Floating basket bar */}
@@ -403,6 +461,34 @@ function MenuPage() {
 
       <SiteFooter />
     </div>
+  );
+}
+
+function FilterChip({
+  active,
+  onClick,
+  icon,
+  children,
+}: {
+  active: boolean;
+  onClick: () => void;
+  icon: React.ReactNode;
+  children: React.ReactNode;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-pressed={active}
+      className={`inline-flex h-10 shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full border px-3.5 text-sm font-semibold transition ${
+        active
+          ? "border-primary bg-primary text-primary-foreground shadow-brand"
+          : "border-border bg-card text-muted-foreground hover:border-primary/50 hover:text-foreground"
+      }`}
+    >
+      {icon}
+      {children}
+    </button>
   );
 }
 
