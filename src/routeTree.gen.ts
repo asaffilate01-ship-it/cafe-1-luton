@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as TillRouteImport } from './routes/till'
 import { Route as TermsRouteImport } from './routes/terms'
 import { Route as TabRouteImport } from './routes/tab'
 import { Route as StaffRouteImport } from './routes/staff'
@@ -53,6 +54,11 @@ import { Route as LovableEmailAuthWebhookRouteImport } from './routes/lovable/em
 import { Route as LovableEmailAuthPreviewRouteImport } from './routes/lovable/email/auth/preview'
 import { Route as ApiPublicDeliverooWebhookRouteImport } from './routes/api/public/deliveroo/webhook'
 
+const TillRoute = TillRouteImport.update({
+  id: '/till',
+  path: '/till',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const TermsRoute = TermsRouteImport.update({
   id: '/terms',
   path: '/terms',
@@ -290,6 +296,7 @@ export interface FileRoutesByFullPath {
   '/staff': typeof StaffRoute
   '/tab': typeof TabRoute
   '/terms': typeof TermsRoute
+  '/till': typeof TillRoute
   '/admin/accounts': typeof AdminAccountsRoute
   '/admin/banners': typeof AdminBannersRoute
   '/admin/blog': typeof AdminBlogRoute
@@ -335,6 +342,7 @@ export interface FileRoutesByTo {
   '/staff': typeof StaffRoute
   '/tab': typeof TabRoute
   '/terms': typeof TermsRoute
+  '/till': typeof TillRoute
   '/admin/accounts': typeof AdminAccountsRoute
   '/admin/banners': typeof AdminBannersRoute
   '/admin/blog': typeof AdminBlogRoute
@@ -381,6 +389,7 @@ export interface FileRoutesById {
   '/staff': typeof StaffRoute
   '/tab': typeof TabRoute
   '/terms': typeof TermsRoute
+  '/till': typeof TillRoute
   '/admin/accounts': typeof AdminAccountsRoute
   '/admin/banners': typeof AdminBannersRoute
   '/admin/blog': typeof AdminBlogRoute
@@ -428,6 +437,7 @@ export interface FileRouteTypes {
     | '/staff'
     | '/tab'
     | '/terms'
+    | '/till'
     | '/admin/accounts'
     | '/admin/banners'
     | '/admin/blog'
@@ -473,6 +483,7 @@ export interface FileRouteTypes {
     | '/staff'
     | '/tab'
     | '/terms'
+    | '/till'
     | '/admin/accounts'
     | '/admin/banners'
     | '/admin/blog'
@@ -518,6 +529,7 @@ export interface FileRouteTypes {
     | '/staff'
     | '/tab'
     | '/terms'
+    | '/till'
     | '/admin/accounts'
     | '/admin/banners'
     | '/admin/blog'
@@ -564,6 +576,7 @@ export interface RootRouteChildren {
   StaffRoute: typeof StaffRoute
   TabRoute: typeof TabRoute
   TermsRoute: typeof TermsRoute
+  TillRoute: typeof TillRoute
   AdminAccountsRoute: typeof AdminAccountsRoute
   AdminBannersRoute: typeof AdminBannersRoute
   AdminBlogRoute: typeof AdminBlogRoute
@@ -592,6 +605,13 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/till': {
+      id: '/till'
+      path: '/till'
+      fullPath: '/till'
+      preLoaderRoute: typeof TillRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/terms': {
       id: '/terms'
       path: '/terms'
@@ -916,6 +936,7 @@ const rootRouteChildren: RootRouteChildren = {
   StaffRoute: StaffRoute,
   TabRoute: TabRoute,
   TermsRoute: TermsRoute,
+  TillRoute: TillRoute,
   AdminAccountsRoute: AdminAccountsRoute,
   AdminBannersRoute: AdminBannersRoute,
   AdminBlogRoute: AdminBlogRoute,
