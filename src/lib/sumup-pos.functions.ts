@@ -12,7 +12,7 @@ type SumupTxn = {
   payment_type?: string;
   entry_mode?: string;
   card?: { last_4_digits?: string; type?: string };
-  products?: Array<{ name: string; quantity?: number; price?: number }>;
+  products?: Array<{ name: string; description?: string; quantity?: number; price?: number }>;
   internal_id?: string | number;
   tip_amount?: number;
   // Terminal / reader identity varies by SumUp product; we probe a few shapes.
