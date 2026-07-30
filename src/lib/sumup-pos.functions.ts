@@ -20,7 +20,21 @@ type SumupTxn = {
   device?: { identifier?: string; id?: string; model?: string };
   terminal?: { id?: string; name?: string };
   local_time?: string;
+  /** Amount already refunded against this payment (SumUp keeps status SUCCESSFUL). */
+  refunded_amount?: number;
+  /** PAYMENT | REFUND */
+  type?: string;
 };
+
+/** A sale is void when SumUp cancelled/failed it, or the full amount was refunded. */
+function isVoidTxn(t: Pick<SumupTxn, "status" | "amount" | "refunded_amount">): "refunded" | "cancelled" | null {
+  const st = String(t.status ?? "").toUpperCase();
+  if (st === "REFUNDED") return "refunded";
+  if (st === "CANCELLED" || st === "CANCELED" || st === "FAILED") return "cancelled";
+  const refunded = Number(t.refunded_amount ?? 0);
+  if (refunded > 0 && refunded >= Number(t.amount) - 0.001) return "refunded";
+  return null;
+}
 
 /** Anything that could identify which physical terminal took the sale. */
 function deviceRefs(t: SumupTxn): string[] {
