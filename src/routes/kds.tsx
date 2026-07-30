@@ -33,6 +33,12 @@ type Order = {
 type Ticket = Order & { items: Item[]; needsCooking: boolean };
 
 const TYPE_LABEL: Record<string, string> = { dine_in: "DINE IN", collection: "PICKUP", delivery: "DELIVERY" };
+/** Which counter rang the sale up — jury, judge or public side. */
+const SIDE_TONE: Record<string, string> = {
+  jury: "bg-indigo-600",
+  judge: "bg-fuchsia-700",
+  public: "bg-teal-600",
+};
 
 function whenLabel(o: { schedule_mode: string | null; scheduled_for: string | null }) {
   if (o.schedule_mode === "scheduled" && o.scheduled_for)
