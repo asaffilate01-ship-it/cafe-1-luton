@@ -102,6 +102,14 @@ export const syncSumupPos = createServerFn({ method: "POST" })
     const key = process.env.SUMUP_API_KEY;
     if (!key) return { imported: 0, skipped: 0, error: "SUMUP_API_KEY not set" };
 
+    // Housekeeping: drop website orders left unpaid for more than 5 minutes.
+    try {
+      const { purgeStaleUnpaidOrders } = await import("./order-cleanup.server");
+      await purgeStaleUnpaidOrders();
+    } catch (e) {
+      console.error("[pos-sync] unpaid purge failed", e);
+    }
+
     // Verify caller is staff/admin (RLS-scoped supabase from middleware)
     const { data: isAdmin } = await context.supabase.rpc("has_role", { _user_id: context.userId, _role: "admin" });
     const { data: isStaff } = await context.supabase.rpc("has_role", { _user_id: context.userId, _role: "staff" });
