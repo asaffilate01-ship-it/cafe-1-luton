@@ -38,9 +38,9 @@ function Till() {
   const [name, setName] = useState("");
   const [type, setType] = useState<"dine_in" | "collection" | "delivery">("dine_in");
   const [table, setTable] = useState("");
-  const [side, setSide] = useState<"jury" | "public">(() => {
+  const [side, setSide] = useState<"jury" | "judge" | "public">(() => {
     if (typeof window === "undefined") return "public";
-    return (window.localStorage.getItem("cafe1-pos-side") as "jury" | "public") || "public";
+    return (window.localStorage.getItem("cafe1-pos-side") as "jury" | "judge" | "public") || "public";
   });
   const [busy, setBusy] = useState(false);
 

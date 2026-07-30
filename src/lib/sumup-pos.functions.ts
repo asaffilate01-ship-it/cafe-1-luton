@@ -1,8 +1,9 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
+export type PosSide = "jury" | "judge" | "public";
+
 type SumupTxn = {
-  id: string;
   id: string;
   transaction_code?: string;
   amount: number;
