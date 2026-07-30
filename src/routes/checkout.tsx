@@ -17,7 +17,10 @@ import { buildScheduleSlots } from "@/lib/business";
 import { useOrderContext, describeContext } from "@/lib/order-context";
 import { OrderSetupGate } from "@/components/order-setup-gate";
 import { Settings2 } from "lucide-react";
-import { JUROR_CODE_KEY, JUROR_FOOD_DISCOUNT_PERCENT, jurorFoodDiscount } from "@/lib/juror";
+import {
+  JUROR_CODE_KEY, JUROR_FOOD_DISCOUNT_PERCENT, jurorFoodDiscount,
+  JUROR_DELIVERY_VENUES, isCourtDeliveryAddress,
+} from "@/lib/juror";
 
 export const Route = createFileRoute("/checkout")({
   head: () => ({
@@ -235,7 +238,6 @@ function Checkout() {
         setVoucherError("This voucher has no allowance left for today.");
       } else {
         setVoucher({ code: res.code, remaining_cents: res.remaining_cents, allocated_cents: res.allocated_cents });
-        if (typeof window !== "undefined") window.localStorage.setItem(JUROR_CODE_KEY, res.code);
       }
     } catch {
       setVoucherError("Couldn't check the voucher code. Please try again.");
@@ -243,22 +245,11 @@ function Checkout() {
       setVoucherBusy(false);
     }
   }
-  // Jurors who opted in on the /juror page carry their code with them.
+  // Fraud control: voucher codes are never remembered between orders — the
+  // juror keys the code in every time. Purge anything stored by older builds.
   useEffect(() => {
-    if (voucher || voucherInput || onTab) return;
-    const stored = typeof window === "undefined" ? null : window.localStorage.getItem(JUROR_CODE_KEY);
-    if (!stored) return;
-    let cancelled = false;
-    findVoucher({ data: { code: stored } })
-      .then((res) => {
-        if (cancelled || !res.found || !res.usable || res.remaining_cents <= 0) return;
-        setVoucherInput(res.code);
-        setVoucher({ code: res.code, remaining_cents: res.remaining_cents, allocated_cents: res.allocated_cents });
-      })
-      .catch(() => {});
-    return () => { cancelled = true; };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [onTab]);
+    if (typeof window !== "undefined") window.localStorage.removeItem(JUROR_CODE_KEY);
+  }, []);
 
   const voucherApplied = voucher ? Math.min(voucher.remaining_cents, grossTotal) : 0;
   const foodSubtotal = c.items.reduce((s, i) => s + (beverageIds.includes(i.menu_item_id) ? 0 : i.price_cents * i.qty), 0);
@@ -297,6 +288,10 @@ function Checkout() {
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     if (!c.items.length) return;
+    if (voucher && mode === "delivery" && !isCourtDeliveryAddress(form.address_line1, form.postcode)) {
+      toast.error("Voucher deliveries must go to St Albans Crown Court or the Magistrates' Court.");
+      return;
+    }
     setBusy(true);
     try {
       const res = await place({
@@ -480,6 +475,31 @@ function Checkout() {
           {mode === "delivery" && (
             <div className="rounded-2xl border border-border bg-card p-5">
               <p className="font-semibold">Delivery address</p>
+              {voucher ? (
+                <div className="mt-3 space-y-2">
+                  <p className="text-xs text-muted-foreground">
+                    Voucher orders are delivered inside the court only. Choose the building:
+                  </p>
+                  {JUROR_DELIVERY_VENUES.map((v) => {
+                    const selected = isCourtDeliveryAddress(form.address_line1, form.postcode) && form.address_line1 === v.address_line1;
+                    return (
+                      <button
+                        key={v.id}
+                        type="button"
+                        onClick={() => { setForm({ ...form, address_line1: v.address_line1, city: v.city, postcode: v.postcode }); setArea(null); }}
+                        className={`flex w-full items-center justify-between rounded-xl border px-4 py-3 text-left text-sm ${selected ? "border-primary bg-primary/10 font-semibold text-primary" : "border-border bg-background"}`}
+                      >
+                        <span>{v.label}</span>
+                        <span className="text-xs text-muted-foreground">{v.postcode}</span>
+                      </button>
+                    );
+                  })}
+                  <textarea placeholder="Jury room / court room and any notes (optional)" value={form.delivery_notes} onChange={(e) => setForm({ ...form, delivery_notes: e.target.value })} className="min-h-20 w-full rounded-xl border border-border bg-background p-3" />
+                  {!isCourtDeliveryAddress(form.address_line1, form.postcode) && (
+                    <p className="text-xs text-destructive">Please pick a court building, or switch to collection.</p>
+                  )}
+                </div>
+              ) : (
               <div className="mt-3 grid gap-3 sm:grid-cols-2">
                 <input required placeholder="Postcode" value={form.postcode} onChange={(e) => { setForm({ ...form, postcode: e.target.value }); setArea(null); }} onBlur={(e) => void verifyPostcode(e.target.value)} className="h-11 rounded-xl border border-border bg-background px-4" />
                 <input placeholder="Office / company name (optional)" value={form.company_name} onChange={(e) => setForm({ ...form, company_name: e.target.value })} className="h-11 rounded-xl border border-border bg-background px-4" />
@@ -487,6 +507,7 @@ function Checkout() {
                 <input required placeholder="City" value={form.city} onChange={(e) => setForm({ ...form, city: e.target.value })} className="h-11 rounded-xl border border-border bg-background px-4" />
                 <textarea placeholder="Delivery notes — buzzer, floor, gate code (optional)" value={form.delivery_notes} onChange={(e) => setForm({ ...form, delivery_notes: e.target.value })} className="min-h-20 rounded-xl border border-border bg-background p-3 sm:col-span-2" />
               </div>
+              )}
               <p className="mt-3 text-xs text-muted-foreground">
                 We deliver up to ½ mile from {settings?.delivery_origin_postcode ?? "AL1 3JU"}, between{" "}
                 {(settings?.delivery_open_time ?? "08:30").slice(0, 5)}–{(settings?.delivery_close_time ?? "16:30").slice(0, 5)}.

@@ -168,6 +168,16 @@ export const createOrder = createServerFn({ method: "POST" })
       if (!area.ok) throw new Error(area.reason);
     }
 
+    // Fraud control: a juror voucher order may only be delivered inside the
+    // court estate (Crown Court or Magistrates' Court) — never to a home or
+    // office address.
+    if (data.type === "delivery" && data.voucher_code) {
+      const { isCourtDeliveryAddress, JUROR_DELIVERY_RULE_MESSAGE } = await import("./juror");
+      if (!isCourtDeliveryAddress(data.address_line1, data.postcode)) {
+        throw new Error(JUROR_DELIVERY_RULE_MESSAGE);
+      }
+    }
+
     const freeThreshold = settings?.free_delivery_threshold_cents ?? null;
     let delivery_fee = data.type === "delivery"
       ? (freeThreshold && subtotal >= freeThreshold ? 0 : baseDeliveryFee)

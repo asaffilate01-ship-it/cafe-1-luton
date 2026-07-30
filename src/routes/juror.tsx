@@ -55,7 +55,6 @@ function JurorPage() {
         setError(("message" in res && res.message) || "That voucher code isn't recognised. Please check it with the Jury Officer.");
       } else {
         setBalance(res);
-        window.localStorage.setItem(JUROR_CODE_KEY, res.code);
       }
     } catch {
       setError("We couldn't check that code just now. Please try again.");
@@ -64,9 +63,11 @@ function JurorPage() {
     }
   }
 
+  // Fraud control: codes are never stored on the device. Only a code passed
+  // in the scanned link is pre-filled; purge anything older builds saved.
   useEffect(() => {
-    const stored = codeParam ?? (typeof window === "undefined" ? null : window.localStorage.getItem(JUROR_CODE_KEY));
-    if (stored) { setInput(stored.toUpperCase()); void check(stored); }
+    if (typeof window !== "undefined") window.localStorage.removeItem(JUROR_CODE_KEY);
+    if (codeParam) { setInput(codeParam.toUpperCase()); void check(codeParam); }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
