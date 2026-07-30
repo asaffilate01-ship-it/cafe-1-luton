@@ -11,7 +11,7 @@ import {
   AlertCircle, Building2, Leaf, ArrowRight,
 } from "lucide-react";
 
-export const JUROR_CODE_KEY = "cafe1-juror-code";
+export { JUROR_CODE_KEY };
 
 export const Route = createFileRoute("/juror")({
   validateSearch: (s: Record<string, unknown>) => ({

@@ -8,6 +8,8 @@
  * • Scheme members get 10% off food (drinks excluded) on anything payable
  *   above the daily allowance — the voucher is always applied first.
  */
+/** localStorage key holding the juror's anonymous code on their device. */
+export const JUROR_CODE_KEY = "cafe1-juror-code";
 export const JUROR_DAILY_ALLOWANCE_CENTS = 571;
 export const JUROR_FOOD_DISCOUNT_PERCENT = 10;
 /** Standard jury service length used when issuing codes. */
