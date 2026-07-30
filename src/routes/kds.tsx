@@ -331,7 +331,9 @@ function KDS() {
               </p>
               <div className="mt-2 rounded-xl bg-primary px-3 py-2 text-primary-foreground">
                 <p className="font-display text-2xl font-black uppercase leading-none tracking-wide">
-                  {TYPE_LABEL[t.type] ?? t.type.replace("_", " ").toUpperCase()}
+                  {t.source === "sumup_pos" && t.type === "collection"
+                    ? "TAKEAWAY"
+                    : (TYPE_LABEL[t.type] ?? t.type.replace("_", " ").toUpperCase())}
                 </p>
                 <p className="mt-1 text-xl font-black leading-none">
                   {whenLabel(t) === "ASAP" ? "ASAP" : `FOR ${whenLabel(t)}`}
