@@ -13,11 +13,12 @@ import {
   cancelReaderPayment,
 } from "@/lib/till.functions";
 import { openCashDrawer, getDrawerBridge, setDrawerBridge } from "@/lib/drawer";
+import { postToDisplay } from "@/lib/customer-display";
 import { money } from "@/lib/format";
 import { toast } from "sonner";
 import {
   Banknote, CreditCard, Minus, Plus, Search, Trash2, Lock, LogOut, Settings2, X,
-  Smartphone, Loader2, Check, Printer, Inbox, ShoppingBag, HandPlatter, Bike,
+  Smartphone, Loader2, Check, Printer, Inbox, ShoppingBag, HandPlatter, Bike, MonitorPlay,
   Delete, ReceiptText, UtensilsCrossed, ChevronDown,
 } from "lucide-react";
 
@@ -190,6 +191,15 @@ function Till() {
   const total = lines.reduce((s, l) => s + l.price_cents * l.qty, 0);
   const count = lines.reduce((s, l) => s + l.qty, 0);
 
+  // mirror the basket onto the customer-facing second screen (/display)
+  useEffect(() => {
+    postToDisplay(
+      lines.length
+        ? { type: "order", lines: lines.map((l) => ({ id: l.id, name: l.name, price_cents: l.price_cents, qty: l.qty })), total, fulfilment: type }
+        : { type: "idle" },
+    );
+  }, [lines, total, type]);
+
   function add(i: Item) {
     setLines((prev) => {
       const at = prev.findIndex((l) => l.id === i.id);
@@ -221,6 +231,7 @@ function Till() {
           },
         });
         setLastOrder({ n: res.order_number, total: res.total_cents, id: res.order_id });
+        postToDisplay({ type: "paid", order_number: res.order_number, total: res.total_cents, method: payment_method });
         toast.success(`Order #${res.order_number} sent to the kitchen · ${money(res.total_cents)}`);
         window.open(`/print/${res.order_id}`, "_blank");
         if (payment_method === "cash") void openCashDrawer();
@@ -257,6 +268,12 @@ function Till() {
           <button onClick={() => void openCashDrawer().then((r) => (r.ok ? toast.success(r.message) : toast.error(r.message)))}
             className="inline-flex items-center gap-1.5 rounded-lg border border-white/15 px-2.5 py-1.5 font-semibold text-white/80 hover:border-white/40">
             <Inbox className="h-4 w-4" /> <span className="hidden sm:inline">Drawer</span>
+          </button>
+          <button
+            onClick={() => window.open("/display", "cafe1-customer-display", "popup=yes,width=1280,height=800")}
+            aria-label="Open the customer display on the second screen"
+            className="inline-flex items-center gap-1.5 rounded-lg border border-white/15 px-2.5 py-1.5 font-semibold text-white/80 hover:border-white/40">
+            <MonitorPlay className="h-4 w-4" /> <span className="hidden sm:inline">Screen</span>
           </button>
           <button onClick={() => setSettings(true)} aria-label="Till settings" className="grid h-8 w-8 place-items-center rounded-lg border border-white/15 hover:border-white/40"><Settings2 className="h-4 w-4" /></button>
           <button onClick={() => setLocked(true)} aria-label="Lock till" className="grid h-8 w-8 place-items-center rounded-lg border border-white/15 hover:border-white/40"><Lock className="h-4 w-4" /></button>
