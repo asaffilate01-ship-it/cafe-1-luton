@@ -471,6 +471,31 @@ function Checkout() {
           {mode === "delivery" && (
             <div className="rounded-2xl border border-border bg-card p-5">
               <p className="font-semibold">Delivery address</p>
+              {voucher ? (
+                <div className="mt-3 space-y-2">
+                  <p className="text-xs text-muted-foreground">
+                    Voucher orders are delivered inside the court only. Choose the building:
+                  </p>
+                  {JUROR_DELIVERY_VENUES.map((v) => {
+                    const selected = isCourtDeliveryAddress(form.address_line1, form.postcode) && form.address_line1 === v.address_line1;
+                    return (
+                      <button
+                        key={v.id}
+                        type="button"
+                        onClick={() => { setForm({ ...form, address_line1: v.address_line1, city: v.city, postcode: v.postcode }); setArea(null); }}
+                        className={`flex w-full items-center justify-between rounded-xl border px-4 py-3 text-left text-sm ${selected ? "border-primary bg-primary/10 font-semibold text-primary" : "border-border bg-background"}`}
+                      >
+                        <span>{v.label}</span>
+                        <span className="text-xs text-muted-foreground">{v.postcode}</span>
+                      </button>
+                    );
+                  })}
+                  <textarea placeholder="Jury room / court room and any notes (optional)" value={form.delivery_notes} onChange={(e) => setForm({ ...form, delivery_notes: e.target.value })} className="min-h-20 w-full rounded-xl border border-border bg-background p-3" />
+                  {!isCourtDeliveryAddress(form.address_line1, form.postcode) && (
+                    <p className="text-xs text-destructive">Please pick a court building, or switch to collection.</p>
+                  )}
+                </div>
+              ) : (
               <div className="mt-3 grid gap-3 sm:grid-cols-2">
                 <input required placeholder="Postcode" value={form.postcode} onChange={(e) => { setForm({ ...form, postcode: e.target.value }); setArea(null); }} onBlur={(e) => void verifyPostcode(e.target.value)} className="h-11 rounded-xl border border-border bg-background px-4" />
                 <input placeholder="Office / company name (optional)" value={form.company_name} onChange={(e) => setForm({ ...form, company_name: e.target.value })} className="h-11 rounded-xl border border-border bg-background px-4" />
@@ -478,6 +503,7 @@ function Checkout() {
                 <input required placeholder="City" value={form.city} onChange={(e) => setForm({ ...form, city: e.target.value })} className="h-11 rounded-xl border border-border bg-background px-4" />
                 <textarea placeholder="Delivery notes — buzzer, floor, gate code (optional)" value={form.delivery_notes} onChange={(e) => setForm({ ...form, delivery_notes: e.target.value })} className="min-h-20 rounded-xl border border-border bg-background p-3 sm:col-span-2" />
               </div>
+              )}
               <p className="mt-3 text-xs text-muted-foreground">
                 We deliver up to ½ mile from {settings?.delivery_origin_postcode ?? "AL1 3JU"}, between{" "}
                 {(settings?.delivery_open_time ?? "08:30").slice(0, 5)}–{(settings?.delivery_close_time ?? "16:30").slice(0, 5)}.
