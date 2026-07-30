@@ -238,13 +238,50 @@ function KDS() {
 
   return (
     <div className="min-h-screen bg-secondary">
-      <AdminNav />
+      {!chromeHidden && <AdminNav />}
+      {chromeHidden ? (
+        <div className="sticky top-0 z-30 flex items-center justify-between gap-2 border-b border-border bg-primary px-3 py-1 text-primary-foreground">
+          <span className="text-xs font-bold uppercase tracking-wide opacity-90">{tickets.length} active</span>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setAll("preparing", "ready")}
+              disabled={bulking || !tickets.some((t) => t.status === "preparing")}
+              className="rounded-full bg-primary-foreground px-2.5 py-1 text-[11px] font-bold text-primary disabled:opacity-40"
+            >
+              All ready
+            </button>
+            <button
+              onClick={() => setAll("ready", "completed")}
+              disabled={bulking || !tickets.some((t) => t.status === "ready")}
+              className="rounded-full bg-emerald-600 px-2.5 py-1 text-[11px] font-bold text-white disabled:opacity-40"
+            >
+              All complete
+            </button>
+            <button
+              onClick={toggleChrome}
+              className="flex items-center gap-1 rounded-full bg-primary-foreground/15 px-2.5 py-1 text-[11px] font-semibold hover:bg-primary-foreground/25"
+              title="Show toolbar"
+              aria-label="Show toolbar"
+            >
+              <ChevronsDown className="h-3.5 w-3.5" /> Show bar
+            </button>
+          </div>
+        </div>
+      ) : (
       <header className="border-b border-border bg-primary text-primary-foreground">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-4">
           <h1 className="font-display text-2xl font-bold">Kitchen Display · Cafe1</h1>
           <div className="flex items-center gap-3">
             <AlertsToggle />
             <WakeToggle />
+            <button
+              onClick={toggleChrome}
+              className="flex items-center gap-1 rounded-full bg-primary-foreground/10 px-3 py-1.5 text-xs font-semibold hover:bg-primary-foreground/20"
+              title="Hide toolbar for more screen space"
+              aria-label="Hide toolbar"
+            >
+              <ChevronsUp className="h-4 w-4" /> Hide bar
+            </button>
             <button
               onClick={() => void signOutAndRedirect()}
               className="flex items-center gap-1 rounded-full bg-primary-foreground px-3 py-1.5 text-xs font-bold text-primary hover:opacity-90"
@@ -308,6 +345,7 @@ function KDS() {
           <span className="inline-flex items-center gap-1.5"><span className="h-3 w-3 rounded-full bg-emerald-500 ring-2 ring-white/60" /> Ready → complete</span>
           </div>
       </header>
+      )}
       <div className="mx-auto grid max-w-[110rem] gap-3 p-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
         {tickets.map((t) => {
           const elapsedSec = Math.max(0, Math.floor((now - new Date(t.created_at).getTime()) / 1000));
