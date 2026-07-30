@@ -26,13 +26,13 @@ export function SiteHeader() {
   const tabSession = useTab();
   const [open, setOpen] = useState(false);
   const count = c.items.reduce((s, i) => s + i.qty, 0);
-  const links = [
+  const links: { to: string; label: string; exact?: boolean }[] = [
     { to: "/", label: "Home", exact: true },
     { to: "/menu", label: "Menu" },
     { to: "/blog", label: "Blog" },
     { to: "/about", label: "About" },
     { to: "/contact", label: "Contact" },
-  ] as const;
+  ];
   return (
     <header className="sticky top-0 z-40 border-b border-border bg-background/85 backdrop-blur">
       <div className="mx-auto flex h-20 max-w-6xl items-center justify-between px-4">
