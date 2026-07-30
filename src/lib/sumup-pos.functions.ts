@@ -158,15 +158,21 @@ export const syncSumupPos = createServerFn({ method: "POST" })
     let skipped = 0;
     let voided = 0;
 
-    // Status lookup for everything SumUp returned in the window.
-    const statusById = new Map<string, string>();
+    // Void lookup for everything SumUp returned in the window. SumUp keeps the
+    // original PAYMENT row SUCCESSFUL and adds a separate REFUND row with the
+    // same transaction_code, so both shapes have to be considered.
+    const voidByRef = new Map<string, "refunded" | "cancelled">();
     for (const t of items) {
-      if (t.id) statusById.set(t.id, String(t.status).toUpperCase());
-      if (t.transaction_code) statusById.set(t.transaction_code, String(t.status).toUpperCase());
+      const v = isVoidTxn(t);
+      if (!v) continue;
+      if (t.id) voidByRef.set(t.id, v);
+      if (t.transaction_code) voidByRef.set(t.transaction_code, v);
     }
 
     for (const t of items) {
-      if (t.status !== "SUCCESSFUL") { skipped++; continue; }
+      if (t.status !== "SUCCESSFUL" || String(t.type ?? "PAYMENT").toUpperCase() === "REFUND") { skipped++; continue; }
+      // Already refunded on the terminal — never bring it onto the kitchen display.
+      if (isVoidTxn(t) || voidByRef.has(t.transaction_code ?? "") || voidByRef.has(t.id)) { skipped++; continue; }
       // Skip transactions that came from our own website checkout (they already exist as orders).
       // Website checkouts are created via /v0.1/checkouts and reconciled by the webhook using sumup_transaction_id.
       const ref = t.transaction_code ?? t.id;
@@ -249,13 +255,14 @@ export const syncSumupPos = createServerFn({ method: "POST" })
       .from("orders")
       .select("id, sumup_transaction_id, sumup_order_ref")
       .eq("source", "sumup_pos")
-      .in("status", ["paid", "preparing", "ready"]);
+      .in("status", ["paid", "preparing", "ready", "out_for_delivery", "delivered", "completed"]);
 
     for (const o of live ?? []) {
       const refKey = o.sumup_transaction_id ?? o.sumup_order_ref;
       if (!refKey) continue;
-      let st = statusById.get(o.sumup_transaction_id ?? "") ?? statusById.get(o.sumup_order_ref ?? "");
-      if (!st) {
+      let voided_as = voidByRef.get(o.sumup_transaction_id ?? "") ?? voidByRef.get(o.sumup_order_ref ?? "");
+      const seen = items.some((t) => t.id === o.sumup_transaction_id || t.transaction_code === o.sumup_order_ref);
+      if (!voided_as && !seen) {
         // Not in the recent window — ask SumUp directly.
         try {
           const param = o.sumup_transaction_id ? `id=${encodeURIComponent(o.sumup_transaction_id)}` : `transaction_code=${encodeURIComponent(o.sumup_order_ref!)}`;
@@ -264,13 +271,12 @@ export const syncSumupPos = createServerFn({ method: "POST" })
           });
           if (d.ok) {
             const dj = (await d.json()) as SumupTxn;
-            if (dj?.status) st = String(dj.status).toUpperCase();
+            voided_as = isVoidTxn(dj) ?? undefined;
           }
         } catch { /* ignore */ }
       }
-      if (!st) continue;
-      if (st === "REFUNDED" || st === "CANCELLED" || st === "CANCELED" || st === "FAILED") {
-        const refunded = st === "REFUNDED";
+      if (voided_as) {
+        const refunded = voided_as === "refunded";
         await supabaseAdmin
           .from("orders")
           .update({
