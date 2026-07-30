@@ -238,7 +238,7 @@ function Till() {
           (["KITCHEN", "COUNTER"] as const).map((heading) => ({
             heading,
             order_number: res.order_number,
-            fulfilment: TYPE_LABEL[type] ?? type,
+            fulfilment: FULFIL.find((f) => f.id === type)?.label ?? type,
             terminal: SIDE_LABEL[side],
             lines: lines.map((l) => ({ name: l.name, qty: l.qty, price_cents: heading === "COUNTER" ? l.price_cents : undefined })),
             total_cents: heading === "COUNTER" ? res.total_cents : undefined,
