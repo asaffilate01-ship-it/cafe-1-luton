@@ -464,6 +464,34 @@ function MenuPage() {
   );
 }
 
+function FilterChip({
+  active,
+  onClick,
+  icon,
+  children,
+}: {
+  active: boolean;
+  onClick: () => void;
+  icon: React.ReactNode;
+  children: React.ReactNode;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-pressed={active}
+      className={`inline-flex h-10 shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full border px-3.5 text-sm font-semibold transition ${
+        active
+          ? "border-primary bg-primary text-primary-foreground shadow-brand"
+          : "border-border bg-card text-muted-foreground hover:border-primary/50 hover:text-foreground"
+      }`}
+    >
+      {icon}
+      {children}
+    </button>
+  );
+}
+
 type MenuItem = {
   id: string;
   name: string;
