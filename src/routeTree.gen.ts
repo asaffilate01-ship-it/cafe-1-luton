@@ -51,6 +51,7 @@ import { Route as AdminBlogRouteImport } from './routes/admin.blog'
 import { Route as AdminBannersRouteImport } from './routes/admin.banners'
 import { Route as AdminAccountsRouteImport } from './routes/admin.accounts'
 import { Route as ApiPublicSumupWebhookRouteImport } from './routes/api/public/sumup-webhook'
+import { Route as ApiPublicJurorDailyRouteImport } from './routes/api/public/juror-daily'
 import { Route as ApiPublicCleanupUnpaidRouteImport } from './routes/api/public/cleanup-unpaid'
 import { Route as LovableEmailAuthWebhookRouteImport } from './routes/lovable/email/auth/webhook'
 import { Route as LovableEmailAuthPreviewRouteImport } from './routes/lovable/email/auth/preview'
@@ -266,6 +267,11 @@ const ApiPublicSumupWebhookRoute = ApiPublicSumupWebhookRouteImport.update({
   path: '/api/public/sumup-webhook',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicJurorDailyRoute = ApiPublicJurorDailyRouteImport.update({
+  id: '/api/public/juror-daily',
+  path: '/api/public/juror-daily',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicCleanupUnpaidRoute = ApiPublicCleanupUnpaidRouteImport.update({
   id: '/api/public/cleanup-unpaid',
   path: '/api/public/cleanup-unpaid',
@@ -331,6 +337,7 @@ export interface FileRoutesByFullPath {
   '/admin/': typeof AdminIndexRoute
   '/blog/': typeof BlogIndexRoute
   '/api/public/cleanup-unpaid': typeof ApiPublicCleanupUnpaidRoute
+  '/api/public/juror-daily': typeof ApiPublicJurorDailyRoute
   '/api/public/sumup-webhook': typeof ApiPublicSumupWebhookRoute
   '/api/public/deliveroo/webhook': typeof ApiPublicDeliverooWebhookRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
@@ -379,6 +386,7 @@ export interface FileRoutesByTo {
   '/admin': typeof AdminIndexRoute
   '/blog': typeof BlogIndexRoute
   '/api/public/cleanup-unpaid': typeof ApiPublicCleanupUnpaidRoute
+  '/api/public/juror-daily': typeof ApiPublicJurorDailyRoute
   '/api/public/sumup-webhook': typeof ApiPublicSumupWebhookRoute
   '/api/public/deliveroo/webhook': typeof ApiPublicDeliverooWebhookRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
@@ -428,6 +436,7 @@ export interface FileRoutesById {
   '/admin/': typeof AdminIndexRoute
   '/blog/': typeof BlogIndexRoute
   '/api/public/cleanup-unpaid': typeof ApiPublicCleanupUnpaidRoute
+  '/api/public/juror-daily': typeof ApiPublicJurorDailyRoute
   '/api/public/sumup-webhook': typeof ApiPublicSumupWebhookRoute
   '/api/public/deliveroo/webhook': typeof ApiPublicDeliverooWebhookRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
@@ -478,6 +487,7 @@ export interface FileRouteTypes {
     | '/admin/'
     | '/blog/'
     | '/api/public/cleanup-unpaid'
+    | '/api/public/juror-daily'
     | '/api/public/sumup-webhook'
     | '/api/public/deliveroo/webhook'
     | '/lovable/email/auth/preview'
@@ -526,6 +536,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/blog'
     | '/api/public/cleanup-unpaid'
+    | '/api/public/juror-daily'
     | '/api/public/sumup-webhook'
     | '/api/public/deliveroo/webhook'
     | '/lovable/email/auth/preview'
@@ -574,6 +585,7 @@ export interface FileRouteTypes {
     | '/admin/'
     | '/blog/'
     | '/api/public/cleanup-unpaid'
+    | '/api/public/juror-daily'
     | '/api/public/sumup-webhook'
     | '/api/public/deliveroo/webhook'
     | '/lovable/email/auth/preview'
@@ -623,6 +635,7 @@ export interface RootRouteChildren {
   AdminIndexRoute: typeof AdminIndexRoute
   BlogIndexRoute: typeof BlogIndexRoute
   ApiPublicCleanupUnpaidRoute: typeof ApiPublicCleanupUnpaidRoute
+  ApiPublicJurorDailyRoute: typeof ApiPublicJurorDailyRoute
   ApiPublicSumupWebhookRoute: typeof ApiPublicSumupWebhookRoute
   ApiPublicDeliverooWebhookRoute: typeof ApiPublicDeliverooWebhookRoute
   LovableEmailAuthPreviewRoute: typeof LovableEmailAuthPreviewRoute
@@ -925,6 +938,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicSumupWebhookRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/juror-daily': {
+      id: '/api/public/juror-daily'
+      path: '/api/public/juror-daily'
+      fullPath: '/api/public/juror-daily'
+      preLoaderRoute: typeof ApiPublicJurorDailyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/cleanup-unpaid': {
       id: '/api/public/cleanup-unpaid'
       path: '/api/public/cleanup-unpaid'
@@ -999,6 +1019,7 @@ const rootRouteChildren: RootRouteChildren = {
   AdminIndexRoute: AdminIndexRoute,
   BlogIndexRoute: BlogIndexRoute,
   ApiPublicCleanupUnpaidRoute: ApiPublicCleanupUnpaidRoute,
+  ApiPublicJurorDailyRoute: ApiPublicJurorDailyRoute,
   ApiPublicSumupWebhookRoute: ApiPublicSumupWebhookRoute,
   ApiPublicDeliverooWebhookRoute: ApiPublicDeliverooWebhookRoute,
   LovableEmailAuthPreviewRoute: LovableEmailAuthPreviewRoute,
