@@ -18,7 +18,7 @@ import { money } from "@/lib/format";
 import { toast } from "sonner";
 import {
   Banknote, CreditCard, Minus, Plus, Search, Trash2, Lock, LogOut, Settings2, X,
-  Smartphone, Loader2, Check, Printer, Inbox, ShoppingBag, HandPlatter, Bike,
+  Smartphone, Loader2, Check, Printer, Inbox, ShoppingBag, HandPlatter, Bike, MonitorPlay,
   Delete, ReceiptText, UtensilsCrossed, ChevronDown,
 } from "lucide-react";
 
