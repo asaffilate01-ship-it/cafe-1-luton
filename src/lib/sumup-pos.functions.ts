@@ -130,6 +130,14 @@ export const syncSumupPos = createServerFn({ method: "POST" })
 
     let imported = 0;
     let skipped = 0;
+    let voided = 0;
+
+    // Status lookup for everything SumUp returned in the window.
+    const statusById = new Map<string, string>();
+    for (const t of items) {
+      if (t.id) statusById.set(t.id, String(t.status).toUpperCase());
+      if (t.transaction_code) statusById.set(t.transaction_code, String(t.status).toUpperCase());
+    }
 
     for (const t of items) {
       if (t.status !== "SUCCESSFUL") { skipped++; continue; }
@@ -209,5 +217,46 @@ export const syncSumupPos = createServerFn({ method: "POST" })
       imported++;
     }
 
-    return { imported, skipped, error: null };
+    // Reconcile: any live POS ticket whose SumUp transaction is no longer
+    // successful (refunded / cancelled / failed) must come off the kitchen display.
+    const { data: live } = await supabaseAdmin
+      .from("orders")
+      .select("id, sumup_transaction_id, sumup_order_ref")
+      .eq("source", "sumup_pos")
+      .in("status", ["paid", "preparing", "ready"]);
+
+    for (const o of live ?? []) {
+      const key = o.sumup_transaction_id ?? o.sumup_order_ref;
+      if (!key) continue;
+      let st = statusById.get(o.sumup_transaction_id ?? "") ?? statusById.get(o.sumup_order_ref ?? "");
+      if (!st) {
+        // Not in the recent window — ask SumUp directly.
+        try {
+          const param = o.sumup_transaction_id ? `id=${encodeURIComponent(o.sumup_transaction_id)}` : `transaction_code=${encodeURIComponent(o.sumup_order_ref!)}`;
+          const d = await fetch(`https://api.sumup.com/v0.1/me/transactions?${param}`, {
+            headers: { Authorization: `Bearer ${key0(key)}` },
+          });
+          if (d.ok) {
+            const dj = (await d.json()) as SumupTxn;
+            if (dj?.status) st = String(dj.status).toUpperCase();
+          }
+        } catch { /* ignore */ }
+      }
+      if (!st) continue;
+      if (st === "REFUNDED" || st === "CANCELLED" || st === "CANCELED" || st === "FAILED") {
+        const refunded = st === "REFUNDED";
+        await supabaseAdmin
+          .from("orders")
+          .update({
+            status: refunded ? "refunded" : "cancelled",
+            payment_status: refunded ? "refunded" : "failed",
+          })
+          .eq("id", o.id);
+        voided++;
+      }
+    }
+
+    function key0(_k: string) { return key; }
+
+    return { imported, skipped, voided, error: null };
   });
