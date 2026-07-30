@@ -51,6 +51,7 @@ const CreateOrderSchema = z.object({
   account_code: z.string().min(3).max(40).optional(),
   promo_code: z.string().min(1).max(40).optional(),
   voucher_code: z.string().min(1).max(40).optional(),
+  jury_room: z.string().max(60).optional(),
 });
 
 export const createOrder = createServerFn({ method: "POST" })
@@ -80,7 +81,7 @@ export const createOrder = createServerFn({ method: "POST" })
     const ids = data.items.map((i) => i.menu_item_id);
     const modIds = [...new Set(data.items.flatMap((i) => i.modifier_ids ?? []))];
     const [{ data: menu, error: menuErr }, { data: modRows, error: modErr }] = await Promise.all([
-      supabase.from("menu_items").select("id,name,price_cents,active,category_id,loyalty_drink").in("id", ids),
+      supabase.from("menu_items").select("id,name,price_cents,active,category_id,loyalty_drink,is_beverage").in("id", ids),
       modIds.length
         ? supabase
             .from("menu_modifiers")
@@ -94,6 +95,8 @@ export const createOrder = createServerFn({ method: "POST" })
     const modById = new Map((modRows ?? []).map((m) => [m.id, m]));
 
     let subtotal = 0;
+    // Food (non-beverage) value — the juror scheme's 10% only applies to food.
+    let food_subtotal = 0;
     // Base prices of every loyalty-eligible drink unit in this order (for "11th free").
     const drinkUnitPrices: number[] = [];
     const lines = data.items.map((i) => {
@@ -112,6 +115,7 @@ export const createOrder = createServerFn({ method: "POST" })
       });
       const unit = m.price_cents + chosen.reduce((s, mod) => s + mod.price_cents, 0);
       subtotal += unit * i.qty;
+      if (!m.is_beverage) food_subtotal += unit * i.qty;
       if (m.loyalty_drink) {
         for (let n = 0; n < i.qty; n++) drinkUnitPrices.push(m.price_cents);
       }
@@ -280,7 +284,15 @@ export const createOrder = createServerFn({ method: "POST" })
         .is("order_id", null);
     }
 
-    const payable = Math.max(0, total - voucher_cents);
+    // Juror scheme benefit: 10% off food (drinks excluded) on anything payable
+    // above the daily allowance. The voucher is always applied first.
+    const { JUROR_FOOD_DISCOUNT_PERCENT } = await import("./juror");
+    let juror_discount = 0;
+    let payable = Math.max(0, total - voucher_cents);
+    if (voucher_holder_id && payable > 0 && food_subtotal > 0) {
+      juror_discount = Math.round((Math.min(food_subtotal, payable) * JUROR_FOOD_DISCOUNT_PERCENT) / 100);
+      payable = Math.max(0, payable - juror_discount);
+    }
 
     // Charge to a house-account tab if a valid code is supplied.
     let account_id: string | null = null;
@@ -369,6 +381,8 @@ export const createOrder = createServerFn({ method: "POST" })
         city: data.city || null,
         postcode: data.postcode || null,
         delivery_notes: data.delivery_notes || null,
+        jury_room: data.jury_room || null,
+        juror_discount_cents: juror_discount,
         company_name: data.company_name || null,
         table_number: data.table_number || null,
         schedule_mode: data.schedule_mode,
