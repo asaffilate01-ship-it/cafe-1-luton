@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { AdminNav } from "@/components/admin-nav";
 import { RequireRole } from "@/components/require-role";
 import { signOutAndRedirect } from "@/lib/sign-out";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useServerFn } from "@tanstack/react-start";
 import { updateOrderStatus, setOrderFulfilment } from "@/lib/orders.functions";
@@ -61,6 +61,8 @@ function KdsPage() {
 
 function KDS() {
   const [tickets, setTickets] = useState<Ticket[]>([]);
+  // Ids currently shown on the board — used to announce cancellations/refunds.
+  const liveIds = useRef<Set<string>>(new Set());
   const [kdsPaper, setKdsPaper] = useState<58 | 80>(80);
   const update = useServerFn(updateOrderStatus);
   const setFulfil = useServerFn(setOrderFulfilment);
@@ -93,7 +95,11 @@ function KDS() {
         .select("id, order_number, status, type, customer_name, created_at, schedule_mode, scheduled_for, table_number, source, payment_method, payment_status, customer_phone, company_name, address_line1, address_line2, city, postcode, delivery_notes, pos_terminal")
         .in("status", ["preparing", "ready"])
         .order("created_at");
-      const ids = (orders ?? []).map((o) => o.id);
+      // Cancelled / refunded orders must never sit on the kitchen display.
+      const live = ((orders ?? []) as Order[]).filter(
+        (o) => o.payment_status !== "refunded" && o.status !== "cancelled" && o.status !== "refunded",
+      );
+      const ids = live.map((o) => o.id);
       const { data: items } = ids.length
         ? await supabase.from("order_items").select("id, order_id, menu_item_id, name, qty, notes").in("order_id", ids)
         : { data: [] as Item[] };
@@ -108,18 +114,32 @@ function KDS() {
         (i.menu_item_id ? byId.get(i.menu_item_id) : undefined) ??
         byName.get(i.name.trim().toLowerCase()) ??
         false;
-      const grouped: Ticket[] = ((orders ?? []) as Order[]).map((o) => {
+      const grouped: Ticket[] = live.map((o) => {
         const its = ((items ?? []) as Item[])
           .filter((i) => i.order_id === o.id)
           .map((i) => ({ ...i, cook: cooks(i) }));
         return { ...o, items: its, needsCooking: its.some((i) => i.cook) };
       });
+      liveIds.current = new Set(grouped.map((g) => g.id));
       setTickets(grouped);
     }
     load();
     const ch = supabase
       .channel("kds")
-      .on("postgres_changes", { event: "*", schema: "public", table: "orders" }, () => load())
+      .on("postgres_changes", { event: "*", schema: "public", table: "orders" }, (payload) => {
+        const o = payload.new as Partial<Order> | null;
+        if (o && (o.status === "cancelled" || o.status === "refunded" || o.payment_status === "refunded")) {
+          if (liveIds.current.has(o.id as string)) {
+            liveIds.current.delete(o.id as string);
+            toast.error(
+              `Order #${o.order_number ?? ""} ${o.status === "refunded" || o.payment_status === "refunded" ? "refunded" : "cancelled"} — removed from the kitchen display`,
+              { duration: 10000 },
+            );
+            playChime();
+          }
+        }
+        load();
+      })
       .on("postgres_changes", { event: "*", schema: "public", table: "order_items" }, () => load())
       .subscribe();
     return () => { supabase.removeChannel(ch); };
