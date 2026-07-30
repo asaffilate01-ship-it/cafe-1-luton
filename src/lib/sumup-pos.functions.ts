@@ -78,12 +78,16 @@ function deriveFulfilment(t: SumupTxn, products: SumupTxn["products"]): {
     .toLowerCase();
 
   const tableMatch = haystack.match(/\b(?:table|tbl)\s*#?\s*([a-z0-9-]{1,6})\b/i);
+  // Terminals send the dine-in / takeaway choice as a modifier line or in the
+  // product summary, e.g. "Latte (Takeaway)" or a "Take away" line item.
+  const isTakeaway = /\b(take\s*-?\s*away|takeaway|to\s*go|take\s*out|takeout)\b/.test(haystack);
   const isDineIn =
-    !!tableMatch ||
-    /\b(dine\s*-?\s*in|eat\s*-?\s*in|sit\s*-?\s*in|in\s*house)\b/.test(haystack);
+    /\b(dine\s*-?\s*in|dinein|eat\s*-?\s*in|sit\s*-?\s*in|in\s*house|eat\s*here)\b/.test(haystack) ||
+    (!!tableMatch && !isTakeaway);
   const isDelivery = /\b(delivery|deliver)\b/.test(haystack);
 
-  if (isDineIn) return { type: "dine_in", table_number: tableMatch ? tableMatch[1].toUpperCase() : null };
+  if (isDineIn && !isTakeaway) return { type: "dine_in", table_number: tableMatch ? tableMatch[1].toUpperCase() : null };
+  if (isTakeaway) return { type: "collection", table_number: null };
   if (isDelivery) return { type: "delivery", table_number: null };
   return { type: "collection", table_number: null };
 }
