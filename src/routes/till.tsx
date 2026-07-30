@@ -18,6 +18,7 @@ import { toast } from "sonner";
 import {
   Banknote, CreditCard, Minus, Plus, Search, Trash2, Lock, LogOut, Settings2, X,
   Smartphone, Loader2, Check, Printer, Inbox, ShoppingBag, HandPlatter, Bike,
+  Delete, ReceiptText, UtensilsCrossed, ChevronDown,
 } from "lucide-react";
 
 export const Route = createFileRoute("/till")({
@@ -36,7 +37,7 @@ export const Route = createFileRoute("/till")({
 });
 
 type Cat = { id: string; name: string; sort_order: number };
-type Item = { id: string; name: string; price_cents: number; category_id: string | null; sort_order: number };
+type Item = { id: string; name: string; price_cents: number; category_id: string | null; sort_order: number; image_url: string | null };
 type Line = { id: string; name: string; price_cents: number; qty: number };
 type Side = "jury" | "judge" | "public";
 type Fulfilment = "dine_in" | "collection" | "delivery";
