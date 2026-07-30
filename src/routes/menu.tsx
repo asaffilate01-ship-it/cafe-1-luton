@@ -14,7 +14,7 @@ import { OrderSetupGate } from "@/components/order-setup-gate";
 import { describeContext, useOrderContext, orderContext } from "@/lib/order-context";
 
 export const Route = createFileRoute("/menu")({
-  validateSearch: (s: Record<string, unknown>) => ({
+  validateSearch: (s: { juror?: unknown }): { juror?: boolean } => ({
     juror: s.juror === true || s.juror === "true" ? true : undefined,
   }),
   head: () => ({
