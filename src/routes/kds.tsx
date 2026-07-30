@@ -163,6 +163,22 @@ function KDS() {
     }
   }
 
+  const [bulking, setBulking] = useState(false);
+  async function setAll(from: string, status: "ready" | "completed") {
+    const ids = tickets.filter((t) => t.status === from).map((t) => t.id);
+    if (!ids.length) return;
+    if (!window.confirm(`Mark ${ids.length} ticket${ids.length === 1 ? "" : "s"} as ${status}?`)) return;
+    setBulking(true);
+    try {
+      await Promise.all(ids.map((id) => update({ data: { order_id: id, status } })));
+      toast.success(`${ids.length} marked ${status}`);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Failed");
+    } finally {
+      setBulking(false);
+    }
+  }
+
   async function markDineIn(id: string, current: string) {
     try {
       if (current === "dine_in") {
