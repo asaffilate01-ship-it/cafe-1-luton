@@ -417,7 +417,9 @@ export type Database = {
           group_label: string | null
           id: string
           image_url: string | null
+          is_beverage: boolean
           is_veg: boolean
+          juror_menu: boolean
           loyalty_drink: boolean
           name: string
           needs_cooking: boolean
@@ -433,7 +435,9 @@ export type Database = {
           group_label?: string | null
           id?: string
           image_url?: string | null
+          is_beverage?: boolean
           is_veg?: boolean
+          juror_menu?: boolean
           loyalty_drink?: boolean
           name: string
           needs_cooking?: boolean
@@ -449,7 +453,9 @@ export type Database = {
           group_label?: string | null
           id?: string
           image_url?: string | null
+          is_beverage?: boolean
           is_veg?: boolean
+          juror_menu?: boolean
           loyalty_drink?: boolean
           name?: string
           needs_cooking?: boolean
@@ -595,6 +601,8 @@ export type Database = {
           driver_id: string | null
           guest_token: string
           id: string
+          juror_discount_cents: number
+          jury_room: string | null
           loyalty_awarded: boolean
           loyalty_stamps_pending: number
           order_number: number
@@ -642,6 +650,8 @@ export type Database = {
           driver_id?: string | null
           guest_token?: string
           id?: string
+          juror_discount_cents?: number
+          jury_room?: string | null
           loyalty_awarded?: boolean
           loyalty_stamps_pending?: number
           order_number?: number
@@ -689,6 +699,8 @@ export type Database = {
           driver_id?: string | null
           guest_token?: string
           id?: string
+          juror_discount_cents?: number
+          jury_room?: string | null
           loyalty_awarded?: boolean
           loyalty_stamps_pending?: number
           order_number?: number
@@ -964,39 +976,111 @@ export type Database = {
           },
         ]
       }
+      voucher_events: {
+        Row: {
+          amount_cents: number | null
+          code: string
+          created_at: string
+          detail: string | null
+          event: string
+          holder_id: string | null
+          id: string
+          order_id: string | null
+        }
+        Insert: {
+          amount_cents?: number | null
+          code: string
+          created_at?: string
+          detail?: string | null
+          event: string
+          holder_id?: string | null
+          id?: string
+          order_id?: string | null
+        }
+        Update: {
+          amount_cents?: number | null
+          code?: string
+          created_at?: string
+          detail?: string | null
+          event?: string
+          holder_id?: string | null
+          id?: string
+          order_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "voucher_events_holder_id_fkey"
+            columns: ["holder_id"]
+            isOneToOne: false
+            referencedRelation: "voucher_holders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "voucher_events_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       voucher_holders: {
         Row: {
           active: boolean
+          batch: string | null
           code: string
           created_at: string
+          daily_amount_cents: number
+          deactivated_at: string | null
           email: string | null
           id: string
+          jury_room: string | null
           name: string | null
           notes: string | null
+          opt_in_source: string | null
+          opted_in_at: string | null
           phone: string | null
           updated_at: string
+          valid_from: string
+          valid_until: string | null
         }
         Insert: {
           active?: boolean
+          batch?: string | null
           code: string
           created_at?: string
+          daily_amount_cents?: number
+          deactivated_at?: string | null
           email?: string | null
           id?: string
+          jury_room?: string | null
           name?: string | null
           notes?: string | null
+          opt_in_source?: string | null
+          opted_in_at?: string | null
           phone?: string | null
           updated_at?: string
+          valid_from?: string
+          valid_until?: string | null
         }
         Update: {
           active?: boolean
+          batch?: string | null
           code?: string
           created_at?: string
+          daily_amount_cents?: number
+          deactivated_at?: string | null
           email?: string | null
           id?: string
+          jury_room?: string | null
           name?: string | null
           notes?: string | null
+          opt_in_source?: string | null
+          opted_in_at?: string | null
           phone?: string | null
           updated_at?: string
+          valid_from?: string
+          valid_until?: string | null
         }
         Relationships: []
       }
@@ -1082,8 +1166,13 @@ export type Database = {
           code: string
           holder_id: string
           holder_name: string
+          jury_room: string
+          opted_in: boolean
           remaining_cents: number
+          status: string
           used_cents: number
+          valid_from: string
+          valid_until: string
         }[]
       }
       has_role: {
@@ -1094,6 +1183,15 @@ export type Database = {
         Returns: boolean
       }
       increment_promo_use: { Args: { _code: string }; Returns: undefined }
+      is_court_working_day: { Args: { _d: string }; Returns: boolean }
+      opt_in_voucher: {
+        Args: { _code: string; _source: string }
+        Returns: {
+          already: boolean
+          message: string
+          ok: boolean
+        }[]
+      }
       redeem_voucher: {
         Args: { _amount_cents: number; _holder_id: string; _order_id: string }
         Returns: number
