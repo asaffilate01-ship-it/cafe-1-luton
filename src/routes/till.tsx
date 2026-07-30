@@ -239,7 +239,7 @@ function Till() {
   return (
     <div className="flex h-screen flex-col overflow-hidden bg-neutral-950 text-white">
       {/* top bar */}
-      <header className="flex shrink-0 items-center gap-3 border-b border-white/10 bg-neutral-900 px-4 py-2.5">
+      <header className="flex shrink-0 flex-wrap items-center gap-2 border-b border-white/10 bg-neutral-900 px-3 py-2 sm:gap-3 sm:px-4 sm:py-2.5">
         <span className="rounded-lg bg-primary px-3 py-1 text-xs font-black uppercase tracking-widest text-primary-foreground">Cafe 1 Till</span>
         <div className="flex gap-1.5">
           {(["jury", "judge", "public"] as const).map((s) => (
@@ -250,13 +250,13 @@ function Till() {
           ))}
         </div>
         <div className="ml-auto flex items-center gap-2 text-xs text-white/50">
-          <span className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 ${readerId ? "border-emerald-500/40 text-emerald-300" : "border-white/15"}`}>
+          <span className={`hidden items-center gap-1.5 rounded-full border px-2.5 py-1 sm:inline-flex ${readerId ? "border-emerald-500/40 text-emerald-300" : "border-white/15"}`}>
             <Smartphone className="h-3.5 w-3.5" />
             {readerId ? readers.find((r) => r.id === readerId)?.name ?? "Solo reader" : "No reader"}
           </span>
           <button onClick={() => void openCashDrawer().then((r) => (r.ok ? toast.success(r.message) : toast.error(r.message)))}
-            className="inline-flex items-center gap-1.5 rounded-lg border border-white/15 px-3 py-1.5 font-semibold text-white/80 hover:border-white/40">
-            <Inbox className="h-4 w-4" /> Drawer
+            className="inline-flex items-center gap-1.5 rounded-lg border border-white/15 px-2.5 py-1.5 font-semibold text-white/80 hover:border-white/40">
+            <Inbox className="h-4 w-4" /> <span className="hidden sm:inline">Drawer</span>
           </button>
           <button onClick={() => setSettings(true)} aria-label="Till settings" className="grid h-8 w-8 place-items-center rounded-lg border border-white/15 hover:border-white/40"><Settings2 className="h-4 w-4" /></button>
           <button onClick={() => setLocked(true)} aria-label="Lock till" className="grid h-8 w-8 place-items-center rounded-lg border border-white/15 hover:border-white/40"><Lock className="h-4 w-4" /></button>
