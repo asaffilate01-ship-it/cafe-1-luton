@@ -18,6 +18,7 @@ import { toast } from "sonner";
 import {
   Banknote, CreditCard, Minus, Plus, Search, Trash2, Lock, LogOut, Settings2, X,
   Smartphone, Loader2, Check, Printer, Inbox, ShoppingBag, HandPlatter, Bike,
+  Delete, ReceiptText, UtensilsCrossed, ChevronDown,
 } from "lucide-react";
 
 export const Route = createFileRoute("/till")({
@@ -36,7 +37,7 @@ export const Route = createFileRoute("/till")({
 });
 
 type Cat = { id: string; name: string; sort_order: number };
-type Item = { id: string; name: string; price_cents: number; category_id: string | null; sort_order: number };
+type Item = { id: string; name: string; price_cents: number; category_id: string | null; sort_order: number; image_url: string | null };
 type Line = { id: string; name: string; price_cents: number; qty: number };
 type Side = "jury" | "judge" | "public";
 type Fulfilment = "dine_in" | "collection" | "delivery";
@@ -147,6 +148,8 @@ function Till() {
   const [locked, setLocked] = useState(false);
   const [busy, setBusy] = useState(false);
   const [lastOrder, setLastOrder] = useState<{ n: number; total: number; id: string } | null>(null);
+  const [tendered, setTendered] = useState(0);
+  const [showOrder, setShowOrder] = useState(false);
 
   useEffect(() => { window.localStorage.setItem("cafe1-pos-side", side); }, [side]);
   useEffect(() => {
@@ -157,7 +160,7 @@ function Till() {
     (async () => {
       const [{ data: c }, { data: i }] = await Promise.all([
         supabase.from("menu_categories").select("id, name, sort_order").eq("active", true).order("sort_order"),
-        supabase.from("menu_items").select("id, name, price_cents, category_id, sort_order").eq("active", true).order("sort_order"),
+        supabase.from("menu_items").select("id, name, price_cents, category_id, sort_order, image_url").eq("active", true).order("sort_order"),
       ]);
       setCats((c ?? []) as Cat[]);
       setItems((i ?? []) as Item[]);
@@ -221,7 +224,7 @@ function Till() {
         toast.success(`Order #${res.order_number} sent to the kitchen · ${money(res.total_cents)}`);
         window.open(`/print/${res.order_id}`, "_blank");
         if (payment_method === "cash") void openCashDrawer();
-        setLines([]); setName(""); setTable(""); setPay(null);
+        setLines([]); setName(""); setTable(""); setPay(null); setTendered(0); setShowOrder(false);
       } catch (e) {
         toast.error(e instanceof Error ? e.message : "Could not take that order");
       } finally {
@@ -236,7 +239,7 @@ function Till() {
   return (
     <div className="flex h-screen flex-col overflow-hidden bg-neutral-950 text-white">
       {/* top bar */}
-      <header className="flex shrink-0 items-center gap-3 border-b border-white/10 bg-neutral-900 px-4 py-2.5">
+      <header className="flex shrink-0 flex-wrap items-center gap-2 border-b border-white/10 bg-neutral-900 px-3 py-2 sm:gap-3 sm:px-4 sm:py-2.5">
         <span className="rounded-lg bg-primary px-3 py-1 text-xs font-black uppercase tracking-widest text-primary-foreground">Cafe 1 Till</span>
         <div className="flex gap-1.5">
           {(["jury", "judge", "public"] as const).map((s) => (
@@ -247,13 +250,13 @@ function Till() {
           ))}
         </div>
         <div className="ml-auto flex items-center gap-2 text-xs text-white/50">
-          <span className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 ${readerId ? "border-emerald-500/40 text-emerald-300" : "border-white/15"}`}>
+          <span className={`hidden items-center gap-1.5 rounded-full border px-2.5 py-1 sm:inline-flex ${readerId ? "border-emerald-500/40 text-emerald-300" : "border-white/15"}`}>
             <Smartphone className="h-3.5 w-3.5" />
             {readerId ? readers.find((r) => r.id === readerId)?.name ?? "Solo reader" : "No reader"}
           </span>
           <button onClick={() => void openCashDrawer().then((r) => (r.ok ? toast.success(r.message) : toast.error(r.message)))}
-            className="inline-flex items-center gap-1.5 rounded-lg border border-white/15 px-3 py-1.5 font-semibold text-white/80 hover:border-white/40">
-            <Inbox className="h-4 w-4" /> Drawer
+            className="inline-flex items-center gap-1.5 rounded-lg border border-white/15 px-2.5 py-1.5 font-semibold text-white/80 hover:border-white/40">
+            <Inbox className="h-4 w-4" /> <span className="hidden sm:inline">Drawer</span>
           </button>
           <button onClick={() => setSettings(true)} aria-label="Till settings" className="grid h-8 w-8 place-items-center rounded-lg border border-white/15 hover:border-white/40"><Settings2 className="h-4 w-4" /></button>
           <button onClick={() => setLocked(true)} aria-label="Lock till" className="grid h-8 w-8 place-items-center rounded-lg border border-white/15 hover:border-white/40"><Lock className="h-4 w-4" /></button>
@@ -261,21 +264,33 @@ function Till() {
         </div>
       </header>
 
-      <div className="grid min-h-0 flex-1 lg:grid-cols-[1fr_400px]">
+      <div className="grid min-h-0 flex-1 lg:grid-cols-[132px_minmax(0,1fr)_400px]">
+        {/* category rail (desktop) */}
+        <nav className="hidden min-h-0 flex-col gap-1 overflow-y-auto border-r border-white/10 bg-neutral-900/60 p-2 lg:flex">
+          {cats.map((c) => (
+            <button key={c.id} onClick={() => { setCatId(c.id); setQ(""); }}
+              className={`shrink-0 rounded-xl px-3 py-3 text-left text-[11px] font-black uppercase leading-tight tracking-wide transition ${
+                catId === c.id && !q ? "bg-primary text-primary-foreground" : "text-white/60 hover:bg-white/5 hover:text-white"
+              }`}>
+              {c.name}
+            </button>
+          ))}
+        </nav>
+
         {/* products */}
         <section className="flex min-h-0 flex-col">
-          <div className="shrink-0 space-y-3 border-b border-white/10 p-4">
+          <div className="shrink-0 space-y-3 border-b border-white/10 p-3 sm:p-4">
             <div className="flex items-center gap-2 rounded-xl border border-white/10 bg-neutral-900 px-4">
-              <Search className="h-4 w-4 text-white/40" />
+              <Search className="h-4 w-4 shrink-0 text-white/40" />
               <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search the whole menu…"
-                className="h-11 flex-1 bg-transparent text-sm outline-none placeholder:text-white/30" />
+                className="h-11 min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-white/30" />
               {q && <button onClick={() => setQ("")} aria-label="Clear search"><X className="h-4 w-4 text-white/40" /></button>}
             </div>
             {!q && (
-              <div className="flex gap-2 overflow-x-auto pb-1">
+              <div className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-1 lg:hidden">
                 {cats.map((c) => (
                   <button key={c.id} onClick={() => setCatId(c.id)}
-                    className={`shrink-0 rounded-lg px-3.5 py-2 text-xs font-bold uppercase tracking-wide transition ${catId === c.id ? "bg-white text-neutral-950" : "border border-white/10 bg-neutral-900 text-white/70 hover:border-white/40"}`}>
+                    className={`shrink-0 rounded-full px-3.5 py-2 text-xs font-bold uppercase tracking-wide transition ${catId === c.id ? "bg-white text-neutral-950" : "border border-white/10 bg-neutral-900 text-white/70"}`}>
                     {c.name}
                   </button>
                 ))}
@@ -283,13 +298,25 @@ function Till() {
             )}
           </div>
 
-          <div className="min-h-0 flex-1 overflow-y-auto p-4">
-            <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 xl:grid-cols-4">
+          <div className="min-h-0 flex-1 overflow-y-auto p-3 pb-24 sm:p-4 lg:pb-4">
+            <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
               {visible.map((i) => (
                 <button key={i.id} onClick={() => add(i)}
-                  className="flex h-24 flex-col justify-between rounded-2xl border border-white/10 bg-neutral-900 p-3 text-left transition hover:border-primary hover:bg-neutral-800 active:scale-[0.98]">
-                  <span className="line-clamp-2 text-sm font-semibold leading-snug">{i.name}</span>
-                  <span className="font-display text-lg font-bold text-primary">{money(i.price_cents)}</span>
+                  className="group flex flex-col overflow-hidden rounded-2xl border border-white/10 bg-neutral-900 text-left transition hover:border-primary hover:bg-neutral-800 active:scale-[0.98]">
+                  <div className="relative aspect-[4/3] w-full overflow-hidden bg-neutral-800">
+                    {i.image_url ? (
+                      <img src={i.image_url} alt={i.name} loading="lazy"
+                        className="h-full w-full object-cover transition group-hover:scale-105" />
+                    ) : (
+                      <div className="grid h-full w-full place-items-center text-white/15">
+                        <UtensilsCrossed className="h-7 w-7" />
+                      </div>
+                    )}
+                  </div>
+                  <div className="flex min-h-[64px] flex-1 flex-col justify-between gap-1 p-2.5">
+                    <span className="line-clamp-2 text-[13px] font-semibold leading-snug">{i.name}</span>
+                    <span className="font-display text-base font-bold text-primary">{money(i.price_cents)}</span>
+                  </div>
                 </button>
               ))}
               {!visible.length && <p className="text-sm text-white/40">No items.</p>}
@@ -298,7 +325,13 @@ function Till() {
         </section>
 
         {/* order panel */}
-        <aside className="flex min-h-0 flex-col border-l border-white/10 bg-neutral-900">
+        <aside className={`fixed inset-0 z-40 min-h-0 flex-col bg-neutral-900 lg:static lg:z-auto lg:flex lg:border-l lg:border-white/10 ${showOrder ? "flex" : "hidden"}`}>
+          <div className="flex shrink-0 items-center justify-between border-b border-white/10 px-4 py-3 lg:hidden">
+            <span className="font-display text-lg font-bold">Current order</span>
+            <button onClick={() => setShowOrder(false)} aria-label="Back to menu" className="grid h-9 w-9 place-items-center rounded-lg border border-white/15">
+              <ChevronDown className="h-4 w-4" />
+            </button>
+          </div>
           <div className="shrink-0 space-y-2 border-b border-white/10 p-4">
             <div className="grid grid-cols-3 gap-1.5">
               {FULFIL.map(({ id, label, Icon }) => (
@@ -347,36 +380,89 @@ function Till() {
             </ul>
           </div>
 
-          <div className="shrink-0 space-y-3 border-t border-white/10 p-4">
-            <div className="flex items-baseline justify-between">
-              <span className="text-xs font-bold uppercase tracking-widest text-white/50">{count} item{count === 1 ? "" : "s"}</span>
-              <span className="font-display text-3xl font-black text-primary">{money(total)}</span>
-            </div>
-            <div className="grid gap-2">
-              <button disabled={!lines.length || busy} onClick={() => setPay("reader")}
-                className="inline-flex h-14 items-center justify-center gap-2 rounded-xl bg-primary text-base font-bold text-primary-foreground disabled:opacity-40">
-                <Smartphone className="h-5 w-5" /> Charge SumUp Solo
-              </button>
-              <div className="grid grid-cols-2 gap-2">
-                <button disabled={!lines.length || busy} onClick={() => setPay("cash")}
-                  className="inline-flex h-12 items-center justify-center gap-2 rounded-xl bg-emerald-600 text-sm font-bold text-white disabled:opacity-40">
-                  <Banknote className="h-4 w-4" /> Cash
-                </button>
-                <button disabled={!lines.length || busy} onClick={() => setPay("manual")}
-                  className="inline-flex h-12 items-center justify-center gap-2 rounded-xl border border-white/15 text-sm font-bold text-white/80 disabled:opacity-40">
-                  <CreditCard className="h-4 w-4" /> Other card
-                </button>
+          {/* cash calculator — always visible */}
+          <div className="shrink-0 border-t border-white/10 p-3">
+            <div className="mb-2 grid grid-cols-3 items-end gap-2 rounded-2xl bg-neutral-800/70 px-3 py-2">
+              <div>
+                <p className="text-[10px] font-bold uppercase tracking-widest text-white/40">Tendered</p>
+                <p className="text-base font-bold tabular-nums">{money(tendered)}</p>
               </div>
-              <button disabled={!lines.length} onClick={() => setLines([])}
-                className="inline-flex h-10 items-center justify-center gap-2 rounded-xl text-xs font-semibold text-white/40 hover:text-white disabled:opacity-40">
+              <div className="text-center">
+                <p className="text-[10px] font-bold uppercase tracking-widest text-white/40">Change</p>
+                <p className={`text-base font-bold tabular-nums ${tendered - total < 0 ? "text-white/25" : "text-emerald-400"}`}>
+                  {tendered === 0 || tendered - total < 0 ? "—" : money(tendered - total)}
+                </p>
+              </div>
+              <div className="text-right">
+                <p className="text-[10px] font-bold uppercase tracking-widest text-white/40">Total</p>
+                <p className="font-display text-xl font-black leading-none text-primary tabular-nums">{money(total)}</p>
+              </div>
+            </div>
+            <div className="grid grid-cols-4 gap-1.5">
+              {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((n) => (
+                <button key={n} onClick={() => setTendered((t) => Math.min(t * 10 + n * 100, 5_000_00))}
+                  className="h-11 rounded-xl border border-white/10 bg-neutral-800/50 text-lg font-bold hover:border-white/40 active:scale-95">{n}</button>
+              ))}
+              <button onClick={() => setTendered(total)}
+                className="h-11 rounded-xl border border-emerald-500/40 text-xs font-black uppercase tracking-wide text-emerald-300 hover:border-emerald-400">Exact</button>
+              <button onClick={() => setTendered((t) => Math.min(t * 10, 5_000_00))}
+                className="h-11 rounded-xl border border-white/10 bg-neutral-800/50 text-lg font-bold hover:border-white/40 active:scale-95">0</button>
+              <button onClick={() => setTendered((t) => Math.floor(t / 10 / 100) * 100)} aria-label="Delete last digit"
+                className="grid h-11 place-items-center rounded-xl border border-white/10 bg-neutral-800/50 hover:border-white/40 active:scale-95"><Delete className="h-4 w-4" /></button>
+              <button onClick={() => setTendered(0)}
+                className="h-11 rounded-xl border border-white/10 text-xs font-black uppercase tracking-wide text-white/50 hover:border-white/40">Clear</button>
+            </div>
+            <div className="mt-1.5 grid grid-cols-4 gap-1.5">
+              {[500, 1000, 2000, 5000].map((v) => (
+                <button key={v} onClick={() => setTendered(v)}
+                  className="h-9 rounded-xl border border-white/10 text-xs font-bold text-white/70 hover:border-white/40">{money(v)}</button>
+              ))}
+            </div>
+          </div>
+
+          <div className="shrink-0 space-y-2 border-t border-white/10 p-3">
+            <button disabled={!lines.length || busy} onClick={() => setPay("reader")}
+              className="inline-flex h-14 w-full items-center justify-between gap-2 rounded-xl bg-primary px-5 text-base font-bold text-primary-foreground disabled:opacity-40">
+              <span className="inline-flex items-center gap-2"><Smartphone className="h-5 w-5" /> Charge SumUp Solo</span>
+              <span className="font-display text-lg font-black tabular-nums">{money(total)}</span>
+            </button>
+            <div className="grid grid-cols-2 gap-2">
+              <button disabled={!lines.length || busy} onClick={() => { if (tendered && tendered < total) return toast.error("Tendered is less than the total"); void finish("cash"); }}
+                className="inline-flex h-12 items-center justify-center gap-2 rounded-xl bg-emerald-600 text-sm font-bold text-white disabled:opacity-40">
+                <Banknote className="h-4 w-4" /> Cash & drawer
+              </button>
+              <button disabled={!lines.length || busy} onClick={() => setPay("manual")}
+                className="inline-flex h-12 items-center justify-center gap-2 rounded-xl border border-white/15 text-sm font-bold text-white/80 disabled:opacity-40">
+                <CreditCard className="h-4 w-4" /> Other card
+              </button>
+            </div>
+            <div className="flex items-center justify-between text-xs">
+              <button disabled={!lines.length} onClick={() => { setLines([]); setTendered(0); }}
+                className="inline-flex items-center gap-1.5 rounded-lg px-2 py-1.5 font-semibold text-white/40 hover:text-white disabled:opacity-40">
                 <Trash2 className="h-3.5 w-3.5" /> Clear order
               </button>
+              {lastOrder && (
+                <button onClick={() => window.open(`/print/${lastOrder.id}`, "_blank")}
+                  className="inline-flex items-center gap-1.5 rounded-lg px-2 py-1.5 font-semibold text-white/40 hover:text-white">
+                  <Printer className="h-3.5 w-3.5" /> Reprint #{lastOrder.n}
+                </button>
+              )}
             </div>
           </div>
         </aside>
       </div>
 
-      {pay === "cash" && <CashPay total={total} busy={busy} onClose={() => setPay(null)} onDone={() => finish("cash")} />}
+      {/* mobile order bar */}
+      {!showOrder && (
+        <button onClick={() => setShowOrder(true)}
+          className="fixed inset-x-3 bottom-3 z-30 flex h-14 items-center justify-between rounded-2xl bg-primary px-5 text-primary-foreground shadow-2xl lg:hidden">
+          <span className="inline-flex items-center gap-2 text-sm font-bold uppercase tracking-wide">
+            <ReceiptText className="h-5 w-5" /> {count} item{count === 1 ? "" : "s"}
+          </span>
+          <span className="font-display text-xl font-black tabular-nums">{money(total)}</span>
+        </button>
+      )}
+
       {pay === "manual" && (
         <Modal title="Paid on another card machine" onClose={() => setPay(null)}>
           <p className="text-sm text-white/60">Confirm once the customer&apos;s card payment has gone through on the terminal.</p>
@@ -414,50 +500,6 @@ function Modal({ title, children, onClose }: { title: string; children: React.Re
         {children}
       </div>
     </div>
-  );
-}
-
-function CashPay({ total, busy, onClose, onDone }: { total: number; busy: boolean; onClose: () => void; onDone: () => void }) {
-  const [tendered, setTendered] = useState<number>(0);
-  const change = tendered - total;
-  const quick = [total, 500, 1000, 2000, 5000].filter((v, i, a) => a.indexOf(v) === i);
-  return (
-    <Modal title="Cash payment" onClose={onClose}>
-      <div className="rounded-2xl bg-neutral-800 p-4 text-center">
-        <p className="text-xs font-bold uppercase tracking-widest text-white/40">Total due</p>
-        <p className="font-display text-4xl font-black text-primary">{money(total)}</p>
-      </div>
-      <div className="mt-3 grid grid-cols-5 gap-1.5">
-        {quick.map((v, i) => (
-          <button key={`${v}-${i}`} onClick={() => setTendered(v)}
-            className={`rounded-xl py-2.5 text-sm font-bold ${tendered === v ? "bg-emerald-600 text-white" : "border border-white/10 text-white/80 hover:border-white/40"}`}>
-            {i === 0 ? "Exact" : money(v)}
-          </button>
-        ))}
-      </div>
-      <div className="mt-3 grid grid-cols-3 gap-1.5">
-        {[1, 2, 3, 4, 5, 6, 7, 8, 9, 0].map((n) => (
-          <button key={n} onClick={() => setTendered((t) => Math.min(t * 10 + n * 100, 5000000))}
-            className="rounded-xl border border-white/10 py-3 text-lg font-bold hover:border-white/40">{n}</button>
-        ))}
-        <button onClick={() => setTendered(0)} className="rounded-xl border border-white/10 py-3 text-sm font-bold text-white/60 hover:border-white/40">Clear</button>
-        <button onClick={() => void openCashDrawer()} className="rounded-xl border border-white/10 py-3 text-xs font-bold text-white/60 hover:border-white/40">Drawer</button>
-      </div>
-      <div className="mt-4 flex items-center justify-between rounded-2xl bg-neutral-800 px-4 py-3">
-        <div>
-          <p className="text-[11px] font-bold uppercase tracking-widest text-white/40">Tendered</p>
-          <p className="text-lg font-bold">{money(tendered)}</p>
-        </div>
-        <div className="text-right">
-          <p className="text-[11px] font-bold uppercase tracking-widest text-white/40">Change</p>
-          <p className={`text-lg font-bold ${change < 0 ? "text-white/30" : "text-emerald-400"}`}>{change < 0 ? "—" : money(change)}</p>
-        </div>
-      </div>
-      <button disabled={busy} onClick={onDone}
-        className="mt-4 inline-flex h-14 w-full items-center justify-center gap-2 rounded-xl bg-emerald-600 text-base font-bold text-white disabled:opacity-50">
-        {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Banknote className="h-5 w-5" />} Take cash & open drawer
-      </button>
-    </Modal>
   );
 }
 

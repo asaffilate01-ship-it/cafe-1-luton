@@ -78,20 +78,22 @@ function MenuManager() {
     <div className="min-h-screen bg-background">
       <AdminNav />
       <div className="border-b border-border bg-card">
-        <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-4">
-          <div>
+        <div className="mx-auto grid max-w-7xl grid-cols-[minmax(0,1fr)_auto] items-center gap-3 px-4 py-4">
+          <div className="min-w-0">
             <Link to="/admin" className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
               <ChevronLeft className="h-4 w-4" /> Admin
             </Link>
-            <h1 className="mt-1 font-display text-3xl font-bold">Menu manager</h1>
+            <h1 className="mt-1 truncate font-display text-2xl font-bold sm:text-3xl">Menu manager</h1>
           </div>
-          <p className="text-sm text-muted-foreground">{cats.length} categories · {items.length} items · {mods.length} modifiers</p>
+          <p className="shrink-0 text-right text-xs text-muted-foreground sm:text-sm">
+            {cats.length} categories<span className="hidden sm:inline"> · {items.length} items · {mods.length} modifiers</span>
+          </p>
         </div>
       </div>
 
-      <div className="mx-auto grid max-w-7xl gap-6 px-4 py-6 md:grid-cols-[280px_1fr]">
+      <div className="mx-auto grid max-w-7xl gap-6 px-4 py-6 md:grid-cols-[260px_minmax(0,1fr)]">
         {/* Categories sidebar */}
-        <aside className="rounded-2xl border border-border bg-card p-4">
+        <aside className="h-fit rounded-2xl border border-border bg-card p-4 md:sticky md:top-4">
           <div className="flex items-center justify-between">
             <h2 className="font-semibold">Categories</h2>
             <button
@@ -268,19 +270,34 @@ function ItemRow({ it, onChanged }: { it: Item; onChanged: () => void }) {
   }
 
   return (
-    <div className="grid gap-3 rounded-xl border border-border bg-background p-3 md:grid-cols-[80px_1fr_auto]">
-      <label className="relative grid h-20 w-20 cursor-pointer place-items-center overflow-hidden rounded-lg border border-dashed border-border bg-muted text-muted-foreground">
-        {form.image_url ? (
-          <img src={form.image_url} alt={form.name} className="h-full w-full object-cover" />
-        ) : (
-          <ImageIcon className="h-6 w-6" />
+    <div className="grid grid-cols-[96px_minmax(0,1fr)] items-start gap-3 rounded-xl border border-border bg-background p-3 md:grid-cols-[96px_minmax(0,1fr)_auto]">
+      <div className="space-y-1">
+        <label className="group relative grid h-24 w-24 cursor-pointer place-items-center overflow-hidden rounded-xl border border-dashed border-border bg-muted text-muted-foreground">
+          {form.image_url ? (
+            <img src={form.image_url} alt={form.name} className="h-full w-full object-cover" />
+          ) : (
+            <span className="flex flex-col items-center gap-1 text-[10px] font-semibold uppercase tracking-wide">
+              <ImageIcon className="h-5 w-5" /> Add photo
+            </span>
+          )}
+          <input type="file" accept="image/*" className="absolute inset-0 cursor-pointer opacity-0"
+            onChange={(e) => { const f = e.target.files?.[0]; if (f) onFile(f); }} />
+          {form.image_url && (
+            <span className="pointer-events-none absolute inset-x-0 bottom-0 bg-black/60 py-0.5 text-center text-[10px] font-semibold uppercase tracking-wide text-white opacity-0 transition group-hover:opacity-100">
+              Replace
+            </span>
+          )}
+          {uploading && <span className="absolute inset-0 grid place-items-center bg-black/60 text-xs text-white">Uploading…</span>}
+        </label>
+        {form.image_url && (
+          <button type="button" onClick={() => save({ image_url: null })}
+            className="w-24 rounded-lg border border-border py-1 text-[11px] font-semibold text-muted-foreground hover:text-destructive">
+            Remove
+          </button>
         )}
-        <input type="file" accept="image/*" className="absolute inset-0 cursor-pointer opacity-0"
-          onChange={(e) => { const f = e.target.files?.[0]; if (f) onFile(f); }} />
-        {uploading && <span className="absolute inset-0 grid place-items-center bg-black/50 text-xs text-white">…</span>}
-      </label>
+      </div>
 
-      <div className="grid gap-2 sm:grid-cols-2">
+      <div className="grid min-w-0 gap-2 sm:grid-cols-2">
         <input
           value={form.name}
           onChange={(e)=>setForm({...form, name:e.target.value})}
@@ -323,7 +340,7 @@ function ItemRow({ it, onChanged }: { it: Item; onChanged: () => void }) {
           className="rounded-lg border border-input bg-background px-3 py-2 text-sm"
           placeholder="Sub-group label (optional)"
         />
-        <div className="flex items-center gap-4 text-sm text-muted-foreground">
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-muted-foreground sm:col-span-2">
           <button
             type="button"
             onClick={()=>{ const next = !form.active; setForm({...form, active: next}); save({ active: next }); }}
@@ -344,11 +361,11 @@ function ItemRow({ it, onChanged }: { it: Item; onChanged: () => void }) {
             <input type="checkbox" checked={!!form.needs_cooking} onChange={(e)=>{ setForm({...form, needs_cooking:e.target.checked}); save({ needs_cooking:e.target.checked }); }} />
             Needs cooking
           </label>
-          <span>{money(form.price_cents)}</span>
+          <span className="ml-auto font-semibold text-foreground">{money(form.price_cents)}</span>
         </div>
       </div>
 
-      <div className="flex items-start justify-end">
+      <div className="col-span-2 flex items-start justify-end md:col-span-1">
         <button
           onClick={async ()=>{
             if (!confirm(`Delete "${it.name}"?`)) return;
