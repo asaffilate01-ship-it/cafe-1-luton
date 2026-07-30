@@ -454,14 +454,18 @@ function Till() {
               <span className="inline-flex items-center gap-2"><Smartphone className="h-5 w-5" /> Charge SumUp Solo</span>
               <span className="font-display text-lg font-black tabular-nums">{money(total)}</span>
             </button>
-            <div className="grid grid-cols-2 gap-2">
+            <div className="grid grid-cols-3 gap-2">
               <button disabled={!lines.length || busy} onClick={() => { if (tendered && tendered < total) return toast.error("Tendered is less than the total"); void finish("cash"); }}
                 className="inline-flex h-12 items-center justify-center gap-2 rounded-xl bg-emerald-600 text-sm font-bold text-white disabled:opacity-40">
-                <Banknote className="h-4 w-4" /> Cash & drawer
+                <Banknote className="h-4 w-4" /> Cash
+              </button>
+              <button onClick={() => void openCashDrawer().then((r) => (r.ok ? toast.success(r.message) : toast.error(r.message)))}
+                className="inline-flex h-12 items-center justify-center gap-2 rounded-xl border border-white/15 text-sm font-bold text-white/80 hover:border-white/40">
+                <Inbox className="h-4 w-4" /> Drawer
               </button>
               <button disabled={!lines.length || busy} onClick={() => setPay("manual")}
                 className="inline-flex h-12 items-center justify-center gap-2 rounded-xl border border-white/15 text-sm font-bold text-white/80 disabled:opacity-40">
-                <CreditCard className="h-4 w-4" /> Other card
+                <CreditCard className="h-4 w-4" /> Card
               </button>
             </div>
             <div className="flex items-center justify-between text-xs">
