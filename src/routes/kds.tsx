@@ -274,7 +274,7 @@ function KDS() {
           <span className="inline-flex items-center gap-1.5"><span className="h-3 w-3 rounded-full bg-emerald-500 ring-2 ring-white/60" /> Ready → complete</span>
           </div>
       </header>
-      <div className="mx-auto grid max-w-7xl gap-4 p-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+      <div className="mx-auto grid max-w-[110rem] gap-3 p-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
         {tickets.map((t) => {
           const elapsedSec = Math.max(0, Math.floor((now - new Date(t.created_at).getTime()) / 1000));
           const mins = Math.floor(elapsedSec / 60);
@@ -288,123 +288,123 @@ function KDS() {
           return (
             <div
               key={t.id}
-              className={`flex flex-col rounded-2xl border-4 p-4 ${
-                cook ? "border-blue-600 bg-blue-50" : "border-amber-400 bg-amber-50"
+              className={`flex flex-col overflow-hidden rounded-xl border-2 bg-white p-3 shadow-sm ring-1 ring-black/5 transition-shadow ${
+                cook ? "border-blue-600" : "border-amber-400"
               } ${hot ? "shadow-brand" : ""}`}
             >
-              <div className={`-mx-4 -mt-4 mb-3 rounded-t-xl px-4 py-1.5 text-center text-xs font-black uppercase tracking-widest text-white ${cook ? "bg-blue-600" : "bg-amber-500"}`}>
+              <div className={`-mx-3 -mt-3 mb-2 px-3 py-1 text-center text-[10px] font-black uppercase tracking-[0.14em] text-white ${cook ? "bg-blue-600" : "bg-amber-500"}`}>
                 {cook ? "Cook / hot food" : "No cooking needed"}
               </div>
-              <div className="flex items-center justify-between">
-                <p className="font-display text-2xl font-bold">#{t.order_number}</p>
-                <div className="flex items-center gap-2">
+              <div className="flex items-start justify-between gap-2">
+                <p className="font-display text-lg font-bold leading-none">#{t.order_number}</p>
+                <div className="flex flex-wrap items-center justify-end gap-1">
                   {t.source === "sumup_pos" && (
-                    <span className="rounded-full bg-blue-600 px-2 py-0.5 text-[10px] font-black uppercase tracking-wide text-white">SumUp POS</span>
+                    <span className="rounded-full bg-blue-600 px-1.5 py-px text-[9px] font-black uppercase tracking-wide text-white">SumUp POS</span>
                   )}
                   {t.source === "deliveroo" && (
-                    <span className="rounded-full bg-[#00CCBC] px-2 py-0.5 text-[10px] font-black uppercase tracking-wide text-white">Deliveroo</span>
+                    <span className="rounded-full bg-[#00CCBC] px-1.5 py-px text-[9px] font-black uppercase tracking-wide text-white">Deliveroo</span>
                   )}
                   {t.source === "counter" && (
-                    <span className="rounded-full bg-slate-700 px-2 py-0.5 text-[10px] font-black uppercase tracking-wide text-white">Counter</span>
+                    <span className="rounded-full bg-slate-700 px-1.5 py-px text-[9px] font-black uppercase tracking-wide text-white">Counter</span>
                   )}
                   {(t.pos_terminal === "jury" || t.pos_terminal === "public") && (
-                    <span className={`rounded-full px-2 py-0.5 text-[10px] font-black uppercase tracking-wide text-white ${t.pos_terminal === "jury" ? "bg-indigo-600" : "bg-teal-600"}`}>
+                    <span className={`rounded-full px-1.5 py-px text-[9px] font-black uppercase tracking-wide text-white ${t.pos_terminal === "jury" ? "bg-indigo-600" : "bg-teal-600"}`}>
                       {t.pos_terminal} side
                     </span>
                   )}
                   {t.source !== "sumup_pos" && t.source !== "deliveroo" && t.source !== "counter" && (
-                    <span className="rounded-full bg-purple-600 px-2 py-0.5 text-[10px] font-black uppercase tracking-wide text-white">Website</span>
+                    <span className="rounded-full bg-purple-600 px-1.5 py-px text-[9px] font-black uppercase tracking-wide text-white">Website</span>
                   )}
-                  <span className={`rounded-full px-2 py-0.5 text-[10px] font-black uppercase tracking-wide ${t.payment_method === "cash" ? "bg-emerald-600 text-white" : "bg-slate-800 text-white"}`}>
+                  <span className={`rounded-full px-1.5 py-px text-[9px] font-black uppercase tracking-wide ${t.payment_method === "cash" ? "bg-emerald-600 text-white" : "bg-slate-800 text-white"}`}>
                     {t.payment_method === "cash" ? "Cash" : "Card"}
                   </span>
                   <span
-                    className={`rounded-full px-2.5 py-0.5 font-mono text-base font-black tabular-nums ${timerTone}`}
+                    className={`rounded-full px-2 py-px font-mono text-xs font-black tabular-nums ${timerTone}`}
                     title="Time in kitchen since the order was accepted"
                   >
                     {clock}
                   </span>
                 </div>
               </div>
-              <p className="mt-0.5 text-xs font-semibold text-muted-foreground">
+              <p className="mt-0.5 text-[10px] font-semibold text-muted-foreground">
                 {new Date(t.created_at).toLocaleString([], { weekday: "short", day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" })}
               </p>
-              <div className="mt-2 rounded-xl bg-primary px-3 py-2 text-primary-foreground">
-                <p className="font-display text-2xl font-black uppercase leading-none tracking-wide">
+              <div className="mt-1.5 rounded-lg bg-primary px-2.5 py-1.5 text-primary-foreground">
+                <p className="font-display text-lg font-black uppercase leading-none tracking-wide">
                   {t.source === "sumup_pos" && t.type === "collection"
                     ? "TAKEAWAY"
                     : (TYPE_LABEL[t.type] ?? t.type.replace("_", " ").toUpperCase())}
                 </p>
-                <p className="mt-1 text-xl font-black leading-none">
+                <p className="mt-0.5 text-sm font-black leading-none">
                   {whenLabel(t) === "ASAP" ? "ASAP" : `FOR ${whenLabel(t)}`}
                 </p>
                 {t.type === "dine_in" && t.table_number && (
-                  <p className="mt-1 text-sm font-bold">TABLE {t.table_number}</p>
+                  <p className="mt-0.5 text-xs font-bold">TABLE {t.table_number}</p>
                 )}
                 <button
                   onClick={() => markDineIn(t.id, t.type)}
-                  className="mt-2 rounded-full bg-primary-foreground/20 px-2.5 py-1 text-[11px] font-bold uppercase tracking-wide hover:bg-primary-foreground/30"
+                  className="mt-1.5 rounded-full bg-primary-foreground/20 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wide hover:bg-primary-foreground/30"
                   title="Switch this ticket between dine in and pickup"
                 >
                   {t.type === "dine_in" ? "Change to pickup" : "Mark as dine in"}
                 </button>
               </div>
-              <p className="mt-2 text-base font-black uppercase tracking-wide text-foreground">{t.customer_name}</p>
+              <p className="mt-1.5 text-xs font-black uppercase tracking-wide text-foreground">{t.customer_name}</p>
               {(t.pos_terminal === "jury" || t.pos_terminal === "public") && (
-                <p className={`mt-2 rounded-xl px-3 py-2 text-center font-display text-xl font-black uppercase tracking-widest text-white ${t.pos_terminal === "jury" ? "bg-indigo-600" : "bg-teal-600"}`}>
+                <p className={`mt-1.5 rounded-lg px-2.5 py-1.5 text-center font-display text-base font-black uppercase tracking-widest text-white ${t.pos_terminal === "jury" ? "bg-indigo-600" : "bg-teal-600"}`}>
                   {t.pos_terminal} side
                 </p>
               )}
               {t.source === "deliveroo" && (
-                <p className="mt-2 rounded-xl border-2 border-[#00CCBC] bg-[#00CCBC]/10 px-3 py-2 text-xs font-black uppercase tracking-wide text-[#007e75]">
+                <p className="mt-1.5 rounded-lg border border-[#00CCBC] bg-[#00CCBC]/10 px-2 py-1.5 text-[10px] font-black uppercase tracking-wide text-[#007e75]">
                   Attach the Deliveroo receipt printed on the tablet to this order
                 </p>
               )}
-              <p className="mt-1 inline-block rounded-md bg-slate-900 px-2 py-0.5 font-mono text-sm font-black tracking-widest text-white">
+              <p className="mt-1 inline-block self-start rounded bg-slate-900 px-1.5 py-0.5 font-mono text-[11px] font-black tracking-widest text-white">
                 {orderCode(t)}
               </p>
               {t.type === "delivery" && (
-                <div className="mt-2 rounded-xl border-2 border-slate-900 bg-white p-2 text-sm">
-                  <p className="text-[10px] font-black uppercase tracking-widest text-slate-500">Deliver to</p>
+                <div className="mt-1.5 rounded-lg border border-slate-900 bg-white p-1.5 text-xs">
+                  <p className="text-[9px] font-black uppercase tracking-widest text-slate-500">Deliver to</p>
                   {t.postcode && (
-                    <p className="font-display text-xl font-black uppercase leading-none">{t.postcode}</p>
+                    <p className="font-display text-base font-black uppercase leading-none">{t.postcode}</p>
                   )}
-                  {t.company_name && <p className="mt-1 font-bold">{t.company_name}</p>}
+                  {t.company_name && <p className="mt-0.5 font-bold">{t.company_name}</p>}
                   {t.address_line1 && <p className="font-semibold">{t.address_line1}</p>}
                   {t.address_line2 && <p className="font-semibold">{t.address_line2}</p>}
                   {t.city && <p className="text-muted-foreground">{t.city}</p>}
-                  {t.customer_phone && <p className="mt-1 font-bold">☎ {t.customer_phone}</p>}
+                  {t.customer_phone && <p className="mt-0.5 font-bold">☎ {t.customer_phone}</p>}
                   {t.delivery_notes && (
-                    <p className="mt-1 rounded bg-amber-100 px-1.5 py-1 text-xs font-semibold text-amber-900">
+                    <p className="mt-0.5 rounded bg-amber-100 px-1.5 py-0.5 text-[10px] font-semibold text-amber-900">
                       NOTE: {t.delivery_notes}
                     </p>
                   )}
                 </div>
               )}
-              <ul className="mt-3 flex-1 space-y-1 text-sm">
+              <ul className={`mt-2 flex-1 space-y-0.5 rounded-lg p-2 text-xs ${cook ? "bg-blue-50" : "bg-amber-50"}`}>
                 {t.items.map((i) => (
-                  <li key={i.id} className="flex items-start gap-2">
-                    <span className={`mt-1.5 h-2.5 w-2.5 shrink-0 rounded-full ${i.cook ? "bg-blue-600" : "bg-amber-400"}`} />
+                  <li key={i.id} className="flex items-start gap-1.5 leading-snug">
+                    <span className={`mt-1 h-2 w-2 shrink-0 rounded-full ${i.cook ? "bg-blue-600" : "bg-amber-400"}`} />
                     <span><span className="font-bold text-primary">{i.qty}×</span> {i.name}{i.notes ? <em className="text-muted-foreground"> — {i.notes}</em> : null}</span>
                   </li>
                 ))}
               </ul>
-              <div className="mt-3 flex gap-2">
+              <div className="mt-2 flex gap-1.5">
                 {t.status === "preparing" && (
                   <button
                     onClick={() => set(t.id, "ready")}
-                    className={`h-9 flex-1 rounded-full text-sm font-bold ${cook ? "bg-blue-600 text-white hover:bg-blue-700" : "bg-amber-400 text-amber-950 hover:bg-amber-500"}`}
+                    className={`h-8 flex-1 rounded-full text-xs font-bold ${cook ? "bg-blue-600 text-white hover:bg-blue-700" : "bg-amber-400 text-amber-950 hover:bg-amber-500"}`}
                   >
                     Mark ready
                   </button>
                 )}
                 {t.status === "ready" && (
-                  <button onClick={() => set(t.id, "completed")} className="h-9 flex-1 rounded-full bg-emerald-600 text-sm font-semibold text-white hover:bg-emerald-700">
+                  <button onClick={() => set(t.id, "completed")} className="h-8 flex-1 rounded-full bg-emerald-600 text-xs font-semibold text-white hover:bg-emerald-700">
                     Mark complete
                   </button>
                 )}
-                <a href={`/print/${t.id}?paper=${kdsPaper}&preview=1`} target="_blank" rel="noreferrer" className="grid h-9 w-9 place-items-center rounded-full border border-border hover:border-primary hover:text-primary" aria-label="Print preview" title="Preview then print">👁</a>
-                <a href={`/print/${t.id}?paper=${kdsPaper}`} target="_blank" rel="noreferrer" className="grid h-9 w-9 place-items-center rounded-full border border-border hover:border-primary hover:text-primary" aria-label="Print" title="Print now">🖨</a>
+                <a href={`/print/${t.id}?paper=${kdsPaper}&preview=1`} target="_blank" rel="noreferrer" className="grid h-8 w-8 place-items-center rounded-full border border-border text-xs hover:border-primary hover:text-primary" aria-label="Print preview" title="Preview then print">👁</a>
+                <a href={`/print/${t.id}?paper=${kdsPaper}`} target="_blank" rel="noreferrer" className="grid h-8 w-8 place-items-center rounded-full border border-border text-xs hover:border-primary hover:text-primary" aria-label="Print" title="Print now">🖨</a>
               </div>
             </div>
           );
