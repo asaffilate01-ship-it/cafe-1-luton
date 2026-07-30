@@ -48,9 +48,16 @@ export const Route = createFileRoute("/api/public/sumup-webhook")({
             .update(patch)
             .eq("status", "pending_payment");
           const { error } = reference
-            ? await q.eq("sumup_reference", reference)
-            : await q.eq("sumup_checkout_id", resolvedId);
+            ? await q.eq("sumup_reference", reference).select("id")
+            : await q.eq("sumup_checkout_id", resolvedId).select("id");
           if (error) console.error("[sumup-webhook] update", error);
+
+          // Loyalty points/stamps are only granted on a confirmed payment.
+          const { data: paidRows } = reference
+            ? await supabaseAdmin.from("orders").select("id").eq("sumup_reference", reference)
+            : await supabaseAdmin.from("orders").select("id").eq("sumup_checkout_id", resolvedId);
+          const { awardLoyaltyForOrder } = await import("@/lib/loyalty.server");
+          for (const r of paidRows ?? []) await awardLoyaltyForOrder(r.id);
 
           return Response.json({ ok: true });
         } catch (err) {
