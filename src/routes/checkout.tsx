@@ -532,6 +532,19 @@ function Checkout() {
                   </div>
                   <button type="button" onClick={() => { setVoucher(null); setVoucherInput(""); setVoucherError(null); }} className="text-xs font-semibold text-primary underline">Remove</button>
                 </div>
+              ) : null}
+              {voucher && (
+                <label className="mt-2 block">
+                  <span className="text-xs font-semibold text-muted-foreground">Jury room / court room (for delivery)</span>
+                  <input
+                    value={juryRoom}
+                    onChange={(e) => setJuryRoom(e.target.value)}
+                    placeholder="e.g. Jury Room 2"
+                    className="mt-1 h-10 w-full rounded-lg border border-border bg-background px-3 text-sm"
+                  />
+                </label>
+              )}
+              {voucher ? null : (
               ) : (
                 <>
                   <div className="mt-2 flex gap-2">
