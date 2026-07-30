@@ -148,6 +148,8 @@ function Till() {
   const [locked, setLocked] = useState(false);
   const [busy, setBusy] = useState(false);
   const [lastOrder, setLastOrder] = useState<{ n: number; total: number; id: string } | null>(null);
+  const [tendered, setTendered] = useState(0);
+  const [showOrder, setShowOrder] = useState(false);
 
   useEffect(() => { window.localStorage.setItem("cafe1-pos-side", side); }, [side]);
   useEffect(() => {
@@ -158,7 +160,7 @@ function Till() {
     (async () => {
       const [{ data: c }, { data: i }] = await Promise.all([
         supabase.from("menu_categories").select("id, name, sort_order").eq("active", true).order("sort_order"),
-        supabase.from("menu_items").select("id, name, price_cents, category_id, sort_order").eq("active", true).order("sort_order"),
+        supabase.from("menu_items").select("id, name, price_cents, category_id, sort_order, image_url").eq("active", true).order("sort_order"),
       ]);
       setCats((c ?? []) as Cat[]);
       setItems((i ?? []) as Item[]);
