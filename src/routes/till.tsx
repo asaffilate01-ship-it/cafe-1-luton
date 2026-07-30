@@ -224,7 +224,7 @@ function Till() {
         toast.success(`Order #${res.order_number} sent to the kitchen · ${money(res.total_cents)}`);
         window.open(`/print/${res.order_id}`, "_blank");
         if (payment_method === "cash") void openCashDrawer();
-        setLines([]); setName(""); setTable(""); setPay(null);
+        setLines([]); setName(""); setTable(""); setPay(null); setTendered(0); setShowOrder(false);
       } catch (e) {
         toast.error(e instanceof Error ? e.message : "Could not take that order");
       } finally {
