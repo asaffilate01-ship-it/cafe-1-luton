@@ -545,7 +545,6 @@ function Checkout() {
                 </label>
               )}
               {voucher ? null : (
-              ) : (
                 <>
                   <div className="mt-2 flex gap-2">
                     <input value={voucherInput} onChange={(e) => { setVoucherInput(e.target.value.toUpperCase()); setVoucherError(null); }} placeholder="Enter court code" className="h-10 flex-1 rounded-lg border border-border bg-background px-3 font-mono text-sm uppercase" />
