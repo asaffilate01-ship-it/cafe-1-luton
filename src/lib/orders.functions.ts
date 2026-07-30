@@ -57,6 +57,13 @@ export const createOrder = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) => CreateOrderSchema.parse(d))
   .handler(async ({ data }) => {
     // Optional auth: signed-in customers get discount + points.
+    // Clear out any baskets left unpaid for more than 5 minutes first.
+    try {
+      const { purgeStaleUnpaidOrders } = await import("./order-cleanup.server");
+      await purgeStaleUnpaidOrders();
+    } catch (e) {
+      console.error("[orders] unpaid purge failed", e);
+    }
     const req = getRequest();
     const authHeader = req?.headers.get("authorization") ?? "";
     const token = authHeader.startsWith("Bearer ") ? authHeader.slice(7) : "";
