@@ -85,6 +85,7 @@ function MenuPage() {
     setQ("");
     setVegOnly(false);
     setUnder5(false);
+    setJurorOnly(false);
     setTemp("any");
   }
 
