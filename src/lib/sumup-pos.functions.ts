@@ -12,7 +12,7 @@ type SumupTxn = {
   payment_type?: string;
   entry_mode?: string;
   card?: { last_4_digits?: string; type?: string };
-  products?: Array<{ name: string; quantity?: number; price?: number }>;
+  products?: Array<{ name: string; description?: string; quantity?: number; price?: number }>;
   internal_id?: string | number;
   tip_amount?: number;
   // Terminal / reader identity varies by SumUp product; we probe a few shapes.
@@ -52,6 +52,7 @@ function derivePosSide(
     String(t.internal_id ?? ""),
     ...deviceRefs(t),
     ...(products ?? []).map((p) => p?.name ?? ""),
+    ...(products ?? []).map((p) => p?.description ?? ""),
   ]
     .join(" | ")
     .toLowerCase();
@@ -73,6 +74,9 @@ function deriveFulfilment(t: SumupTxn, products: SumupTxn["products"]): {
     t.product_summary ?? "",
     String(t.internal_id ?? ""),
     ...(products ?? []).map((p) => p?.name ?? ""),
+    // SumUp POS puts the chosen modifier (e.g. "Dine In" / "Takeaway") in the
+    // line-item description, not the name.
+    ...(products ?? []).map((p) => p?.description ?? ""),
   ]
     .join(" | ")
     .toLowerCase();
@@ -203,7 +207,7 @@ export const syncSumupPos = createServerFn({ method: "POST" })
             name: p.name || "Item",
             qty: Math.max(1, Number(p.quantity ?? 1)),
             unit_price_cents: Math.round(Number(p.price ?? 0) * 100),
-            notes: null as string | null,
+            notes: (p.description ?? "").trim() || null,
           }))
         : [{
             order_id: inserted.id,
