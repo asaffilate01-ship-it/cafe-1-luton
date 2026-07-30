@@ -8,12 +8,15 @@ import { PromoCarousel } from "@/components/promo-carousel";
 import { StoreStatus } from "@/components/store-status";
 import { cart, useCart, type CartModifier } from "@/lib/cart";
 import { money } from "@/lib/format";
-import { Plus, Minus, Search, Leaf, ShoppingBag, X, Settings2, ChevronLeft, ChevronRight, Flame, Snowflake, Tag } from "lucide-react";
+import { Plus, Minus, Search, Leaf, ShoppingBag, X, Settings2, ChevronLeft, ChevronRight, Flame, Snowflake, Tag, ShieldCheck } from "lucide-react";
 import { toast } from "sonner";
 import { OrderSetupGate } from "@/components/order-setup-gate";
 import { describeContext, useOrderContext, orderContext } from "@/lib/order-context";
 
 export const Route = createFileRoute("/menu")({
+  validateSearch: (s: { juror?: unknown }): { juror?: boolean } => ({
+    juror: s.juror === true || s.juror === "true" ? true : undefined,
+  }),
   head: () => ({
     meta: [
       { title: "Menu — Café 1 St Albans" },
@@ -30,6 +33,7 @@ export const Route = createFileRoute("/menu")({
 });
 
 function MenuPage() {
+  const { juror: jurorParam } = Route.useSearch();
   const ctx = useOrderContext();
   const [gateOpen, setGateOpen] = useState(false);
   useEffect(() => {
@@ -51,6 +55,7 @@ function MenuPage() {
   const [vegOnly, setVegOnly] = useState(false);
   const [temp, setTemp] = useState<"any" | "hot" | "cold">("any");
   const [under5, setUnder5] = useState(false);
+  const [jurorOnly, setJurorOnly] = useState(!!jurorParam);
   const [activeCat, setActiveCat] = useState<string | null>(null);
   const cartState = useCart();
   const cartCount = cartState.items.reduce((a, i) => a + i.qty, 0);
@@ -61,6 +66,7 @@ function MenuPage() {
     const ql = q.trim().toLowerCase();
     const items = data.items.filter((i) => {
       if (vegOnly && !i.is_veg) return false;
+      if (jurorOnly && !i.juror_menu) return false;
       if (temp === "hot" && !i.needs_cooking) return false;
       if (temp === "cold" && i.needs_cooking) return false;
       if (under5 && i.price_cents >= 500) return false;
@@ -72,13 +78,14 @@ function MenuPage() {
     });
     const cats = data.cats.filter((c) => items.some((i) => i.category_id === c.id));
     return { cats, items, mods: data.mods };
-  }, [data, q, vegOnly, temp, under5]);
+  }, [data, q, vegOnly, temp, under5, jurorOnly]);
 
-  const filtersOn = vegOnly || under5 || temp !== "any";
+  const filtersOn = vegOnly || under5 || jurorOnly || temp !== "any";
   function clearFilters() {
     setQ("");
     setVegOnly(false);
     setUnder5(false);
+    setJurorOnly(false);
     setTemp("any");
   }
 
@@ -256,6 +263,9 @@ function MenuPage() {
             <span className="hidden shrink-0 text-xs font-semibold uppercase tracking-widest text-muted-foreground lg:inline">
               Filters
             </span>
+            <FilterChip active={jurorOnly} onClick={() => setJurorOnly((v) => !v)} icon={<ShieldCheck className="h-4 w-4" />}>
+              Juror Menu
+            </FilterChip>
             <FilterChip active={vegOnly} onClick={() => setVegOnly((v) => !v)} icon={<Leaf className="h-4 w-4" />}>
               Vegetarian
             </FilterChip>

@@ -23,6 +23,7 @@ export const createCounterOrder = createServerFn({ method: "POST" })
         payment_method: z.enum(["cash", "card"]),
         sumup_transaction_id: z.string().max(120).optional(),
         pos_terminal: z.enum(["jury", "judge", "public"]).optional(),
+        voucher_code: z.string().min(1).max(40).optional(),
         items: z.array(Line).min(1).max(60),
       })
       .parse(d),
@@ -37,16 +38,18 @@ export const createCounterOrder = createServerFn({ method: "POST" })
     const ids = data.items.map((i) => i.menu_item_id);
     const { data: menu, error: mErr } = await context.supabase
       .from("menu_items")
-      .select("id, name, price_cents, active")
+      .select("id, name, price_cents, active, is_beverage")
       .in("id", ids);
     if (mErr) throw new Error(mErr.message);
     const byId = new Map((menu ?? []).map((m) => [m.id, m]));
 
     let subtotal = 0;
+    let food_subtotal = 0;
     const lines = data.items.map((i) => {
       const m = byId.get(i.menu_item_id);
       if (!m) throw new Error("Item not found");
       subtotal += m.price_cents * i.qty;
+      if (!m.is_beverage) food_subtotal += m.price_cents * i.qty;
       return {
         menu_item_id: m.id,
         name: m.name,
@@ -55,6 +58,36 @@ export const createCounterOrder = createServerFn({ method: "POST" })
         notes: i.notes || null,
       };
     });
+
+    // Juror voucher: redeem today's remaining allowance, then 10% off food on
+    // anything still payable. Cafe 1 only ever claims what is actually redeemed.
+    let voucher_cents = 0;
+    let voucher_holder_id: string | null = null;
+    let voucher_code: string | null = null;
+    let juror_discount = 0;
+    if (data.voucher_code) {
+      const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+      const { data: vRows } = await supabaseAdmin.rpc("get_voucher_balance_by_code", {
+        _code: data.voucher_code.trim(),
+      });
+      const v = (vRows ?? [])[0];
+      if (!v) throw new Error("That voucher code isn't recognised.");
+      if (v.status !== "ok") throw new Error("That voucher code can't be used today.");
+      if (v.remaining_cents > 0) {
+        const { data: taken } = await supabaseAdmin.rpc("redeem_voucher", {
+          _holder_id: v.holder_id,
+          _order_id: null as unknown as string,
+          _amount_cents: Math.min(v.remaining_cents, subtotal),
+        });
+        voucher_cents = (taken as number | null) ?? 0;
+      }
+      voucher_holder_id = v.holder_id;
+      voucher_code = v.code;
+      const afterVoucher = Math.max(0, subtotal - voucher_cents);
+      const { jurorFoodDiscount } = await import("./juror");
+      juror_discount = jurorFoodDiscount(afterVoucher, food_subtotal);
+    }
+    const payable = Math.max(0, subtotal - voucher_cents - juror_discount);
 
     const { data: order, error } = await context.supabase
       .from("orders")
@@ -66,7 +99,10 @@ export const createCounterOrder = createServerFn({ method: "POST" })
         subtotal_cents: subtotal,
         delivery_fee_cents: 0,
         discount_cents: 0,
-        total_cents: subtotal,
+        juror_discount_cents: juror_discount,
+        voucher_cents,
+        voucher_holder_id,
+        total_cents: payable,
         status: "preparing" as const,
         payment_status: "paid" as const,
         payment_method: data.payment_method,
@@ -84,5 +120,28 @@ export const createCounterOrder = createServerFn({ method: "POST" })
       .insert(lines.map((l) => ({ ...l, order_id: order.id })));
     if (iErr) throw new Error(iErr.message);
 
-    return { order_id: order.id, order_number: order.order_number, total_cents: subtotal };
+    if (voucher_holder_id && voucher_cents > 0) {
+      const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+      await supabaseAdmin
+        .from("voucher_redemptions")
+        .update({ order_id: order.id })
+        .eq("holder_id", voucher_holder_id)
+        .is("order_id", null);
+      await supabaseAdmin
+        .from("voucher_events")
+        .update({ order_id: order.id })
+        .eq("holder_id", voucher_holder_id)
+        .eq("event", "redeem")
+        .is("order_id", null);
+    }
+
+    return {
+      order_id: order.id,
+      order_number: order.order_number,
+      total_cents: payable,
+      subtotal_cents: subtotal,
+      voucher_cents,
+      voucher_code,
+      juror_discount_cents: juror_discount,
+    };
   });

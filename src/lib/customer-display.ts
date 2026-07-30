@@ -5,6 +5,7 @@ export type DisplayLine = { id: string; name: string; price_cents: number; qty: 
 export type DisplayMessage =
   | { type: "order"; lines: DisplayLine[]; total: number; fulfilment: string }
   | { type: "paid"; order_number: number; total: number; method: "cash" | "card" }
+  | { type: "juror"; url: string }
   | { type: "idle" };
 
 export function postToDisplay(msg: DisplayMessage) {

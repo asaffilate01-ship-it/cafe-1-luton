@@ -21,7 +21,7 @@ export const Route = createFileRoute("/admin/menu")({
 type Cat = { id: string; name: string; description: string | null; sort_order: number; active: boolean };
 type Item = {
   id: string; category_id: string | null; name: string; description: string | null;
-  price_cents: number; image_url: string | null; is_veg: boolean; loyalty_drink?: boolean; needs_cooking?: boolean;
+  price_cents: number; image_url: string | null; is_veg: boolean; loyalty_drink?: boolean; needs_cooking?: boolean; juror_menu?: boolean; is_beverage?: boolean;
   group_label: string | null; sort_order: number; active: boolean;
 };
 type Mod = {
@@ -360,6 +360,14 @@ function ItemRow({ it, onChanged }: { it: Item; onChanged: () => void }) {
           <label className="inline-flex items-center gap-1" title="Hot/cooked item — kitchen tickets containing it show BLUE">
             <input type="checkbox" checked={!!form.needs_cooking} onChange={(e)=>{ setForm({...form, needs_cooking:e.target.checked}); save({ needs_cooking:e.target.checked }); }} />
             Needs cooking
+          </label>
+          <label className="inline-flex items-center gap-1" title="Shown on the dedicated Juror Menu">
+            <input type="checkbox" checked={!!form.juror_menu} onChange={(e)=>{ setForm({...form, juror_menu:e.target.checked}); save({ juror_menu:e.target.checked }); }} />
+            Juror menu
+          </label>
+          <label className="inline-flex items-center gap-1" title="Drink — excluded from the juror 10% food discount">
+            <input type="checkbox" checked={!!form.is_beverage} onChange={(e)=>{ setForm({...form, is_beverage:e.target.checked}); save({ is_beverage:e.target.checked }); }} />
+            Beverage
           </label>
           <span className="ml-auto font-semibold text-foreground">{money(form.price_cents)}</span>
         </div>

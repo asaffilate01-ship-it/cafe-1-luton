@@ -15,12 +15,15 @@ import {
 import { openCashDrawer, getDrawerBridge, setDrawerBridge } from "@/lib/drawer";
 import { iminPrintTickets, isIminDevice, openCustomerScreen } from "@/lib/imin";
 import { postToDisplay } from "@/lib/customer-display";
+import { lookupVoucher } from "@/lib/vouchers.functions";
+import { QrCode } from "@/components/qr-code";
+import { jurorFoodDiscount, JUROR_DAILY_ALLOWANCE_CENTS, JUROR_FOOD_DISCOUNT_PERCENT } from "@/lib/juror";
 import { money } from "@/lib/format";
 import { toast } from "sonner";
 import {
   Banknote, CreditCard, Minus, Plus, Search, Trash2, Lock, LogOut, Settings2, X,
   Smartphone, Loader2, Check, Printer, Inbox, ShoppingBag, HandPlatter, Bike, MonitorPlay,
-  Delete, ReceiptText, UtensilsCrossed, ChevronDown,
+  Delete, ReceiptText, UtensilsCrossed, ChevronDown, Ticket, ShieldCheck,
 } from "lucide-react";
 
 export const Route = createFileRoute("/till")({
@@ -39,8 +42,9 @@ export const Route = createFileRoute("/till")({
 });
 
 type Cat = { id: string; name: string; sort_order: number };
-type Item = { id: string; name: string; price_cents: number; category_id: string | null; sort_order: number; image_url: string | null };
-type Line = { id: string; name: string; price_cents: number; qty: number };
+type Item = { id: string; name: string; price_cents: number; category_id: string | null; sort_order: number; image_url: string | null; is_beverage: boolean };
+
+type Line = { id: string; name: string; price_cents: number; qty: number; is_beverage: boolean };
 type Side = "jury" | "judge" | "public";
 type Fulfilment = "dine_in" | "collection" | "delivery";
 
@@ -152,6 +156,8 @@ function Till() {
   const [lastOrder, setLastOrder] = useState<{ n: number; total: number; id: string } | null>(null);
   const [tendered, setTendered] = useState(0);
   const [showOrder, setShowOrder] = useState(false);
+  const [voucher, setVoucher] = useState<null | { code: string; remaining_cents: number; allocated_cents: number; opted_in: boolean }>(null);
+  const [voucherOpen, setVoucherOpen] = useState(false);
 
   useEffect(() => { window.localStorage.setItem("cafe1-pos-side", side); }, [side]);
   useEffect(() => {
@@ -162,7 +168,7 @@ function Till() {
     (async () => {
       const [{ data: c }, { data: i }] = await Promise.all([
         supabase.from("menu_categories").select("id, name, sort_order").eq("active", true).order("sort_order"),
-        supabase.from("menu_items").select("id, name, price_cents, category_id, sort_order, image_url").eq("active", true).order("sort_order"),
+        supabase.from("menu_items").select("id, name, price_cents, category_id, sort_order, image_url, is_beverage").eq("active", true).order("sort_order"),
       ]);
       setCats((c ?? []) as Cat[]);
       setItems((i ?? []) as Item[]);
@@ -191,6 +197,10 @@ function Till() {
 
   const total = lines.reduce((s, l) => s + l.price_cents * l.qty, 0);
   const count = lines.reduce((s, l) => s + l.qty, 0);
+  const foodTotal = lines.reduce((s, l) => s + (l.is_beverage ? 0 : l.price_cents * l.qty), 0);
+  const voucherApplied = voucher ? Math.min(voucher.remaining_cents, total) : 0;
+  const jurorDiscount = voucher ? jurorFoodDiscount(Math.max(0, total - voucherApplied), foodTotal) : 0;
+  const due = Math.max(0, total - voucherApplied - jurorDiscount);
 
   // mirror the basket onto the customer-facing second screen (/display)
   useEffect(() => {
@@ -209,7 +219,7 @@ function Till() {
         next[at] = { ...next[at], qty: next[at].qty + 1 };
         return next;
       }
-      return [...prev, { id: i.id, name: i.name, price_cents: i.price_cents, qty: 1 }];
+      return [...prev, { id: i.id, name: i.name, price_cents: i.price_cents, qty: 1, is_beverage: i.is_beverage }];
     });
   }
   function bump(id: string, d: number) {
@@ -228,6 +238,7 @@ function Till() {
             payment_method,
             sumup_transaction_id,
             pos_terminal: side,
+            voucher_code: voucher?.code,
             items: lines.map((l) => ({ menu_item_id: l.id, qty: l.qty })),
           },
         });
@@ -246,14 +257,15 @@ function Till() {
           })),
         );
         if (!printed) window.open(`/print/${res.order_id}`, "_blank");
-        setLines([]); setName(""); setTable(""); setPay(null); setTendered(0); setShowOrder(false);
+        if (res.voucher_cents > 0) toast.success(`Juror voucher ${res.voucher_code} — ${money(res.voucher_cents)} redeemed`);
+        setLines([]); setName(""); setTable(""); setPay(null); setTendered(0); setShowOrder(false); setVoucher(null);
       } catch (e) {
         toast.error(e instanceof Error ? e.message : "Could not take that order");
       } finally {
         setBusy(false);
       }
     },
-    [create, lines, name, side, table, type],
+    [create, lines, name, side, table, type, voucher],
   );
 
   if (locked) return <LockScreen onUnlock={() => setLocked(false)} />;
@@ -417,13 +429,13 @@ function Till() {
               </div>
               <div className="text-center">
                 <p className="text-[10px] font-bold uppercase tracking-widest text-white/40">Change</p>
-                <p className={`text-base font-bold tabular-nums ${tendered - total < 0 ? "text-white/25" : "text-emerald-400"}`}>
-                  {tendered === 0 || tendered - total < 0 ? "—" : money(tendered - total)}
+                <p className={`text-base font-bold tabular-nums ${tendered - due < 0 ? "text-white/25" : "text-emerald-400"}`}>
+                  {tendered === 0 || tendered - due < 0 ? "—" : money(tendered - due)}
                 </p>
               </div>
               <div className="text-right">
                 <p className="text-[10px] font-bold uppercase tracking-widest text-white/40">Total</p>
-                <p className="font-display text-xl font-black leading-none text-primary tabular-nums">{money(total)}</p>
+                <p className="font-display text-xl font-black leading-none text-primary tabular-nums">{money(due)}</p>
               </div>
             </div>
             <div className="grid grid-cols-4 gap-1.5">
@@ -431,7 +443,7 @@ function Till() {
                 <button key={n} onClick={() => setTendered((t) => Math.min(t * 10 + n * 100, 5_000_00))}
                   className="h-11 rounded-xl border border-white/10 bg-neutral-800/50 text-lg font-bold hover:border-white/40 active:scale-95">{n}</button>
               ))}
-              <button onClick={() => setTendered(total)}
+              <button onClick={() => setTendered(due)}
                 className="h-11 rounded-xl border border-emerald-500/40 text-xs font-black uppercase tracking-wide text-emerald-300 hover:border-emerald-400">Exact</button>
               <button onClick={() => setTendered((t) => Math.min(t * 10, 5_000_00))}
                 className="h-11 rounded-xl border border-white/10 bg-neutral-800/50 text-lg font-bold hover:border-white/40 active:scale-95">0</button>
@@ -448,14 +460,39 @@ function Till() {
             </div>
           </div>
 
+          {(voucher || lines.length > 0) && (
+            <div className="shrink-0 space-y-1.5 border-t border-white/10 px-3 pt-2 text-sm">
+              {voucher ? (
+                <>
+                  <div className="flex items-center justify-between text-white/60">
+                    <span className="inline-flex items-center gap-1.5 font-semibold text-indigo-300">
+                      <Ticket className="h-3.5 w-3.5" /> Juror {voucher.code}
+                    </span>
+                    <button onClick={() => setVoucher(null)} className="text-xs font-semibold text-white/40 underline">Remove</button>
+                  </div>
+                  <div className="flex justify-between text-white/70"><span>Subtotal</span><span className="tabular-nums">{money(total)}</span></div>
+                  <div className="flex justify-between text-indigo-300"><span>Voucher allowance</span><span className="tabular-nums">−{money(voucherApplied)}</span></div>
+                  {jurorDiscount > 0 && (
+                    <div className="flex justify-between text-indigo-300"><span>Juror {JUROR_FOOD_DISCOUNT_PERCENT}% off food</span><span className="tabular-nums">−{money(jurorDiscount)}</span></div>
+                  )}
+                </>
+              ) : (
+                <button onClick={() => setVoucherOpen(true)}
+                  className="inline-flex h-10 w-full items-center justify-center gap-2 rounded-xl border border-indigo-500/40 text-xs font-bold uppercase tracking-wide text-indigo-300 hover:border-indigo-400">
+                  <Ticket className="h-4 w-4" /> Juror voucher
+                </button>
+              )}
+            </div>
+          )}
+
           <div className="shrink-0 space-y-2 border-t border-white/10 p-3">
             <button disabled={!lines.length || busy} onClick={() => setPay("reader")}
               className="inline-flex h-14 w-full items-center justify-between gap-2 rounded-xl bg-primary px-5 text-base font-bold text-primary-foreground disabled:opacity-40">
               <span className="inline-flex items-center gap-2"><Smartphone className="h-5 w-5" /> Charge SumUp Solo</span>
-              <span className="font-display text-lg font-black tabular-nums">{money(total)}</span>
+              <span className="font-display text-lg font-black tabular-nums">{money(due)}</span>
             </button>
             <div className="grid grid-cols-3 gap-2">
-              <button disabled={!lines.length || busy} onClick={() => { if (tendered && tendered < total) return toast.error("Tendered is less than the total"); void finish("cash"); }}
+              <button disabled={!lines.length || busy} onClick={() => { if (tendered && tendered < due) return toast.error("Tendered is less than the amount due"); void finish("cash"); }}
                 className="inline-flex h-12 items-center justify-center gap-2 rounded-xl bg-emerald-600 text-sm font-bold text-white disabled:opacity-40">
                 <Banknote className="h-4 w-4" /> Cash
               </button>
@@ -505,13 +542,19 @@ function Till() {
       )}
       {pay === "reader" && (
         <ReaderPay
-          total={total}
+          total={due}
           readers={readers}
           readerId={readerId}
           setReaderId={setReaderId}
           onClose={() => setPay(null)}
           onPaid={(txn) => finish("card", txn ?? undefined)}
           onSettings={() => { setPay(null); setSettings(true); }}
+        />
+      )}
+      {voucherOpen && (
+        <VoucherModal
+          onClose={() => { setVoucherOpen(false); postToDisplay(lines.length ? { type: "order", lines: lines.map((l) => ({ id: l.id, name: l.name, price_cents: l.price_cents, qty: l.qty })), total, fulfilment: type } : { type: "idle" }); }}
+          onApply={(v) => { setVoucher(v); setVoucherOpen(false); }}
         />
       )}
       {settings && <TillSettings readers={readers} reload={loadReaders} onClose={() => setSettings(false)} />}
@@ -730,5 +773,88 @@ function LockScreen({ onUnlock }: { onUnlock: () => void }) {
         <span className="text-sm text-white/50">Tap to carry on serving</span>
       </button>
     </div>
+  );
+}
+
+/* ------------------------------------------------------- juror voucher */
+
+function VoucherModal({
+  onClose,
+  onApply,
+}: {
+  onClose: () => void;
+  onApply: (v: { code: string; remaining_cents: number; allocated_cents: number; opted_in: boolean }) => void;
+}) {
+  const lookup = useServerFn(lookupVoucher);
+  const [code, setCode] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const url = typeof window === "undefined" ? "" : `${window.location.origin}/juror?src=till`;
+
+  useEffect(() => { if (url) postToDisplay({ type: "juror", url }); }, [url]);
+
+  async function apply() {
+    const c = code.trim().toUpperCase();
+    if (!c) return;
+    setBusy(true); setError(null);
+    try {
+      const res = await lookup({ data: { code: c } });
+      if (!res.found) {
+        setError(("message" in res && res.message) || "That voucher code isn't recognised.");
+      } else if (!res.usable) {
+        setError(res.message ?? "That code can't be used today.");
+      } else if (res.remaining_cents <= 0) {
+        setError("Today's allowance has already been used on this code.");
+      } else {
+        onApply({
+          code: res.code,
+          remaining_cents: res.remaining_cents,
+          allocated_cents: res.allocated_cents,
+          opted_in: res.opted_in,
+        });
+        toast.success(`${money(res.remaining_cents)} allowance left today`);
+      }
+    } catch {
+      setError("Could not check that code. Try again.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <Modal title="Juror voucher" onClose={onClose}>
+      <div className="grid gap-5 sm:grid-cols-[auto_1fr] sm:items-start">
+        <div className="mx-auto w-fit rounded-2xl bg-white p-3">
+          {url && <QrCode value={url} size={150} alt="Scan to open the juror voucher page" />}
+        </div>
+        <div className="text-sm text-white/60">
+          <p className="font-semibold text-white">Ask the customer to scan</p>
+          <p className="mt-1">
+            The same QR is on the customer screen. Scanning opts them into the scheme and shows their remaining
+            allowance — {money(JUROR_DAILY_ALLOWANCE_CENTS)} each sitting day, plus {JUROR_FOOD_DISCOUNT_PERCENT}% off
+            food above it.
+          </p>
+          <p className="mt-2 inline-flex items-center gap-1.5 text-xs text-white/40">
+            <ShieldCheck className="h-3.5 w-3.5" /> Anonymous — no personal details are recorded.
+          </p>
+        </div>
+      </div>
+
+      <label className="mt-6 block text-xs font-bold uppercase tracking-widest text-white/50">Or key the code in</label>
+      <div className="mt-2 flex gap-2">
+        <input
+          value={code}
+          onChange={(e) => { setCode(e.target.value.toUpperCase()); setError(null); }}
+          onKeyDown={(e) => { if (e.key === "Enter") void apply(); }}
+          placeholder="CV-XXXXX-XXXXX"
+          className="h-12 flex-1 rounded-xl border border-white/10 bg-neutral-800 px-4 font-mono text-base uppercase outline-none focus:border-primary"
+        />
+        <button onClick={() => void apply()} disabled={busy || !code.trim()}
+          className="inline-flex h-12 items-center gap-2 rounded-xl bg-primary px-5 font-bold text-primary-foreground disabled:opacity-50">
+          {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Ticket className="h-4 w-4" />} Apply
+        </button>
+      </div>
+      {error && <p className="mt-2 text-sm text-red-400">{error}</p>}
+    </Modal>
   );
 }
