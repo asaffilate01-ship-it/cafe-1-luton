@@ -372,6 +372,8 @@ export const createOrder = createServerFn({ method: "POST" })
         voucher_cents,
         voucher_holder_id,
         points_earned,
+        points_earned,
+        loyalty_stamps_pending: stamps_earned,
         total_cents: payable,
         sumup_reference: reference,
         sumup_checkout_id: checkout_id,
