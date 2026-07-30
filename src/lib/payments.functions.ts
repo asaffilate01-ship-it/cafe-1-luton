@@ -35,6 +35,8 @@ export const confirmPayment = createServerFn({ method: "POST" })
         sumup_transaction_id: co.transaction_id ?? null,
       })
       .eq("id", order.id);
+    const { awardLoyaltyForOrder } = await import("./loyalty.server");
+    await awardLoyaltyForOrder(order.id);
     return { paid: true, status: "preparing" as const };
   });
 

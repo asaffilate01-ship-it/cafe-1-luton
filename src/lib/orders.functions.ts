@@ -57,6 +57,13 @@ export const createOrder = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) => CreateOrderSchema.parse(d))
   .handler(async ({ data }) => {
     // Optional auth: signed-in customers get discount + points.
+    // Clear out any baskets left unpaid for more than 5 minutes first.
+    try {
+      const { purgeStaleUnpaidOrders } = await import("./order-cleanup.server");
+      await purgeStaleUnpaidOrders();
+    } catch (e) {
+      console.error("[orders] unpaid purge failed", e);
+    }
     const req = getRequest();
     const authHeader = req?.headers.get("authorization") ?? "";
     const token = authHeader.startsWith("Bearer ") ? authHeader.slice(7) : "";
@@ -372,6 +379,7 @@ export const createOrder = createServerFn({ method: "POST" })
         voucher_cents,
         voucher_holder_id,
         points_earned,
+        loyalty_stamps_pending: stamps_earned,
         total_cents: payable,
         sumup_reference: reference,
         sumup_checkout_id: checkout_id,
@@ -379,6 +387,7 @@ export const createOrder = createServerFn({ method: "POST" })
         promo_discount_cents: free_delivery_promo ? 0 : promo_discount,
         ...(account_id ? { payment_status: "on_account" as const, status: "paid" as const } : {}),
         ...(fully_covered ? { payment_status: "paid" as const, status: "paid" as const } : {}),
+        ...(account_id || fully_covered ? { loyalty_awarded: true } : {}),
       })
       .select()
       .single();
@@ -405,22 +414,33 @@ export const createOrder = createServerFn({ method: "POST" })
 
     // Promo usage was already claimed atomically above (consume_promo_use).
 
-    // Award loyalty points + drink stamps immediately for authed customers.
-    if (userId && (points_earned > 0 || drinkUnitPrices.length > 0 || free_drinks_used > 0)) {
+    // Loyalty rewards are only granted once the order is actually paid.
+    // Free drinks being redeemed are deducted immediately so the same free
+    // drink can't be spent twice while a payment is in flight.
+    const settled_now = !!account_id || fully_covered;
+    if (userId && (settled_now || free_drinks_used > 0)) {
       const { data: prof } = await supabase
         .from("profiles")
-        .select("loyalty_points, lifetime_points, free_drinks_redeemed")
+        .select("loyalty_points, lifetime_points, free_drinks_redeemed, drink_stamps, free_drinks_available")
         .eq("id", userId)
         .maybeSingle();
       await supabase
         .from("profiles")
-        .update({
-          loyalty_points: (prof?.loyalty_points ?? 0) + points_earned,
-          lifetime_points: (prof?.lifetime_points ?? 0) + points_earned,
-          drink_stamps: drink_stamps_after,
-          free_drinks_available: free_drinks_after,
-          free_drinks_redeemed: (prof?.free_drinks_redeemed ?? 0) + free_drinks_used,
-        })
+        .update(
+          settled_now
+            ? {
+                loyalty_points: (prof?.loyalty_points ?? 0) + points_earned,
+                lifetime_points: (prof?.lifetime_points ?? 0) + points_earned,
+                drink_stamps: drink_stamps_after,
+                free_drinks_available: free_drinks_after,
+                free_drinks_redeemed: (prof?.free_drinks_redeemed ?? 0) + free_drinks_used,
+              }
+            : {
+                // unpaid: no points, no new stamps — only the redemption is held
+                free_drinks_available: Math.max(0, (prof?.free_drinks_available ?? 0) - free_drinks_used),
+                free_drinks_redeemed: (prof?.free_drinks_redeemed ?? 0) + free_drinks_used,
+              },
+        )
         .eq("id", userId);
     }
 

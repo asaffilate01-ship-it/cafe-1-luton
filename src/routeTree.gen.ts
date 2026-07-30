@@ -48,6 +48,7 @@ import { Route as AdminBlogRouteImport } from './routes/admin.blog'
 import { Route as AdminBannersRouteImport } from './routes/admin.banners'
 import { Route as AdminAccountsRouteImport } from './routes/admin.accounts'
 import { Route as ApiPublicSumupWebhookRouteImport } from './routes/api/public/sumup-webhook'
+import { Route as ApiPublicCleanupUnpaidRouteImport } from './routes/api/public/cleanup-unpaid'
 import { Route as LovableEmailAuthWebhookRouteImport } from './routes/lovable/email/auth/webhook'
 import { Route as LovableEmailAuthPreviewRouteImport } from './routes/lovable/email/auth/preview'
 import { Route as ApiPublicDeliverooWebhookRouteImport } from './routes/api/public/deliveroo/webhook'
@@ -247,6 +248,11 @@ const ApiPublicSumupWebhookRoute = ApiPublicSumupWebhookRouteImport.update({
   path: '/api/public/sumup-webhook',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicCleanupUnpaidRoute = ApiPublicCleanupUnpaidRouteImport.update({
+  id: '/api/public/cleanup-unpaid',
+  path: '/api/public/cleanup-unpaid',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const LovableEmailAuthWebhookRoute = LovableEmailAuthWebhookRouteImport.update({
   id: '/lovable/email/auth/webhook',
   path: '/lovable/email/auth/webhook',
@@ -303,6 +309,7 @@ export interface FileRoutesByFullPath {
   '/print/$orderId': typeof PrintOrderIdRoute
   '/admin/': typeof AdminIndexRoute
   '/blog/': typeof BlogIndexRoute
+  '/api/public/cleanup-unpaid': typeof ApiPublicCleanupUnpaidRoute
   '/api/public/sumup-webhook': typeof ApiPublicSumupWebhookRoute
   '/api/public/deliveroo/webhook': typeof ApiPublicDeliverooWebhookRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
@@ -347,6 +354,7 @@ export interface FileRoutesByTo {
   '/print/$orderId': typeof PrintOrderIdRoute
   '/admin': typeof AdminIndexRoute
   '/blog': typeof BlogIndexRoute
+  '/api/public/cleanup-unpaid': typeof ApiPublicCleanupUnpaidRoute
   '/api/public/sumup-webhook': typeof ApiPublicSumupWebhookRoute
   '/api/public/deliveroo/webhook': typeof ApiPublicDeliverooWebhookRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
@@ -392,6 +400,7 @@ export interface FileRoutesById {
   '/print/$orderId': typeof PrintOrderIdRoute
   '/admin/': typeof AdminIndexRoute
   '/blog/': typeof BlogIndexRoute
+  '/api/public/cleanup-unpaid': typeof ApiPublicCleanupUnpaidRoute
   '/api/public/sumup-webhook': typeof ApiPublicSumupWebhookRoute
   '/api/public/deliveroo/webhook': typeof ApiPublicDeliverooWebhookRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
@@ -438,6 +447,7 @@ export interface FileRouteTypes {
     | '/print/$orderId'
     | '/admin/'
     | '/blog/'
+    | '/api/public/cleanup-unpaid'
     | '/api/public/sumup-webhook'
     | '/api/public/deliveroo/webhook'
     | '/lovable/email/auth/preview'
@@ -482,6 +492,7 @@ export interface FileRouteTypes {
     | '/print/$orderId'
     | '/admin'
     | '/blog'
+    | '/api/public/cleanup-unpaid'
     | '/api/public/sumup-webhook'
     | '/api/public/deliveroo/webhook'
     | '/lovable/email/auth/preview'
@@ -526,6 +537,7 @@ export interface FileRouteTypes {
     | '/print/$orderId'
     | '/admin/'
     | '/blog/'
+    | '/api/public/cleanup-unpaid'
     | '/api/public/sumup-webhook'
     | '/api/public/deliveroo/webhook'
     | '/lovable/email/auth/preview'
@@ -571,6 +583,7 @@ export interface RootRouteChildren {
   PrintOrderIdRoute: typeof PrintOrderIdRoute
   AdminIndexRoute: typeof AdminIndexRoute
   BlogIndexRoute: typeof BlogIndexRoute
+  ApiPublicCleanupUnpaidRoute: typeof ApiPublicCleanupUnpaidRoute
   ApiPublicSumupWebhookRoute: typeof ApiPublicSumupWebhookRoute
   ApiPublicDeliverooWebhookRoute: typeof ApiPublicDeliverooWebhookRoute
   LovableEmailAuthPreviewRoute: typeof LovableEmailAuthPreviewRoute
@@ -852,6 +865,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicSumupWebhookRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/cleanup-unpaid': {
+      id: '/api/public/cleanup-unpaid'
+      path: '/api/public/cleanup-unpaid'
+      fullPath: '/api/public/cleanup-unpaid'
+      preLoaderRoute: typeof ApiPublicCleanupUnpaidRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/lovable/email/auth/webhook': {
       id: '/lovable/email/auth/webhook'
       path: '/lovable/email/auth/webhook'
@@ -915,6 +935,7 @@ const rootRouteChildren: RootRouteChildren = {
   PrintOrderIdRoute: PrintOrderIdRoute,
   AdminIndexRoute: AdminIndexRoute,
   BlogIndexRoute: BlogIndexRoute,
+  ApiPublicCleanupUnpaidRoute: ApiPublicCleanupUnpaidRoute,
   ApiPublicSumupWebhookRoute: ApiPublicSumupWebhookRoute,
   ApiPublicDeliverooWebhookRoute: ApiPublicDeliverooWebhookRoute,
   LovableEmailAuthPreviewRoute: LovableEmailAuthPreviewRoute,
