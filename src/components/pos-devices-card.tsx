@@ -10,7 +10,7 @@ export function PosDevicesCard() {
   const [rows, setRows] = useState<Device[]>([]);
   const [ref, setRef] = useState("");
   const [name, setName] = useState("");
-  const [side, setSide] = useState<"jury" | "public">("jury");
+  const [side, setSide] = useState<Side>("jury");
   const [busy, setBusy] = useState(false);
 
   async function load() {
@@ -35,7 +35,7 @@ export function PosDevicesCard() {
     void load();
   }
 
-  async function setSideFor(id: string, next: "jury" | "public") {
+  async function setSideFor(id: string, next: Side) {
     const { error } = await supabase.from("pos_devices").update({ side: next }).eq("id", id);
     if (error) return toast.error(error.message);
     void load();
