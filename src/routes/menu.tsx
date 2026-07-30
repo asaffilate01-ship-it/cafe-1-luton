@@ -49,6 +49,8 @@ function MenuPage() {
 
   const [q, setQ] = useState("");
   const [vegOnly, setVegOnly] = useState(false);
+  const [temp, setTemp] = useState<"any" | "hot" | "cold">("any");
+  const [under5, setUnder5] = useState(false);
   const [activeCat, setActiveCat] = useState<string | null>(null);
   const cartState = useCart();
   const cartCount = cartState.items.reduce((a, i) => a + i.qty, 0);
@@ -59,6 +61,9 @@ function MenuPage() {
     const ql = q.trim().toLowerCase();
     const items = data.items.filter((i) => {
       if (vegOnly && !i.is_veg) return false;
+      if (temp === "hot" && !i.needs_cooking) return false;
+      if (temp === "cold" && i.needs_cooking) return false;
+      if (under5 && i.price_cents >= 500) return false;
       if (!ql) return true;
       return (
         i.name.toLowerCase().includes(ql) ||
@@ -67,7 +72,15 @@ function MenuPage() {
     });
     const cats = data.cats.filter((c) => items.some((i) => i.category_id === c.id));
     return { cats, items, mods: data.mods };
-  }, [data, q, vegOnly]);
+  }, [data, q, vegOnly, temp, under5]);
+
+  const filtersOn = vegOnly || under5 || temp !== "any";
+  function clearFilters() {
+    setQ("");
+    setVegOnly(false);
+    setUnder5(false);
+    setTemp("any");
+  }
 
   // Scrollspy: watch section headers to update active pill.
   const sectionRefs = useRef<Record<string, HTMLElement | null>>({});
