@@ -4,6 +4,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { money } from "@/lib/format";
 import { CheckCircle2, ShoppingBag, HandPlatter, Bike, UtensilsCrossed } from "lucide-react";
 import { DISPLAY_CHANNEL, type DisplayLine, type DisplayMessage } from "@/lib/customer-display";
+import { QrCode } from "@/components/qr-code";
+import { JUROR_DAILY_ALLOWANCE_CENTS } from "@/lib/juror";
 
 export const Route = createFileRoute("/display")({
   head: () => ({
@@ -34,6 +36,7 @@ function DisplayPage() {
   const [total, setTotal] = useState(0);
   const [fulfilment, setFulfilment] = useState("dine_in");
   const [paid, setPaid] = useState<null | { order_number: number; total: number }>(null);
+  const [jurorUrl, setJurorUrl] = useState<string | null>(null);
   const [banners, setBanners] = useState<Banner[]>([]);
   const [slide, setSlide] = useState(0);
   const [now, setNow] = useState(() => new Date());
@@ -66,6 +69,11 @@ function DisplayPage() {
     const ch = new BroadcastChannel(DISPLAY_CHANNEL);
     ch.onmessage = (e: MessageEvent<DisplayMessage>) => {
       const msg = e.data;
+      if (msg.type === "juror") {
+        setJurorUrl(msg.url);
+        return;
+      }
+      setJurorUrl(null);
       if (msg.type === "order") {
         setPaid(null);
         setLines(msg.lines);
@@ -88,6 +96,29 @@ function DisplayPage() {
   const count = useMemo(() => lines.reduce((s, l) => s + l.qty, 0), [lines]);
   const banner = banners[slide] ?? null;
   const Icon = FULFIL_ICON[fulfilment] ?? HandPlatter;
+
+  /* ---- juror voucher QR ---- */
+  if (jurorUrl) {
+    return (
+      <div className="grid h-screen place-items-center bg-white px-8 text-center text-neutral-900">
+        <div>
+          <span className="inline-flex items-center gap-2 rounded-full bg-primary px-5 py-1.5 text-sm font-black uppercase tracking-[0.25em] text-primary-foreground">
+            Juror voucher scheme
+          </span>
+          <h1 className="mt-5 font-display text-5xl font-black">Scan to use your voucher</h1>
+          <p className="mt-3 text-2xl text-neutral-500">
+            Scan with your phone, enter your voucher code and opt in — {money(JUROR_DAILY_ALLOWANCE_CENTS)} each sitting day.
+          </p>
+          <div className="mx-auto mt-8 w-fit rounded-3xl border-4 border-neutral-900 p-5">
+            <QrCode value={jurorUrl} size={320} alt="Scan to open the Cafe 1 juror voucher page" />
+          </div>
+          <p className="mt-6 text-lg text-neutral-400">
+            Completely anonymous — Cafe 1 never sees your name or personal details.
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   /* ---- thank you ---- */
   if (paid) {
