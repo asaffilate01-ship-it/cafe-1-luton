@@ -61,6 +61,8 @@ function KdsPage() {
 
 function KDS() {
   const [tickets, setTickets] = useState<Ticket[]>([]);
+  // Ids currently shown on the board — used to announce cancellations/refunds.
+  const liveIds = useRef<Set<string>>(new Set());
   const [kdsPaper, setKdsPaper] = useState<58 | 80>(80);
   const update = useServerFn(updateOrderStatus);
   const setFulfil = useServerFn(setOrderFulfilment);
@@ -118,6 +120,7 @@ function KDS() {
           .map((i) => ({ ...i, cook: cooks(i) }));
         return { ...o, items: its, needsCooking: its.some((i) => i.cook) };
       });
+      liveIds.current = new Set(grouped.map((g) => g.id));
       setTickets(grouped);
     }
     load();
