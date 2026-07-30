@@ -1,0 +1,1 @@
+update public.menu_items set needs_cooking = true where name = '2 Fish Fingers';
