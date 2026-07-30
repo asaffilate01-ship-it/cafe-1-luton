@@ -78,20 +78,22 @@ function MenuManager() {
     <div className="min-h-screen bg-background">
       <AdminNav />
       <div className="border-b border-border bg-card">
-        <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-4">
-          <div>
+        <div className="mx-auto grid max-w-7xl grid-cols-[minmax(0,1fr)_auto] items-center gap-3 px-4 py-4">
+          <div className="min-w-0">
             <Link to="/admin" className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
               <ChevronLeft className="h-4 w-4" /> Admin
             </Link>
-            <h1 className="mt-1 font-display text-3xl font-bold">Menu manager</h1>
+            <h1 className="mt-1 truncate font-display text-2xl font-bold sm:text-3xl">Menu manager</h1>
           </div>
-          <p className="text-sm text-muted-foreground">{cats.length} categories · {items.length} items · {mods.length} modifiers</p>
+          <p className="shrink-0 text-right text-xs text-muted-foreground sm:text-sm">
+            {cats.length} categories<span className="hidden sm:inline"> · {items.length} items · {mods.length} modifiers</span>
+          </p>
         </div>
       </div>
 
-      <div className="mx-auto grid max-w-7xl gap-6 px-4 py-6 md:grid-cols-[280px_1fr]">
+      <div className="mx-auto grid max-w-7xl gap-6 px-4 py-6 md:grid-cols-[260px_minmax(0,1fr)]">
         {/* Categories sidebar */}
-        <aside className="rounded-2xl border border-border bg-card p-4">
+        <aside className="h-fit rounded-2xl border border-border bg-card p-4 md:sticky md:top-4">
           <div className="flex items-center justify-between">
             <h2 className="font-semibold">Categories</h2>
             <button
