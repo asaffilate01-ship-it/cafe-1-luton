@@ -155,6 +155,9 @@ function KDS() {
         if (!cancelled && r?.imported && r.imported > 0) {
           toast.success(`${r.imported} SumUp POS ${r.imported === 1 ? "order" : "orders"} imported`);
         }
+        if (!cancelled && r?.voided && r.voided > 0) {
+          toast.warning(`${r.voided} SumUp ${r.voided === 1 ? "order" : "orders"} refunded/cancelled — removed`);
+        }
       } catch { /* silent */ }
     }
     tick();
