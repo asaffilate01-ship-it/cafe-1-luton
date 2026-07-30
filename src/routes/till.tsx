@@ -13,6 +13,7 @@ import {
   cancelReaderPayment,
 } from "@/lib/till.functions";
 import { openCashDrawer, getDrawerBridge, setDrawerBridge } from "@/lib/drawer";
+import { iminPrintTickets, isIminDevice, openCustomerScreen } from "@/lib/imin";
 import { postToDisplay } from "@/lib/customer-display";
 import { money } from "@/lib/format";
 import { toast } from "sonner";
