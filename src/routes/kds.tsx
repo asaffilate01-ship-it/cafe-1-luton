@@ -9,7 +9,7 @@ import { updateOrderStatus, setOrderFulfilment } from "@/lib/orders.functions";
 import { toast } from "sonner";
 import { useSession, useRoles } from "@/hooks/use-auth";
 import { useAlertOnIncrease, useNotificationPermission, playChime } from "@/hooks/use-order-alerts";
-import { Bell, BellOff, RefreshCw, Sun, SunDim } from "lucide-react";
+import { Bell, BellOff, RefreshCw, Sun, SunDim, ChevronsUp, ChevronsDown } from "lucide-react";
 import { useWakeLock } from "@/hooks/use-wake-lock";
 import { syncSumupPos } from "@/lib/sumup-pos.functions";
 import { orderCode } from "@/lib/order-code";
@@ -184,6 +184,20 @@ function KDS() {
   }
 
   const [bulking, setBulking] = useState(false);
+  const [chromeHidden, setChromeHidden] = useState(false);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    setChromeHidden(window.localStorage.getItem("kds_chrome_hidden") === "1");
+  }, []);
+
+  function toggleChrome() {
+    setChromeHidden((v) => {
+      const next = !v;
+      try { window.localStorage.setItem("kds_chrome_hidden", next ? "1" : "0"); } catch { /* ignore */ }
+      return next;
+    });
+  }
   async function setAll(from: string, status: "ready" | "completed") {
     const ids = tickets.filter((t) => t.status === from).map((t) => t.id);
     if (!ids.length) return;
