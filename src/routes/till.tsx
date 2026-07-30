@@ -684,6 +684,24 @@ function TillSettings({ readers, reload, onClose }: { readers: { id: string; nam
         </button>
       </div>
 
+      <p className="mt-6 text-xs font-bold uppercase tracking-widest text-white/40">Built-in printer (iMin D4-504)</p>
+      <p className="mt-1 text-xs text-white/40">
+        {isIminDevice()
+          ? "Detected — kitchen and counter tickets print straight to this terminal."
+          : "Not detected on this device — tickets open in a print window instead."}
+      </p>
+      <button
+        onClick={() => {
+          const ok = iminPrintTickets([
+            { heading: "TEST TICKET", order_number: 0, fulfilment: "Dine in", terminal: "Counter", lines: [{ name: "Test print", qty: 1, price_cents: 0 }], total_cents: 0 },
+          ]);
+          if (ok) toast.success("Test ticket sent to the printer");
+          else { window.open("/print/test?paper=58", "_blank"); toast.message("No built-in printer — opened a print preview"); }
+        }}
+        className="mt-2 inline-flex h-10 w-full items-center justify-center gap-2 rounded-xl border border-white/15 text-sm font-bold hover:border-primary">
+        <Printer className="h-4 w-4" /> Test print
+      </button>
+
       <p className="mt-6 text-xs font-bold uppercase tracking-widest text-white/40">Cash drawer</p>
       <p className="mt-1 text-xs text-white/40">
         On the iMin/Sunmi terminal the drawer opens through the built-in printer automatically. On other
