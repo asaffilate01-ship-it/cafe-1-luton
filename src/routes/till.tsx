@@ -281,7 +281,7 @@ function Till() {
             <Inbox className="h-4 w-4" /> <span className="hidden sm:inline">Drawer</span>
           </button>
           <button
-            onClick={() => window.open("/display", "cafe1-customer-display", "popup=yes,width=1280,height=800")}
+            onClick={() => { const r = openCustomerScreen("/display"); r.ok ? toast.success(r.message) : toast.error(r.message); }}
             aria-label="Open the customer display on the second screen"
             className="inline-flex items-center gap-1.5 rounded-lg border border-white/15 px-2.5 py-1.5 font-semibold text-white/80 hover:border-white/40">
             <MonitorPlay className="h-4 w-4" /> <span className="hidden sm:inline">Screen</span>
