@@ -52,6 +52,7 @@ function derivePosSide(
     String(t.internal_id ?? ""),
     ...deviceRefs(t),
     ...(products ?? []).map((p) => p?.name ?? ""),
+    ...(products ?? []).map((p) => p?.description ?? ""),
   ]
     .join(" | ")
     .toLowerCase();
@@ -73,6 +74,9 @@ function deriveFulfilment(t: SumupTxn, products: SumupTxn["products"]): {
     t.product_summary ?? "",
     String(t.internal_id ?? ""),
     ...(products ?? []).map((p) => p?.name ?? ""),
+    // SumUp POS puts the chosen modifier (e.g. "Dine In" / "Takeaway") in the
+    // line-item description, not the name.
+    ...(products ?? []).map((p) => p?.description ?? ""),
   ]
     .join(" | ")
     .toLowerCase();
