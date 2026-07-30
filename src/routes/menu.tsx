@@ -230,7 +230,7 @@ function MenuPage() {
         className="sticky top-20 z-30 border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80"
       >
         <div className="mx-auto max-w-6xl px-4 py-3">
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 lg:max-w-md">
             <label className="relative flex-1">
               <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <input
@@ -249,22 +249,38 @@ function MenuPage() {
                 </button>
               )}
             </label>
-            <button
-              onClick={() => setVegOnly((v) => !v)}
-              aria-pressed={vegOnly}
-              className={`inline-flex h-11 shrink-0 items-center gap-1.5 rounded-full border px-3 text-sm font-medium transition ${
-                vegOnly
-                  ? "border-green-600 bg-green-50 text-green-700"
-                  : "border-border bg-card text-muted-foreground hover:border-foreground/30 hover:text-foreground"
-              }`}
-            >
-              <Leaf className="h-4 w-4" /> Veg
-            </button>
           </div>
 
-          {/* Category pills */}
+          {/* Dietary & quick filters */}
+          <div className="mt-2.5 flex items-center gap-2 overflow-x-auto pb-0.5 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            <span className="hidden shrink-0 text-xs font-semibold uppercase tracking-widest text-muted-foreground lg:inline">
+              Filters
+            </span>
+            <FilterChip active={vegOnly} onClick={() => setVegOnly((v) => !v)} icon={<Leaf className="h-4 w-4" />}>
+              Vegetarian
+            </FilterChip>
+            <FilterChip active={temp === "hot"} onClick={() => setTemp((t) => (t === "hot" ? "any" : "hot"))} icon={<Flame className="h-4 w-4" />}>
+              Hot food
+            </FilterChip>
+            <FilterChip active={temp === "cold"} onClick={() => setTemp((t) => (t === "cold" ? "any" : "cold"))} icon={<Snowflake className="h-4 w-4" />}>
+              Cold & drinks
+            </FilterChip>
+            <FilterChip active={under5} onClick={() => setUnder5((v) => !v)} icon={<Tag className="h-4 w-4" />}>
+              Under £5
+            </FilterChip>
+            {(filtersOn || q) && (
+              <button
+                onClick={clearFilters}
+                className="ml-1 shrink-0 whitespace-nowrap rounded-full px-3 py-2 text-sm font-medium text-muted-foreground underline-offset-4 hover:text-primary hover:underline"
+              >
+                Clear
+              </button>
+            )}
+          </div>
+
+          {/* Category pills (mobile/tablet — desktop uses the sidebar) */}
           {filtered && filtered.cats.length > 0 && (
-            <div className="relative mt-3">
+            <div className="relative mt-3 lg:hidden">
               <div
                 aria-hidden
                 className={`pointer-events-none absolute inset-y-0 left-0 z-10 w-8 bg-gradient-to-r from-background to-transparent transition-opacity ${canScroll.left ? "opacity-100" : "opacity-0"}`}
