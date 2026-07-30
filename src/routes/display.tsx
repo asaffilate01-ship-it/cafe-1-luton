@@ -3,6 +3,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { money } from "@/lib/format";
 import { CheckCircle2, ShoppingBag, HandPlatter, Bike, UtensilsCrossed } from "lucide-react";
+import { DISPLAY_CHANNEL, type DisplayLine, type DisplayMessage } from "@/lib/customer-display";
 
 export const Route = createFileRoute("/display")({
   head: () => ({
@@ -18,14 +19,6 @@ export const Route = createFileRoute("/display")({
   }),
   component: DisplayPage,
 });
-
-export type DisplayLine = { id: string; name: string; price_cents: number; qty: number };
-export type DisplayMessage =
-  | { type: "order"; lines: DisplayLine[]; total: number; fulfilment: string }
-  | { type: "paid"; order_number: number; total: number; method: "cash" | "card" }
-  | { type: "idle" };
-
-export const DISPLAY_CHANNEL = "cafe1-customer-display";
 
 type Banner = { id: string; title: string; subtitle: string | null; badge: string | null; image_url: string | null; bg_color: string | null };
 
