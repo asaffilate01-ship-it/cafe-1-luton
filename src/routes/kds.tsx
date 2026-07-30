@@ -9,7 +9,7 @@ import { updateOrderStatus, setOrderFulfilment } from "@/lib/orders.functions";
 import { toast } from "sonner";
 import { useSession, useRoles } from "@/hooks/use-auth";
 import { useAlertOnIncrease, useNotificationPermission, playChime } from "@/hooks/use-order-alerts";
-import { Bell, BellOff, RefreshCw, Sun, SunDim, ChevronsUp, ChevronsDown } from "lucide-react";
+import { Bell, BellOff, RefreshCw, Sun, SunDim, ChevronsUp, ChevronsDown, ShoppingBag, HandPlatter, Bike } from "lucide-react";
 import { useWakeLock } from "@/hooks/use-wake-lock";
 import { syncSumupPos } from "@/lib/sumup-pos.functions";
 import { orderCode } from "@/lib/order-code";
@@ -33,6 +33,12 @@ type Order = {
 type Ticket = Order & { items: Item[]; needsCooking: boolean };
 
 const TYPE_LABEL: Record<string, string> = { dine_in: "DINE IN", collection: "PICKUP", delivery: "DELIVERY" };
+/** Which counter rang the sale up — jury, judge or public side. */
+const SIDE_TONE: Record<string, string> = {
+  jury: "bg-indigo-600",
+  judge: "bg-fuchsia-700",
+  public: "bg-teal-600",
+};
 
 function whenLabel(o: { schedule_mode: string | null; scheduled_for: string | null }) {
   if (o.schedule_mode === "scheduled" && o.scheduled_for)
@@ -382,9 +388,9 @@ function KDS() {
                   {t.source === "counter" && (
                     <span className="rounded-full bg-slate-700 px-1.5 py-px text-[9px] font-black uppercase tracking-wide text-white">Counter</span>
                   )}
-                  {(t.pos_terminal === "jury" || t.pos_terminal === "public") && (
-                    <span className={`rounded-full px-1.5 py-px text-[9px] font-black uppercase tracking-wide text-white ${t.pos_terminal === "jury" ? "bg-indigo-600" : "bg-teal-600"}`}>
-                      {t.pos_terminal} side
+                  {SIDE_TONE[t.pos_terminal ?? ""] && (
+                    <span className={`rounded-full px-1.5 py-px text-[9px] font-black uppercase tracking-wide text-white ${SIDE_TONE[t.pos_terminal!]}`}>
+                      {t.pos_terminal === "public" ? "Public side" : t.pos_terminal}
                     </span>
                   )}
                   {t.source !== "sumup_pos" && t.source !== "deliveroo" && t.source !== "counter" && (
@@ -405,7 +411,11 @@ function KDS() {
                 {new Date(t.created_at).toLocaleString([], { weekday: "short", day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" })}
               </p>
               <div className="mt-1.5 rounded-lg bg-primary px-2.5 py-1.5 text-primary-foreground">
-                <p className="font-display text-lg font-black uppercase leading-none tracking-wide">
+                <p className="flex items-center gap-1.5 font-display text-lg font-black uppercase leading-none tracking-wide">
+                  {(() => {
+                    const Icon = t.type === "dine_in" ? HandPlatter : t.type === "delivery" ? Bike : ShoppingBag;
+                    return <Icon className="h-5 w-5 shrink-0" aria-hidden="true" />;
+                  })()}
                   {t.source === "sumup_pos" && t.type === "collection"
                     ? "TAKEAWAY"
                     : (TYPE_LABEL[t.type] ?? t.type.replace("_", " ").toUpperCase())}
@@ -425,9 +435,9 @@ function KDS() {
                 </button>
               </div>
               <p className="mt-1.5 text-xs font-black uppercase tracking-wide text-foreground">{t.customer_name}</p>
-              {(t.pos_terminal === "jury" || t.pos_terminal === "public") && (
-                <p className={`mt-1.5 rounded-lg px-2.5 py-1.5 text-center font-display text-base font-black uppercase tracking-widest text-white ${t.pos_terminal === "jury" ? "bg-indigo-600" : "bg-teal-600"}`}>
-                  {t.pos_terminal} side
+              {SIDE_TONE[t.pos_terminal ?? ""] && (
+                <p className={`mt-1.5 rounded-lg px-2.5 py-1.5 text-center font-display text-base font-black uppercase tracking-widest text-white ${SIDE_TONE[t.pos_terminal!]}`}>
+                  {t.pos_terminal === "public" ? "Public side" : t.pos_terminal}
                 </p>
               )}
               {t.source === "deliveroo" && (

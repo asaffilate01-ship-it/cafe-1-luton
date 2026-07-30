@@ -1,6 +1,8 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
+export type PosSide = "jury" | "judge" | "public";
+
 type SumupTxn = {
   id: string;
   transaction_code?: string;
@@ -55,8 +57,8 @@ function deviceRefs(t: SumupTxn): string[] {
 function derivePosSide(
   t: SumupTxn,
   products: SumupTxn["products"],
-  mapping: Map<string, "jury" | "public">,
-): "jury" | "public" | null {
+  mapping: Map<string, PosSide>,
+): PosSide | null {
   for (const ref of deviceRefs(t)) {
     const hit = mapping.get(ref.toLowerCase());
     if (hit) return hit;
@@ -71,6 +73,7 @@ function derivePosSide(
     .join(" | ")
     .toLowerCase();
   if (/\bjury\b/.test(haystack)) return "jury";
+  if (/\bjudge(s)?\b/.test(haystack)) return "judge";
   if (/\bpublic\b/.test(haystack)) return "public";
   return null;
 }
@@ -150,8 +153,8 @@ export const syncSumupPos = createServerFn({ method: "POST" })
       .from("pos_devices")
       .select("device_ref, side, active")
       .eq("active", true);
-    const mapping = new Map<string, "jury" | "public">(
-      (devices ?? []).map((d) => [String(d.device_ref).toLowerCase(), d.side as "jury" | "public"]),
+    const mapping = new Map<string, PosSide>(
+      (devices ?? []).map((d) => [String(d.device_ref).toLowerCase(), d.side as PosSide]),
     );
 
     let imported = 0;

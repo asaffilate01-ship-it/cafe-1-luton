@@ -4,13 +4,15 @@ import { toast } from "sonner";
 import { Plus, Trash2 } from "lucide-react";
 
 type Device = { id: string; device_ref: string; name: string; side: string; active: boolean };
+type Side = "jury" | "judge" | "public";
+const SIDE_TONE: Record<Side, string> = { jury: "bg-indigo-600", judge: "bg-fuchsia-700", public: "bg-teal-600" };
 
 /** Maps each physical card terminal to the jury or public side of the court cafe. */
 export function PosDevicesCard() {
   const [rows, setRows] = useState<Device[]>([]);
   const [ref, setRef] = useState("");
   const [name, setName] = useState("");
-  const [side, setSide] = useState<"jury" | "public">("jury");
+  const [side, setSide] = useState<Side>("jury");
   const [busy, setBusy] = useState(false);
 
   async function load() {
@@ -35,7 +37,7 @@ export function PosDevicesCard() {
     void load();
   }
 
-  async function setSideFor(id: string, next: "jury" | "public") {
+  async function setSideFor(id: string, next: Side) {
     const { error } = await supabase.from("pos_devices").update({ side: next }).eq("id", id);
     if (error) return toast.error(error.message);
     void load();
@@ -49,10 +51,10 @@ export function PosDevicesCard() {
 
   return (
     <section className="rounded-2xl border border-border bg-card p-5">
-      <p className="font-semibold">Card terminals — jury or public side</p>
+      <p className="font-semibold">Card terminals — jury, judge or public side</p>
       <p className="mt-1 text-sm text-muted-foreground">
         Give each card machine its terminal reference (serial or reader ID shown on the device) so imported
-        POS sales land on the kitchen display marked JURY SIDE or PUBLIC SIDE.
+        POS sales land on the kitchen display marked JURY, JUDGE or PUBLIC SIDE.
       </p>
 
       <div className="mt-3 space-y-2">
@@ -62,14 +64,12 @@ export function PosDevicesCard() {
               <p className="truncate text-sm font-semibold">{d.name}</p>
               <p className="truncate font-mono text-xs text-muted-foreground">{d.device_ref}</p>
             </div>
-            {(["jury", "public"] as const).map((s) => (
+            {(["jury", "judge", "public"] as const).map((s) => (
               <button
                 key={s}
                 onClick={() => setSideFor(d.id, s)}
                 className={`rounded-full px-3 py-1 text-xs font-black uppercase ${
-                  d.side === s
-                    ? s === "jury" ? "bg-indigo-600 text-white" : "bg-teal-600 text-white"
-                    : "border border-border hover:border-primary"
+                  d.side === s ? `${SIDE_TONE[s]} text-white` : "border border-border hover:border-primary"
                 }`}
               >
                 {s}
@@ -86,8 +86,9 @@ export function PosDevicesCard() {
       <div className="mt-3 grid gap-2 sm:grid-cols-[1fr_1fr_auto_auto]">
         <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Terminal name (e.g. Jury counter)" className="h-10 rounded-lg border border-border bg-background px-3 text-sm" />
         <input value={ref} onChange={(e) => setRef(e.target.value)} placeholder="Terminal reference / serial" className="h-10 rounded-lg border border-border bg-background px-3 font-mono text-sm" />
-        <select value={side} onChange={(e) => setSide(e.target.value as "jury" | "public")} className="h-10 rounded-lg border border-border bg-background px-3 text-sm">
+        <select value={side} onChange={(e) => setSide(e.target.value as Side)} className="h-10 rounded-lg border border-border bg-background px-3 text-sm">
           <option value="jury">Jury side</option>
+          <option value="judge">Judge side</option>
           <option value="public">Public side</option>
         </select>
         <button disabled={busy} onClick={add} className="inline-flex h-10 items-center gap-1 rounded-full bg-primary px-4 text-sm font-semibold text-primary-foreground disabled:opacity-60">

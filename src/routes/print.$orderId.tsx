@@ -205,9 +205,9 @@ function PrintPage() {
             )}
           </div>
           <p className="text-[15px] font-black uppercase leading-tight">{order.customer_name}</p>
-          {(order.pos_terminal === "jury" || order.pos_terminal === "public") && (
+          {(order.pos_terminal === "jury" || order.pos_terminal === "judge" || order.pos_terminal === "public") && (
             <p className="mt-1 border-2 border-black px-1 py-1 text-center text-[20px] font-black uppercase tracking-widest leading-tight">
-              {order.pos_terminal} SIDE
+              {order.pos_terminal === "public" ? "PUBLIC SIDE" : order.pos_terminal.toUpperCase()}
             </p>
           )}
           <p className="text-[11px]">{order.customer_phone}</p>
