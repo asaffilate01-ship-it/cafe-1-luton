@@ -1,6 +1,8 @@
 import { NAP } from "@/lib/nap";
 import { Link } from "@tanstack/react-router";
-import { ShoppingBag, ReceiptText, MapPin, Facebook, Instagram, Youtube, Music2 } from "lucide-react";
+import { ShoppingBag, ReceiptText, MapPin, Facebook, Instagram, Youtube, Music2, Menu } from "lucide-react";
+import { useState } from "react";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { openCookieSettings } from "@/lib/cookie-consent";
 import logo from "@/assets/cafe1-logo.png.asset.json";
 import { useCart } from "@/lib/cart";
@@ -22,7 +24,15 @@ export function SiteHeader() {
   const c = useCart();
   const { user } = useSession();
   const tabSession = useTab();
+  const [open, setOpen] = useState(false);
   const count = c.items.reduce((s, i) => s + i.qty, 0);
+  const links: { to: string; label: string; exact?: boolean }[] = [
+    { to: "/", label: "Home", exact: true },
+    { to: "/menu", label: "Menu" },
+    { to: "/blog", label: "Blog" },
+    { to: "/about", label: "About" },
+    { to: "/contact", label: "Contact" },
+  ];
   return (
     <header className="sticky top-0 z-40 border-b border-border bg-background/85 backdrop-blur">
       <div className="mx-auto flex h-20 max-w-6xl items-center justify-between px-4">
@@ -56,6 +66,44 @@ export function SiteHeader() {
           ) : (
             <Link to="/auth" className="hidden text-sm font-medium hover:text-primary sm:inline">Sign in</Link>
           )}
+          <Sheet open={open} onOpenChange={setOpen}>
+            <SheetTrigger asChild>
+              <button
+                aria-label="Open menu"
+                className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-border bg-card hover:border-primary hover:text-primary sm:hidden"
+              >
+                <Menu className="h-5 w-5" />
+              </button>
+            </SheetTrigger>
+            <SheetContent side="right" className="w-72">
+              <SheetHeader>
+                <SheetTitle>Menu</SheetTitle>
+              </SheetHeader>
+              <nav aria-label="Mobile" className="mt-6 flex flex-col gap-1 text-base font-medium">
+                {links.map((l) => (
+                  <Link
+                    key={l.to}
+                    to={l.to}
+                    activeOptions={l.exact ? { exact: true } : undefined}
+                    activeProps={{ className: "text-primary" }}
+                    onClick={() => setOpen(false)}
+                    className="rounded-xl px-3 py-2.5 hover:bg-muted hover:text-primary"
+                  >
+                    {l.label}
+                  </Link>
+                ))}
+                <div className="my-2 h-px bg-border" />
+                <Link to={user ? "/account" : "/auth"} onClick={() => setOpen(false)} className="rounded-xl px-3 py-2.5 hover:bg-muted hover:text-primary">
+                  {user ? "My account" : "Sign in"}
+                </Link>
+                {tabSession && (
+                  <Link to="/tab" onClick={() => setOpen(false)} className="rounded-xl px-3 py-2.5 text-primary hover:bg-muted">
+                    Tab: {tabSession.name}
+                  </Link>
+                )}
+              </nav>
+            </SheetContent>
+          </Sheet>
         </div>
       </div>
     </header>
@@ -113,6 +161,8 @@ export function SiteFooter() {
         </div>
         <nav aria-label="Footer" className="grid grid-cols-2 gap-x-8 gap-y-2 sm:grid-cols-2">
           <Link to="/menu" className="hover:text-primary">Menu</Link>
+          <Link to="/blog" className="hover:text-primary">Blog</Link>
+          <Link to="/about" className="hover:text-primary">About</Link>
           <Link to="/contact" className="hover:text-primary">Contact</Link>
           <Link to="/privacy" className="hover:text-primary">Privacy Policy</Link>
           <Link to="/terms" className="hover:text-primary">Terms &amp; Conditions</Link>
