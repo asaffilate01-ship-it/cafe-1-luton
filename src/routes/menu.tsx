@@ -338,7 +338,35 @@ function MenuPage() {
         </div>
       </div>
 
-      <div className="mx-auto max-w-6xl px-4">
+      <div className="mx-auto max-w-6xl gap-10 px-4 lg:grid lg:grid-cols-[15rem_minmax(0,1fr)] lg:items-start">
+        {/* Desktop category sidebar */}
+        <aside className="sticky top-[11.5rem] hidden max-h-[calc(100vh-13rem)] overflow-y-auto pt-8 pr-2 lg:block">
+          <p className="px-3 text-xs font-semibold uppercase tracking-widest text-muted-foreground">Categories</p>
+          <nav aria-label="Menu categories" className="mt-3 flex flex-col gap-1">
+            {filtered?.cats.map((c) => {
+              const active = c.id === activeCat;
+              const count = filtered.items.filter((i) => i.category_id === c.id).length;
+              return (
+                <button
+                  key={c.id}
+                  type="button"
+                  aria-current={active ? "true" : undefined}
+                  onClick={() => scrollToCat(c.id)}
+                  className={`flex items-center justify-between gap-2 rounded-xl border-l-4 px-3 py-2.5 text-left text-[15px] font-semibold transition ${
+                    active
+                      ? "border-primary bg-primary-soft/50 text-primary"
+                      : "border-transparent text-foreground hover:border-primary/40 hover:bg-muted"
+                  }`}
+                >
+                  <span className="truncate">{c.name}</span>
+                  <span className={`shrink-0 text-xs font-medium ${active ? "text-primary/70" : "text-muted-foreground"}`}>{count}</span>
+                </button>
+              );
+            })}
+          </nav>
+        </aside>
+
+        <div className="min-w-0">
         {isLoading && (
           <div className="mt-10 grid gap-3 sm:grid-cols-2">
             {Array.from({ length: 6 }).map((_, i) => (
@@ -354,7 +382,7 @@ function MenuPage() {
               Nothing matches “{q}”{vegOnly ? " with veg filter on" : ""}.
             </p>
             <button
-              onClick={() => { setQ(""); setVegOnly(false); }}
+              onClick={clearFilters}
               className="mt-4 rounded-full border border-border px-4 py-1.5 text-sm font-medium hover:border-primary hover:text-primary"
             >
               Clear filters
@@ -407,6 +435,7 @@ function MenuPage() {
             </section>
           );
         })}
+        </div>
       </div>
 
       {/* Floating basket bar */}
