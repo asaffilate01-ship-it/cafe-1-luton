@@ -8,7 +8,7 @@ import { PromoCarousel } from "@/components/promo-carousel";
 import { StoreStatus } from "@/components/store-status";
 import { cart, useCart, type CartModifier } from "@/lib/cart";
 import { money } from "@/lib/format";
-import { Plus, Minus, Search, Leaf, ShoppingBag, X, Settings2, ChevronLeft, ChevronRight } from "lucide-react";
+import { Plus, Minus, Search, Leaf, ShoppingBag, X, Settings2, ChevronLeft, ChevronRight, Flame, Snowflake, Tag } from "lucide-react";
 import { toast } from "sonner";
 import { OrderSetupGate } from "@/components/order-setup-gate";
 import { describeContext, useOrderContext, orderContext } from "@/lib/order-context";
