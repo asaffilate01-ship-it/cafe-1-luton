@@ -288,6 +288,10 @@ function Checkout() {
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     if (!c.items.length) return;
+    if (voucher && mode === "delivery" && !isCourtDeliveryAddress(form.address_line1, form.postcode)) {
+      toast.error("Voucher deliveries must go to St Albans Crown Court or the Magistrates' Court.");
+      return;
+    }
     setBusy(true);
     try {
       const res = await place({
