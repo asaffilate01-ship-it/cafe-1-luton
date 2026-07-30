@@ -17,6 +17,7 @@ import { buildScheduleSlots } from "@/lib/business";
 import { useOrderContext, describeContext } from "@/lib/order-context";
 import { OrderSetupGate } from "@/components/order-setup-gate";
 import { Settings2 } from "lucide-react";
+import { JUROR_CODE_KEY, JUROR_FOOD_DISCOUNT_PERCENT, jurorFoodDiscount } from "@/lib/juror";
 
 export const Route = createFileRoute("/checkout")({
   head: () => ({
@@ -173,6 +174,19 @@ function Checkout() {
     return () => { cancelled = true; };
   }, [cartItemIds]);
 
+  useEffect(() => {
+    const ids = cartItemIds ? cartItemIds.split(",") : [];
+    if (!ids.length) { setBeverageIds([]); return; }
+    let cancelled = false;
+    supabase
+      .from("menu_items")
+      .select("id")
+      .in("id", ids)
+      .eq("is_beverage", true)
+      .then(({ data }) => { if (!cancelled) setBeverageIds((data ?? []).map((r) => r.id)); });
+    return () => { cancelled = true; };
+  }, [cartItemIds]);
+
   const subtotal = c.items.reduce((s, i) => s + i.price_cents * i.qty, 0);
   const baseDelivery = settings?.delivery_fee_cents ?? 299;
   const freeThreshold = settings?.free_delivery_threshold_cents ?? null;
@@ -197,7 +211,9 @@ function Checkout() {
   // Court voucher: recognised from an anonymous code the court gives the customer.
   const [voucherInput, setVoucherInput] = useState("");
   const [voucher, setVoucher] = useState<null | { code: string; remaining_cents: number; allocated_cents: number }>(null);
+  const [beverageIds, setBeverageIds] = useState<string[]>([]);
   const [voucherBusy, setVoucherBusy] = useState(false);
+  const [juryRoom, setJuryRoom] = useState("");
   const [voucherError, setVoucherError] = useState<string | null>(null);
   async function applyVoucher() {
     const code = voucherInput.trim().toUpperCase();
@@ -211,11 +227,15 @@ function Checkout() {
         setVoucherError(
           ("message" in res && res.message) || "That voucher code isn't recognised or is inactive.",
         );
+      } else if (!res.usable) {
+        setVoucher(null);
+        setVoucherError(res.message ?? "That code can't be used today.");
       } else if (res.remaining_cents <= 0) {
         setVoucher(null);
         setVoucherError("This voucher has no allowance left for today.");
       } else {
         setVoucher({ code: res.code, remaining_cents: res.remaining_cents, allocated_cents: res.allocated_cents });
+        if (typeof window !== "undefined") window.localStorage.setItem(JUROR_CODE_KEY, res.code);
       }
     } catch {
       setVoucherError("Couldn't check the voucher code. Please try again.");
@@ -224,7 +244,9 @@ function Checkout() {
     }
   }
   const voucherApplied = voucher ? Math.min(voucher.remaining_cents, grossTotal) : 0;
-  const total = Math.max(0, grossTotal - voucherApplied);
+  const foodSubtotal = c.items.reduce((s, i) => s + (beverageIds.includes(i.menu_item_id) ? 0 : i.price_cents * i.qty), 0);
+  const jurorDiscount = voucher ? jurorFoodDiscount(Math.max(0, grossTotal - voucherApplied), foodSubtotal) : 0;
+  const total = Math.max(0, grossTotal - voucherApplied - jurorDiscount);
   const pointsEarn = user && !onTab ? Math.floor(Math.max(0, subtotal - discount) / 100) : 0;
   const minOrder = settings?.min_order_cents ?? 0;
   const belowMin = minOrder > 0 && subtotal < minOrder;
@@ -283,6 +305,7 @@ function Checkout() {
           account_code: tabSession?.code,
           promo_code: promo?.code,
           voucher_code: voucher?.code,
+          jury_room: voucher && juryRoom.trim() ? juryRoom.trim() : undefined,
         },
       });
       cart.clear();
@@ -573,6 +596,9 @@ function Checkout() {
                 </p>
                 <button type="button" onClick={() => { setVoucher(null); setVoucherInput(""); }} className="mt-2 text-xs font-semibold text-primary underline">Remove voucher</button>
               </div>
+            )}
+            {jurorDiscount > 0 && (
+              <div className="flex justify-between text-primary"><span>Juror {JUROR_FOOD_DISCOUNT_PERCENT}% off food</span><span>−{money(jurorDiscount)}</span></div>
             )}
             {voucherApplied > 0 && (
               <div className="flex justify-between text-primary"><span>Court voucher</span><span>−{money(voucherApplied)}</span></div>
