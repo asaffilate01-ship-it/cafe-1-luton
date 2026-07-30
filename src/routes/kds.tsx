@@ -252,6 +252,23 @@ function KDS() {
           </div>
         </div>
         <div className="mx-auto flex max-w-7xl items-center gap-3 px-4 pb-3 text-xs font-semibold">
+          <button
+            onClick={() => setAll("preparing", "ready")}
+            disabled={bulking || !tickets.some((t) => t.status === "preparing")}
+            className="rounded-full bg-primary-foreground px-3 py-1.5 text-xs font-bold text-primary hover:opacity-90 disabled:opacity-40"
+            title="Mark every preparing ticket as ready"
+          >
+            Mark all ready
+          </button>
+          <button
+            onClick={() => setAll("ready", "completed")}
+            disabled={bulking || !tickets.some((t) => t.status === "ready")}
+            className="rounded-full bg-emerald-600 px-3 py-1.5 text-xs font-bold text-white hover:bg-emerald-700 disabled:opacity-40"
+            title="Mark every ready ticket as complete"
+          >
+            Mark all complete
+          </button>
+          <span className="mx-1 h-4 w-px bg-primary-foreground/30" />
           <span className="inline-flex items-center gap-1.5"><span className="h-3 w-3 rounded-full bg-blue-600 ring-2 ring-white/60" /> Cooked / hot food</span>
           <span className="inline-flex items-center gap-1.5"><span className="h-3 w-3 rounded-full bg-amber-400 ring-2 ring-white/60" /> No cooking (drinks &amp; cold)</span>
           <span className="inline-flex items-center gap-1.5"><span className="h-3 w-3 rounded-full bg-emerald-500 ring-2 ring-white/60" /> Ready → complete</span>
