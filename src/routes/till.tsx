@@ -503,50 +503,6 @@ function Modal({ title, children, onClose }: { title: string; children: React.Re
   );
 }
 
-function CashPay({ total, busy, onClose, onDone }: { total: number; busy: boolean; onClose: () => void; onDone: () => void }) {
-  const [tendered, setTendered] = useState<number>(0);
-  const change = tendered - total;
-  const quick = [total, 500, 1000, 2000, 5000].filter((v, i, a) => a.indexOf(v) === i);
-  return (
-    <Modal title="Cash payment" onClose={onClose}>
-      <div className="rounded-2xl bg-neutral-800 p-4 text-center">
-        <p className="text-xs font-bold uppercase tracking-widest text-white/40">Total due</p>
-        <p className="font-display text-4xl font-black text-primary">{money(total)}</p>
-      </div>
-      <div className="mt-3 grid grid-cols-5 gap-1.5">
-        {quick.map((v, i) => (
-          <button key={`${v}-${i}`} onClick={() => setTendered(v)}
-            className={`rounded-xl py-2.5 text-sm font-bold ${tendered === v ? "bg-emerald-600 text-white" : "border border-white/10 text-white/80 hover:border-white/40"}`}>
-            {i === 0 ? "Exact" : money(v)}
-          </button>
-        ))}
-      </div>
-      <div className="mt-3 grid grid-cols-3 gap-1.5">
-        {[1, 2, 3, 4, 5, 6, 7, 8, 9, 0].map((n) => (
-          <button key={n} onClick={() => setTendered((t) => Math.min(t * 10 + n * 100, 5000000))}
-            className="rounded-xl border border-white/10 py-3 text-lg font-bold hover:border-white/40">{n}</button>
-        ))}
-        <button onClick={() => setTendered(0)} className="rounded-xl border border-white/10 py-3 text-sm font-bold text-white/60 hover:border-white/40">Clear</button>
-        <button onClick={() => void openCashDrawer()} className="rounded-xl border border-white/10 py-3 text-xs font-bold text-white/60 hover:border-white/40">Drawer</button>
-      </div>
-      <div className="mt-4 flex items-center justify-between rounded-2xl bg-neutral-800 px-4 py-3">
-        <div>
-          <p className="text-[11px] font-bold uppercase tracking-widest text-white/40">Tendered</p>
-          <p className="text-lg font-bold">{money(tendered)}</p>
-        </div>
-        <div className="text-right">
-          <p className="text-[11px] font-bold uppercase tracking-widest text-white/40">Change</p>
-          <p className={`text-lg font-bold ${change < 0 ? "text-white/30" : "text-emerald-400"}`}>{change < 0 ? "—" : money(change)}</p>
-        </div>
-      </div>
-      <button disabled={busy} onClick={onDone}
-        className="mt-4 inline-flex h-14 w-full items-center justify-center gap-2 rounded-xl bg-emerald-600 text-base font-bold text-white disabled:opacity-50">
-        {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Banknote className="h-5 w-5" />} Take cash & open drawer
-      </button>
-    </Modal>
-  );
-}
-
 function ReaderPay({
   total, readers, readerId, setReaderId, onClose, onPaid, onSettings,
 }: {
