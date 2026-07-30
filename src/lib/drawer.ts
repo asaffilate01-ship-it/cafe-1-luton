@@ -5,6 +5,8 @@
  *  1. iMin / Sunmi Android WebView bridges (built-in printer service)
  *  2. A local printer bridge URL saved on the device (any ESC/POS relay)
  */
+import { getIminPrinter } from "./imin";
+
 const BRIDGE_KEY = "cafe1-drawer-bridge";
 const KICK = "\x1B\x70\x00\x19\xFA"; // ESC p 0 25 250
 
@@ -19,13 +21,11 @@ export function setDrawerBridge(url: string) {
   else window.localStorage.removeItem(BRIDGE_KEY);
 }
 
-type Bridge = { openCashBox?: () => void; opencashBox?: () => void; sendRAWData?: (d: string) => void };
-
 export async function openCashDrawer(): Promise<{ ok: boolean; message: string }> {
-  const w = window as unknown as { iminPrinter?: Bridge; AndroidPrinter?: Bridge; sunmiPrinter?: Bridge };
-  const native = w.iminPrinter ?? w.sunmiPrinter ?? w.AndroidPrinter;
+  const native = getIminPrinter();
   if (native) {
     try {
+      native.initPrinter?.();
       if (native.openCashBox) native.openCashBox();
       else if (native.opencashBox) native.opencashBox();
       else native.sendRAWData?.(KICK);
