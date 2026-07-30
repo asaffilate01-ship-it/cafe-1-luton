@@ -17,7 +17,10 @@ import { buildScheduleSlots } from "@/lib/business";
 import { useOrderContext, describeContext } from "@/lib/order-context";
 import { OrderSetupGate } from "@/components/order-setup-gate";
 import { Settings2 } from "lucide-react";
-import { JUROR_CODE_KEY, JUROR_FOOD_DISCOUNT_PERCENT, jurorFoodDiscount } from "@/lib/juror";
+import {
+  JUROR_CODE_KEY, JUROR_FOOD_DISCOUNT_PERCENT, jurorFoodDiscount,
+  JUROR_DELIVERY_VENUES, isCourtDeliveryAddress,
+} from "@/lib/juror";
 
 export const Route = createFileRoute("/checkout")({
   head: () => ({
@@ -235,7 +238,6 @@ function Checkout() {
         setVoucherError("This voucher has no allowance left for today.");
       } else {
         setVoucher({ code: res.code, remaining_cents: res.remaining_cents, allocated_cents: res.allocated_cents });
-        if (typeof window !== "undefined") window.localStorage.setItem(JUROR_CODE_KEY, res.code);
       }
     } catch {
       setVoucherError("Couldn't check the voucher code. Please try again.");
@@ -243,22 +245,11 @@ function Checkout() {
       setVoucherBusy(false);
     }
   }
-  // Jurors who opted in on the /juror page carry their code with them.
+  // Fraud control: voucher codes are never remembered between orders — the
+  // juror keys the code in every time. Purge anything stored by older builds.
   useEffect(() => {
-    if (voucher || voucherInput || onTab) return;
-    const stored = typeof window === "undefined" ? null : window.localStorage.getItem(JUROR_CODE_KEY);
-    if (!stored) return;
-    let cancelled = false;
-    findVoucher({ data: { code: stored } })
-      .then((res) => {
-        if (cancelled || !res.found || !res.usable || res.remaining_cents <= 0) return;
-        setVoucherInput(res.code);
-        setVoucher({ code: res.code, remaining_cents: res.remaining_cents, allocated_cents: res.allocated_cents });
-      })
-      .catch(() => {});
-    return () => { cancelled = true; };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [onTab]);
+    if (typeof window !== "undefined") window.localStorage.removeItem(JUROR_CODE_KEY);
+  }, []);
 
   const voucherApplied = voucher ? Math.min(voucher.remaining_cents, grossTotal) : 0;
   const foodSubtotal = c.items.reduce((s, i) => s + (beverageIds.includes(i.menu_item_id) ? 0 : i.price_cents * i.qty), 0);
