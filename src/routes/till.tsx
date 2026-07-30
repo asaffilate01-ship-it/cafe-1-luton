@@ -13,6 +13,7 @@ import {
   cancelReaderPayment,
 } from "@/lib/till.functions";
 import { openCashDrawer, getDrawerBridge, setDrawerBridge } from "@/lib/drawer";
+import { postToDisplay } from "@/lib/customer-display";
 import { money } from "@/lib/format";
 import { toast } from "sonner";
 import {
@@ -267,6 +268,12 @@ function Till() {
           <button onClick={() => void openCashDrawer().then((r) => (r.ok ? toast.success(r.message) : toast.error(r.message)))}
             className="inline-flex items-center gap-1.5 rounded-lg border border-white/15 px-2.5 py-1.5 font-semibold text-white/80 hover:border-white/40">
             <Inbox className="h-4 w-4" /> <span className="hidden sm:inline">Drawer</span>
+          </button>
+          <button
+            onClick={() => window.open("/display", "cafe1-customer-display", "popup=yes,width=1280,height=800")}
+            aria-label="Open the customer display on the second screen"
+            className="inline-flex items-center gap-1.5 rounded-lg border border-white/15 px-2.5 py-1.5 font-semibold text-white/80 hover:border-white/40">
+            <MonitorPlay className="h-4 w-4" /> <span className="hidden sm:inline">Screen</span>
           </button>
           <button onClick={() => setSettings(true)} aria-label="Till settings" className="grid h-8 w-8 place-items-center rounded-lg border border-white/15 hover:border-white/40"><Settings2 className="h-4 w-4" /></button>
           <button onClick={() => setLocked(true)} aria-label="Lock till" className="grid h-8 w-8 place-items-center rounded-lg border border-white/15 hover:border-white/40"><Lock className="h-4 w-4" /></button>
