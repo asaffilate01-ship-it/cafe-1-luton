@@ -44,6 +44,7 @@ export const Route = createFileRoute("/till")({
 type Cat = { id: string; name: string; sort_order: number };
 type Item = { id: string; name: string; price_cents: number; category_id: string | null; sort_order: number; image_url: string | null; is_beverage: boolean };
 
+type Line = { id: string; name: string; price_cents: number; qty: number; is_beverage: boolean };
 type Side = "jury" | "judge" | "public";
 type Fulfilment = "dine_in" | "collection" | "delivery";
 
@@ -772,5 +773,88 @@ function LockScreen({ onUnlock }: { onUnlock: () => void }) {
         <span className="text-sm text-white/50">Tap to carry on serving</span>
       </button>
     </div>
+  );
+}
+
+/* ------------------------------------------------------- juror voucher */
+
+function VoucherModal({
+  onClose,
+  onApply,
+}: {
+  onClose: () => void;
+  onApply: (v: { code: string; remaining_cents: number; allocated_cents: number; opted_in: boolean }) => void;
+}) {
+  const lookup = useServerFn(lookupVoucher);
+  const [code, setCode] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const url = typeof window === "undefined" ? "" : `${window.location.origin}/juror?src=till`;
+
+  useEffect(() => { if (url) postToDisplay({ type: "juror", url }); }, [url]);
+
+  async function apply() {
+    const c = code.trim().toUpperCase();
+    if (!c) return;
+    setBusy(true); setError(null);
+    try {
+      const res = await lookup({ data: { code: c } });
+      if (!res.found) {
+        setError(("message" in res && res.message) || "That voucher code isn't recognised.");
+      } else if (!res.usable) {
+        setError(res.message ?? "That code can't be used today.");
+      } else if (res.remaining_cents <= 0) {
+        setError("Today's allowance has already been used on this code.");
+      } else {
+        onApply({
+          code: res.code,
+          remaining_cents: res.remaining_cents,
+          allocated_cents: res.allocated_cents,
+          opted_in: res.opted_in,
+        });
+        toast.success(`${money(res.remaining_cents)} allowance left today`);
+      }
+    } catch {
+      setError("Could not check that code. Try again.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <Modal title="Juror voucher" onClose={onClose}>
+      <div className="grid gap-5 sm:grid-cols-[auto_1fr] sm:items-start">
+        <div className="mx-auto w-fit rounded-2xl bg-white p-3">
+          {url && <QrCode value={url} size={150} alt="Scan to open the juror voucher page" />}
+        </div>
+        <div className="text-sm text-white/60">
+          <p className="font-semibold text-white">Ask the customer to scan</p>
+          <p className="mt-1">
+            The same QR is on the customer screen. Scanning opts them into the scheme and shows their remaining
+            allowance — {money(JUROR_DAILY_ALLOWANCE_CENTS)} each sitting day, plus {JUROR_FOOD_DISCOUNT_PERCENT}% off
+            food above it.
+          </p>
+          <p className="mt-2 inline-flex items-center gap-1.5 text-xs text-white/40">
+            <ShieldCheck className="h-3.5 w-3.5" /> Anonymous — no personal details are recorded.
+          </p>
+        </div>
+      </div>
+
+      <label className="mt-6 block text-xs font-bold uppercase tracking-widest text-white/50">Or key the code in</label>
+      <div className="mt-2 flex gap-2">
+        <input
+          value={code}
+          onChange={(e) => { setCode(e.target.value.toUpperCase()); setError(null); }}
+          onKeyDown={(e) => { if (e.key === "Enter") void apply(); }}
+          placeholder="CV-XXXXX-XXXXX"
+          className="h-12 flex-1 rounded-xl border border-white/10 bg-neutral-800 px-4 font-mono text-base uppercase outline-none focus:border-primary"
+        />
+        <button onClick={() => void apply()} disabled={busy || !code.trim()}
+          className="inline-flex h-12 items-center gap-2 rounded-xl bg-primary px-5 font-bold text-primary-foreground disabled:opacity-50">
+          {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Ticket className="h-4 w-4" />} Apply
+        </button>
+      </div>
+      {error && <p className="mt-2 text-sm text-red-400">{error}</p>}
+    </Modal>
   );
 }
