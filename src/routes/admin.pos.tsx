@@ -171,7 +171,7 @@ function Till() {
             <div>
               <p className="mb-1 text-[11px] font-bold uppercase tracking-wide text-muted-foreground">This till / POS side</p>
               <div className="flex gap-2">
-                {(["jury", "public"] as const).map((s) => (
+                {(["jury", "judge", "public"] as const).map((s) => (
                   <button
                     key={s}
                     onClick={() => setSide(s)}
@@ -179,11 +179,13 @@ function Till() {
                       side === s
                         ? s === "jury"
                           ? "bg-indigo-600 text-white"
-                          : "bg-teal-600 text-white"
+                          : s === "judge"
+                            ? "bg-fuchsia-700 text-white"
+                            : "bg-teal-600 text-white"
                         : "border border-border hover:border-primary"
                     }`}
                   >
-                    {s} side
+                    {s === "public" ? "Public side" : s}
                   </button>
                 ))}
               </div>

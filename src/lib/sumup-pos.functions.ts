@@ -55,8 +55,8 @@ function deviceRefs(t: SumupTxn): string[] {
 function derivePosSide(
   t: SumupTxn,
   products: SumupTxn["products"],
-  mapping: Map<string, "jury" | "public">,
-): "jury" | "public" | null {
+  mapping: Map<string, PosSide>,
+): PosSide | null {
   for (const ref of deviceRefs(t)) {
     const hit = mapping.get(ref.toLowerCase());
     if (hit) return hit;
@@ -71,6 +71,7 @@ function derivePosSide(
     .join(" | ")
     .toLowerCase();
   if (/\bjury\b/.test(haystack)) return "jury";
+  if (/\bjudge(s)?\b/.test(haystack)) return "judge";
   if (/\bpublic\b/.test(haystack)) return "public";
   return null;
 }
