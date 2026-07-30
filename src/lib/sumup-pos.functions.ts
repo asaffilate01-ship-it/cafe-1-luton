@@ -153,8 +153,8 @@ export const syncSumupPos = createServerFn({ method: "POST" })
       .from("pos_devices")
       .select("device_ref, side, active")
       .eq("active", true);
-    const mapping = new Map<string, "jury" | "public">(
-      (devices ?? []).map((d) => [String(d.device_ref).toLowerCase(), d.side as "jury" | "public"]),
+    const mapping = new Map<string, PosSide>(
+      (devices ?? []).map((d) => [String(d.device_ref).toLowerCase(), d.side as PosSide]),
     );
 
     let imported = 0;
