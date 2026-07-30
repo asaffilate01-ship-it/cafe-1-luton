@@ -270,19 +270,34 @@ function ItemRow({ it, onChanged }: { it: Item; onChanged: () => void }) {
   }
 
   return (
-    <div className="grid gap-3 rounded-xl border border-border bg-background p-3 md:grid-cols-[80px_1fr_auto]">
-      <label className="relative grid h-20 w-20 cursor-pointer place-items-center overflow-hidden rounded-lg border border-dashed border-border bg-muted text-muted-foreground">
-        {form.image_url ? (
-          <img src={form.image_url} alt={form.name} className="h-full w-full object-cover" />
-        ) : (
-          <ImageIcon className="h-6 w-6" />
+    <div className="grid grid-cols-[96px_minmax(0,1fr)] items-start gap-3 rounded-xl border border-border bg-background p-3 md:grid-cols-[96px_minmax(0,1fr)_auto]">
+      <div className="space-y-1">
+        <label className="group relative grid h-24 w-24 cursor-pointer place-items-center overflow-hidden rounded-xl border border-dashed border-border bg-muted text-muted-foreground">
+          {form.image_url ? (
+            <img src={form.image_url} alt={form.name} className="h-full w-full object-cover" />
+          ) : (
+            <span className="flex flex-col items-center gap-1 text-[10px] font-semibold uppercase tracking-wide">
+              <ImageIcon className="h-5 w-5" /> Add photo
+            </span>
+          )}
+          <input type="file" accept="image/*" className="absolute inset-0 cursor-pointer opacity-0"
+            onChange={(e) => { const f = e.target.files?.[0]; if (f) onFile(f); }} />
+          {form.image_url && (
+            <span className="pointer-events-none absolute inset-x-0 bottom-0 bg-black/60 py-0.5 text-center text-[10px] font-semibold uppercase tracking-wide text-white opacity-0 transition group-hover:opacity-100">
+              Replace
+            </span>
+          )}
+          {uploading && <span className="absolute inset-0 grid place-items-center bg-black/60 text-xs text-white">Uploading…</span>}
+        </label>
+        {form.image_url && (
+          <button type="button" onClick={() => save({ image_url: null })}
+            className="w-24 rounded-lg border border-border py-1 text-[11px] font-semibold text-muted-foreground hover:text-destructive">
+            Remove
+          </button>
         )}
-        <input type="file" accept="image/*" className="absolute inset-0 cursor-pointer opacity-0"
-          onChange={(e) => { const f = e.target.files?.[0]; if (f) onFile(f); }} />
-        {uploading && <span className="absolute inset-0 grid place-items-center bg-black/50 text-xs text-white">…</span>}
-      </label>
+      </div>
 
-      <div className="grid gap-2 sm:grid-cols-2">
+      <div className="grid min-w-0 gap-2 sm:grid-cols-2">
         <input
           value={form.name}
           onChange={(e)=>setForm({...form, name:e.target.value})}
@@ -325,7 +340,7 @@ function ItemRow({ it, onChanged }: { it: Item; onChanged: () => void }) {
           className="rounded-lg border border-input bg-background px-3 py-2 text-sm"
           placeholder="Sub-group label (optional)"
         />
-        <div className="flex items-center gap-4 text-sm text-muted-foreground">
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-muted-foreground sm:col-span-2">
           <button
             type="button"
             onClick={()=>{ const next = !form.active; setForm({...form, active: next}); save({ active: next }); }}
@@ -346,11 +361,11 @@ function ItemRow({ it, onChanged }: { it: Item; onChanged: () => void }) {
             <input type="checkbox" checked={!!form.needs_cooking} onChange={(e)=>{ setForm({...form, needs_cooking:e.target.checked}); save({ needs_cooking:e.target.checked }); }} />
             Needs cooking
           </label>
-          <span>{money(form.price_cents)}</span>
+          <span className="ml-auto font-semibold text-foreground">{money(form.price_cents)}</span>
         </div>
       </div>
 
-      <div className="flex items-start justify-end">
+      <div className="col-span-2 flex items-start justify-end md:col-span-1">
         <button
           onClick={async ()=>{
             if (!confirm(`Delete "${it.name}"?`)) return;
