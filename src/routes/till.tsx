@@ -190,6 +190,15 @@ function Till() {
   const total = lines.reduce((s, l) => s + l.price_cents * l.qty, 0);
   const count = lines.reduce((s, l) => s + l.qty, 0);
 
+  // mirror the basket onto the customer-facing second screen (/display)
+  useEffect(() => {
+    postToDisplay(
+      lines.length
+        ? { type: "order", lines: lines.map((l) => ({ id: l.id, name: l.name, price_cents: l.price_cents, qty: l.qty })), total, fulfilment: type }
+        : { type: "idle" },
+    );
+  }, [lines, total, type]);
+
   function add(i: Item) {
     setLines((prev) => {
       const at = prev.findIndex((l) => l.id === i.id);
@@ -221,6 +230,7 @@ function Till() {
           },
         });
         setLastOrder({ n: res.order_number, total: res.total_cents, id: res.order_id });
+        postToDisplay({ type: "paid", order_number: res.order_number, total: res.total_cents, method: payment_method });
         toast.success(`Order #${res.order_number} sent to the kitchen · ${money(res.total_cents)}`);
         window.open(`/print/${res.order_id}`, "_blank");
         if (payment_method === "cash") void openCashDrawer();
