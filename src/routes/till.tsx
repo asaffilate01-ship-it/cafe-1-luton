@@ -13,6 +13,7 @@ import {
   cancelReaderPayment,
 } from "@/lib/till.functions";
 import { openCashDrawer, getDrawerBridge, setDrawerBridge } from "@/lib/drawer";
+import { iminPrintTickets, isIminDevice, openCustomerScreen } from "@/lib/imin";
 import { postToDisplay } from "@/lib/customer-display";
 import { money } from "@/lib/format";
 import { toast } from "sonner";
@@ -233,8 +234,18 @@ function Till() {
         setLastOrder({ n: res.order_number, total: res.total_cents, id: res.order_id });
         postToDisplay({ type: "paid", order_number: res.order_number, total: res.total_cents, method: payment_method });
         toast.success(`Order #${res.order_number} sent to the kitchen · ${money(res.total_cents)}`);
-        window.open(`/print/${res.order_id}`, "_blank");
-        if (payment_method === "cash") void openCashDrawer();
+        const printed = iminPrintTickets(
+          (["KITCHEN", "COUNTER"] as const).map((heading) => ({
+            heading,
+            order_number: res.order_number,
+            fulfilment: FULFIL.find((f) => f.id === type)?.label ?? type,
+            terminal: SIDE_LABEL[side],
+            lines: lines.map((l) => ({ name: l.name, qty: l.qty, price_cents: heading === "COUNTER" ? l.price_cents : undefined })),
+            total_cents: heading === "COUNTER" ? res.total_cents : undefined,
+            footer: heading === "COUNTER" ? "Thank you — cafe1stalbans.co.uk" : undefined,
+          })),
+        );
+        if (!printed) window.open(`/print/${res.order_id}`, "_blank");
         setLines([]); setName(""); setTable(""); setPay(null); setTendered(0); setShowOrder(false);
       } catch (e) {
         toast.error(e instanceof Error ? e.message : "Could not take that order");
@@ -270,7 +281,7 @@ function Till() {
             <Inbox className="h-4 w-4" /> <span className="hidden sm:inline">Drawer</span>
           </button>
           <button
-            onClick={() => window.open("/display", "cafe1-customer-display", "popup=yes,width=1280,height=800")}
+            onClick={() => { const r = openCustomerScreen("/display"); r.ok ? toast.success(r.message) : toast.error(r.message); }}
             aria-label="Open the customer display on the second screen"
             className="inline-flex items-center gap-1.5 rounded-lg border border-white/15 px-2.5 py-1.5 font-semibold text-white/80 hover:border-white/40">
             <MonitorPlay className="h-4 w-4" /> <span className="hidden sm:inline">Screen</span>
@@ -443,14 +454,18 @@ function Till() {
               <span className="inline-flex items-center gap-2"><Smartphone className="h-5 w-5" /> Charge SumUp Solo</span>
               <span className="font-display text-lg font-black tabular-nums">{money(total)}</span>
             </button>
-            <div className="grid grid-cols-2 gap-2">
+            <div className="grid grid-cols-3 gap-2">
               <button disabled={!lines.length || busy} onClick={() => { if (tendered && tendered < total) return toast.error("Tendered is less than the total"); void finish("cash"); }}
                 className="inline-flex h-12 items-center justify-center gap-2 rounded-xl bg-emerald-600 text-sm font-bold text-white disabled:opacity-40">
-                <Banknote className="h-4 w-4" /> Cash & drawer
+                <Banknote className="h-4 w-4" /> Cash
+              </button>
+              <button onClick={() => void openCashDrawer().then((r) => (r.ok ? toast.success(r.message) : toast.error(r.message)))}
+                className="inline-flex h-12 items-center justify-center gap-2 rounded-xl border border-white/15 text-sm font-bold text-white/80 hover:border-white/40">
+                <Inbox className="h-4 w-4" /> Drawer
               </button>
               <button disabled={!lines.length || busy} onClick={() => setPay("manual")}
                 className="inline-flex h-12 items-center justify-center gap-2 rounded-xl border border-white/15 text-sm font-bold text-white/80 disabled:opacity-40">
-                <CreditCard className="h-4 w-4" /> Other card
+                <CreditCard className="h-4 w-4" /> Card
               </button>
             </div>
             <div className="flex items-center justify-between text-xs">
@@ -668,6 +683,24 @@ function TillSettings({ readers, reload, onClose }: { readers: { id: string; nam
           {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />} Pair
         </button>
       </div>
+
+      <p className="mt-6 text-xs font-bold uppercase tracking-widest text-white/40">Built-in printer (iMin D4-504)</p>
+      <p className="mt-1 text-xs text-white/40">
+        {isIminDevice()
+          ? "Detected — kitchen and counter tickets print straight to this terminal."
+          : "Not detected on this device — tickets open in a print window instead."}
+      </p>
+      <button
+        onClick={() => {
+          const ok = iminPrintTickets([
+            { heading: "TEST TICKET", order_number: 0, fulfilment: "Dine in", terminal: "Counter", lines: [{ name: "Test print", qty: 1, price_cents: 0 }], total_cents: 0 },
+          ]);
+          if (ok) toast.success("Test ticket sent to the printer");
+          else { window.open("/print/test?paper=58", "_blank"); toast.message("No built-in printer — opened a print preview"); }
+        }}
+        className="mt-2 inline-flex h-10 w-full items-center justify-center gap-2 rounded-xl border border-white/15 text-sm font-bold hover:border-primary">
+        <Printer className="h-4 w-4" /> Test print
+      </button>
 
       <p className="mt-6 text-xs font-bold uppercase tracking-widest text-white/40">Cash drawer</p>
       <p className="mt-1 text-xs text-white/40">
