@@ -595,6 +595,8 @@ export type Database = {
           driver_id: string | null
           guest_token: string
           id: string
+          loyalty_awarded: boolean
+          loyalty_stamps_pending: number
           order_number: number
           payment_method: string
           payment_status: Database["public"]["Enums"]["payment_status"]
@@ -640,6 +642,8 @@ export type Database = {
           driver_id?: string | null
           guest_token?: string
           id?: string
+          loyalty_awarded?: boolean
+          loyalty_stamps_pending?: number
           order_number?: number
           payment_method?: string
           payment_status?: Database["public"]["Enums"]["payment_status"]
@@ -685,6 +689,8 @@ export type Database = {
           driver_id?: string | null
           guest_token?: string
           id?: string
+          loyalty_awarded?: boolean
+          loyalty_stamps_pending?: number
           order_number?: number
           payment_method?: string
           payment_status?: Database["public"]["Enums"]["payment_status"]
