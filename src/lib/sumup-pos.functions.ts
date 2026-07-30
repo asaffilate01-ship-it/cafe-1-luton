@@ -3,6 +3,7 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
 type SumupTxn = {
   id: string;
+  id: string;
   transaction_code?: string;
   amount: number;
   currency: string;
