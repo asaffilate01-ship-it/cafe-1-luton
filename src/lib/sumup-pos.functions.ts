@@ -226,15 +226,15 @@ export const syncSumupPos = createServerFn({ method: "POST" })
       .in("status", ["paid", "preparing", "ready"]);
 
     for (const o of live ?? []) {
-      const key = o.sumup_transaction_id ?? o.sumup_order_ref;
-      if (!key) continue;
+      const refKey = o.sumup_transaction_id ?? o.sumup_order_ref;
+      if (!refKey) continue;
       let st = statusById.get(o.sumup_transaction_id ?? "") ?? statusById.get(o.sumup_order_ref ?? "");
       if (!st) {
         // Not in the recent window — ask SumUp directly.
         try {
           const param = o.sumup_transaction_id ? `id=${encodeURIComponent(o.sumup_transaction_id)}` : `transaction_code=${encodeURIComponent(o.sumup_order_ref!)}`;
           const d = await fetch(`https://api.sumup.com/v0.1/me/transactions?${param}`, {
-            headers: { Authorization: `Bearer ${key0(key)}` },
+            headers: { Authorization: `Bearer ${key}` },
           });
           if (d.ok) {
             const dj = (await d.json()) as SumupTxn;
@@ -255,8 +255,6 @@ export const syncSumupPos = createServerFn({ method: "POST" })
         voided++;
       }
     }
-
-    function key0(_k: string) { return key; }
 
     return { imported, skipped, voided, error: null };
   });
