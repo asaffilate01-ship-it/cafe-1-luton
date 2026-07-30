@@ -51,7 +51,7 @@ export const Route = createFileRoute("/order/$orderId")({
 const DELIVERY_STEPS = ["pending_payment", "paid", "preparing", "ready", "out_for_delivery", "delivered"] as const;
 const COUNTER_STEPS = ["pending_payment", "paid", "preparing", "ready", "completed"] as const;
 const STEP_LABELS: Record<string, string> = {
-  pending_payment: "Placed",
+  pending_payment: "Awaiting payment",
   paid: "Awaiting accept",
   preparing: "Preparing",
   ready: "Ready",
@@ -61,6 +61,7 @@ const STEP_LABELS: Record<string, string> = {
 };
 
 const STATUS_MESSAGES: Record<string, { title: string; body: string }> = {
+  pending_payment: { title: "Payment not completed", body: "This order isn't paid yet — finish payment to send it to the kitchen." },
   paid: { title: "Payment received", body: "We've got your payment — waiting for the café to accept." },
   preparing: { title: "Order accepted 👩‍🍳", body: "Cafe1 is preparing your order now." },
   ready: { title: "Ready ☕", body: "Your order is ready." },
