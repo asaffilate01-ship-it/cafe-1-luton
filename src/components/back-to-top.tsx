@@ -39,10 +39,9 @@ export function BackToTop() {
       type="button"
       aria-label={`Back to top (${Math.round(progress * 100)}% of page scrolled)`}
       onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
-      className={`fixed right-4 z-40 grid h-12 w-12 place-items-center rounded-full border border-border bg-background/90 text-foreground shadow-lg backdrop-blur transition-all duration-300 hover:bg-accent ${
+      className={`fixed right-4 bottom-[calc(5.5rem+env(safe-area-inset-bottom))] z-40 grid h-12 w-12 place-items-center rounded-full border border-border bg-background/90 text-foreground shadow-lg backdrop-blur transition-all duration-300 hover:bg-accent md:bottom-6 ${
         visible ? "pointer-events-auto opacity-100 translate-y-0" : "pointer-events-none opacity-0 translate-y-3"
       }`}
-      style={{ bottom: "calc(5.5rem + env(safe-area-inset-bottom))" }}
     >
       <svg className="absolute inset-0 h-12 w-12 -rotate-90" viewBox="0 0 48 48" aria-hidden="true">
         <circle cx="24" cy="24" r={r} fill="none" stroke="currentColor" strokeWidth="2.5" className="text-muted opacity-40" />
