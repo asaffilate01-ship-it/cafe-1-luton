@@ -234,8 +234,18 @@ function Till() {
         setLastOrder({ n: res.order_number, total: res.total_cents, id: res.order_id });
         postToDisplay({ type: "paid", order_number: res.order_number, total: res.total_cents, method: payment_method });
         toast.success(`Order #${res.order_number} sent to the kitchen · ${money(res.total_cents)}`);
-        window.open(`/print/${res.order_id}`, "_blank");
-        if (payment_method === "cash") void openCashDrawer();
+        const printed = iminPrintTickets(
+          (["KITCHEN", "COUNTER"] as const).map((heading) => ({
+            heading,
+            order_number: res.order_number,
+            fulfilment: TYPE_LABEL[type] ?? type,
+            terminal: SIDE_LABEL[side],
+            lines: lines.map((l) => ({ name: l.name, qty: l.qty, price_cents: heading === "COUNTER" ? l.price_cents : undefined })),
+            total_cents: heading === "COUNTER" ? res.total_cents : undefined,
+            footer: heading === "COUNTER" ? "Thank you — cafe1stalbans.co.uk" : undefined,
+          })),
+        );
+        if (!printed) window.open(`/print/${res.order_id}`, "_blank");
         setLines([]); setName(""); setTable(""); setPay(null); setTendered(0); setShowOrder(false);
       } catch (e) {
         toast.error(e instanceof Error ? e.message : "Could not take that order");
