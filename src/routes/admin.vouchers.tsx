@@ -7,6 +7,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { money } from "@/lib/format";
 import { Ticket, Trash2, Download, CalendarPlus, Power, ShieldCheck } from "lucide-react";
+import { QrCode } from "@/components/qr-code";
 import {
   JUROR_DAILY_ALLOWANCE_CENTS,
   JUROR_DEFAULT_SERVICE_DAYS,
@@ -135,6 +136,10 @@ function AdminVouchers() {
   const [allowance, setAllowance] = useState((JUROR_DAILY_ALLOWANCE_CENTS / 100).toFixed(2));
   const [busy, setBusy] = useState(false);
   const [issued, setIssued] = useState<string[]>([]);
+  const [slips, setSlips] = useState<string[]>([]);
+
+  const slipUrl = (code: string) =>
+    `https://cafe1stalbans.co.uk/juror?code=${encodeURIComponent(code)}&src=slip`;
 
   // Unambiguous alphabet (no O/0, I/1) — 10 chars ≈ 50 bits of entropy, so
   // juror codes can never be guessed or walked sequentially.
@@ -322,6 +327,9 @@ function AdminVouchers() {
                 <p className="text-sm font-semibold text-primary">{issued.length} codes ready for the Jury Officer</p>
                 <button type="button" onClick={() => downloadIssued(issued, batch.replace(/\W+/g, "-").toLowerCase() || "batch")} className="flex h-10 items-center gap-2 rounded-xl bg-primary px-4 text-sm font-semibold text-primary-foreground">
                   <Download className="h-4 w-4" /> Download list
+                </button>
+                <button type="button" onClick={() => setSlips(issued)} className="flex h-10 items-center gap-2 rounded-xl border border-border px-4 text-sm font-semibold hover:bg-muted">
+                  <Ticket className="h-4 w-4" /> Print QR slips
                 </button>
               </div>
               <pre className="mt-3 max-h-40 overflow-auto rounded-lg bg-background p-3 font-mono text-xs">{issued.join("\n")}</pre>
