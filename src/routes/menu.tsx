@@ -66,6 +66,8 @@ function MenuPage() {
     const ql = q.trim().toLowerCase();
     const items = data.items.filter((i) => {
       if (vegOnly && !i.is_veg) return false;
+      // Juror Menu is only visible to verified jurors arriving from /juror.
+      if (!jurorParam && i.juror_menu) return false;
       if (jurorOnly && !i.juror_menu) return false;
       if (temp === "hot" && !i.needs_cooking) return false;
       if (temp === "cold" && i.needs_cooking) return false;
@@ -78,7 +80,7 @@ function MenuPage() {
     });
     const cats = data.cats.filter((c) => items.some((i) => i.category_id === c.id));
     return { cats, items, mods: data.mods };
-  }, [data, q, vegOnly, temp, under5, jurorOnly]);
+  }, [data, q, vegOnly, temp, under5, jurorOnly, jurorParam]);
 
   const filtersOn = vegOnly || under5 || jurorOnly || temp !== "any";
   function clearFilters() {
@@ -263,9 +265,11 @@ function MenuPage() {
             <span className="hidden shrink-0 text-xs font-semibold uppercase tracking-widest text-muted-foreground lg:inline">
               Filters
             </span>
-            <FilterChip active={jurorOnly} onClick={() => setJurorOnly((v) => !v)} icon={<ShieldCheck className="h-4 w-4" />}>
-              Juror Menu
-            </FilterChip>
+            {jurorParam && (
+              <FilterChip active={jurorOnly} onClick={() => setJurorOnly((v) => !v)} icon={<ShieldCheck className="h-4 w-4" />}>
+                Juror Menu
+              </FilterChip>
+            )}
             <FilterChip active={vegOnly} onClick={() => setVegOnly((v) => !v)} icon={<Leaf className="h-4 w-4" />}>
               Vegetarian
             </FilterChip>
