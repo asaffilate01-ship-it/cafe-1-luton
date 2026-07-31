@@ -440,6 +440,33 @@ function AdminVouchers() {
           </div>
         </div>
       </div>
+
+      {slips.length > 0 && (
+        <div className="fixed inset-0 z-50 overflow-auto bg-background p-6 print:p-0">
+          <style>{`@media print { .no-print { display: none !important; } }`}</style>
+          <div className="no-print mx-auto mb-6 flex max-w-4xl flex-wrap items-center justify-between gap-3">
+            <p className="font-semibold">{slips.length} juror QR slip{slips.length === 1 ? "" : "s"}</p>
+            <div className="flex gap-2">
+              <button onClick={() => window.print()} className="h-10 rounded-xl bg-primary px-4 text-sm font-semibold text-primary-foreground hover:bg-primary-hover">Print</button>
+              <button onClick={() => setSlips([])} className="h-10 rounded-xl border border-border px-4 text-sm font-semibold hover:bg-muted">Close</button>
+            </div>
+          </div>
+          <div className="mx-auto grid max-w-4xl grid-cols-2 gap-4 sm:grid-cols-3">
+            {slips.map((c) => (
+              <div key={c} className="break-inside-avoid rounded-xl border border-border p-4 text-center">
+                <p className="text-[10px] font-black uppercase tracking-widest text-primary">Café 1 juror voucher</p>
+                <div className="mt-2 flex justify-center">
+                  <QrCode value={slipUrl(c)} size={150} alt={`QR code for juror voucher ${c}`} />
+                </div>
+                <p className="mt-2 font-mono text-sm font-bold">{c}</p>
+                <p className="mt-1 text-[10px] leading-snug text-muted-foreground">
+                  Scan to check your daily {money(JUROR_DAILY_ALLOWANCE_CENTS)} allowance, or give this code at the till.
+                </p>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
