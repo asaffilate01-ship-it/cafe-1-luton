@@ -7,6 +7,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { money } from "@/lib/format";
 import { Ticket, Trash2, Download, CalendarPlus, Power, ShieldCheck } from "lucide-react";
+import { QrCode } from "@/components/qr-code";
 import {
   JUROR_DAILY_ALLOWANCE_CENTS,
   JUROR_DEFAULT_SERVICE_DAYS,
@@ -135,6 +136,10 @@ function AdminVouchers() {
   const [allowance, setAllowance] = useState((JUROR_DAILY_ALLOWANCE_CENTS / 100).toFixed(2));
   const [busy, setBusy] = useState(false);
   const [issued, setIssued] = useState<string[]>([]);
+  const [slips, setSlips] = useState<string[]>([]);
+
+  const slipUrl = (code: string) =>
+    `https://cafe1stalbans.co.uk/juror?code=${encodeURIComponent(code)}&src=slip`;
 
   // Unambiguous alphabet (no O/0, I/1) — 10 chars ≈ 50 bits of entropy, so
   // juror codes can never be guessed or walked sequentially.
@@ -323,6 +328,9 @@ function AdminVouchers() {
                 <button type="button" onClick={() => downloadIssued(issued, batch.replace(/\W+/g, "-").toLowerCase() || "batch")} className="flex h-10 items-center gap-2 rounded-xl bg-primary px-4 text-sm font-semibold text-primary-foreground">
                   <Download className="h-4 w-4" /> Download list
                 </button>
+                <button type="button" onClick={() => setSlips(issued)} className="flex h-10 items-center gap-2 rounded-xl border border-border px-4 text-sm font-semibold hover:bg-muted">
+                  <Ticket className="h-4 w-4" /> Print QR slips
+                </button>
               </div>
               <pre className="mt-3 max-h-40 overflow-auto rounded-lg bg-background p-3 font-mono text-xs">{issued.join("\n")}</pre>
             </div>
@@ -361,6 +369,7 @@ function AdminVouchers() {
                     {money(h.daily_amount_cents)}/day · used {money(used)} · left <span className="font-semibold text-primary">{money(left)}</span>
                   </span>
                   <button onClick={() => extend(h, 5)} className="rounded-lg p-2 text-muted-foreground hover:text-primary" aria-label={`Extend ${h.code} by 5 working days`} title="Extend 5 working days"><CalendarPlus className="h-4 w-4" /></button>
+                  <button onClick={() => setSlips([h.code])} className="rounded-lg p-2 text-muted-foreground hover:text-primary" aria-label={`Print QR slip for ${h.code}`} title="Print QR slip"><Ticket className="h-4 w-4" /></button>
                   <button onClick={() => toggleActive(h)} className={`rounded-lg p-2 ${h.active ? "text-muted-foreground hover:text-destructive" : "text-emerald-600"}`} aria-label={`${h.active ? "Deactivate" : "Reactivate"} ${h.code}`} title={h.active ? "Deactivate" : "Reactivate"}><Power className="h-4 w-4" /></button>
                   <button onClick={() => removeHolder(h)} className="rounded-lg p-2 text-muted-foreground hover:text-destructive" aria-label={`Delete ${h.code}`}><Trash2 className="h-4 w-4" /></button>
                 </div>
@@ -431,6 +440,33 @@ function AdminVouchers() {
           </div>
         </div>
       </div>
+
+      {slips.length > 0 && (
+        <div className="fixed inset-0 z-50 overflow-auto bg-background p-6 print:p-0">
+          <style>{`@media print { .no-print { display: none !important; } }`}</style>
+          <div className="no-print mx-auto mb-6 flex max-w-4xl flex-wrap items-center justify-between gap-3">
+            <p className="font-semibold">{slips.length} juror QR slip{slips.length === 1 ? "" : "s"}</p>
+            <div className="flex gap-2">
+              <button onClick={() => window.print()} className="h-10 rounded-xl bg-primary px-4 text-sm font-semibold text-primary-foreground hover:bg-primary-hover">Print</button>
+              <button onClick={() => setSlips([])} className="h-10 rounded-xl border border-border px-4 text-sm font-semibold hover:bg-muted">Close</button>
+            </div>
+          </div>
+          <div className="mx-auto grid max-w-4xl grid-cols-2 gap-4 sm:grid-cols-3">
+            {slips.map((c) => (
+              <div key={c} className="break-inside-avoid rounded-xl border border-border p-4 text-center">
+                <p className="text-[10px] font-black uppercase tracking-widest text-primary">Café 1 juror voucher</p>
+                <div className="mt-2 flex justify-center">
+                  <QrCode value={slipUrl(c)} size={150} alt={`QR code for juror voucher ${c}`} />
+                </div>
+                <p className="mt-2 font-mono text-sm font-bold">{c}</p>
+                <p className="mt-1 text-[10px] leading-snug text-muted-foreground">
+                  Scan to check your daily {money(JUROR_DAILY_ALLOWANCE_CENTS)} allowance, or give this code at the till.
+                </p>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
