@@ -681,7 +681,7 @@ function ReaderPay({
   );
 }
 
-function TillSettings({ readers, reload, onClose }: { readers: { id: string; name: string; status: string }[]; reload: () => Promise<void>; onClose: () => void }) {
+function TillSettings({ readers, readerError, reload, onClose }: { readers: { id: string; name: string; status: string }[]; readerError?: string | null; reload: () => Promise<void>; onClose: () => void }) {
   const pairFn = useServerFn(pairSumupReader);
   const unpairFn = useServerFn(unpairSumupReader);
   const [code, setCode] = useState("");
@@ -709,7 +709,17 @@ function TillSettings({ readers, reload, onClose }: { readers: { id: string; nam
 
   return (
     <Modal title="Till settings" onClose={onClose}>
-      <p className="text-xs font-bold uppercase tracking-widest text-white/40">SumUp Solo readers</p>
+      <div className="flex items-center justify-between gap-2">
+        <p className="text-xs font-bold uppercase tracking-widest text-white/40">SumUp Solo readers</p>
+        <button onClick={() => void reload()} className="rounded-lg border border-white/15 px-2.5 py-1 text-[11px] font-bold uppercase hover:border-primary">
+          Refresh
+        </button>
+      </div>
+      {readerError && (
+        <p className="mt-2 rounded-xl bg-red-500/15 p-3 text-xs text-red-300">
+          SumUp connection problem: {readerError}
+        </p>
+      )}
       <div className="mt-2 space-y-1.5">
         {readers.map((r) => (
           <div key={r.id} className="flex items-center gap-2 rounded-xl border border-white/10 px-3 py-2 text-sm">
