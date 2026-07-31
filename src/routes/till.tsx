@@ -146,6 +146,7 @@ function Till() {
     return (window.localStorage.getItem("cafe1-pos-side") as Side) || "public";
   });
   const [readers, setReaders] = useState<{ id: string; name: string; status: string }[]>([]);
+  const [readerError, setReaderError] = useState<string | null>(null);
   const [readerId, setReaderId] = useState<string>(() =>
     typeof window === "undefined" ? "" : window.localStorage.getItem("cafe1-till-reader") ?? "",
   );
@@ -181,10 +182,14 @@ function Till() {
       const res = await readersFn({});
       if (res.ok) {
         setReaders(res.readers);
+        setReaderError(null);
         setReaderId((prev) => prev || res.readers[0]?.id || "");
+      } else {
+        setReaders([]);
+        setReaderError(res.error ?? "Could not reach SumUp");
       }
-    } catch {
-      /* SumUp keys may not be configured yet */
+    } catch (e) {
+      setReaderError(e instanceof Error ? e.message : "Could not reach SumUp");
     }
   }, [readersFn]);
   useEffect(() => { void loadReaders(); }, [loadReaders]);
@@ -557,7 +562,9 @@ function Till() {
           onApply={(v) => { setVoucher(v); setVoucherOpen(false); }}
         />
       )}
-      {settings && <TillSettings readers={readers} reload={loadReaders} onClose={() => setSettings(false)} />}
+      {settings && (
+        <TillSettings readers={readers} readerError={readerError} reload={loadReaders} onClose={() => setSettings(false)} />
+      )}
     </div>
   );
 }
