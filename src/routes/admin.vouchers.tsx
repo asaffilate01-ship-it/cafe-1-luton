@@ -369,6 +369,7 @@ function AdminVouchers() {
                     {money(h.daily_amount_cents)}/day · used {money(used)} · left <span className="font-semibold text-primary">{money(left)}</span>
                   </span>
                   <button onClick={() => extend(h, 5)} className="rounded-lg p-2 text-muted-foreground hover:text-primary" aria-label={`Extend ${h.code} by 5 working days`} title="Extend 5 working days"><CalendarPlus className="h-4 w-4" /></button>
+                  <button onClick={() => setSlips([h.code])} className="rounded-lg p-2 text-muted-foreground hover:text-primary" aria-label={`Print QR slip for ${h.code}`} title="Print QR slip"><Ticket className="h-4 w-4" /></button>
                   <button onClick={() => toggleActive(h)} className={`rounded-lg p-2 ${h.active ? "text-muted-foreground hover:text-destructive" : "text-emerald-600"}`} aria-label={`${h.active ? "Deactivate" : "Reactivate"} ${h.code}`} title={h.active ? "Deactivate" : "Reactivate"}><Power className="h-4 w-4" /></button>
                   <button onClick={() => removeHolder(h)} className="rounded-lg p-2 text-muted-foreground hover:text-destructive" aria-label={`Delete ${h.code}`}><Trash2 className="h-4 w-4" /></button>
                 </div>
