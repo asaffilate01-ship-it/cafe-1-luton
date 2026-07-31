@@ -146,6 +146,7 @@ function Till() {
     return (window.localStorage.getItem("cafe1-pos-side") as Side) || "public";
   });
   const [readers, setReaders] = useState<{ id: string; name: string; status: string }[]>([]);
+  const [readerError, setReaderError] = useState<string | null>(null);
   const [readerId, setReaderId] = useState<string>(() =>
     typeof window === "undefined" ? "" : window.localStorage.getItem("cafe1-till-reader") ?? "",
   );
@@ -181,10 +182,14 @@ function Till() {
       const res = await readersFn({});
       if (res.ok) {
         setReaders(res.readers);
+        setReaderError(null);
         setReaderId((prev) => prev || res.readers[0]?.id || "");
+      } else {
+        setReaders([]);
+        setReaderError(res.error ?? "Could not reach SumUp");
       }
-    } catch {
-      /* SumUp keys may not be configured yet */
+    } catch (e) {
+      setReaderError(e instanceof Error ? e.message : "Could not reach SumUp");
     }
   }, [readersFn]);
   useEffect(() => { void loadReaders(); }, [loadReaders]);
@@ -557,7 +562,9 @@ function Till() {
           onApply={(v) => { setVoucher(v); setVoucherOpen(false); }}
         />
       )}
-      {settings && <TillSettings readers={readers} reload={loadReaders} onClose={() => setSettings(false)} />}
+      {settings && (
+        <TillSettings readers={readers} readerError={readerError} reload={loadReaders} onClose={() => setSettings(false)} />
+      )}
     </div>
   );
 }
@@ -674,7 +681,7 @@ function ReaderPay({
   );
 }
 
-function TillSettings({ readers, reload, onClose }: { readers: { id: string; name: string; status: string }[]; reload: () => Promise<void>; onClose: () => void }) {
+function TillSettings({ readers, readerError, reload, onClose }: { readers: { id: string; name: string; status: string }[]; readerError?: string | null; reload: () => Promise<void>; onClose: () => void }) {
   const pairFn = useServerFn(pairSumupReader);
   const unpairFn = useServerFn(unpairSumupReader);
   const [code, setCode] = useState("");
@@ -702,7 +709,17 @@ function TillSettings({ readers, reload, onClose }: { readers: { id: string; nam
 
   return (
     <Modal title="Till settings" onClose={onClose}>
-      <p className="text-xs font-bold uppercase tracking-widest text-white/40">SumUp Solo readers</p>
+      <div className="flex items-center justify-between gap-2">
+        <p className="text-xs font-bold uppercase tracking-widest text-white/40">SumUp Solo readers</p>
+        <button onClick={() => void reload()} className="rounded-lg border border-white/15 px-2.5 py-1 text-[11px] font-bold uppercase hover:border-primary">
+          Refresh
+        </button>
+      </div>
+      {readerError && (
+        <p className="mt-2 rounded-xl bg-red-500/15 p-3 text-xs text-red-300">
+          SumUp connection problem: {readerError}
+        </p>
+      )}
       <div className="mt-2 space-y-1.5">
         {readers.map((r) => (
           <div key={r.id} className="flex items-center gap-2 rounded-xl border border-white/10 px-3 py-2 text-sm">
