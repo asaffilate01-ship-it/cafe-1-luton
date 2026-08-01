@@ -3,79 +3,114 @@ import { getRequestHeader } from "@tanstack/react-start/server";
 import { isDevHost } from "./dev-env";
 
 type Role = "admin" | "staff" | "driver" | "customer";
+type DevAccount = { email: string; password: string; name: string; role: Role };
 
-const ACCOUNTS: { email: string; password: string; name: string; role: Role }[] = [
-  { email: "dev-admin@cafe1.test",    password: "DevAdmin!2026",    name: "Dev Admin",    role: "admin" },
-  { email: "dev-staff@cafe1.test",    password: "DevStaff!2026",    name: "Dev Staff",    role: "staff" },
-  { email: "dev-driver@cafe1.test",   password: "DevDriver!2026",   name: "Dev Driver",   role: "driver" },
-  { email: "dev-customer@cafe1.test", password: "DevCustomer!2026", name: "Dev Customer", role: "customer" },
+const ROLE_CONFIG: Array<{
+  role: Role;
+  name: string;
+  emailKey: string;
+  passwordKey: string;
+}> = [
+  {
+    role: "admin",
+    name: "Dev Admin",
+    emailKey: "DEV_ADMIN_EMAIL",
+    passwordKey: "DEV_ADMIN_PASSWORD",
+  },
+  {
+    role: "staff",
+    name: "Dev Staff",
+    emailKey: "DEV_STAFF_EMAIL",
+    passwordKey: "DEV_STAFF_PASSWORD",
+  },
+  {
+    role: "driver",
+    name: "Dev Driver",
+    emailKey: "DEV_DRIVER_EMAIL",
+    passwordKey: "DEV_DRIVER_PASSWORD",
+  },
+  {
+    role: "customer",
+    name: "Dev Customer",
+    emailKey: "DEV_CUSTOMER_EMAIL",
+    passwordKey: "DEV_CUSTOMER_PASSWORD",
+  },
 ];
 
 function assertDevEnvironment() {
   const host = getRequestHeader("host") ?? getRequestHeader("x-forwarded-host");
-  if (!isDevHost(host)) {
+  if (
+    process.env.NODE_ENV === "production" ||
+    process.env.ENABLE_DEV_LOGIN !== "true" ||
+    !isDevHost(host)
+  ) {
     throw new Error("Dev logins are disabled on this environment.");
   }
 }
 
+function configuredAccounts(): DevAccount[] {
+  return ROLE_CONFIG.flatMap((config) => {
+    const email = process.env[config.emailKey]?.trim();
+    const password = process.env[config.passwordKey] ?? "";
+    if (!email || password.length < 12) return [];
+    return [{ email, password, name: config.name, role: config.role }];
+  });
+}
+
 export const listDevAccounts = createServerFn({ method: "GET" }).handler(async () => {
   assertDevEnvironment();
-  return ACCOUNTS.map(({ email, password, name, role }) => ({ email, password, name, role }));
+  return configuredAccounts();
 });
 
 export const ensureDevAccounts = createServerFn({ method: "POST" }).handler(async () => {
   assertDevEnvironment();
+  const accounts = configuredAccounts();
+  if (!accounts.length) throw new Error("No DEV_* accounts are configured.");
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  const { data: list, error: listError } = await supabaseAdmin.auth.admin.listUsers({
+    page: 1,
+    perPage: 200,
+  });
+  if (listError) throw new Error(listError.message);
+
   const results: { email: string; role: Role; status: string }[] = [];
-
-  for (const acct of ACCOUNTS) {
-    // Find existing user by email
-    let userId: string | null = null;
-    const { data: list, error: listErr } = await supabaseAdmin.auth.admin.listUsers({ page: 1, perPage: 200 });
-    if (listErr) {
-      results.push({ email: acct.email, role: acct.role, status: `list error: ${listErr.message}` });
-      continue;
-    }
-    const existing = list.users.find((u) => u.email?.toLowerCase() === acct.email.toLowerCase());
-
+  for (const account of accounts) {
+    const existing = list.users.find(
+      (user) => user.email?.toLowerCase() === account.email.toLowerCase(),
+    );
+    let userId: string;
     if (existing) {
       userId = existing.id;
-      // Reset password + confirm email so login always works
-      await supabaseAdmin.auth.admin.updateUserById(userId, {
-        password: acct.password,
+      const { error } = await supabaseAdmin.auth.admin.updateUserById(userId, {
+        password: account.password,
         email_confirm: true,
-        user_metadata: { full_name: acct.name },
+        user_metadata: { full_name: account.name },
       });
+      if (error) throw new Error(error.message);
     } else {
-      const { data: created, error: createErr } = await supabaseAdmin.auth.admin.createUser({
-        email: acct.email,
-        password: acct.password,
+      const { data: created, error } = await supabaseAdmin.auth.admin.createUser({
+        email: account.email,
+        password: account.password,
         email_confirm: true,
-        user_metadata: { full_name: acct.name },
+        user_metadata: { full_name: account.name },
       });
-      if (createErr || !created.user) {
-        results.push({ email: acct.email, role: acct.role, status: `create error: ${createErr?.message ?? "unknown"}` });
-        continue;
-      }
+      if (error || !created.user) throw new Error(error?.message ?? "Could not create dev user");
       userId = created.user.id;
     }
 
-    // Ensure profile row
-    await supabaseAdmin.from("profiles").upsert(
-      { id: userId, email: acct.email, full_name: acct.name },
-      { onConflict: "id" },
-    );
-
-    // Ensure role assignment
-    if (acct.role !== "customer") {
-      await supabaseAdmin.from("user_roles").upsert(
-        { user_id: userId, role: acct.role },
-        { onConflict: "user_id,role" },
-      );
+    await supabaseAdmin
+      .from("profiles")
+      .upsert({ id: userId, email: account.email, full_name: account.name }, { onConflict: "id" });
+    if (account.role !== "customer") {
+      await supabaseAdmin
+        .from("user_roles")
+        .upsert({ user_id: userId, role: account.role }, { onConflict: "user_id,role" });
     }
-
-    results.push({ email: acct.email, role: acct.role, status: existing ? "updated" : "created" });
+    results.push({
+      email: account.email,
+      role: account.role,
+      status: existing ? "updated" : "created",
+    });
   }
-
   return { results };
 });

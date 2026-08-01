@@ -2,146 +2,152 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
-const Line = z.object({
+const CounterLineSchema = z.object({
   menu_item_id: z.string().uuid(),
   qty: z.number().int().min(1).max(50),
   notes: z.string().max(200).optional(),
+  modifier_ids: z.array(z.string().uuid()).max(20).optional(),
 });
 
+const CounterBasketSchema = z.object({
+  idempotency_key: z.string().uuid(),
+  shift_id: z.string().uuid(),
+  customer_name: z.string().min(1).max(100),
+  type: z.enum(["dine_in", "collection"]),
+  table_number: z.string().max(20).optional(),
+  pos_terminal: z.enum(["jury", "judge", "public"]),
+  voucher_code: z.string().min(1).max(40).optional(),
+  items: z.array(CounterLineSchema).min(1).max(60),
+});
+
+type CounterBasket = z.infer<typeof CounterBasketSchema>;
+
+function rpcArgs(
+  data: CounterBasket,
+  paymentMode: "reader" | "cash" | "manual",
+  manualCardReference = "",
+) {
+  return {
+    _idempotency_key: data.idempotency_key,
+    _shift_id: data.shift_id,
+    _customer_name: data.customer_name,
+    _order_type: data.type,
+    _table_number: data.table_number ?? "",
+    _terminal: data.pos_terminal,
+    _voucher_code: data.voucher_code ?? "",
+    _payment_mode: paymentMode,
+    _manual_card_reference: manualCardReference,
+    _items: data.items,
+  };
+}
+
+function firstResult<T>(rows: T[] | null, message: string): T {
+  const row = rows?.[0];
+  if (!row) throw new Error(message);
+  return row;
+}
+
 /**
- * Counter / till order taken in person by staff (cash or card machine).
- * Goes straight to the kitchen display as an already-paid ticket.
+ * Reserves a counter order, including any juror allowance, before a reader is
+ * charged. The database calculates all prices and inserts the order/items in a
+ * single transaction. It remains hidden from the KDS until payment is verified.
+ */
+export const prepareCounterOrder = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) => CounterBasketSchema.parse(input))
+  .handler(async ({ data, context }) => {
+    const { data: rows, error } = await context.supabase.rpc(
+      "prepare_counter_order",
+      rpcArgs(data, "reader"),
+    );
+    if (error) throw new Error(error.message);
+    return firstResult(rows, "Could not prepare that counter order");
+  });
+
+/**
+ * Settles cash sales transactionally. A manual external-terminal card sale is
+ * intentionally manager-only and requires its receipt reference.
  */
 export const createCounterOrder = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: unknown) =>
-    z
-      .object({
-        customer_name: z.string().min(1).max(100),
-        type: z.enum(["dine_in", "collection", "delivery"]),
-        table_number: z.string().max(20).optional(),
-        payment_method: z.enum(["cash", "card"]),
-        sumup_transaction_id: z.string().max(120).optional(),
-        pos_terminal: z.enum(["jury", "judge", "public"]).optional(),
-        voucher_code: z.string().min(1).max(40).optional(),
-        items: z.array(Line).min(1).max(60),
-      })
-      .parse(d),
+  .inputValidator((input: unknown) =>
+    CounterBasketSchema.extend({
+      payment_method: z.enum(["cash", "card"]),
+      manual_card_reference: z.string().min(4).max(120).optional(),
+    }).parse(input),
   )
   .handler(async ({ data, context }) => {
-    const [{ data: isAdmin }, { data: isStaff }] = await Promise.all([
-      context.supabase.rpc("has_role", { _user_id: context.userId, _role: "admin" }),
-      context.supabase.rpc("has_role", { _user_id: context.userId, _role: "staff" }),
-    ]);
-    if (!isAdmin && !isStaff) throw new Error("Forbidden");
-
-    const ids = data.items.map((i) => i.menu_item_id);
-    const { data: menu, error: mErr } = await context.supabase
-      .from("menu_items")
-      .select("id, name, price_cents, active, is_beverage")
-      .in("id", ids);
-    if (mErr) throw new Error(mErr.message);
-    const byId = new Map((menu ?? []).map((m) => [m.id, m]));
-
-    let subtotal = 0;
-    let food_subtotal = 0;
-    const lines = data.items.map((i) => {
-      const m = byId.get(i.menu_item_id);
-      if (!m) throw new Error("Item not found");
-      subtotal += m.price_cents * i.qty;
-      if (!m.is_beverage) food_subtotal += m.price_cents * i.qty;
-      return {
-        menu_item_id: m.id,
-        name: m.name,
-        qty: i.qty,
-        unit_price_cents: m.price_cents,
-        notes: i.notes || null,
-      };
-    });
-
-    // Juror voucher: redeem today's remaining allowance, then 10% off food on
-    // anything still payable. Cafe 1 only ever claims what is actually redeemed.
-    let voucher_cents = 0;
-    let voucher_holder_id: string | null = null;
-    let voucher_code: string | null = null;
-    let juror_discount = 0;
-    if (data.voucher_code) {
-      const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-      const { data: vRows } = await supabaseAdmin.rpc("get_voucher_balance_by_code", {
-        _code: data.voucher_code.trim(),
-      });
-      const v = (vRows ?? [])[0];
-      if (!v) throw new Error("That voucher code isn't recognised.");
-      if (v.status !== "ok") throw new Error("That voucher code can't be used today.");
-      if (v.remaining_cents > 0) {
-        const { data: taken } = await supabaseAdmin.rpc("redeem_voucher", {
-          _holder_id: v.holder_id,
-          _order_id: null as unknown as string,
-          _amount_cents: Math.min(v.remaining_cents, subtotal),
-        });
-        voucher_cents = (taken as number | null) ?? 0;
-      }
-      voucher_holder_id = v.holder_id;
-      voucher_code = v.code;
-      const afterVoucher = Math.max(0, subtotal - voucher_cents);
-      const { jurorFoodDiscount } = await import("./juror");
-      juror_discount = jurorFoodDiscount(afterVoucher, food_subtotal);
+    if (data.payment_method === "card" && !data.manual_card_reference) {
+      throw new Error("A card terminal receipt reference is required");
     }
-    const payable = Math.max(0, subtotal - voucher_cents - juror_discount);
-
-    const { data: order, error } = await context.supabase
-      .from("orders")
-      .insert({
-        customer_name: data.customer_name,
-        customer_phone: "",
-        type: data.type,
-        table_number: data.type === "dine_in" ? data.table_number || null : null,
-        subtotal_cents: subtotal,
-        delivery_fee_cents: 0,
-        discount_cents: 0,
-        juror_discount_cents: juror_discount,
-        voucher_cents,
-        voucher_holder_id,
-        total_cents: payable,
-        status: "preparing" as const,
-        payment_status: "paid" as const,
-        payment_method: data.payment_method,
-        sumup_transaction_id: data.sumup_transaction_id ?? null,
-        pos_terminal: data.pos_terminal ?? null,
-        source: "counter",
-        schedule_mode: "asap",
-      })
-      .select("id, order_number")
-      .single();
+    if (data.payment_method === "card") {
+      const { requireManagerMfa } = await import("./elevated-auth.server");
+      requireManagerMfa(context.claims);
+    }
+    const { data: rows, error } = await context.supabase.rpc(
+      "prepare_counter_order",
+      rpcArgs(
+        data,
+        data.payment_method === "cash" ? "cash" : "manual",
+        data.manual_card_reference ?? "",
+      ),
+    );
     if (error) throw new Error(error.message);
+    return firstResult(rows, "Could not settle that counter order");
+  });
 
-    const { error: iErr } = await context.supabase
-      .from("order_items")
-      .insert(lines.map((l) => ({ ...l, order_id: order.id })));
-    if (iErr) throw new Error(iErr.message);
-
-    if (voucher_holder_id && voucher_cents > 0) {
-      const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-      await supabaseAdmin
-        .from("voucher_redemptions")
-        .update({ order_id: order.id })
-        .eq("holder_id", voucher_holder_id)
-        .is("order_id", null);
-      await supabaseAdmin
-        .from("voucher_events")
-        .update({ order_id: order.id })
-        .eq("holder_id", voucher_holder_id)
-        .eq("event", "redeem")
-        .is("order_id", null);
-    }
-
+/** Finalizes a previously prepared reader order using a verified attempt. */
+export const finalizeCounterCardPayment = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) =>
+    z
+      .object({
+        order_id: z.string().uuid(),
+        payment_attempt_id: z.string().uuid(),
+      })
+      .parse(input),
+  )
+  .handler(async ({ data, context }) => {
+    const { data: order, error } = await context.supabase.rpc("finalize_counter_card", {
+      _order_id: data.order_id,
+      _payment_attempt_id: data.payment_attempt_id,
+    });
+    if (error) throw new Error(error.message);
+    if (!order) throw new Error("Could not finalize that card payment");
     return {
       order_id: order.id,
       order_number: order.order_number,
-      total_cents: payable,
-      subtotal_cents: subtotal,
-      voucher_cents,
-      voucher_code,
-      juror_discount_cents: juror_discount,
+      total_cents: order.total_cents,
+      subtotal_cents: order.subtotal_cents,
+      voucher_cents: order.voucher_cents,
+      voucher_code: null as string | null,
+      juror_discount_cents: order.juror_discount_cents,
     };
+  });
+
+/** Releases a prepared order and voucher hold after a cancelled reader flow. */
+export const cancelCounterOrder = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) =>
+    z.object({ order_id: z.string().uuid(), reason: z.string().min(3).max(200) }).parse(input),
+  )
+  .handler(async ({ data, context }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: unsettled } = await supabaseAdmin
+      .from("payment_attempts")
+      .select("id, status")
+      .eq("order_id", data.order_id)
+      .in("status", ["pending", "paid", "used"])
+      .limit(1);
+    if (unsettled?.length) {
+      throw new Error(
+        "Payment is still pending verification. Do not recreate or re-charge this order.",
+      );
+    }
+    const { data: cancelled, error } = await context.supabase.rpc("cancel_counter_order", {
+      _order_id: data.order_id,
+      _reason: data.reason,
+    });
+    if (error) throw new Error(error.message);
+    return { ok: cancelled };
   });

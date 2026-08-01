@@ -7,18 +7,31 @@ import { z } from "zod";
  * safe projection instead of exposing the whole table to anonymous readers.
  */
 export const getPublicOrder = createServerFn({ method: "POST" })
-  .inputValidator((d: unknown) => z.object({ order_id: z.string().uuid() }).parse(d))
+  .inputValidator((d: unknown) =>
+    z
+      .object({
+        order_id: z.string().uuid(),
+        tracking_token: z.string().min(32).max(200).optional(),
+      })
+      .parse(d),
+  )
   .handler(async ({ data }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
     const { data: order } = await supabaseAdmin
       .from("orders")
       .select(
-        "id, order_number, status, payment_status, type, total_cents, customer_name, created_at, scheduled_for, schedule_mode, sumup_checkout_id",
+        "id, order_number, status, payment_status, type, total_cents, customer_name, customer_id, tracking_token_hash, created_at, scheduled_for, schedule_mode, sumup_checkout_id",
       )
       .eq("id", data.order_id)
       .maybeSingle();
     if (!order) return { order: null, items: [], driver: null };
+    const { canAccessPublicOrder } = await import("./order-access.server");
+    if (!(await canAccessPublicOrder(order, data.tracking_token))) {
+      return { order: null, items: [], driver: null };
+    }
+
+    const { customer_id: _customerId, tracking_token_hash: _trackingHash, ...publicOrder } = order;
 
     const { data: items } = await supabaseAdmin
       .from("order_items")
@@ -35,5 +48,5 @@ export const getPublicOrder = createServerFn({ method: "POST" })
       driver = loc ?? null;
     }
 
-    return { order, items: items ?? [], driver };
+    return { order: publicOrder, items: items ?? [], driver };
   });

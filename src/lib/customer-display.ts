@@ -3,8 +3,16 @@ export const DISPLAY_CHANNEL = "cafe1-customer-display";
 export type DisplayLine = { id: string; name: string; price_cents: number; qty: number };
 
 export type DisplayMessage =
-  | { type: "order"; lines: DisplayLine[]; total: number; fulfilment: string }
-  | { type: "paid"; order_number: number; total: number; method: "cash" | "card" }
+  | {
+      type: "order";
+      lines: DisplayLine[];
+      subtotal: number;
+      voucher_cents: number;
+      discount_cents: number;
+      due: number;
+      fulfilment: string;
+    }
+  | { type: "paid"; order_number: number; total: number; method: "cash" | "card" | "split" }
   | { type: "juror"; url: string }
   | { type: "idle" };
 

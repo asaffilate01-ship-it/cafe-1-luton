@@ -211,10 +211,10 @@ function Till() {
   useEffect(() => {
     postToDisplay(
       lines.length
-        ? { type: "order", lines: lines.map((l) => ({ id: l.id, name: l.name, price_cents: l.price_cents, qty: l.qty })), total, fulfilment: type }
+        ? { type: "order" as const, lines: lines.map((l) => ({ id: l.id, name: l.name, price_cents: l.price_cents, qty: l.qty })), subtotal: total, voucher_cents: voucherApplied, discount_cents: jurorDiscount, due, fulfilment: type }
         : { type: "idle" },
     );
-  }, [lines, total, type]);
+  }, [lines, total, voucherApplied, jurorDiscount, due, type]);
 
   function add(i: Item) {
     setLines((prev) => {
@@ -558,7 +558,7 @@ function Till() {
       )}
       {voucherOpen && (
         <VoucherModal
-          onClose={() => { setVoucherOpen(false); postToDisplay(lines.length ? { type: "order", lines: lines.map((l) => ({ id: l.id, name: l.name, price_cents: l.price_cents, qty: l.qty })), total, fulfilment: type } : { type: "idle" }); }}
+          onClose={() => { setVoucherOpen(false); postToDisplay(lines.length ? { type: "order" as const, lines: lines.map((l) => ({ id: l.id, name: l.name, price_cents: l.price_cents, qty: l.qty })), subtotal: total, voucher_cents: voucherApplied, discount_cents: jurorDiscount, due, fulfilment: type } : { type: "idle" }); }}
           onApply={(v) => { setVoucher(v); setVoucherOpen(false); }}
         />
       )}

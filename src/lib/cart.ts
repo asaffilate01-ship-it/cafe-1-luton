@@ -56,7 +56,9 @@ function load() {
         })),
       };
     }
-  } catch {}
+  } catch {
+    // Ignore invalid legacy cart data and start with an empty cart.
+  }
 }
 function persist() {
   if (typeof window === "undefined") return;
@@ -105,8 +107,7 @@ export const cart = {
   ) {
     const modifiers = item.modifiers ?? [];
     const id = lineId(item.menu_item_id, modifiers);
-    const price_cents =
-      item.base_price_cents + modifiers.reduce((s, m) => s + m.price_cents, 0);
+    const price_cents = item.base_price_cents + modifiers.reduce((s, m) => s + m.price_cents, 0);
     const existing = state.items.find((i) => i.id === id);
     if (existing) existing.qty += qty;
     else
@@ -125,9 +126,7 @@ export const cart = {
   },
   setQty(id: string, qty: number) {
     state = {
-      items: state.items
-        .map((i) => (i.id === id ? { ...i, qty } : i))
-        .filter((i) => i.qty > 0),
+      items: state.items.map((i) => (i.id === id ? { ...i, qty } : i)).filter((i) => i.qty > 0),
     };
     persist();
   },

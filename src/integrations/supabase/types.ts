@@ -63,7 +63,8 @@ export type Database = {
       }
       accounts: {
         Row: {
-          access_code: string
+          access_code: string | null
+          access_code_hash: string | null
           active: boolean
           contact_email: string | null
           contact_name: string | null
@@ -76,7 +77,8 @@ export type Database = {
           updated_at: string
         }
         Insert: {
-          access_code: string
+          access_code?: string | null
+          access_code_hash?: string | null
           active?: boolean
           contact_email?: string | null
           contact_name?: string | null
@@ -89,7 +91,8 @@ export type Database = {
           updated_at?: string
         }
         Update: {
-          access_code?: string
+          access_code?: string | null
+          access_code_hash?: string | null
           active?: boolean
           contact_email?: string | null
           contact_name?: string | null
@@ -100,6 +103,39 @@ export type Database = {
           name?: string
           notes?: string | null
           updated_at?: string
+        }
+        Relationships: []
+      }
+      audit_events: {
+        Row: {
+          action: string
+          actor_id: string | null
+          created_at: string
+          detail: Json
+          entity_id: string | null
+          entity_type: string
+          id: string
+          terminal: string | null
+        }
+        Insert: {
+          action: string
+          actor_id?: string | null
+          created_at?: string
+          detail?: Json
+          entity_id?: string | null
+          entity_type: string
+          id?: string
+          terminal?: string | null
+        }
+        Update: {
+          action?: string
+          actor_id?: string | null
+          created_at?: string
+          detail?: Json
+          entity_id?: string | null
+          entity_type?: string
+          id?: string
+          terminal?: string | null
         }
         Relationships: []
       }
@@ -581,8 +617,119 @@ export type Database = {
           },
         ]
       }
+      order_payments: {
+        Row: {
+          amount_cents: number
+          created_at: string
+          id: string
+          method: string
+          order_id: string
+          payment_attempt_id: string | null
+          provider: string | null
+          provider_transaction_id: string | null
+          received_by: string | null
+        }
+        Insert: {
+          amount_cents: number
+          created_at?: string
+          id?: string
+          method: string
+          order_id: string
+          payment_attempt_id?: string | null
+          provider?: string | null
+          provider_transaction_id?: string | null
+          received_by?: string | null
+        }
+        Update: {
+          amount_cents?: number
+          created_at?: string
+          id?: string
+          method?: string
+          order_id?: string
+          payment_attempt_id?: string | null
+          provider?: string | null
+          provider_transaction_id?: string | null
+          received_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "order_payments_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "order_payments_payment_attempt_id_fkey"
+            columns: ["payment_attempt_id"]
+            isOneToOne: false
+            referencedRelation: "payment_attempts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      order_refunds: {
+        Row: {
+          amount_cents: number
+          card_amount_cents: number
+          cash_amount_cents: number
+          completed_at: string | null
+          created_at: string
+          failure_reason: string | null
+          id: string
+          idempotency_key: string
+          order_id: string
+          provider: string | null
+          provider_transaction_id: string | null
+          reason: string
+          requested_by: string
+          status: string
+        }
+        Insert: {
+          amount_cents: number
+          card_amount_cents?: number
+          cash_amount_cents?: number
+          completed_at?: string | null
+          created_at?: string
+          failure_reason?: string | null
+          id?: string
+          idempotency_key: string
+          order_id: string
+          provider?: string | null
+          provider_transaction_id?: string | null
+          reason: string
+          requested_by: string
+          status?: string
+        }
+        Update: {
+          amount_cents?: number
+          card_amount_cents?: number
+          cash_amount_cents?: number
+          completed_at?: string | null
+          created_at?: string
+          failure_reason?: string | null
+          id?: string
+          idempotency_key?: string
+          order_id?: string
+          provider?: string | null
+          provider_transaction_id?: string | null
+          reason?: string
+          requested_by?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "order_refunds_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       orders: {
         Row: {
+          abandoned_at: string | null
           account_id: string | null
           address_line1: string | null
           address_line2: string | null
@@ -601,9 +748,11 @@ export type Database = {
           driver_id: string | null
           guest_token: string
           id: string
+          idempotency_key: string | null
           juror_discount_cents: number
           jury_room: string | null
           loyalty_awarded: boolean
+          loyalty_free_drinks_used: number
           loyalty_stamps_pending: number
           order_number: number
           payment_method: string
@@ -615,6 +764,7 @@ export type Database = {
           promo_code: string | null
           promo_discount_cents: number
           ready_at: string | null
+          refunded_cents: number
           schedule_mode: string
           scheduled_for: string | null
           source: string
@@ -625,13 +775,16 @@ export type Database = {
           sumup_reference: string | null
           sumup_transaction_id: string | null
           table_number: string | null
+          till_shift_id: string | null
           total_cents: number
+          tracking_token_hash: string | null
           type: Database["public"]["Enums"]["order_type"]
           updated_at: string
           voucher_cents: number
           voucher_holder_id: string | null
         }
         Insert: {
+          abandoned_at?: string | null
           account_id?: string | null
           address_line1?: string | null
           address_line2?: string | null
@@ -650,9 +803,11 @@ export type Database = {
           driver_id?: string | null
           guest_token?: string
           id?: string
+          idempotency_key?: string | null
           juror_discount_cents?: number
           jury_room?: string | null
           loyalty_awarded?: boolean
+          loyalty_free_drinks_used?: number
           loyalty_stamps_pending?: number
           order_number?: number
           payment_method?: string
@@ -664,6 +819,7 @@ export type Database = {
           promo_code?: string | null
           promo_discount_cents?: number
           ready_at?: string | null
+          refunded_cents?: number
           schedule_mode?: string
           scheduled_for?: string | null
           source?: string
@@ -674,13 +830,16 @@ export type Database = {
           sumup_reference?: string | null
           sumup_transaction_id?: string | null
           table_number?: string | null
+          till_shift_id?: string | null
           total_cents?: number
+          tracking_token_hash?: string | null
           type: Database["public"]["Enums"]["order_type"]
           updated_at?: string
           voucher_cents?: number
           voucher_holder_id?: string | null
         }
         Update: {
+          abandoned_at?: string | null
           account_id?: string | null
           address_line1?: string | null
           address_line2?: string | null
@@ -699,9 +858,11 @@ export type Database = {
           driver_id?: string | null
           guest_token?: string
           id?: string
+          idempotency_key?: string | null
           juror_discount_cents?: number
           jury_room?: string | null
           loyalty_awarded?: boolean
+          loyalty_free_drinks_used?: number
           loyalty_stamps_pending?: number
           order_number?: number
           payment_method?: string
@@ -713,6 +874,7 @@ export type Database = {
           promo_code?: string | null
           promo_discount_cents?: number
           ready_at?: string | null
+          refunded_cents?: number
           schedule_mode?: string
           scheduled_for?: string | null
           source?: string
@@ -723,7 +885,9 @@ export type Database = {
           sumup_reference?: string | null
           sumup_transaction_id?: string | null
           table_number?: string | null
+          till_shift_id?: string | null
           total_cents?: number
+          tracking_token_hash?: string | null
           type?: Database["public"]["Enums"]["order_type"]
           updated_at?: string
           voucher_cents?: number
@@ -738,10 +902,79 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "orders_till_shift_id_fkey"
+            columns: ["till_shift_id"]
+            isOneToOne: false
+            referencedRelation: "till_shifts"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "orders_voucher_holder_id_fkey"
             columns: ["voucher_holder_id"]
             isOneToOne: false
             referencedRelation: "voucher_holders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      payment_attempts: {
+        Row: {
+          amount_cents: number
+          cash_component_cents: number
+          client_transaction_id: string | null
+          created_at: string
+          created_by: string
+          currency: string
+          failure_reason: string | null
+          id: string
+          order_id: string
+          provider: string
+          provider_reference: string
+          provider_transaction_id: string | null
+          reader_id: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          amount_cents: number
+          cash_component_cents?: number
+          client_transaction_id?: string | null
+          created_at?: string
+          created_by: string
+          currency?: string
+          failure_reason?: string | null
+          id?: string
+          order_id: string
+          provider?: string
+          provider_reference: string
+          provider_transaction_id?: string | null
+          reader_id?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          amount_cents?: number
+          cash_component_cents?: number
+          client_transaction_id?: string | null
+          created_at?: string
+          created_by?: string
+          currency?: string
+          failure_reason?: string | null
+          id?: string
+          order_id?: string
+          provider?: string
+          provider_reference?: string
+          provider_transaction_id?: string | null
+          reader_id?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payment_attempts_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
             referencedColumns: ["id"]
           },
         ]
@@ -914,6 +1147,96 @@ export type Database = {
           min_subtotal_cents?: number
           starts_at?: string | null
           uses?: number
+        }
+        Relationships: []
+      }
+      till_cash_events: {
+        Row: {
+          actor_id: string
+          amount_cents: number
+          created_at: string
+          event_type: string
+          id: string
+          order_id: string | null
+          reason: string | null
+          shift_id: string
+        }
+        Insert: {
+          actor_id: string
+          amount_cents?: number
+          created_at?: string
+          event_type: string
+          id?: string
+          order_id?: string | null
+          reason?: string | null
+          shift_id: string
+        }
+        Update: {
+          actor_id?: string
+          amount_cents?: number
+          created_at?: string
+          event_type?: string
+          id?: string
+          order_id?: string | null
+          reason?: string | null
+          shift_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "till_cash_events_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "till_cash_events_shift_id_fkey"
+            columns: ["shift_id"]
+            isOneToOne: false
+            referencedRelation: "till_shifts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      till_shifts: {
+        Row: {
+          close_note: string | null
+          closed_at: string | null
+          counted_cash_cents: number | null
+          created_at: string
+          discrepancy_cents: number | null
+          expected_cash_cents: number | null
+          id: string
+          opened_at: string
+          opening_float_cents: number
+          staff_id: string
+          terminal: string
+        }
+        Insert: {
+          close_note?: string | null
+          closed_at?: string | null
+          counted_cash_cents?: number | null
+          created_at?: string
+          discrepancy_cents?: number | null
+          expected_cash_cents?: number | null
+          id?: string
+          opened_at?: string
+          opening_float_cents: number
+          staff_id: string
+          terminal: string
+        }
+        Update: {
+          close_note?: string | null
+          closed_at?: string | null
+          counted_cash_cents?: number | null
+          created_at?: string
+          discrepancy_cents?: number | null
+          expected_cash_cents?: number | null
+          id?: string
+          opened_at?: string
+          opening_float_cents?: number
+          staff_id?: string
+          terminal?: string
         }
         Relationships: []
       }
@@ -1141,7 +1464,226 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      award_loyalty_for_order: { Args: { _order_id: string }; Returns: boolean }
+      cancel_counter_order: {
+        Args: { _order_id: string; _reason: string }
+        Returns: boolean
+      }
+      claim_delivery_order: {
+        Args: { _order_id: string }
+        Returns: {
+          abandoned_at: string | null
+          account_id: string | null
+          address_line1: string | null
+          address_line2: string | null
+          city: string | null
+          company_name: string | null
+          created_at: string
+          customer_email: string | null
+          customer_id: string | null
+          customer_name: string
+          customer_phone: string
+          delivered_at: string | null
+          deliveroo_order_id: string | null
+          delivery_fee_cents: number
+          delivery_notes: string | null
+          discount_cents: number
+          driver_id: string | null
+          guest_token: string
+          id: string
+          idempotency_key: string | null
+          juror_discount_cents: number
+          jury_room: string | null
+          loyalty_awarded: boolean
+          loyalty_free_drinks_used: number
+          loyalty_stamps_pending: number
+          order_number: number
+          payment_method: string
+          payment_status: Database["public"]["Enums"]["payment_status"]
+          picked_up_at: string | null
+          points_earned: number
+          pos_terminal: string | null
+          postcode: string | null
+          promo_code: string | null
+          promo_discount_cents: number
+          ready_at: string | null
+          refunded_cents: number
+          schedule_mode: string
+          scheduled_for: string | null
+          source: string
+          status: Database["public"]["Enums"]["order_status"]
+          subtotal_cents: number
+          sumup_checkout_id: string | null
+          sumup_order_ref: string | null
+          sumup_reference: string | null
+          sumup_transaction_id: string | null
+          table_number: string | null
+          till_shift_id: string | null
+          total_cents: number
+          tracking_token_hash: string | null
+          type: Database["public"]["Enums"]["order_type"]
+          updated_at: string
+          voucher_cents: number
+          voucher_holder_id: string | null
+        }
+        SetofOptions: {
+          from: "*"
+          to: "orders"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      close_till_shift: {
+        Args: { _counted_cash_cents: number; _note?: string; _shift_id: string }
+        Returns: {
+          close_note: string | null
+          closed_at: string | null
+          counted_cash_cents: number | null
+          created_at: string
+          discrepancy_cents: number | null
+          expected_cash_cents: number | null
+          id: string
+          opened_at: string
+          opening_float_cents: number
+          staff_id: string
+          terminal: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "till_shifts"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      complete_order_refund: {
+        Args: { _refund_id: string }
+        Returns: {
+          abandoned_at: string | null
+          account_id: string | null
+          address_line1: string | null
+          address_line2: string | null
+          city: string | null
+          company_name: string | null
+          created_at: string
+          customer_email: string | null
+          customer_id: string | null
+          customer_name: string
+          customer_phone: string
+          delivered_at: string | null
+          deliveroo_order_id: string | null
+          delivery_fee_cents: number
+          delivery_notes: string | null
+          discount_cents: number
+          driver_id: string | null
+          guest_token: string
+          id: string
+          idempotency_key: string | null
+          juror_discount_cents: number
+          jury_room: string | null
+          loyalty_awarded: boolean
+          loyalty_free_drinks_used: number
+          loyalty_stamps_pending: number
+          order_number: number
+          payment_method: string
+          payment_status: Database["public"]["Enums"]["payment_status"]
+          picked_up_at: string | null
+          points_earned: number
+          pos_terminal: string | null
+          postcode: string | null
+          promo_code: string | null
+          promo_discount_cents: number
+          ready_at: string | null
+          refunded_cents: number
+          schedule_mode: string
+          scheduled_for: string | null
+          source: string
+          status: Database["public"]["Enums"]["order_status"]
+          subtotal_cents: number
+          sumup_checkout_id: string | null
+          sumup_order_ref: string | null
+          sumup_reference: string | null
+          sumup_transaction_id: string | null
+          table_number: string | null
+          till_shift_id: string | null
+          total_cents: number
+          tracking_token_hash: string | null
+          type: Database["public"]["Enums"]["order_type"]
+          updated_at: string
+          voucher_cents: number
+          voucher_holder_id: string | null
+        }
+        SetofOptions: {
+          from: "*"
+          to: "orders"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       consume_promo_use: { Args: { _code: string }; Returns: boolean }
+      finalize_counter_card: {
+        Args: { _order_id: string; _payment_attempt_id: string }
+        Returns: {
+          abandoned_at: string | null
+          account_id: string | null
+          address_line1: string | null
+          address_line2: string | null
+          city: string | null
+          company_name: string | null
+          created_at: string
+          customer_email: string | null
+          customer_id: string | null
+          customer_name: string
+          customer_phone: string
+          delivered_at: string | null
+          deliveroo_order_id: string | null
+          delivery_fee_cents: number
+          delivery_notes: string | null
+          discount_cents: number
+          driver_id: string | null
+          guest_token: string
+          id: string
+          idempotency_key: string | null
+          juror_discount_cents: number
+          jury_room: string | null
+          loyalty_awarded: boolean
+          loyalty_free_drinks_used: number
+          loyalty_stamps_pending: number
+          order_number: number
+          payment_method: string
+          payment_status: Database["public"]["Enums"]["payment_status"]
+          picked_up_at: string | null
+          points_earned: number
+          pos_terminal: string | null
+          postcode: string | null
+          promo_code: string | null
+          promo_discount_cents: number
+          ready_at: string | null
+          refunded_cents: number
+          schedule_mode: string
+          scheduled_for: string | null
+          source: string
+          status: Database["public"]["Enums"]["order_status"]
+          subtotal_cents: number
+          sumup_checkout_id: string | null
+          sumup_order_ref: string | null
+          sumup_reference: string | null
+          sumup_transaction_id: string | null
+          table_number: string | null
+          till_shift_id: string | null
+          total_cents: number
+          tracking_token_hash: string | null
+          type: Database["public"]["Enums"]["order_type"]
+          updated_at: string
+          voucher_cents: number
+          voucher_holder_id: string | null
+        }
+        SetofOptions: {
+          from: "*"
+          to: "orders"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       get_customer_discount: {
         Args: { _email: string }
         Returns: {
@@ -1184,6 +1726,28 @@ export type Database = {
       }
       increment_promo_use: { Args: { _code: string }; Returns: undefined }
       is_court_working_day: { Args: { _d: string }; Returns: boolean }
+      open_till_shift: {
+        Args: { _opening_float_cents: number; _terminal: string }
+        Returns: {
+          close_note: string | null
+          closed_at: string | null
+          counted_cash_cents: number | null
+          created_at: string
+          discrepancy_cents: number | null
+          expected_cash_cents: number | null
+          id: string
+          opened_at: string
+          opening_float_cents: number
+          staff_id: string
+          terminal: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "till_shifts"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       opt_in_voucher: {
         Args: { _code: string; _source: string }
         Returns: {
@@ -1192,9 +1756,159 @@ export type Database = {
           ok: boolean
         }[]
       }
+      prepare_counter_order: {
+        Args: {
+          _customer_name: string
+          _idempotency_key: string
+          _items: Json
+          _manual_card_reference: string
+          _order_type: string
+          _payment_mode: string
+          _shift_id: string
+          _table_number: string
+          _terminal: string
+          _voucher_code: string
+        }
+        Returns: {
+          juror_discount_cents: number
+          order_id: string
+          order_number: number
+          payment_status: Database["public"]["Enums"]["payment_status"]
+          subtotal_cents: number
+          total_cents: number
+          voucher_cents: number
+          voucher_code: string
+        }[]
+      }
+      record_till_cash_event: {
+        Args: {
+          _amount_cents: number
+          _event_type: string
+          _reason: string
+          _shift_id: string
+        }
+        Returns: {
+          actor_id: string
+          amount_cents: number
+          created_at: string
+          event_type: string
+          id: string
+          order_id: string | null
+          reason: string | null
+          shift_id: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "till_cash_events"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       redeem_voucher: {
         Args: { _amount_cents: number; _holder_id: string; _order_id: string }
         Returns: number
+      }
+      reserve_order_refund: {
+        Args: {
+          _amount_cents: number
+          _card_amount_cents: number
+          _cash_amount_cents: number
+          _idempotency_key: string
+          _order_id: string
+          _provider: string
+          _provider_transaction_id: string
+          _reason: string
+          _requested_by: string
+        }
+        Returns: {
+          amount_cents: number
+          card_amount_cents: number
+          cash_amount_cents: number
+          completed_at: string | null
+          created_at: string
+          failure_reason: string | null
+          id: string
+          idempotency_key: string
+          order_id: string
+          provider: string | null
+          provider_transaction_id: string | null
+          reason: string
+          requested_by: string
+          status: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "order_refunds"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      transition_order_status: {
+        Args: {
+          _next: Database["public"]["Enums"]["order_status"]
+          _order_id: string
+        }
+        Returns: {
+          abandoned_at: string | null
+          account_id: string | null
+          address_line1: string | null
+          address_line2: string | null
+          city: string | null
+          company_name: string | null
+          created_at: string
+          customer_email: string | null
+          customer_id: string | null
+          customer_name: string
+          customer_phone: string
+          delivered_at: string | null
+          deliveroo_order_id: string | null
+          delivery_fee_cents: number
+          delivery_notes: string | null
+          discount_cents: number
+          driver_id: string | null
+          guest_token: string
+          id: string
+          idempotency_key: string | null
+          juror_discount_cents: number
+          jury_room: string | null
+          loyalty_awarded: boolean
+          loyalty_free_drinks_used: number
+          loyalty_stamps_pending: number
+          order_number: number
+          payment_method: string
+          payment_status: Database["public"]["Enums"]["payment_status"]
+          picked_up_at: string | null
+          points_earned: number
+          pos_terminal: string | null
+          postcode: string | null
+          promo_code: string | null
+          promo_discount_cents: number
+          ready_at: string | null
+          refunded_cents: number
+          schedule_mode: string
+          scheduled_for: string | null
+          source: string
+          status: Database["public"]["Enums"]["order_status"]
+          subtotal_cents: number
+          sumup_checkout_id: string | null
+          sumup_order_ref: string | null
+          sumup_reference: string | null
+          sumup_transaction_id: string | null
+          table_number: string | null
+          till_shift_id: string | null
+          total_cents: number
+          tracking_token_hash: string | null
+          type: Database["public"]["Enums"]["order_type"]
+          updated_at: string
+          voucher_cents: number
+          voucher_holder_id: string | null
+        }
+        SetofOptions: {
+          from: "*"
+          to: "orders"
+          isOneToOne: true
+          isSetofReturn: false
+        }
       }
       validate_promo_code: {
         Args: {
