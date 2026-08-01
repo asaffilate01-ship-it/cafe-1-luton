@@ -139,6 +139,10 @@ function TillLogin() {
 
 function Till() {
   const create = useServerFn(createCounterOrder);
+  const prepare = useServerFn(prepareCounterOrder);
+  const finalizeCard = useServerFn(finalizeCounterCardPayment);
+  const cancelOrder = useServerFn(cancelCounterOrder);
+  const shiftFn = useServerFn(getTillShift);
   const readersFn = useServerFn(listPairedReaders);
 
   const [cats, setCats] = useState<Cat[]>([]);
@@ -167,6 +171,33 @@ function Till() {
   const [showOrder, setShowOrder] = useState(false);
   const [voucher, setVoucher] = useState<null | { code: string; remaining_cents: number; allocated_cents: number; opted_in: boolean }>(null);
   const [voucherOpen, setVoucherOpen] = useState(false);
+  const [shift, setShift] = useState<Shift | null>(null);
+  const [shiftLoading, setShiftLoading] = useState(true);
+  const [closing, setClosing] = useState(false);
+  const [prepared, setPrepared] = useState<null | { order_id: string; order_number: number; total_cents: number; voucher_cents: number; juror_discount_cents: number }>(null);
+  const [online, setOnline] = useState(true);
+
+  useEffect(() => {
+    const sync = () => setOnline(navigator.onLine);
+    sync();
+    window.addEventListener("online", sync);
+    window.addEventListener("offline", sync);
+    return () => { window.removeEventListener("online", sync); window.removeEventListener("offline", sync); };
+  }, []);
+
+  const loadShift = useCallback(async () => {
+    setShiftLoading(true);
+    try {
+      const s = (await shiftFn({ data: { terminal: side } })) as Shift | null;
+      setShift(s ?? null);
+    } catch (e) {
+      setShift(null);
+      toast.error(e instanceof Error ? e.message : "Could not load the till shift");
+    } finally {
+      setShiftLoading(false);
+    }
+  }, [shiftFn, side]);
+  useEffect(() => { void loadShift(); }, [loadShift]);
 
   useEffect(() => { window.localStorage.setItem("cafe1-pos-side", side); }, [side]);
   useEffect(() => {
@@ -239,26 +270,26 @@ function Till() {
     setLines((prev) => prev.flatMap((l) => (l.id === id ? (l.qty + d <= 0 ? [] : [{ ...l, qty: l.qty + d }]) : [l])));
   }
 
-  const finish = useCallback(
-    async (payment_method: "cash" | "card", sumup_transaction_id?: string) => {
-      setBusy(true);
-      try {
-        const res = await create({
-          data: {
-            customer_name: name.trim() || "Counter",
-            type,
-            table_number: table.trim() || undefined,
-            payment_method,
-            sumup_transaction_id,
-            pos_terminal: side,
-            voucher_code: voucher?.code,
-            items: lines.map((l) => ({ menu_item_id: l.id, qty: l.qty })),
-          },
-        });
-        setLastOrder({ n: res.order_number, total: res.total_cents, id: res.order_id });
-        postToDisplay({ type: "paid", order_number: res.order_number, total: res.total_cents, method: payment_method });
-        toast.success(`Order #${res.order_number} sent to the kitchen · ${money(res.total_cents)}`);
-        const printed = iminPrintTickets(
+  const basket = useCallback(
+    () => ({
+      idempotency_key: crypto.randomUUID(),
+      shift_id: shift?.id ?? "",
+      customer_name: name.trim() || "Counter",
+      type,
+      table_number: table.trim() || undefined,
+      pos_terminal: side,
+      voucher_code: voucher?.code,
+      items: lines.map((l) => ({ menu_item_id: l.id, qty: l.qty })),
+    }),
+    [lines, name, shift, side, table, type, voucher],
+  );
+
+  const completed = useCallback(
+    (res: { order_id: string; order_number: number; total_cents: number; voucher_cents: number; voucher_code?: string | null }, payment_method: "cash" | "card" | "voucher") => {
+      setLastOrder({ n: res.order_number, total: res.total_cents, id: res.order_id });
+      postToDisplay({ type: "paid", order_number: res.order_number, total: res.total_cents, method: payment_method });
+      toast.success(`Order #${res.order_number} sent to the kitchen · ${money(res.total_cents)}`);
+      const printed = iminPrintTickets(
           (["KITCHEN", "COUNTER"] as const).map((heading) => ({
             heading,
             order_number: res.order_number,
@@ -268,20 +299,81 @@ function Till() {
             total_cents: heading === "COUNTER" ? res.total_cents : undefined,
             footer: heading === "COUNTER" ? "Thank you — cafe1stalbans.co.uk" : undefined,
           })),
-        );
-        if (!printed) window.open(`/print/${res.order_id}`, "_blank");
-        if (res.voucher_cents > 0) toast.success(`Juror voucher ${res.voucher_code} — ${money(res.voucher_cents)} redeemed`);
-        setLines([]); setName(""); setTable(""); setPay(null); setTendered(0); setShowOrder(false); setVoucher(null);
+      );
+      if (!printed) window.open(`/print/${res.order_id}`, "_blank");
+      if (res.voucher_cents > 0) toast.success(`Juror voucher ${res.voucher_code ?? ""} — ${money(res.voucher_cents)} redeemed`);
+      setLines([]); setName(""); setTable(""); setPay(null); setTendered(0); setShowOrder(false); setVoucher(null); setPrepared(null);
+    },
+    [lines, side, type],
+  );
+
+  /** Cash, voucher-covered and manual (external terminal) card settlement. */
+  const finish = useCallback(
+    async (payment_method: "cash" | "card", manual_card_reference?: string) => {
+      if (!shift) return toast.error("Open a till shift first");
+      setBusy(true);
+      try {
+        const res = await create({
+          data: { ...basket(), payment_method, manual_card_reference },
+        });
+        completed(res, due === 0 ? "voucher" : payment_method);
+        if (payment_method === "cash") void openCashDrawer();
       } catch (e) {
         toast.error(e instanceof Error ? e.message : "Could not take that order");
       } finally {
         setBusy(false);
       }
     },
-    [create, lines, name, side, table, type, voucher],
+    [basket, completed, create, due, shift],
+  );
+
+  /** Prepares the order server-side, then hands it to the SumUp Solo reader. */
+  const beginReader = useCallback(async () => {
+    if (!shift) return toast.error("Open a till shift first");
+    setBusy(true);
+    try {
+      const res = await prepare({ data: basket() });
+      setPrepared({
+        order_id: res.order_id,
+        order_number: res.order_number,
+        total_cents: res.total_cents,
+        voucher_cents: res.voucher_cents,
+        juror_discount_cents: res.juror_discount_cents,
+      });
+      setPay("reader");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Could not start that card payment");
+    } finally {
+      setBusy(false);
+    }
+  }, [basket, prepare, shift]);
+
+  const abandonPrepared = useCallback(
+    async (reason: string) => {
+      const order = prepared;
+      setPay(null);
+      setPrepared(null);
+      if (!order) return;
+      try {
+        await cancelOrder({ data: { order_id: order.order_id, reason } });
+      } catch (e) {
+        toast.error(e instanceof Error ? e.message : "Could not release that order");
+      }
+    },
+    [cancelOrder, prepared],
   );
 
   if (locked) return <LockScreen onUnlock={() => setLocked(false)} />;
+  if (shiftLoading) {
+    return (
+      <div className="grid min-h-screen place-items-center bg-neutral-950 text-white">
+        <Loader2 className="h-6 w-6 animate-spin" />
+      </div>
+    );
+  }
+  if (!shift) {
+    return <OpenShiftScreen terminal={side} setSide={setSide} onOpened={(s) => setShift(s)} />;
+  }
 
   return (
     <div className="flex h-screen flex-col overflow-hidden bg-neutral-950 text-white">
