@@ -16,7 +16,7 @@ import { useSession, useRoles } from "@/hooks/use-auth";
 import { money } from "@/lib/format";
 import { buildStatementPdf } from "@/lib/account-statement-pdf";
 import { toast } from "sonner";
-import { ArrowLeft, Copy, RefreshCw, Printer, CheckCircle2, Plus, FileDown, Trash2, Banknote } from "lucide-react";
+import { ArrowLeft, RefreshCw, Printer, CheckCircle2, Plus, FileDown, Trash2, Banknote } from "lucide-react";
 
 export const Route = createFileRoute("/admin/accounts")({
   head: () => ({
@@ -262,7 +262,7 @@ function StatementModal({ account, onClose, onSettled }: { account: Account; onC
             <p className="mt-1 font-semibold">{account.name}</p>
             {account.contact_name && <p className="text-sm text-muted-foreground">{account.contact_name}</p>}
             {account.contact_email && <p className="text-sm text-muted-foreground">{account.contact_email}</p>}
-            <p className="mt-1 text-sm text-muted-foreground">Code <span className="font-mono">{account.access_code}</span> · {new Date().toLocaleDateString()}</p>
+            <p className="mt-1 text-sm text-muted-foreground">{new Date().toLocaleDateString()}</p>
           </div>
           <div className="flex gap-2 print:hidden">
             <button onClick={downloadPdf} className="inline-flex h-10 items-center gap-2 rounded-full border border-border px-4 text-sm font-semibold hover:border-primary hover:text-primary"><FileDown className="h-4 w-4" />PDF</button>
