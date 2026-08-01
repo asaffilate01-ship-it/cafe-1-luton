@@ -80,6 +80,9 @@ function KDS() {
   const { user } = useSession();
   const { has } = useRoles(user);
 
+  // Lets the till status strip show that a kitchen display is live
+  useKdsHeartbeat();
+
   // Live kitchen timer — ticks every second
   useEffect(() => {
     const iv = window.setInterval(() => setNow(Date.now()), 1000);
