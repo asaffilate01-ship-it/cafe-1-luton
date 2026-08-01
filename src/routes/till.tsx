@@ -462,34 +462,34 @@ function Till() {
             </button>
           ))}
         </div>
-        <div className="ml-auto flex items-center gap-2 text-xs text-white/50">
-          <span className={`hidden items-center gap-1.5 rounded-full border px-2.5 py-1 sm:inline-flex ${online ? "border-emerald-500/40 text-emerald-300" : "border-red-500/50 text-red-300"}`}>
+        <div className="ml-auto flex flex-wrap items-center justify-end gap-2 text-xs text-white/50">
+          <span className={`hidden h-8 items-center gap-1.5 rounded-full border px-2.5 sm:inline-flex ${online ? "border-emerald-500/40 text-emerald-300" : "border-red-500/50 text-red-300"}`}>
             {online ? <Wifi className="h-3.5 w-3.5" /> : <WifiOff className="h-3.5 w-3.5" />} {online ? "Online" : "Offline"}
           </span>
           <button onClick={() => setClosing(true)}
-            className="hidden items-center gap-1.5 rounded-full border border-white/15 px-2.5 py-1 font-semibold text-white/70 hover:border-white/40 sm:inline-flex">
+            className="hidden h-8 items-center gap-1.5 rounded-full border border-white/15 px-2.5 font-semibold text-white/70 hover:border-white/40 sm:inline-flex">
             <ShieldCheck className="h-3.5 w-3.5" /> Shift open · float {money(shift.opening_float_cents)}
           </button>
-          <span className={`hidden items-center gap-1.5 rounded-full border px-2.5 py-1 sm:inline-flex ${readerId ? "border-emerald-500/40 text-emerald-300" : "border-white/15"}`}>
+          <span className={`hidden h-8 items-center gap-1.5 rounded-full border px-2.5 sm:inline-flex ${readerId ? "border-emerald-500/40 text-emerald-300" : "border-white/15"}`}>
             <Smartphone className="h-3.5 w-3.5" />
             {readerId ? readers.find((r) => r.id === readerId)?.name ?? "Solo reader" : "No reader"}
           </span>
-          <span className={`hidden items-center gap-1.5 rounded-full border px-2.5 py-1 xl:inline-flex ${printerReady ? "border-emerald-500/40 text-emerald-300" : "border-white/15"}`}
+          <span className={`hidden h-8 items-center gap-1.5 rounded-full border px-2.5 xl:inline-flex ${printerReady ? "border-emerald-500/40 text-emerald-300" : "border-white/15"}`}
             title={printerReady ? "Tickets print to the built-in printer" : "No built-in printer — tickets open in a print window"}>
             <Printer className="h-3.5 w-3.5" /> {printerReady ? "Printer" : "No printer"}
           </span>
-          <span className={`hidden items-center gap-1.5 rounded-full border px-2.5 py-1 xl:inline-flex ${drawerReady ? "border-emerald-500/40 text-emerald-300" : "border-white/15"}`}
+          <span className={`hidden h-8 items-center gap-1.5 rounded-full border px-2.5 xl:inline-flex ${drawerReady ? "border-emerald-500/40 text-emerald-300" : "border-white/15"}`}
             title={drawerReady ? "Cash drawer connected" : "No cash drawer connection on this device"}>
             <Inbox className="h-3.5 w-3.5" /> {drawerReady ? "Drawer" : "No drawer"}
           </span>
           <button onClick={() => void openCashDrawer().then((r) => (r.ok ? toast.success(r.message) : toast.error(r.message)))}
-            className="inline-flex items-center gap-1.5 rounded-lg border border-white/15 px-2.5 py-1.5 font-semibold text-white/80 hover:border-white/40">
+            className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-white/15 px-2.5 font-semibold text-white/80 hover:border-white/40">
             <Inbox className="h-4 w-4" /> <span className="hidden sm:inline">Drawer</span>
           </button>
           <button
             onClick={() => { const r = openCustomerScreen("/display"); r.ok ? toast.success(r.message) : toast.error(r.message); }}
             aria-label="Open the customer display on the second screen"
-            className="inline-flex items-center gap-1.5 rounded-lg border border-white/15 px-2.5 py-1.5 font-semibold text-white/80 hover:border-white/40">
+            className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-white/15 px-2.5 font-semibold text-white/80 hover:border-white/40">
             <MonitorPlay className="h-4 w-4" /> <span className="hidden sm:inline">Screen</span>
           </button>
           <button onClick={() => setSettings(true)} aria-label="Till settings" className="grid h-8 w-8 place-items-center rounded-lg border border-white/15 hover:border-white/40"><Settings2 className="h-4 w-4" /></button>
