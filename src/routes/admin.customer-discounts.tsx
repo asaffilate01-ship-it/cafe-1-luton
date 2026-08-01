@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { askConfirm } from "@/components/confirm-dialog";
 import { AdminNav } from "@/components/admin-nav";
 import { useState } from "react";
 import { RequireRole } from "@/components/require-role";
@@ -78,7 +79,7 @@ function AdminCustomerDiscounts() {
   }
 
   async function remove(id: string) {
-    if (!confirm("Remove this member's approval?")) return;
+    if (!(await askConfirm("Remove this member's approval?"))) return;
     const { error } = await supabase.from("customer_discounts").delete().eq("id", id);
     if (error) return toast.error(error.message);
     qc.invalidateQueries({ queryKey: ["admin-customer-discounts"] });

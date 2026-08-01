@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { askConfirm } from "@/components/confirm-dialog";
 import { AdminNav } from "@/components/admin-nav";
 import { RequireRole } from "@/components/require-role";
 import { signOutAndRedirect } from "@/lib/sign-out";
@@ -210,7 +211,7 @@ function KDS() {
   async function setAll(from: string, status: "ready" | "completed") {
     const ids = tickets.filter((t) => t.status === from).map((t) => t.id);
     if (!ids.length) return;
-    if (!window.confirm(`Mark ${ids.length} ticket${ids.length === 1 ? "" : "s"} as ${status}?`)) return;
+    if (!(await askConfirm(`Mark ${ids.length} ticket${ids.length === 1 ? "" : "s"} as ${status}?`))) return;
     setBulking(true);
     try {
       await Promise.all(ids.map((id) => update({ data: { order_id: id, status } })));

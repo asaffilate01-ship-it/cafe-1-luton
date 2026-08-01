@@ -1,4 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { askConfirm } from "@/components/confirm-dialog";
 import { AdminNav } from "@/components/admin-nav";
 import { useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
@@ -98,7 +99,7 @@ function AccountsAdmin() {
                       <span className="font-mono text-sm text-muted-foreground" title="Codes are stored hashed and shown once when generated">•••• hidden</span>
                       <button
                         onClick={async () => {
-                          if (!confirm("Generate a new code? The old one will stop working immediately.")) return;
+                          if (!(await askConfirm("Generate a new code? The old one will stop working immediately."))) return;
                           const res = await regen({ data: { id: a.id } });
                           toast.success(`New code: ${res.code}`);
                           void refresh();
@@ -216,7 +217,7 @@ function StatementModal({ account, onClose, onSettled }: { account: Account; onC
   }
 
   async function doSettle() {
-    if (!confirm(`Mark the remaining ${money(outstanding)} of tab charges as paid?`)) return;
+    if (!(await askConfirm(`Mark the remaining ${money(outstanding)} of tab charges as paid?`))) return;
     try {
       await settle({ data: { account_id: account.id } });
       toast.success("Tab settled");
@@ -330,7 +331,7 @@ function StatementModal({ account, onClose, onSettled }: { account: Account; onC
                       className="text-muted-foreground hover:text-primary print:hidden"
                       title="Remove payment"
                       onClick={async () => {
-                        if (!confirm("Remove this payment record?")) return;
+                        if (!(await askConfirm("Remove this payment record?"))) return;
                         try { await delPay({ data: { id: p.id } }); await reload(); }
                         catch (e) { toast.error(e instanceof Error ? e.message : "Delete failed"); }
                       }}

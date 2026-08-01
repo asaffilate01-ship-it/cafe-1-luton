@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { askConfirm } from "@/components/confirm-dialog";
 import { AdminNav } from "@/components/admin-nav";
 import { useState } from "react";
 import { RequireRole } from "@/components/require-role";
@@ -82,7 +83,7 @@ function AdminPromos() {
     qc.invalidateQueries({ queryKey: ["admin-promos"] });
   }
   async function remove(id: string) {
-    if (!confirm("Delete this code?")) return;
+    if (!(await askConfirm("Delete this code?"))) return;
     await supabase.from("promo_codes").delete().eq("id", id);
     qc.invalidateQueries({ queryKey: ["admin-promos"] });
   }
