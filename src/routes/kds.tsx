@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { askConfirm } from "@/components/confirm-dialog";
+import { askConfirm, askPrompt } from "@/components/confirm-dialog";
 import { AdminNav } from "@/components/admin-nav";
 import { RequireRole } from "@/components/require-role";
 import { signOutAndRedirect } from "@/lib/sign-out";
