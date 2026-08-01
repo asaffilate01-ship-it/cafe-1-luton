@@ -16,7 +16,7 @@ import { useSession, useRoles } from "@/hooks/use-auth";
 import { money } from "@/lib/format";
 import { buildStatementPdf } from "@/lib/account-statement-pdf";
 import { toast } from "sonner";
-import { ArrowLeft, Copy, RefreshCw, Printer, CheckCircle2, Plus, FileDown, Trash2, Banknote } from "lucide-react";
+import { ArrowLeft, RefreshCw, Printer, CheckCircle2, Plus, FileDown, Trash2, Banknote } from "lucide-react";
 
 export const Route = createFileRoute("/admin/accounts")({
   head: () => ({
@@ -95,8 +95,7 @@ function AccountsAdmin() {
                   <td className="p-3 font-semibold">{a.name}{a.contact_name && <div className="text-xs font-normal text-muted-foreground">{a.contact_name}</div>}</td>
                   <td className="p-3">
                     <div className="flex items-center gap-2">
-                      <span className="font-mono text-base font-bold tracking-widest text-primary">{a.access_code ?? "—"}</span>
-                      <button onClick={() => { navigator.clipboard.writeText(a.access_code ?? ""); toast.success("Code copied"); }} className="text-muted-foreground hover:text-primary" title="Copy"><Copy className="h-3.5 w-3.5" /></button>
+                      <span className="font-mono text-sm text-muted-foreground" title="Codes are stored hashed and shown once when generated">•••• hidden</span>
                       <button
                         onClick={async () => {
                           if (!confirm("Generate a new code? The old one will stop working immediately.")) return;
@@ -263,7 +262,7 @@ function StatementModal({ account, onClose, onSettled }: { account: Account; onC
             <p className="mt-1 font-semibold">{account.name}</p>
             {account.contact_name && <p className="text-sm text-muted-foreground">{account.contact_name}</p>}
             {account.contact_email && <p className="text-sm text-muted-foreground">{account.contact_email}</p>}
-            <p className="mt-1 text-sm text-muted-foreground">Code <span className="font-mono">{account.access_code}</span> · {new Date().toLocaleDateString()}</p>
+            <p className="mt-1 text-sm text-muted-foreground">{new Date().toLocaleDateString()}</p>
           </div>
           <div className="flex gap-2 print:hidden">
             <button onClick={downloadPdf} className="inline-flex h-10 items-center gap-2 rounded-full border border-border px-4 text-sm font-semibold hover:border-primary hover:text-primary"><FileDown className="h-4 w-4" />PDF</button>

@@ -63,7 +63,6 @@ export type Database = {
       }
       accounts: {
         Row: {
-          access_code: string | null
           access_code_hash: string | null
           active: boolean
           contact_email: string | null
@@ -77,7 +76,6 @@ export type Database = {
           updated_at: string
         }
         Insert: {
-          access_code?: string | null
           access_code_hash?: string | null
           active?: boolean
           contact_email?: string | null
@@ -91,7 +89,6 @@ export type Database = {
           updated_at?: string
         }
         Update: {
-          access_code?: string | null
           access_code_hash?: string | null
           active?: boolean
           contact_email?: string | null
