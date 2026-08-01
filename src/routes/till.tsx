@@ -171,6 +171,9 @@ function Till() {
 
   const [cats, setCats] = useState<Cat[]>([]);
   const [items, setItems] = useState<Item[]>([]);
+  const [modifiers, setModifiers] = useState<Modifier[]>([]);
+  const [customise, setCustomise] = useState<Item | null>(null);
+  const [recent, setRecent] = useState<string[]>(() => readRecent());
   const [catId, setCatId] = useState<string | null>(null);
   const [q, setQ] = useState("");
   const [lines, setLines] = useState<Line[]>([]);
@@ -200,6 +203,7 @@ function Till() {
   const [closing, setClosing] = useState(false);
   const [prepared, setPrepared] = useState<null | { order_id: string; order_number: number; total_cents: number; voucher_cents: number; juror_discount_cents: number }>(null);
   const [online, setOnline] = useState(true);
+  const [cashMode, setCashMode] = useState(false);
 
   useEffect(() => {
     const sync = () => setOnline(navigator.onLine);
@@ -230,12 +234,14 @@ function Till() {
 
   useEffect(() => {
     (async () => {
-      const [{ data: c }, { data: i }] = await Promise.all([
+      const [{ data: c }, { data: i }, { data: m }] = await Promise.all([
         supabase.from("menu_categories").select("id, name, sort_order").eq("active", true).order("sort_order"),
         supabase.from("menu_items").select("id, name, price_cents, category_id, sort_order, image_url, is_beverage").eq("active", true).order("sort_order"),
+        supabase.from("menu_modifiers").select("id, item_id, category_id, name, price_cents, group_name, group_type, required, sort_order").eq("active", true).order("sort_order"),
       ]);
       setCats((c ?? []) as Cat[]);
       setItems((i ?? []) as Item[]);
+      setModifiers((m ?? []) as Modifier[]);
       setCatId((c ?? [])[0]?.id ?? null);
     })();
   }, []);
