@@ -1,42 +1,48 @@
-import type { ReactNode } from "react";
-import { SiteHeader, SiteFooter } from "@/components/site-header";
+import { useEffect } from "react";
+import { useNavigate, Link } from "@tanstack/react-router";
+import { useSession, useRoles, type Role } from "@/hooks/use-auth";
 
-export function LegalPage({
-  title,
-  updated = "26 July 2026",
-  intro,
+/**
+ * Client-side gate for staff surfaces. This is UX only — the real
+ * enforcement lives in RLS policies and role checks inside server functions.
+ */
+export function RequireRole({
+  roles,
+  next,
   children,
 }: {
-  title: string;
-  updated?: string;
-  intro?: string;
-  children: ReactNode;
+  roles: Role[];
+  next: string;
+  children: React.ReactNode;
 }) {
-  return (
-    <div className="min-h-screen bg-background">
-      <SiteHeader />
-      <main className="mx-auto max-w-3xl px-4 py-12">
-        <h1 className="font-display text-3xl font-bold sm:text-4xl">{title}</h1>
-        <p className="mt-2 text-sm text-muted-foreground">Last updated: {updated}</p>
-        {intro && <p className="mt-4 text-muted-foreground">{intro}</p>}
-        <div className="legal-body mt-8 space-y-6 text-sm leading-relaxed text-foreground/90">{children}</div>
-        <div className="mt-12 rounded-2xl border border-border bg-secondary/40 p-5 text-sm">
-          <p className="font-semibold">Contact us</p>
-          <p className="mt-1 text-muted-foreground">
-            Cafe 1, St Albans Crown Court, AL1 3JU · <a className="text-primary underline underline-offset-2" href="mailto:info@cafe1stalbans.co.uk">info@cafe1stalbans.co.uk</a>
-          </p>
-        </div>
-      </main>
-      <SiteFooter />
-    </div>
-  );
-}
+  const { user, loading } = useSession();
+  const { has, loading: rolesLoading } = useRoles(user);
+  const navigate = useNavigate();
 
-export function Section({ heading, children }: { heading: string; children: ReactNode }) {
-  return (
-    <section>
-      <h2 className="font-display text-lg font-bold text-foreground">{heading}</h2>
-      <div className="mt-2 space-y-2 text-muted-foreground">{children}</div>
-    </section>
-  );
+  useEffect(() => {
+    if (!loading && !user) navigate({ to: "/admin/login", search: { next } });
+  }, [loading, user, next, navigate]);
+
+  if (loading || (user && rolesLoading)) {
+    return <div className="grid min-h-screen place-items-center text-sm text-muted-foreground">Checking access…</div>;
+  }
+  if (!user) {
+    return <div className="grid min-h-screen place-items-center text-sm text-muted-foreground">Redirecting to sign in…</div>;
+  }
+  if (!roles.some((r) => has(r))) {
+    return (
+      <div className="grid min-h-screen place-items-center px-6 text-center">
+        <div>
+          <p className="font-display text-2xl font-bold">Not authorised</p>
+          <p className="mt-2 text-sm text-muted-foreground">
+            This area needs {roles.join(" or ")} access. Ask an admin to grant your account a role.
+          </p>
+          <Link to="/staff" className="mt-5 inline-flex h-10 items-center rounded-full bg-primary px-5 text-sm font-semibold text-primary-foreground">
+            Back to staff hub
+          </Link>
+        </div>
+      </div>
+    );
+  }
+  return <>{children}</>;
 }

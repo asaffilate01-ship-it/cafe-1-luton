@@ -1,100 +1,193 @@
-import { useEffect, useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
-import { toast } from "sonner";
-import { Plus, Trash2 } from "lucide-react";
+import { Link, useRouterState } from "@tanstack/react-router";
+import { useSession, useRoles } from "@/hooks/use-auth";
+import { signOutAndRedirect } from "@/lib/sign-out";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  BadgePercent,
+  BarChart3,
+  Bike,
+  BookOpen,
+  Calculator,
+  ChevronDown,
+  Home,
+  Image as ImageIcon,
+  LayoutDashboard,
+  LogOut,
+  Megaphone,
+  MonitorPlay,
+  Newspaper,
+  ReceiptText,
+  Settings,
+  Ticket,
+  UserCog,
+} from "lucide-react";
 
-type Device = { id: string; device_ref: string; name: string; side: string; active: boolean };
-type Side = "jury" | "judge" | "public";
-const SIDE_TONE: Record<Side, string> = { jury: "bg-indigo-600", judge: "bg-fuchsia-700", public: "bg-teal-600" };
+type NavPath =
+  | "/staff"
+  | "/admin"
+  | "/admin/menu"
+  | "/admin/pos"
+  | "/admin/reports"
+  | "/admin/blog"
+  | "/admin/broadcasts"
+  | "/admin/banners"
+  | "/admin/promos"
+  | "/admin/customer-discounts"
+  | "/admin/vouchers"
+  | "/admin/settings"
+  | "/admin/accounts"
+  | "/admin/users"
+  | "/kds"
+  | "/driver";
 
-/** Maps each physical card terminal to the jury or public side of the court cafe. */
-export function PosDevicesCard() {
-  const [rows, setRows] = useState<Device[]>([]);
-  const [ref, setRef] = useState("");
-  const [name, setName] = useState("");
-  const [side, setSide] = useState<Side>("jury");
-  const [busy, setBusy] = useState(false);
+type Item = {
+  to: NavPath;
+  label: string;
+  icon: React.ComponentType<{ className?: string }>;
+  need?: "admin" | "driver";
+};
 
-  async function load() {
-    const { data } = await supabase
-      .from("pos_devices")
-      .select("id, device_ref, name, side, active")
-      .order("side");
-    setRows((data ?? []) as Device[]);
-  }
-  useEffect(() => { void load(); }, []);
+const QUICK: Item[] = [
+  { to: "/staff", label: "Hub", icon: Home },
+  { to: "/admin", label: "Orders", icon: LayoutDashboard },
+  { to: "/kds", label: "Kitchen", icon: MonitorPlay },
+  { to: "/admin/pos", label: "Till", icon: Calculator },
+];
 
-  async function add() {
-    if (!ref.trim() || !name.trim()) return toast.error("Add a terminal reference and a name");
-    setBusy(true);
-    const { error } = await supabase
-      .from("pos_devices")
-      .insert({ device_ref: ref.trim(), name: name.trim(), side });
-    setBusy(false);
-    if (error) return toast.error(error.message);
-    setRef(""); setName("");
-    toast.success("Terminal saved");
-    void load();
-  }
+const GROUPS: Array<{ label: string; items: Item[] }> = [
+  {
+    label: "Operations",
+    items: [
+      { to: "/driver", label: "Driver", icon: Bike, need: "driver" },
+      { to: "/admin/menu", label: "Menu & stock", icon: BookOpen },
+    ],
+  },
+  {
+    label: "Customers",
+    items: [
+      { to: "/admin/customer-discounts", label: "Members", icon: BadgePercent },
+      { to: "/admin/vouchers", label: "Juror vouchers", icon: Ticket },
+      { to: "/admin/accounts", label: "Business tabs", icon: ReceiptText },
+    ],
+  },
+  {
+    label: "Marketing",
+    items: [
+      { to: "/admin/blog", label: "Blog", icon: Newspaper },
+      { to: "/admin/broadcasts", label: "Broadcasts", icon: Megaphone },
+      { to: "/admin/banners", label: "Display banners", icon: ImageIcon },
+      { to: "/admin/promos", label: "Promo codes", icon: Ticket },
+    ],
+  },
+  {
+    label: "Management",
+    items: [
+      { to: "/admin/reports", label: "Reports", icon: BarChart3 },
+      { to: "/admin/settings", label: "Settings", icon: Settings },
+      { to: "/admin/users", label: "Users & roles", icon: UserCog, need: "admin" },
+    ],
+  },
+];
 
-  async function setSideFor(id: string, next: Side) {
-    const { error } = await supabase.from("pos_devices").update({ side: next }).eq("id", id);
-    if (error) return toast.error(error.message);
-    void load();
-  }
+function isActive(pathname: string, to: NavPath) {
+  return pathname === to || (to !== "/staff" && pathname.startsWith(`${to}/`));
+}
 
-  async function remove(id: string) {
-    const { error } = await supabase.from("pos_devices").delete().eq("id", id);
-    if (error) return toast.error(error.message);
-    void load();
-  }
+export function AdminNav() {
+  const { user } = useSession();
+  const { has } = useRoles(user);
+  const pathname = useRouterState({ select: (state) => state.location.pathname });
+  if (!user) return null;
+  const isStaff = has("admin") || has("staff");
+  const isDriver = has("driver");
+  if (!isStaff && !isDriver) return null;
+
+  const allowed = (item: Item) => {
+    if (item.need === "admin") return has("admin");
+    if (item.need === "driver") return isDriver || has("admin");
+    return isStaff;
+  };
 
   return (
-    <section className="rounded-2xl border border-border bg-card p-5">
-      <p className="font-semibold">Card terminals — jury, judge or public side</p>
-      <p className="mt-1 text-sm text-muted-foreground">
-        Give each card machine its terminal reference (serial or reader ID shown on the device) so imported
-        POS sales land on the kitchen display marked JURY, JUDGE or PUBLIC SIDE.
-      </p>
-
-      <div className="mt-3 space-y-2">
-        {rows.map((d) => (
-          <div key={d.id} className="flex items-center gap-2 rounded-xl border border-border px-3 py-2">
-            <div className="min-w-0 flex-1">
-              <p className="truncate text-sm font-semibold">{d.name}</p>
-              <p className="truncate font-mono text-xs text-muted-foreground">{d.device_ref}</p>
-            </div>
-            {(["jury", "judge", "public"] as const).map((s) => (
-              <button
-                key={s}
-                onClick={() => setSideFor(d.id, s)}
-                className={`rounded-full px-3 py-1 text-xs font-black uppercase ${
-                  d.side === s ? `${SIDE_TONE[s]} text-white` : "border border-border hover:border-primary"
+    <nav className="sticky top-0 z-40 border-b border-border bg-background/95 backdrop-blur print:hidden">
+      <div className="mx-auto flex max-w-7xl items-center gap-2 px-3 py-2">
+        <span className="shrink-0 rounded-full bg-primary px-2.5 py-1 text-xs font-bold uppercase tracking-wide text-primary-foreground">
+          Café1
+        </span>
+        <div className="flex min-w-0 flex-1 items-center gap-1 overflow-x-auto">
+          {QUICK.filter(allowed).map((item) => {
+            const Icon = item.icon;
+            return (
+              <Link
+                key={item.to}
+                to={item.to}
+                className={`inline-flex shrink-0 items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold transition ${
+                  isActive(pathname, item.to)
+                    ? "bg-primary text-primary-foreground shadow-brand"
+                    : "text-muted-foreground hover:bg-secondary hover:text-foreground"
                 }`}
               >
-                {s}
-              </button>
-            ))}
-            <button onClick={() => remove(d.id)} className="grid h-8 w-8 place-items-center rounded-full border border-border hover:border-primary" aria-label="Remove terminal">
-              <Trash2 className="h-4 w-4" />
-            </button>
-          </div>
-        ))}
-        {!rows.length && <p className="text-sm text-muted-foreground">No terminals mapped yet.</p>}
-      </div>
+                <Icon className="h-3.5 w-3.5" />
+                {item.label}
+              </Link>
+            );
+          })}
 
-      <div className="mt-3 grid gap-2 sm:grid-cols-[1fr_1fr_auto_auto]">
-        <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Terminal name (e.g. Jury counter)" className="h-10 rounded-lg border border-border bg-background px-3 text-sm" />
-        <input value={ref} onChange={(e) => setRef(e.target.value)} placeholder="Terminal reference / serial" className="h-10 rounded-lg border border-border bg-background px-3 font-mono text-sm" />
-        <select value={side} onChange={(e) => setSide(e.target.value as Side)} className="h-10 rounded-lg border border-border bg-background px-3 text-sm">
-          <option value="jury">Jury side</option>
-          <option value="judge">Judge side</option>
-          <option value="public">Public side</option>
-        </select>
-        <button disabled={busy} onClick={add} className="inline-flex h-10 items-center gap-1 rounded-full bg-primary px-4 text-sm font-semibold text-primary-foreground disabled:opacity-60">
-          <Plus className="h-4 w-4" /> Add
-        </button>
+          {GROUPS.map((group) => {
+            const items = group.items.filter(allowed);
+            if (!items.length) return null;
+            const active = items.some((item) => isActive(pathname, item.to));
+            return (
+              <DropdownMenu key={group.label}>
+                <DropdownMenuTrigger asChild>
+                  <button
+                    className={`inline-flex shrink-0 items-center gap-1 rounded-full px-3 py-1.5 text-xs font-semibold outline-none transition ${
+                      active
+                        ? "bg-primary-soft text-primary"
+                        : "text-muted-foreground hover:bg-secondary hover:text-foreground"
+                    }`}
+                  >
+                    {group.label} <ChevronDown className="h-3 w-3" />
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="start" className="min-w-48">
+                  <DropdownMenuLabel>{group.label}</DropdownMenuLabel>
+                  {items.map((item) => {
+                    const Icon = item.icon;
+                    return (
+                      <DropdownMenuItem key={item.to} asChild>
+                        <Link to={item.to} className="flex cursor-pointer items-center gap-2">
+                          <Icon className="h-4 w-4" />
+                          <span>{item.label}</span>
+                        </Link>
+                      </DropdownMenuItem>
+                    );
+                  })}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            );
+          })}
+        </div>
+        <div className="flex shrink-0 items-center gap-2 border-l border-border pl-2">
+          <span className="hidden max-w-40 truncate text-xs text-muted-foreground lg:inline">
+            {user.email}
+          </span>
+          <button
+            onClick={() => void signOutAndRedirect()}
+            className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-primary px-3 py-1.5 text-xs font-bold text-primary-foreground shadow-brand transition hover:opacity-90"
+            title="Sign out"
+          >
+            <LogOut className="h-3.5 w-3.5" />
+            <span className="hidden sm:inline">Sign out</span>
+          </button>
+        </div>
       </div>
-    </section>
+    </nav>
   );
 }
