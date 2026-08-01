@@ -498,7 +498,7 @@ function Till() {
         </div>
       </header>
 
-      <div className="grid min-h-0 flex-1 lg:grid-cols-[132px_minmax(0,1fr)_400px]">
+      <div className="grid min-h-0 flex-1 overflow-hidden lg:grid-cols-[132px_minmax(0,1fr)_400px]">
         {/* category rail (desktop) */}
         <nav className="hidden min-h-0 flex-col gap-1 overflow-y-auto border-r border-white/10 bg-neutral-900/60 p-2 lg:flex">
           {cats.map((c) => (
@@ -512,7 +512,7 @@ function Till() {
         </nav>
 
         {/* products */}
-        <section className="flex min-h-0 flex-col">
+        <section className="flex min-h-0 min-w-0 flex-col">
           <div className="shrink-0 space-y-3 border-b border-white/10 p-3 sm:p-4">
             <div className="flex items-center gap-2 rounded-xl border border-white/10 bg-neutral-900 px-4">
               <Search className="h-4 w-4 shrink-0 text-white/40" />
@@ -573,7 +573,7 @@ function Till() {
         </section>
 
         {/* order panel */}
-        <aside className={`fixed inset-0 z-40 min-h-0 flex-col bg-neutral-900 lg:static lg:z-auto lg:flex lg:border-l lg:border-white/10 ${showOrder ? "flex" : "hidden"}`}>
+        <aside className={`fixed inset-0 z-40 min-h-0 min-w-0 flex-col bg-neutral-900 lg:static lg:z-auto lg:flex lg:border-l lg:border-white/10 ${showOrder ? "flex" : "hidden"}`}>
           <div className="flex shrink-0 items-center justify-between border-b border-white/10 px-4 py-3 lg:hidden">
             <span className="font-display text-lg font-bold">Current order</span>
             <button onClick={() => setShowOrder(false)} aria-label="Back to menu" className="grid h-9 w-9 place-items-center rounded-lg border border-white/15">
