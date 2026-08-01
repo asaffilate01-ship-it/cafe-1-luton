@@ -1,4 +1,5 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { askConfirm } from "@/components/confirm-dialog";
 import { AdminNav } from "@/components/admin-nav";
 import { useEffect, useState } from "react";
 import { useSession, useRoles } from "@/hooks/use-auth";
@@ -81,7 +82,7 @@ function AdminBanners() {
     qc.invalidateQueries({ queryKey: ["promo-banners"] });
   }
   async function remove(id: string) {
-    if (!confirm("Delete this banner?")) return;
+    if (!(await askConfirm("Delete this banner?"))) return;
     await supabase.from("promo_banners").delete().eq("id", id);
     qc.invalidateQueries({ queryKey: ["admin-banners"] });
     qc.invalidateQueries({ queryKey: ["promo-banners"] });

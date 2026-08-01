@@ -1,4 +1,5 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { askConfirm } from "@/components/confirm-dialog";
 import { AdminNav } from "@/components/admin-nav";
 import { useEffect, useState } from "react";
 import { useSession, useRoles } from "@/hooks/use-auth";
@@ -68,7 +69,7 @@ function Broadcasts() {
     qc.invalidateQueries({ queryKey: ["broadcasts", "active"] });
   }
   async function remove(id: string) {
-    if (!confirm("Delete this broadcast?")) return;
+    if (!(await askConfirm("Delete this broadcast?"))) return;
     await supabase.from("broadcasts").delete().eq("id", id);
     qc.invalidateQueries({ queryKey: ["admin-broadcasts"] });
     qc.invalidateQueries({ queryKey: ["broadcasts", "active"] });

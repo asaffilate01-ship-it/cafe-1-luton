@@ -1,4 +1,5 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { askConfirm } from "@/components/confirm-dialog";
 import { AdminNav } from "@/components/admin-nav";
 import { useEffect, useState } from "react";
 import { useSession, useRoles } from "@/hooks/use-auth";
@@ -127,7 +128,7 @@ function AdminBlog() {
   }
 
   async function remove(id: string) {
-    if (!confirm("Delete this post?")) return;
+    if (!(await askConfirm("Delete this post?"))) return;
     await supabase.from("blog_posts").delete().eq("id", id);
     if (editingId === id) { setEditingId(null); setForm(EMPTY); }
     qc.invalidateQueries({ queryKey: ["admin-blog"] });

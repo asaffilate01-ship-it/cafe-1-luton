@@ -1,4 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { askConfirm } from "@/components/confirm-dialog";
 import { AdminNav } from "@/components/admin-nav";
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -227,7 +228,7 @@ function CategoryEditor({ cat, onSaved, onDeleted }: { cat: Cat; onSaved: () => 
         ><Save className="h-4 w-4" /> Save</button>
         <button
           onClick={async () => {
-            if (!confirm(`Delete category "${cat.name}" and all its items?`)) return;
+            if (!(await askConfirm(`Delete category "${cat.name}" and all its items?`))) return;
             const { error } = await supabase.from("menu_categories").delete().eq("id", cat.id);
             if (error) return toast.error(error.message);
             toast.success("Deleted");
@@ -376,7 +377,7 @@ function ItemRow({ it, onChanged }: { it: Item; onChanged: () => void }) {
       <div className="col-span-2 flex items-start justify-end md:col-span-1">
         <button
           onClick={async ()=>{
-            if (!confirm(`Delete "${it.name}"?`)) return;
+            if (!(await askConfirm(`Delete "${it.name}"?`))) return;
             const { error } = await supabase.from("menu_items").delete().eq("id", it.id);
             if (error) return toast.error(error.message);
             onChanged();
@@ -463,7 +464,7 @@ function ModRow({ m, onChanged }: { m: Mod; onChanged: () => void }) {
       </label>
       <button
         onClick={async ()=>{
-          if (!confirm(`Delete modifier "${m.name}"?`)) return;
+          if (!(await askConfirm(`Delete modifier "${m.name}"?`))) return;
           const { error } = await supabase.from("menu_modifiers").delete().eq("id", m.id);
           if (error) return toast.error(error.message);
           onChanged();
