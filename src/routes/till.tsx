@@ -525,6 +525,10 @@ function Till() {
             title={drawerReady ? "Cash drawer connected" : "No cash drawer connection on this device"}>
             <Inbox className="h-3.5 w-3.5" /> {drawerReady ? "Drawer" : "No drawer"}
           </span>
+          <button onClick={() => setCashEvent(true)}
+            className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-white/15 px-2.5 font-semibold text-white/80 hover:border-white/40">
+            <Banknote className="h-4 w-4" /> <span className="hidden sm:inline">Cash in/out</span>
+          </button>
           <button onClick={() => void openCashDrawer().then((r) => (r.ok ? toast.success(r.message) : toast.error(r.message)))}
             className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-white/15 px-2.5 font-semibold text-white/80 hover:border-white/40">
             <Inbox className="h-4 w-4" /> <span className="hidden sm:inline">Drawer</span>
@@ -858,6 +862,9 @@ function Till() {
       )}
       {closing && shift && (
         <CloseShiftModal shift={shift} onClose={() => setClosing(false)} onClosed={() => { setClosing(false); setShift(null); }} />
+      )}
+      {cashEvent && (
+        <CashEventModal shift={shift} onClose={() => setCashEvent(false)} />
       )}
       {voucherOpen && (
         <VoucherModal
