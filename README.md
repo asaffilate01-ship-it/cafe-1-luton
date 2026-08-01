@@ -1,26 +1,53 @@
-# CAFE1 ST ALBANS
+# Cafe 1 Connect
 
-look at @project:b5c235f6-fa09-44e3-aa45-6689b8c6a4c8:"ONYN" andmusing the features, ui/ux and functionality create a delivery app/saas for just one merchant vendor called cafe1, driver app, customer app and website/dashboard, its not an aggregtor app but a one business ordering app, payments via sumup and all orders can be ingtegrated into a pos terminal using sumup also?
+Single-merchant ordering and operations platform for Cafe 1 at St Albans Crown Court. It includes the customer storefront, SumUp checkout, counter till, kitchen display, delivery driver view, juror vouchers, loyalty, business tabs, reporting, and the management dashboard.
 
-This project was built with [Lovable](https://lovable.dev).
+## Production hardening included
 
-**Live app**: https://cafe1-connect-dash.lovable.app
+- Atomic, server-priced counter orders and idempotent cash/card/voucher/split settlement
+- SumUp Solo payment-attempt verification and refund ledger
+- Till shifts, cash movements, close variance, held orders, modifiers, notes, printing, and customer display
+- Least-privilege RLS, hashed account codes, audited manager actions, protected scheduler routes, security headers, and optional manager MFA enforcement
+- Driver claim/state controls, atomic loyalty award, reconciliation-aware unpaid cleanup, net revenue/refund reporting
+- TypeScript, ESLint, Vitest, dependency audit, production build, and GitHub Actions CI
 
-## Build with Lovable
+Read [the release notes](docs/RELEASE_NOTES_PRODUCTION_HARDENING.md) for the full change list and [the production runbook](docs/PRODUCTION_RUNBOOK.md) before deployment.
 
-Continue developing this project in the [Lovable editor](https://lovable.dev/projects/4e8d727f-9796-42a7-9a37-e92941913d6a).
+## Local setup
 
-- **Ship faster**: describe what you want to build and Lovable handles the code.
-- **Stay in sync**: every change made in Lovable is committed straight to this repository.
-- **Full ownership**: this code is yours. Push to `main` on GitHub and your changes sync back into Lovable, ready for your next prompt.
-
-## Development
-
-Prefer working locally? You need Node.js and npm — [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating).
+Requirements: Node.js 22+, npm, and a Supabase project.
 
 ```sh
-git clone <this-repository-url>
-cd <repository-name>
-npm i
+cp .env.example .env
+npm ci
 npm run dev
 ```
+
+Fill `.env` with the real project/provider values. Never commit it. Apply migrations to a staging database before production:
+
+```sh
+supabase db push
+npm run check
+npm audit --audit-level=high
+```
+
+Useful commands:
+
+| Command             | Purpose                                       |
+| ------------------- | --------------------------------------------- |
+| `npm run typecheck` | Strict TypeScript validation                  |
+| `npm run lint`      | ESLint validation                             |
+| `npm test`          | Unit tests                                    |
+| `npm run build`     | Production bundle                             |
+| `npm run check`     | Typecheck, lint, tests, and build             |
+| `supabase test db`  | Database pgTAP assertions with local Supabase |
+
+## Deployment order
+
+1. Back up and migrate Supabase.
+2. Configure all production values from `.env.example` in the host secret manager.
+3. Build and deploy this revision.
+4. Configure authenticated POST cron calls.
+5. Complete every runbook smoke test before accepting live payments.
+
+This project remains compatible with the Lovable/TanStack Start workflow. Do not expose `SUPABASE_SERVICE_ROLE_KEY`, SumUp credentials, webhook secrets, or `CRON_SECRET` to browser code.
