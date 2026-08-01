@@ -9,11 +9,16 @@ import { z } from "zod";
 export const getEmailDiscount = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) => z.object({ email: z.string().email().max(200) }).parse(d))
   .handler(async ({ data }) => {
+    const { checkThrottle, recordAttempt, requestIdentity } = await import("./rate-limit.server");
+    const ident = requestIdentity();
+    const gate = await checkThrottle("promo", ident);
+    if (!gate.allowed) return null;
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data: rows } = await supabaseAdmin.rpc("get_customer_discount", {
       _email: data.email.trim().toLowerCase(),
     });
     const row = (rows ?? [])[0];
+    await recordAttempt("promo", ident, Boolean(row));
     return row ? { percent: row.percent, label: row.label ?? null } : null;
   });
 
