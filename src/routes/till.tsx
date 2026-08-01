@@ -1068,6 +1068,60 @@ function CloseShiftModal({ shift, onClose, onClosed }: { shift: Shift; onClose: 
 }
 
 function ManualCardModal({ due, busy, onClose, onConfirm }: { due: number; busy: boolean; onClose: () => void; onConfirm: (ref: string) => void }) {
+  return <ManualCardModalInner due={due} busy={busy} onClose={onClose} onConfirm={onConfirm} />;
+}
+
+/** Petty cash in/out, logged against the open shift so the close-off balances. */
+function CashEventModal({ shift, onClose }: { shift: Shift; onClose: () => void }) {
+  const recordFn = useServerFn(recordTillCashEvent);
+  const [kind, setKind] = useState<"paid_in" | "paid_out">("paid_out");
+  const [amount, setAmount] = useState("");
+  const [reason, setReason] = useState("");
+  const [busy, setBusy] = useState(false);
+
+  async function run() {
+    const cents = Math.round(Number(amount || 0) * 100);
+    if (!Number.isFinite(cents) || cents <= 0) return toast.error("Enter an amount");
+    if (!reason.trim()) return toast.error("Add a reason for the audit trail");
+    setBusy(true);
+    try {
+      await recordFn({ data: { shift_id: shift.id, event_type: kind, amount_cents: cents, reason: reason.trim() } });
+      void openCashDrawer();
+      toast.success(`${kind === "paid_in" ? "Paid in" : "Paid out"} ${money(cents)}`);
+      onClose();
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Could not record the cash movement");
+    } finally { setBusy(false); }
+  }
+
+  return (
+    <Modal title="Cash in / out" onClose={onClose}>
+      <p className="text-sm text-white/60">Record money going into or out of the drawer so the shift close-off still balances.</p>
+      <div className="mt-4 grid grid-cols-2 gap-2">
+        {([["paid_in", "Paid in"], ["paid_out", "Paid out"]] as const).map(([k, label]) => (
+          <button key={k} onClick={() => setKind(k)}
+            className={`h-12 rounded-xl text-sm font-black uppercase tracking-wide transition ${kind === k ? "bg-primary text-primary-foreground" : "border border-white/15 text-white/60 hover:border-white/40"}`}>
+            {label}
+          </button>
+        ))}
+      </div>
+      <label htmlFor="cash-amount" className="mt-4 block text-xs font-bold uppercase tracking-widest text-white/40">Amount (£)</label>
+      <input id="cash-amount" type="number" min={0} step="0.01" inputMode="decimal" value={amount}
+        onChange={(e) => setAmount(e.target.value)} placeholder="0.00"
+        className="mt-2 h-14 w-full rounded-xl border border-white/15 bg-neutral-800 px-4 font-display text-2xl font-black tabular-nums outline-none focus:border-primary" />
+      <label htmlFor="cash-reason" className="mt-4 block text-xs font-bold uppercase tracking-widest text-white/40">Reason</label>
+      <input id="cash-reason" value={reason} onChange={(e) => setReason(e.target.value)} maxLength={200}
+        placeholder={kind === "paid_in" ? "Change from the bank…" : "Milk run, window cleaner…"}
+        className="mt-2 h-11 w-full rounded-xl border border-white/15 bg-neutral-800 px-3 text-sm outline-none focus:border-primary" />
+      <button disabled={busy} onClick={() => void run()}
+        className="mt-5 inline-flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-primary font-bold text-primary-foreground disabled:opacity-50">
+        {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />} Record movement
+      </button>
+    </Modal>
+  );
+}
+
+function ManualCardModalInner({ due, busy, onClose, onConfirm }: { due: number; busy: boolean; onClose: () => void; onConfirm: (ref: string) => void }) {
   const [ref, setRef] = useState("");
   return (
     <Modal title="Paid on another card machine" onClose={onClose}>
