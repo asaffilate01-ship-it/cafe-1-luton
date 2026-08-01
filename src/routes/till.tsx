@@ -1067,10 +1067,6 @@ function CloseShiftModal({ shift, onClose, onClosed }: { shift: Shift; onClose: 
   );
 }
 
-function ManualCardModal({ due, busy, onClose, onConfirm }: { due: number; busy: boolean; onClose: () => void; onConfirm: (ref: string) => void }) {
-  return <ManualCardModalInner due={due} busy={busy} onClose={onClose} onConfirm={onConfirm} />;
-}
-
 /** Petty cash in/out, logged against the open shift so the close-off balances. */
 function CashEventModal({ shift, onClose }: { shift: Shift; onClose: () => void }) {
   const recordFn = useServerFn(recordTillCashEvent);
@@ -1121,7 +1117,7 @@ function CashEventModal({ shift, onClose }: { shift: Shift; onClose: () => void 
   );
 }
 
-function ManualCardModalInner({ due, busy, onClose, onConfirm }: { due: number; busy: boolean; onClose: () => void; onConfirm: (ref: string) => void }) {
+function ManualCardModal({ due, busy, onClose, onConfirm }: { due: number; busy: boolean; onClose: () => void; onConfirm: (ref: string) => void }) {
   const [ref, setRef] = useState("");
   return (
     <Modal title="Paid on another card machine" onClose={onClose}>
