@@ -98,10 +98,14 @@ function Admin() {
   }
 
   async function doRefund(o: OrderRow) {
-    const raw = window.prompt(
-      `Refund order #${o.order_number}. Leave blank for the full ${money(o.total_cents)}, or enter a partial amount in £.`,
-      "",
-    );
+    const raw = await askPrompt({
+      title: `Refund order #${o.order_number}`,
+      description: `Leave blank to refund the full ${money(o.total_cents)}, or enter a partial amount in £.`,
+      label: "Refund amount (£)",
+      placeholder: money(o.total_cents).replace("£", ""),
+      inputMode: "decimal",
+      confirmLabel: "Refund",
+    });
     if (raw === null) return;
     const trimmed = raw.trim();
     let amount_cents: number | undefined;
