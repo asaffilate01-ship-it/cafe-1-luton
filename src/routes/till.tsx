@@ -3,7 +3,12 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useSession, useRoles } from "@/hooks/use-auth";
 import { useServerFn } from "@tanstack/react-start";
-import { createCounterOrder } from "@/lib/pos.functions";
+import {
+  createCounterOrder,
+  prepareCounterOrder,
+  finalizeCounterCardPayment,
+  cancelCounterOrder,
+} from "@/lib/pos.functions";
 import {
   listPairedReaders,
   pairSumupReader,
@@ -11,6 +16,9 @@ import {
   startReaderPayment,
   checkReaderPayment,
   cancelReaderPayment,
+  getTillShift,
+  openTillShift,
+  closeTillShift,
 } from "@/lib/till.functions";
 import { openCashDrawer, getDrawerBridge, setDrawerBridge } from "@/lib/drawer";
 import { iminPrintTickets, isIminDevice, openCustomerScreen } from "@/lib/imin";
