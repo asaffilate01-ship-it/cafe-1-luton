@@ -12,7 +12,12 @@ export type DisplayMessage =
       due: number;
       fulfilment: string;
     }
-  | { type: "paid"; order_number: number; total: number; method: "cash" | "card" | "split" }
+  | {
+      type: "paid";
+      order_number: number;
+      total: number;
+      method: "cash" | "card" | "split" | "voucher";
+    }
   | { type: "juror"; url: string }
   | { type: "idle" };
 
