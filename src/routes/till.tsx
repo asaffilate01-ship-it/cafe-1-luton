@@ -696,6 +696,129 @@ function Till() {
 
 /* -------------------------------------------------------------- widgets */
 
+function OpenShiftScreen({
+  terminal, setSide, onOpened,
+}: { terminal: Side; setSide: (s: Side) => void; onOpened: (s: Shift) => void }) {
+  const openFn = useServerFn(openTillShift);
+  const [float, setFloat] = useState("");
+  const [busy, setBusy] = useState(false);
+
+  async function open() {
+    const cents = Math.round(Number(float || 0) * 100);
+    if (!Number.isFinite(cents) || cents < 0) return toast.error("Enter the opening float");
+    setBusy(true);
+    try {
+      const s = (await openFn({ data: { terminal, opening_float_cents: cents } })) as Shift;
+      toast.success("Till shift open");
+      onOpened(s);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Could not open the shift");
+    } finally { setBusy(false); }
+  }
+
+  return (
+    <div className="grid min-h-screen place-items-center bg-neutral-950 p-4 text-white">
+      <div className="w-full max-w-sm rounded-3xl border border-white/10 bg-neutral-900 p-6">
+        <h1 className="font-display text-2xl font-black">Open the till</h1>
+        <p className="mt-1 text-sm text-white/50">Count the cash drawer before you start serving.</p>
+
+        <p className="mt-5 text-xs font-bold uppercase tracking-widest text-white/40">Terminal</p>
+        <div className="mt-2 grid grid-cols-3 gap-2">
+          {(["jury", "judge", "public"] as const).map((s) => (
+            <button key={s} onClick={() => setSide(s)}
+              className={`rounded-xl px-2 py-2.5 text-xs font-black uppercase tracking-wide transition ${terminal === s ? SIDE_TONE[s] : "border border-white/15 text-white/60 hover:border-white/40"}`}>
+              {SIDE_LABEL[s]}
+            </button>
+          ))}
+        </div>
+
+        <label htmlFor="float" className="mt-5 block text-xs font-bold uppercase tracking-widest text-white/40">Opening float (£)</label>
+        <input id="float" type="number" min={0} step="0.01" inputMode="decimal" value={float}
+          onChange={(e) => setFloat(e.target.value)} placeholder="0.00"
+          className="mt-2 h-14 w-full rounded-xl border border-white/15 bg-neutral-800 px-4 font-display text-2xl font-black tabular-nums outline-none focus:border-primary" />
+
+        <button disabled={busy} onClick={() => void open()}
+          className="mt-5 inline-flex h-14 w-full items-center justify-center gap-2 rounded-xl bg-primary text-base font-bold text-primary-foreground disabled:opacity-40">
+          {busy ? <Loader2 className="h-5 w-5 animate-spin" /> : <ShieldCheck className="h-5 w-5" />} Start shift
+        </button>
+        <button onClick={() => supabase.auth.signOut()} className="mt-3 w-full text-xs font-semibold text-white/40 underline">Sign out</button>
+      </div>
+    </div>
+  );
+}
+
+function CloseShiftModal({ shift, onClose, onClosed }: { shift: Shift; onClose: () => void; onClosed: () => void }) {
+  const closeFn = useServerFn(closeTillShift);
+  const [counted, setCounted] = useState("");
+  const [note, setNote] = useState("");
+  const [confirm, setConfirm] = useState(false);
+  const [busy, setBusy] = useState(false);
+
+  async function run() {
+    const cents = Math.round(Number(counted || 0) * 100);
+    if (!Number.isFinite(cents) || cents < 0) return toast.error("Enter the counted cash");
+    setBusy(true);
+    try {
+      const s = (await closeFn({ data: { shift_id: shift.id, counted_cash_cents: cents, note: note.trim() } })) as Shift;
+      const diff = s.discrepancy_cents ?? 0;
+      toast.success(diff === 0 ? "Shift closed and balanced" : `Shift closed · ${diff > 0 ? "over" : "short"} by ${money(Math.abs(diff))}`);
+      onClosed();
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Could not close the shift");
+    } finally { setBusy(false); }
+  }
+
+  return (
+    <Modal title="Close the till" onClose={onClose}>
+      <p className="text-sm text-white/60">Opening float {money(shift.opening_float_cents)}. Count everything in the drawer.</p>
+      <label htmlFor="counted" className="mt-4 block text-xs font-bold uppercase tracking-widest text-white/40">Counted cash (£)</label>
+      <input id="counted" type="number" min={0} step="0.01" inputMode="decimal" value={counted}
+        onChange={(e) => setCounted(e.target.value)} placeholder="0.00"
+        className="mt-2 h-14 w-full rounded-xl border border-white/15 bg-neutral-800 px-4 font-display text-2xl font-black tabular-nums outline-none focus:border-primary" />
+      <label htmlFor="closenote" className="mt-4 block text-xs font-bold uppercase tracking-widest text-white/40">Note (optional)</label>
+      <input id="closenote" value={note} onChange={(e) => setNote(e.target.value)} maxLength={300}
+        className="mt-2 h-11 w-full rounded-xl border border-white/15 bg-neutral-800 px-3 text-sm outline-none focus:border-primary" />
+
+      {confirm ? (
+        <div className="mt-5 rounded-2xl border border-red-500/40 bg-red-500/10 p-4">
+          <p className="text-sm font-semibold text-red-200">Close this shift? No more sales can be rung through until a new one is opened.</p>
+          <div className="mt-3 grid grid-cols-2 gap-2">
+            <button onClick={() => setConfirm(false)} className="h-11 rounded-xl border border-white/15 text-sm font-bold text-white/70">Keep open</button>
+            <button disabled={busy} onClick={() => void run()} className="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-red-600 text-sm font-bold text-white disabled:opacity-50">
+              {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />} Close shift
+            </button>
+          </div>
+        </div>
+      ) : (
+        <button onClick={() => setConfirm(true)}
+          className="mt-5 inline-flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-primary font-bold text-primary-foreground">
+          <ShieldCheck className="h-4 w-4" /> Review and close
+        </button>
+      )}
+    </Modal>
+  );
+}
+
+function ManualCardModal({ due, busy, onClose, onConfirm }: { due: number; busy: boolean; onClose: () => void; onConfirm: (ref: string) => void }) {
+  const [ref, setRef] = useState("");
+  return (
+    <Modal title="Paid on another card machine" onClose={onClose}>
+      <p className="text-sm text-white/60">Confirm once the customer&apos;s card payment has gone through on the terminal.</p>
+      <div className="mt-4 rounded-2xl bg-neutral-800 p-4 text-center">
+        <p className="text-xs font-bold uppercase tracking-widest text-white/40">Amount due</p>
+        <p className="font-display text-4xl font-black text-primary">{money(due)}</p>
+      </div>
+      <label htmlFor="cardref" className="mt-4 block text-xs font-bold uppercase tracking-widest text-white/40">Terminal receipt reference</label>
+      <input id="cardref" value={ref} onChange={(e) => setRef(e.target.value)} placeholder="Last 4 of the receipt no."
+        className="mt-2 h-11 w-full rounded-xl border border-white/15 bg-neutral-800 px-3 text-sm outline-none focus:border-primary" />
+      <button disabled={busy || ref.trim().length < 4} onClick={() => onConfirm(ref.trim())}
+        className="mt-5 inline-flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-primary font-bold text-primary-foreground disabled:opacity-50">
+        {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />} Mark paid · {money(due)}
+      </button>
+    </Modal>
+  );
+}
+
 function Modal({ title, children, onClose }: { title: string; children: React.ReactNode; onClose: () => void }) {
   return (
     <div className="fixed inset-0 z-50 grid place-items-center bg-black/70 p-4" role="dialog" aria-modal="true">
