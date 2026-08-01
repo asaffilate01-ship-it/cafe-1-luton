@@ -462,34 +462,34 @@ function Till() {
             </button>
           ))}
         </div>
-        <div className="ml-auto flex items-center gap-2 text-xs text-white/50">
-          <span className={`hidden items-center gap-1.5 rounded-full border px-2.5 py-1 sm:inline-flex ${online ? "border-emerald-500/40 text-emerald-300" : "border-red-500/50 text-red-300"}`}>
+        <div className="ml-auto flex flex-wrap items-center justify-end gap-2 text-xs text-white/50">
+          <span className={`hidden h-8 items-center gap-1.5 rounded-full border px-2.5 sm:inline-flex ${online ? "border-emerald-500/40 text-emerald-300" : "border-red-500/50 text-red-300"}`}>
             {online ? <Wifi className="h-3.5 w-3.5" /> : <WifiOff className="h-3.5 w-3.5" />} {online ? "Online" : "Offline"}
           </span>
           <button onClick={() => setClosing(true)}
-            className="hidden items-center gap-1.5 rounded-full border border-white/15 px-2.5 py-1 font-semibold text-white/70 hover:border-white/40 sm:inline-flex">
+            className="hidden h-8 items-center gap-1.5 rounded-full border border-white/15 px-2.5 font-semibold text-white/70 hover:border-white/40 sm:inline-flex">
             <ShieldCheck className="h-3.5 w-3.5" /> Shift open · float {money(shift.opening_float_cents)}
           </button>
-          <span className={`hidden items-center gap-1.5 rounded-full border px-2.5 py-1 sm:inline-flex ${readerId ? "border-emerald-500/40 text-emerald-300" : "border-white/15"}`}>
+          <span className={`hidden h-8 items-center gap-1.5 rounded-full border px-2.5 sm:inline-flex ${readerId ? "border-emerald-500/40 text-emerald-300" : "border-white/15"}`}>
             <Smartphone className="h-3.5 w-3.5" />
             {readerId ? readers.find((r) => r.id === readerId)?.name ?? "Solo reader" : "No reader"}
           </span>
-          <span className={`hidden items-center gap-1.5 rounded-full border px-2.5 py-1 xl:inline-flex ${printerReady ? "border-emerald-500/40 text-emerald-300" : "border-white/15"}`}
+          <span className={`hidden h-8 items-center gap-1.5 rounded-full border px-2.5 xl:inline-flex ${printerReady ? "border-emerald-500/40 text-emerald-300" : "border-white/15"}`}
             title={printerReady ? "Tickets print to the built-in printer" : "No built-in printer — tickets open in a print window"}>
             <Printer className="h-3.5 w-3.5" /> {printerReady ? "Printer" : "No printer"}
           </span>
-          <span className={`hidden items-center gap-1.5 rounded-full border px-2.5 py-1 xl:inline-flex ${drawerReady ? "border-emerald-500/40 text-emerald-300" : "border-white/15"}`}
+          <span className={`hidden h-8 items-center gap-1.5 rounded-full border px-2.5 xl:inline-flex ${drawerReady ? "border-emerald-500/40 text-emerald-300" : "border-white/15"}`}
             title={drawerReady ? "Cash drawer connected" : "No cash drawer connection on this device"}>
             <Inbox className="h-3.5 w-3.5" /> {drawerReady ? "Drawer" : "No drawer"}
           </span>
           <button onClick={() => void openCashDrawer().then((r) => (r.ok ? toast.success(r.message) : toast.error(r.message)))}
-            className="inline-flex items-center gap-1.5 rounded-lg border border-white/15 px-2.5 py-1.5 font-semibold text-white/80 hover:border-white/40">
+            className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-white/15 px-2.5 font-semibold text-white/80 hover:border-white/40">
             <Inbox className="h-4 w-4" /> <span className="hidden sm:inline">Drawer</span>
           </button>
           <button
             onClick={() => { const r = openCustomerScreen("/display"); r.ok ? toast.success(r.message) : toast.error(r.message); }}
             aria-label="Open the customer display on the second screen"
-            className="inline-flex items-center gap-1.5 rounded-lg border border-white/15 px-2.5 py-1.5 font-semibold text-white/80 hover:border-white/40">
+            className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-white/15 px-2.5 font-semibold text-white/80 hover:border-white/40">
             <MonitorPlay className="h-4 w-4" /> <span className="hidden sm:inline">Screen</span>
           </button>
           <button onClick={() => setSettings(true)} aria-label="Till settings" className="grid h-8 w-8 place-items-center rounded-lg border border-white/15 hover:border-white/40"><Settings2 className="h-4 w-4" /></button>
@@ -498,7 +498,7 @@ function Till() {
         </div>
       </header>
 
-      <div className="grid min-h-0 flex-1 lg:grid-cols-[132px_minmax(0,1fr)_400px]">
+      <div className="grid min-h-0 flex-1 overflow-hidden lg:grid-cols-[132px_minmax(0,1fr)_400px]">
         {/* category rail (desktop) */}
         <nav className="hidden min-h-0 flex-col gap-1 overflow-y-auto border-r border-white/10 bg-neutral-900/60 p-2 lg:flex">
           {cats.map((c) => (
@@ -512,7 +512,7 @@ function Till() {
         </nav>
 
         {/* products */}
-        <section className="flex min-h-0 flex-col">
+        <section className="flex min-h-0 min-w-0 flex-col">
           <div className="shrink-0 space-y-3 border-b border-white/10 p-3 sm:p-4">
             <div className="flex items-center gap-2 rounded-xl border border-white/10 bg-neutral-900 px-4">
               <Search className="h-4 w-4 shrink-0 text-white/40" />
@@ -573,7 +573,7 @@ function Till() {
         </section>
 
         {/* order panel */}
-        <aside className={`fixed inset-0 z-40 min-h-0 flex-col bg-neutral-900 lg:static lg:z-auto lg:flex lg:border-l lg:border-white/10 ${showOrder ? "flex" : "hidden"}`}>
+        <aside className={`fixed inset-0 z-40 min-h-0 min-w-0 flex-col bg-neutral-900 lg:static lg:z-auto lg:flex lg:border-l lg:border-white/10 ${showOrder ? "flex" : "hidden"}`}>
           <div className="flex shrink-0 items-center justify-between border-b border-white/10 px-4 py-3 lg:hidden">
             <span className="font-display text-lg font-bold">Current order</span>
             <button onClick={() => setShowOrder(false)} aria-label="Back to menu" className="grid h-9 w-9 place-items-center rounded-lg border border-white/15">
