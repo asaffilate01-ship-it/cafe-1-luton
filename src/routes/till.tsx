@@ -800,7 +800,90 @@ function Till() {
       {settings && (
         <TillSettings readers={readers} readerError={readerError} reload={loadReaders} onClose={() => setSettings(false)} />
       )}
+      {customise && (
+        <CustomiseSheet
+          item={customise}
+          modifiers={modifiersFor(customise)}
+          onClose={() => setCustomise(null)}
+          onAdd={(ids, notes) => { add(customise, ids, notes); setCustomise(null); }}
+        />
+      )}
     </div>
+  );
+}
+
+/* --------------------------------------------------- modifiers / notes */
+
+function CustomiseSheet({
+  item, modifiers, onClose, onAdd,
+}: {
+  item: Item;
+  modifiers: Modifier[];
+  onClose: () => void;
+  onAdd: (modifierIds: string[], notes: string) => void;
+}) {
+  const [picked, setPicked] = useState<string[]>([]);
+  const [notes, setNotes] = useState("");
+
+  const groups = useMemo(() => {
+    const map = new Map<string, Modifier[]>();
+    for (const m of modifiers) {
+      const key = m.group_name ?? "Add-ons";
+      map.set(key, [...(map.get(key) ?? []), m]);
+    }
+    return [...map.entries()];
+  }, [modifiers]);
+
+  const extra = modifiers.filter((m) => picked.includes(m.id)).reduce((s, m) => s + m.price_cents, 0);
+  const missing = groups.find(([, list]) => list.some((m) => m.required) && !list.some((m) => picked.includes(m.id)));
+
+  function toggle(m: Modifier) {
+    const single = m.group_type === "single";
+    setPicked((prev) => {
+      if (prev.includes(m.id)) return prev.filter((id) => id !== m.id);
+      if (single) {
+        const siblings = modifiers.filter((x) => (x.group_name ?? "Add-ons") === (m.group_name ?? "Add-ons")).map((x) => x.id);
+        return [...prev.filter((id) => !siblings.includes(id)), m.id];
+      }
+      return [...prev, m.id];
+    });
+  }
+
+  return (
+    <Modal title={item.name} onClose={onClose}>
+      <div className="max-h-[55vh] space-y-4 overflow-y-auto pr-1">
+        {groups.map(([label, list]) => (
+          <div key={label}>
+            <p className="text-xs font-black uppercase tracking-widest text-white/40">
+              {label}{list.some((m) => m.required) && <span className="ml-1 text-primary">required</span>}
+            </p>
+            <div className="mt-2 space-y-1.5">
+              {list.map((m) => (
+                <button key={m.id} onClick={() => toggle(m)}
+                  aria-pressed={picked.includes(m.id)}
+                  className={`flex w-full items-center gap-2 rounded-xl px-3 py-2.5 text-sm font-semibold transition ${
+                    picked.includes(m.id) ? "bg-primary text-primary-foreground" : "border border-white/10 text-white/80 hover:border-white/40"
+                  }`}>
+                  <span className="flex-1 text-left">{m.name}</span>
+                  {m.price_cents > 0 && <span className="tabular-nums">+{money(m.price_cents)}</span>}
+                </button>
+              ))}
+            </div>
+          </div>
+        ))}
+        <div>
+          <label htmlFor="line-notes" className="text-xs font-black uppercase tracking-widest text-white/40">Kitchen note</label>
+          <input id="line-notes" value={notes} onChange={(e) => setNotes(e.target.value)} maxLength={200}
+            placeholder="No butter, extra hot…"
+            className="mt-2 h-11 w-full rounded-xl border border-white/15 bg-neutral-800 px-3 text-sm outline-none focus:border-primary" />
+        </div>
+      </div>
+      <button disabled={Boolean(missing)} onClick={() => onAdd(picked, notes)}
+        className="mt-5 inline-flex h-14 w-full items-center justify-between gap-2 rounded-xl bg-primary px-5 text-base font-bold text-primary-foreground disabled:opacity-40">
+        <span className="inline-flex items-center gap-2"><Plus className="h-5 w-5" /> {missing ? `Choose ${missing[0]}` : "Add to order"}</span>
+        <span className="font-display text-lg font-black tabular-nums">{money(item.price_cents + extra)}</span>
+      </button>
+    </Modal>
   );
 }
 
