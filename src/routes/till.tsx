@@ -51,10 +51,29 @@ export const Route = createFileRoute("/till")({
 
 type Cat = { id: string; name: string; sort_order: number };
 type Item = { id: string; name: string; price_cents: number; category_id: string | null; sort_order: number; image_url: string | null; is_beverage: boolean };
+type Modifier = {
+  id: string; item_id: string | null; category_id: string | null; name: string;
+  price_cents: number; group_name: string | null; group_type: string; required: boolean; sort_order: number;
+};
 
-type Line = { id: string; name: string; price_cents: number; qty: number; is_beverage: boolean };
+type Line = {
+  key: string; id: string; name: string; price_cents: number; qty: number;
+  is_beverage: boolean; modifier_ids: string[]; notes: string; detail: string;
+};
 type Side = "jury" | "judge" | "public";
 type Fulfilment = "dine_in" | "collection";
+
+const RECENT_KEY = "cafe1-till-recent";
+
+function readRecent(): string[] {
+  if (typeof window === "undefined") return [];
+  try {
+    const raw = JSON.parse(window.localStorage.getItem(RECENT_KEY) ?? "[]") as unknown;
+    return Array.isArray(raw) ? raw.filter((v): v is string => typeof v === "string").slice(0, 12) : [];
+  } catch {
+    return [];
+  }
+}
 type Shift = {
   id: string;
   terminal: string;
