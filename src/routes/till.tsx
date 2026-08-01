@@ -231,6 +231,10 @@ function Till() {
 
   useEffect(() => { window.localStorage.setItem("cafe1-pos-side", side); }, [side]);
   useEffect(() => {
+    setPrinterReady(isIminDevice());
+    setDrawerReady(isIminDevice() || Boolean(getDrawerBridge()));
+  }, [settings]);
+  useEffect(() => {
     if (readerId) window.localStorage.setItem("cafe1-till-reader", readerId);
   }, [readerId]);
 
@@ -469,6 +473,14 @@ function Till() {
           <span className={`hidden items-center gap-1.5 rounded-full border px-2.5 py-1 sm:inline-flex ${readerId ? "border-emerald-500/40 text-emerald-300" : "border-white/15"}`}>
             <Smartphone className="h-3.5 w-3.5" />
             {readerId ? readers.find((r) => r.id === readerId)?.name ?? "Solo reader" : "No reader"}
+          </span>
+          <span className={`hidden items-center gap-1.5 rounded-full border px-2.5 py-1 xl:inline-flex ${printerReady ? "border-emerald-500/40 text-emerald-300" : "border-white/15"}`}
+            title={printerReady ? "Tickets print to the built-in printer" : "No built-in printer — tickets open in a print window"}>
+            <Printer className="h-3.5 w-3.5" /> {printerReady ? "Printer" : "No printer"}
+          </span>
+          <span className={`hidden items-center gap-1.5 rounded-full border px-2.5 py-1 xl:inline-flex ${drawerReady ? "border-emerald-500/40 text-emerald-300" : "border-white/15"}`}
+            title={drawerReady ? "Cash drawer connected" : "No cash drawer connection on this device"}>
+            <Inbox className="h-3.5 w-3.5" /> {drawerReady ? "Drawer" : "No drawer"}
           </span>
           <button onClick={() => void openCashDrawer().then((r) => (r.ok ? toast.success(r.message) : toast.error(r.message)))}
             className="inline-flex items-center gap-1.5 rounded-lg border border-white/15 px-2.5 py-1.5 font-semibold text-white/80 hover:border-white/40">
