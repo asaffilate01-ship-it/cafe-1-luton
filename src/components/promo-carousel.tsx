@@ -53,7 +53,7 @@ export function PromoCarousel() {
               : { background: `linear-gradient(120deg, ${b.bg_color ?? "oklch(0.55 0.22 27)"}, color-mix(in oklab, ${b.bg_color ?? "oklch(0.55 0.22 27)"} 60%, black))` };
           const inner = (
             <div
-              className="flex h-40 w-full min-w-full snap-start items-end rounded-2xl p-5 text-white shadow-brand sm:h-56"
+              className="flex h-40 w-full min-w-full snap-start items-end rounded-2xl p-5 text-white shadow-brand sm:h-56 sm:px-14"
               style={cardStyle}
             >
               <div className="max-w-md">
