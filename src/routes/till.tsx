@@ -19,6 +19,7 @@ import {
   getTillShift,
   openTillShift,
   closeTillShift,
+  recordTillCashEvent,
 } from "@/lib/till.functions";
 import { openCashDrawer, getDrawerBridge, setDrawerBridge } from "@/lib/drawer";
 import { useKdsOnline, useBackendStatus } from "@/hooks/use-kds-presence";
@@ -214,6 +215,7 @@ function Till() {
   const [shift, setShift] = useState<Shift | null>(null);
   const [shiftLoading, setShiftLoading] = useState(true);
   const [closing, setClosing] = useState(false);
+  const [cashEvent, setCashEvent] = useState(false);
   const [prepared, setPrepared] = useState<null | { order_id: string; order_number: number; total_cents: number; voucher_cents: number; juror_discount_cents: number }>(null);
   const [online, setOnline] = useState(true);
   const [cashMode, setCashMode] = useState(false);
