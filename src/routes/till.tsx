@@ -389,6 +389,13 @@ function Till() {
           ))}
         </div>
         <div className="ml-auto flex items-center gap-2 text-xs text-white/50">
+          <span className={`hidden items-center gap-1.5 rounded-full border px-2.5 py-1 sm:inline-flex ${online ? "border-emerald-500/40 text-emerald-300" : "border-red-500/50 text-red-300"}`}>
+            {online ? <Wifi className="h-3.5 w-3.5" /> : <WifiOff className="h-3.5 w-3.5" />} {online ? "Online" : "Offline"}
+          </span>
+          <button onClick={() => setClosing(true)}
+            className="hidden items-center gap-1.5 rounded-full border border-white/15 px-2.5 py-1 font-semibold text-white/70 hover:border-white/40 sm:inline-flex">
+            <ShieldCheck className="h-3.5 w-3.5" /> Shift open · float {money(shift.opening_float_cents)}
+          </button>
           <span className={`hidden items-center gap-1.5 rounded-full border px-2.5 py-1 sm:inline-flex ${readerId ? "border-emerald-500/40 text-emerald-300" : "border-white/15"}`}>
             <Smartphone className="h-3.5 w-3.5" />
             {readerId ? readers.find((r) => r.id === readerId)?.name ?? "Solo reader" : "No reader"}
