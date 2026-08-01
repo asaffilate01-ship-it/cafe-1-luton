@@ -31,7 +31,7 @@ import { toast } from "sonner";
 import {
   Banknote, CreditCard, Minus, Plus, Search, Trash2, Lock, LogOut, Settings2, X,
   Smartphone, Loader2, Check, Printer, Inbox, ShoppingBag, HandPlatter, MonitorPlay,
-  Delete, ReceiptText, UtensilsCrossed, ChevronDown, Ticket, ShieldCheck, Wifi, WifiOff,
+  Delete, ReceiptText, UtensilsCrossed, ChevronDown, Ticket, ShieldCheck, Wifi, WifiOff, Star,
 } from "lucide-react";
 
 export const Route = createFileRoute("/till")({
@@ -64,6 +64,17 @@ type Side = "jury" | "judge" | "public";
 type Fulfilment = "dine_in" | "collection";
 
 const RECENT_KEY = "cafe1-till-recent";
+const FAV_KEY = "cafe1-till-favourites";
+
+function readIds(key: string, limit: number): string[] {
+  if (typeof window === "undefined") return [];
+  try {
+    const raw = JSON.parse(window.localStorage.getItem(key) ?? "[]") as unknown;
+    return Array.isArray(raw) ? raw.filter((v): v is string => typeof v === "string").slice(0, limit) : [];
+  } catch {
+    return [];
+  }
+}
 
 function readRecent(): string[] {
   if (typeof window === "undefined") return [];
@@ -174,6 +185,7 @@ function Till() {
   const [modifiers, setModifiers] = useState<Modifier[]>([]);
   const [customise, setCustomise] = useState<Item | null>(null);
   const [recent, setRecent] = useState<string[]>(() => readRecent());
+  const [favourites, setFavourites] = useState<string[]>(() => readIds(FAV_KEY, 16));
   const [catId, setCatId] = useState<string | null>(null);
   const [q, setQ] = useState("");
   const [lines, setLines] = useState<Line[]>([]);
@@ -275,9 +287,27 @@ function Till() {
     return items.filter((i) => i.category_id === catId);
   }, [items, catId, q]);
 
+  const toggleFavourite = useCallback((id: string) => {
+    setFavourites((prev) => {
+      const next = prev.includes(id) ? prev.filter((f) => f !== id) : [id, ...prev].slice(0, 16);
+      window.localStorage.setItem(FAV_KEY, JSON.stringify(next));
+      toast.success(prev.includes(id) ? "Removed from quick keys" : "Pinned to quick keys");
+      return next;
+    });
+  }, []);
+
+  const favouriteItems = useMemo(
+    () => favourites.map((id) => items.find((i) => i.id === id)).filter((i): i is Item => Boolean(i)),
+    [favourites, items],
+  );
+
   const recentItems = useMemo(
-    () => recent.map((id) => items.find((i) => i.id === id)).filter((i): i is Item => Boolean(i)),
-    [recent, items],
+    () =>
+      recent
+        .filter((id) => !favourites.includes(id))
+        .map((id) => items.find((i) => i.id === id))
+        .filter((i): i is Item => Boolean(i)),
+    [recent, items, favourites],
   );
 
   const total = lines.reduce((s, l) => s + l.price_cents * l.qty, 0);
@@ -530,9 +560,23 @@ function Till() {
                 ))}
               </div>
             )}
+            {!q && favouriteItems.length > 0 && (
+              <div>
+                <p className="mb-1.5 text-[10px] font-black uppercase tracking-widest text-amber-300/70">Favourites</p>
+                <div className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-1">
+                  {favouriteItems.map((i) => (
+                    <button key={i.id} onClick={() => tap(i)}
+                      className="shrink-0 rounded-xl border border-amber-400/40 bg-amber-400/10 px-3 py-2 text-left text-xs font-bold hover:border-amber-300 active:scale-95">
+                      <span className="block max-w-[9rem] truncate">{i.name}</span>
+                      <span className="text-[11px] font-semibold text-amber-300">{money(i.price_cents)}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
             {!q && recentItems.length > 0 && (
               <div>
-                <p className="mb-1.5 text-[10px] font-black uppercase tracking-widest text-white/35">Quick keys · recently used</p>
+                <p className="mb-1.5 text-[10px] font-black uppercase tracking-widest text-white/35">Recently used</p>
                 <div className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-1">
                   {recentItems.map((i) => (
                     <button key={i.id} onClick={() => tap(i)}
@@ -549,8 +593,18 @@ function Till() {
           <div className="min-h-0 flex-1 overflow-y-auto p-3 pb-24 sm:p-4 lg:pb-4">
             <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
               {visible.map((i) => (
-                <button key={i.id} onClick={() => tap(i)}
-                  className="group flex flex-col overflow-hidden rounded-2xl border border-white/10 bg-neutral-900 text-left transition hover:border-primary hover:bg-neutral-800 active:scale-[0.98]">
+                <div key={i.id} className="relative">
+                <button
+                  type="button"
+                  onClick={() => toggleFavourite(i.id)}
+                  aria-pressed={favourites.includes(i.id)}
+                  aria-label={favourites.includes(i.id) ? `Unpin ${i.name} from favourites` : `Pin ${i.name} to favourites`}
+                  className="absolute right-1.5 top-1.5 z-10 grid h-8 w-8 place-items-center rounded-full bg-neutral-950/70 text-white/50 backdrop-blur transition hover:text-amber-300"
+                >
+                  <Star className={`h-4 w-4 ${favourites.includes(i.id) ? "fill-amber-300 text-amber-300" : ""}`} />
+                </button>
+                <button onClick={() => tap(i)}
+                  className="group flex h-full w-full flex-col overflow-hidden rounded-2xl border border-white/10 bg-neutral-900 text-left transition hover:border-primary hover:bg-neutral-800 active:scale-[0.98]">
                   <div className="relative aspect-[4/3] w-full overflow-hidden bg-neutral-800">
                     {i.image_url ? (
                       <img src={i.image_url} alt={i.name} loading="lazy"
@@ -566,6 +620,7 @@ function Till() {
                     <span className="font-display text-base font-bold text-primary">{money(i.price_cents)}</span>
                   </div>
                 </button>
+                </div>
               ))}
               {!visible.length && <p className="text-sm text-white/40">No items.</p>}
             </div>
