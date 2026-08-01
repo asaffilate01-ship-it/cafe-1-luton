@@ -3,7 +3,12 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useSession, useRoles } from "@/hooks/use-auth";
 import { useServerFn } from "@tanstack/react-start";
-import { createCounterOrder } from "@/lib/pos.functions";
+import {
+  createCounterOrder,
+  prepareCounterOrder,
+  finalizeCounterCardPayment,
+  cancelCounterOrder,
+} from "@/lib/pos.functions";
 import {
   listPairedReaders,
   pairSumupReader,
@@ -11,6 +16,9 @@ import {
   startReaderPayment,
   checkReaderPayment,
   cancelReaderPayment,
+  getTillShift,
+  openTillShift,
+  closeTillShift,
 } from "@/lib/till.functions";
 import { openCashDrawer, getDrawerBridge, setDrawerBridge } from "@/lib/drawer";
 import { iminPrintTickets, isIminDevice, openCustomerScreen } from "@/lib/imin";
@@ -22,8 +30,8 @@ import { money } from "@/lib/format";
 import { toast } from "sonner";
 import {
   Banknote, CreditCard, Minus, Plus, Search, Trash2, Lock, LogOut, Settings2, X,
-  Smartphone, Loader2, Check, Printer, Inbox, ShoppingBag, HandPlatter, Bike, MonitorPlay,
-  Delete, ReceiptText, UtensilsCrossed, ChevronDown, Ticket, ShieldCheck,
+  Smartphone, Loader2, Check, Printer, Inbox, ShoppingBag, HandPlatter, MonitorPlay,
+  Delete, ReceiptText, UtensilsCrossed, ChevronDown, Ticket, ShieldCheck, Wifi, WifiOff,
 } from "lucide-react";
 
 export const Route = createFileRoute("/till")({
@@ -46,7 +54,13 @@ type Item = { id: string; name: string; price_cents: number; category_id: string
 
 type Line = { id: string; name: string; price_cents: number; qty: number; is_beverage: boolean };
 type Side = "jury" | "judge" | "public";
-type Fulfilment = "dine_in" | "collection" | "delivery";
+type Fulfilment = "dine_in" | "collection";
+type Shift = {
+  id: string;
+  terminal: string;
+  opening_float_cents: number;
+  discrepancy_cents?: number | null;
+};
 
 const SIDE_TONE: Record<Side, string> = {
   jury: "bg-indigo-600 text-white",
@@ -57,7 +71,6 @@ const SIDE_LABEL: Record<Side, string> = { jury: "Jury", judge: "Judge", public:
 const FULFIL: { id: Fulfilment; label: string; Icon: typeof ShoppingBag }[] = [
   { id: "dine_in", label: "Dine in", Icon: HandPlatter },
   { id: "collection", label: "Takeaway", Icon: ShoppingBag },
-  { id: "delivery", label: "Delivery", Icon: Bike },
 ];
 
 function TillPage() {
@@ -131,6 +144,10 @@ function TillLogin() {
 
 function Till() {
   const create = useServerFn(createCounterOrder);
+  const prepare = useServerFn(prepareCounterOrder);
+  const finalizeCard = useServerFn(finalizeCounterCardPayment);
+  const cancelOrder = useServerFn(cancelCounterOrder);
+  const shiftFn = useServerFn(getTillShift);
   const readersFn = useServerFn(listPairedReaders);
 
   const [cats, setCats] = useState<Cat[]>([]);
@@ -159,6 +176,33 @@ function Till() {
   const [showOrder, setShowOrder] = useState(false);
   const [voucher, setVoucher] = useState<null | { code: string; remaining_cents: number; allocated_cents: number; opted_in: boolean }>(null);
   const [voucherOpen, setVoucherOpen] = useState(false);
+  const [shift, setShift] = useState<Shift | null>(null);
+  const [shiftLoading, setShiftLoading] = useState(true);
+  const [closing, setClosing] = useState(false);
+  const [prepared, setPrepared] = useState<null | { order_id: string; order_number: number; total_cents: number; voucher_cents: number; juror_discount_cents: number }>(null);
+  const [online, setOnline] = useState(true);
+
+  useEffect(() => {
+    const sync = () => setOnline(navigator.onLine);
+    sync();
+    window.addEventListener("online", sync);
+    window.addEventListener("offline", sync);
+    return () => { window.removeEventListener("online", sync); window.removeEventListener("offline", sync); };
+  }, []);
+
+  const loadShift = useCallback(async () => {
+    setShiftLoading(true);
+    try {
+      const s = (await shiftFn({ data: { terminal: side } })) as Shift | null;
+      setShift(s ?? null);
+    } catch (e) {
+      setShift(null);
+      toast.error(e instanceof Error ? e.message : "Could not load the till shift");
+    } finally {
+      setShiftLoading(false);
+    }
+  }, [shiftFn, side]);
+  useEffect(() => { void loadShift(); }, [loadShift]);
 
   useEffect(() => { window.localStorage.setItem("cafe1-pos-side", side); }, [side]);
   useEffect(() => {
@@ -231,26 +275,26 @@ function Till() {
     setLines((prev) => prev.flatMap((l) => (l.id === id ? (l.qty + d <= 0 ? [] : [{ ...l, qty: l.qty + d }]) : [l])));
   }
 
-  const finish = useCallback(
-    async (payment_method: "cash" | "card", sumup_transaction_id?: string) => {
-      setBusy(true);
-      try {
-        const res = await create({
-          data: {
-            customer_name: name.trim() || "Counter",
-            type,
-            table_number: table.trim() || undefined,
-            payment_method,
-            sumup_transaction_id,
-            pos_terminal: side,
-            voucher_code: voucher?.code,
-            items: lines.map((l) => ({ menu_item_id: l.id, qty: l.qty })),
-          },
-        });
-        setLastOrder({ n: res.order_number, total: res.total_cents, id: res.order_id });
-        postToDisplay({ type: "paid", order_number: res.order_number, total: res.total_cents, method: payment_method });
-        toast.success(`Order #${res.order_number} sent to the kitchen · ${money(res.total_cents)}`);
-        const printed = iminPrintTickets(
+  const basket = useCallback(
+    () => ({
+      idempotency_key: crypto.randomUUID(),
+      shift_id: shift?.id ?? "",
+      customer_name: name.trim() || "Counter",
+      type,
+      table_number: table.trim() || undefined,
+      pos_terminal: side,
+      voucher_code: voucher?.code,
+      items: lines.map((l) => ({ menu_item_id: l.id, qty: l.qty })),
+    }),
+    [lines, name, shift, side, table, type, voucher],
+  );
+
+  const completed = useCallback(
+    (res: { order_id: string; order_number: number; total_cents: number; voucher_cents: number; voucher_code?: string | null }, payment_method: "cash" | "card" | "voucher") => {
+      setLastOrder({ n: res.order_number, total: res.total_cents, id: res.order_id });
+      postToDisplay({ type: "paid", order_number: res.order_number, total: res.total_cents, method: payment_method });
+      toast.success(`Order #${res.order_number} sent to the kitchen · ${money(res.total_cents)}`);
+      const printed = iminPrintTickets(
           (["KITCHEN", "COUNTER"] as const).map((heading) => ({
             heading,
             order_number: res.order_number,
@@ -260,20 +304,81 @@ function Till() {
             total_cents: heading === "COUNTER" ? res.total_cents : undefined,
             footer: heading === "COUNTER" ? "Thank you — cafe1stalbans.co.uk" : undefined,
           })),
-        );
-        if (!printed) window.open(`/print/${res.order_id}`, "_blank");
-        if (res.voucher_cents > 0) toast.success(`Juror voucher ${res.voucher_code} — ${money(res.voucher_cents)} redeemed`);
-        setLines([]); setName(""); setTable(""); setPay(null); setTendered(0); setShowOrder(false); setVoucher(null);
+      );
+      if (!printed) window.open(`/print/${res.order_id}`, "_blank");
+      if (res.voucher_cents > 0) toast.success(`Juror voucher ${res.voucher_code ?? ""} — ${money(res.voucher_cents)} redeemed`);
+      setLines([]); setName(""); setTable(""); setPay(null); setTendered(0); setShowOrder(false); setVoucher(null); setPrepared(null);
+    },
+    [lines, side, type],
+  );
+
+  /** Cash, voucher-covered and manual (external terminal) card settlement. */
+  const finish = useCallback(
+    async (payment_method: "cash" | "card", manual_card_reference?: string) => {
+      if (!shift) return toast.error("Open a till shift first");
+      setBusy(true);
+      try {
+        const res = await create({
+          data: { ...basket(), payment_method, manual_card_reference },
+        });
+        completed(res, due === 0 ? "voucher" : payment_method);
+        if (payment_method === "cash") void openCashDrawer();
       } catch (e) {
         toast.error(e instanceof Error ? e.message : "Could not take that order");
       } finally {
         setBusy(false);
       }
     },
-    [create, lines, name, side, table, type, voucher],
+    [basket, completed, create, due, shift],
+  );
+
+  /** Prepares the order server-side, then hands it to the SumUp Solo reader. */
+  const beginReader = useCallback(async () => {
+    if (!shift) return toast.error("Open a till shift first");
+    setBusy(true);
+    try {
+      const res = await prepare({ data: basket() });
+      setPrepared({
+        order_id: res.order_id,
+        order_number: res.order_number,
+        total_cents: res.total_cents,
+        voucher_cents: res.voucher_cents,
+        juror_discount_cents: res.juror_discount_cents,
+      });
+      setPay("reader");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Could not start that card payment");
+    } finally {
+      setBusy(false);
+    }
+  }, [basket, prepare, shift]);
+
+  const abandonPrepared = useCallback(
+    async (reason: string) => {
+      const order = prepared;
+      setPay(null);
+      setPrepared(null);
+      if (!order) return;
+      try {
+        await cancelOrder({ data: { order_id: order.order_id, reason } });
+      } catch (e) {
+        toast.error(e instanceof Error ? e.message : "Could not release that order");
+      }
+    },
+    [cancelOrder, prepared],
   );
 
   if (locked) return <LockScreen onUnlock={() => setLocked(false)} />;
+  if (shiftLoading) {
+    return (
+      <div className="grid min-h-screen place-items-center bg-neutral-950 text-white">
+        <Loader2 className="h-6 w-6 animate-spin" />
+      </div>
+    );
+  }
+  if (!shift) {
+    return <OpenShiftScreen terminal={side} setSide={setSide} onOpened={(s) => setShift(s)} />;
+  }
 
   return (
     <div className="flex h-screen flex-col overflow-hidden bg-neutral-950 text-white">
@@ -289,6 +394,13 @@ function Till() {
           ))}
         </div>
         <div className="ml-auto flex items-center gap-2 text-xs text-white/50">
+          <span className={`hidden items-center gap-1.5 rounded-full border px-2.5 py-1 sm:inline-flex ${online ? "border-emerald-500/40 text-emerald-300" : "border-red-500/50 text-red-300"}`}>
+            {online ? <Wifi className="h-3.5 w-3.5" /> : <WifiOff className="h-3.5 w-3.5" />} {online ? "Online" : "Offline"}
+          </span>
+          <button onClick={() => setClosing(true)}
+            className="hidden items-center gap-1.5 rounded-full border border-white/15 px-2.5 py-1 font-semibold text-white/70 hover:border-white/40 sm:inline-flex">
+            <ShieldCheck className="h-3.5 w-3.5" /> Shift open · float {money(shift.opening_float_cents)}
+          </button>
           <span className={`hidden items-center gap-1.5 rounded-full border px-2.5 py-1 sm:inline-flex ${readerId ? "border-emerald-500/40 text-emerald-300" : "border-white/15"}`}>
             <Smartphone className="h-3.5 w-3.5" />
             {readerId ? readers.find((r) => r.id === readerId)?.name ?? "Solo reader" : "No reader"}
@@ -491,25 +603,37 @@ function Till() {
           )}
 
           <div className="shrink-0 space-y-2 border-t border-white/10 p-3">
-            <button disabled={!lines.length || busy} onClick={() => setPay("reader")}
-              className="inline-flex h-14 w-full items-center justify-between gap-2 rounded-xl bg-primary px-5 text-base font-bold text-primary-foreground disabled:opacity-40">
-              <span className="inline-flex items-center gap-2"><Smartphone className="h-5 w-5" /> Charge SumUp Solo</span>
-              <span className="font-display text-lg font-black tabular-nums">{money(due)}</span>
-            </button>
-            <div className="grid grid-cols-3 gap-2">
-              <button disabled={!lines.length || busy} onClick={() => { if (tendered && tendered < due) return toast.error("Tendered is less than the amount due"); void finish("cash"); }}
-                className="inline-flex h-12 items-center justify-center gap-2 rounded-xl bg-emerald-600 text-sm font-bold text-white disabled:opacity-40">
-                <Banknote className="h-4 w-4" /> Cash
+            {lines.length > 0 && due === 0 ? (
+              <button disabled={busy} onClick={() => void finish("cash")}
+                className="inline-flex h-14 w-full items-center justify-between gap-2 rounded-xl bg-indigo-600 px-5 text-base font-bold text-white disabled:opacity-40">
+                <span className="inline-flex items-center gap-2"><Ticket className="h-5 w-5" /> Complete voucher order</span>
+                <span className="font-display text-lg font-black tabular-nums">{money(0)}</span>
               </button>
-              <button onClick={() => void openCashDrawer().then((r) => (r.ok ? toast.success(r.message) : toast.error(r.message)))}
-                className="inline-flex h-12 items-center justify-center gap-2 rounded-xl border border-white/15 text-sm font-bold text-white/80 hover:border-white/40">
-                <Inbox className="h-4 w-4" /> Drawer
+            ) : (
+              <button disabled={!lines.length || busy} onClick={() => void beginReader()}
+                className="inline-flex h-14 w-full items-center justify-between gap-2 rounded-xl bg-primary px-5 text-base font-bold text-primary-foreground disabled:opacity-40">
+                <span className="inline-flex items-center gap-2">
+                  {busy ? <Loader2 className="h-5 w-5 animate-spin" /> : <Smartphone className="h-5 w-5" />} Charge SumUp Solo
+                </span>
+                <span className="font-display text-lg font-black tabular-nums">{money(due)}</span>
               </button>
-              <button disabled={!lines.length || busy} onClick={() => setPay("manual")}
-                className="inline-flex h-12 items-center justify-center gap-2 rounded-xl border border-white/15 text-sm font-bold text-white/80 disabled:opacity-40">
-                <CreditCard className="h-4 w-4" /> Card
-              </button>
-            </div>
+            )}
+            {due > 0 && (
+              <div className="grid grid-cols-3 gap-2">
+                <button disabled={!lines.length || busy} onClick={() => { if (tendered && tendered < due) return toast.error("Tendered is less than the amount due"); void finish("cash"); }}
+                  className="inline-flex h-12 items-center justify-center gap-2 rounded-xl bg-emerald-600 text-sm font-bold text-white disabled:opacity-40">
+                  <Banknote className="h-4 w-4" /> Cash
+                </button>
+                <button onClick={() => void openCashDrawer().then((r) => (r.ok ? toast.success(r.message) : toast.error(r.message)))}
+                  className="inline-flex h-12 items-center justify-center gap-2 rounded-xl border border-white/15 text-sm font-bold text-white/80 hover:border-white/40">
+                  <Inbox className="h-4 w-4" /> Drawer
+                </button>
+                <button disabled={!lines.length || busy} onClick={() => setPay("manual")}
+                  className="inline-flex h-12 items-center justify-center gap-2 rounded-xl border border-white/15 text-sm font-bold text-white/80 disabled:opacity-40">
+                  <CreditCard className="h-4 w-4" /> Card
+                </button>
+              </div>
+            )}
             <div className="flex items-center justify-between text-xs">
               <button disabled={!lines.length} onClick={() => { setLines([]); setTendered(0); }}
                 className="inline-flex items-center gap-1.5 rounded-lg px-2 py-1.5 font-semibold text-white/40 hover:text-white disabled:opacity-40">
@@ -538,23 +662,29 @@ function Till() {
       )}
 
       {pay === "manual" && (
-        <Modal title="Paid on another card machine" onClose={() => setPay(null)}>
-          <p className="text-sm text-white/60">Confirm once the customer&apos;s card payment has gone through on the terminal.</p>
-          <button disabled={busy} onClick={() => finish("card")} className="mt-5 inline-flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-primary font-bold text-primary-foreground disabled:opacity-50">
-            <Check className="h-4 w-4" /> Mark paid · {money(total)}
-          </button>
-        </Modal>
+        <ManualCardModal due={due} busy={busy} onClose={() => setPay(null)} onConfirm={(ref) => void finish("card", ref)} />
       )}
-      {pay === "reader" && (
+      {pay === "reader" && prepared && (
         <ReaderPay
-          total={due}
+          total={prepared.total_cents}
+          orderId={prepared.order_id}
           readers={readers}
           readerId={readerId}
           setReaderId={setReaderId}
-          onClose={() => setPay(null)}
-          onPaid={(txn) => finish("card", txn ?? undefined)}
+          onClose={(reason) => void abandonPrepared(reason)}
+          onPaid={async (attemptId) => {
+            try {
+              const res = await finalizeCard({ data: { order_id: prepared.order_id, payment_attempt_id: attemptId } });
+              completed(res, "card");
+            } catch (e) {
+              toast.error(e instanceof Error ? e.message : "Payment taken but the order could not be finalised");
+            }
+          }}
           onSettings={() => { setPay(null); setSettings(true); }}
         />
+      )}
+      {closing && shift && (
+        <CloseShiftModal shift={shift} onClose={() => setClosing(false)} onClosed={() => { setClosing(false); setShift(null); }} />
       )}
       {voucherOpen && (
         <VoucherModal
@@ -571,6 +701,129 @@ function Till() {
 
 /* -------------------------------------------------------------- widgets */
 
+function OpenShiftScreen({
+  terminal, setSide, onOpened,
+}: { terminal: Side; setSide: (s: Side) => void; onOpened: (s: Shift) => void }) {
+  const openFn = useServerFn(openTillShift);
+  const [float, setFloat] = useState("");
+  const [busy, setBusy] = useState(false);
+
+  async function open() {
+    const cents = Math.round(Number(float || 0) * 100);
+    if (!Number.isFinite(cents) || cents < 0) return toast.error("Enter the opening float");
+    setBusy(true);
+    try {
+      const s = (await openFn({ data: { terminal, opening_float_cents: cents } })) as Shift;
+      toast.success("Till shift open");
+      onOpened(s);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Could not open the shift");
+    } finally { setBusy(false); }
+  }
+
+  return (
+    <div className="grid min-h-screen place-items-center bg-neutral-950 p-4 text-white">
+      <div className="w-full max-w-sm rounded-3xl border border-white/10 bg-neutral-900 p-6">
+        <h1 className="font-display text-2xl font-black">Open the till</h1>
+        <p className="mt-1 text-sm text-white/50">Count the cash drawer before you start serving.</p>
+
+        <p className="mt-5 text-xs font-bold uppercase tracking-widest text-white/40">Terminal</p>
+        <div className="mt-2 grid grid-cols-3 gap-2">
+          {(["jury", "judge", "public"] as const).map((s) => (
+            <button key={s} onClick={() => setSide(s)}
+              className={`rounded-xl px-2 py-2.5 text-xs font-black uppercase tracking-wide transition ${terminal === s ? SIDE_TONE[s] : "border border-white/15 text-white/60 hover:border-white/40"}`}>
+              {SIDE_LABEL[s]}
+            </button>
+          ))}
+        </div>
+
+        <label htmlFor="float" className="mt-5 block text-xs font-bold uppercase tracking-widest text-white/40">Opening float (£)</label>
+        <input id="float" type="number" min={0} step="0.01" inputMode="decimal" value={float}
+          onChange={(e) => setFloat(e.target.value)} placeholder="0.00"
+          className="mt-2 h-14 w-full rounded-xl border border-white/15 bg-neutral-800 px-4 font-display text-2xl font-black tabular-nums outline-none focus:border-primary" />
+
+        <button disabled={busy} onClick={() => void open()}
+          className="mt-5 inline-flex h-14 w-full items-center justify-center gap-2 rounded-xl bg-primary text-base font-bold text-primary-foreground disabled:opacity-40">
+          {busy ? <Loader2 className="h-5 w-5 animate-spin" /> : <ShieldCheck className="h-5 w-5" />} Start shift
+        </button>
+        <button onClick={() => supabase.auth.signOut()} className="mt-3 w-full text-xs font-semibold text-white/40 underline">Sign out</button>
+      </div>
+    </div>
+  );
+}
+
+function CloseShiftModal({ shift, onClose, onClosed }: { shift: Shift; onClose: () => void; onClosed: () => void }) {
+  const closeFn = useServerFn(closeTillShift);
+  const [counted, setCounted] = useState("");
+  const [note, setNote] = useState("");
+  const [confirm, setConfirm] = useState(false);
+  const [busy, setBusy] = useState(false);
+
+  async function run() {
+    const cents = Math.round(Number(counted || 0) * 100);
+    if (!Number.isFinite(cents) || cents < 0) return toast.error("Enter the counted cash");
+    setBusy(true);
+    try {
+      const s = (await closeFn({ data: { shift_id: shift.id, counted_cash_cents: cents, note: note.trim() } })) as Shift;
+      const diff = s.discrepancy_cents ?? 0;
+      toast.success(diff === 0 ? "Shift closed and balanced" : `Shift closed · ${diff > 0 ? "over" : "short"} by ${money(Math.abs(diff))}`);
+      onClosed();
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Could not close the shift");
+    } finally { setBusy(false); }
+  }
+
+  return (
+    <Modal title="Close the till" onClose={onClose}>
+      <p className="text-sm text-white/60">Opening float {money(shift.opening_float_cents)}. Count everything in the drawer.</p>
+      <label htmlFor="counted" className="mt-4 block text-xs font-bold uppercase tracking-widest text-white/40">Counted cash (£)</label>
+      <input id="counted" type="number" min={0} step="0.01" inputMode="decimal" value={counted}
+        onChange={(e) => setCounted(e.target.value)} placeholder="0.00"
+        className="mt-2 h-14 w-full rounded-xl border border-white/15 bg-neutral-800 px-4 font-display text-2xl font-black tabular-nums outline-none focus:border-primary" />
+      <label htmlFor="closenote" className="mt-4 block text-xs font-bold uppercase tracking-widest text-white/40">Note (optional)</label>
+      <input id="closenote" value={note} onChange={(e) => setNote(e.target.value)} maxLength={300}
+        className="mt-2 h-11 w-full rounded-xl border border-white/15 bg-neutral-800 px-3 text-sm outline-none focus:border-primary" />
+
+      {confirm ? (
+        <div className="mt-5 rounded-2xl border border-red-500/40 bg-red-500/10 p-4">
+          <p className="text-sm font-semibold text-red-200">Close this shift? No more sales can be rung through until a new one is opened.</p>
+          <div className="mt-3 grid grid-cols-2 gap-2">
+            <button onClick={() => setConfirm(false)} className="h-11 rounded-xl border border-white/15 text-sm font-bold text-white/70">Keep open</button>
+            <button disabled={busy} onClick={() => void run()} className="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-red-600 text-sm font-bold text-white disabled:opacity-50">
+              {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />} Close shift
+            </button>
+          </div>
+        </div>
+      ) : (
+        <button onClick={() => setConfirm(true)}
+          className="mt-5 inline-flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-primary font-bold text-primary-foreground">
+          <ShieldCheck className="h-4 w-4" /> Review and close
+        </button>
+      )}
+    </Modal>
+  );
+}
+
+function ManualCardModal({ due, busy, onClose, onConfirm }: { due: number; busy: boolean; onClose: () => void; onConfirm: (ref: string) => void }) {
+  const [ref, setRef] = useState("");
+  return (
+    <Modal title="Paid on another card machine" onClose={onClose}>
+      <p className="text-sm text-white/60">Confirm once the customer&apos;s card payment has gone through on the terminal.</p>
+      <div className="mt-4 rounded-2xl bg-neutral-800 p-4 text-center">
+        <p className="text-xs font-bold uppercase tracking-widest text-white/40">Amount due</p>
+        <p className="font-display text-4xl font-black text-primary">{money(due)}</p>
+      </div>
+      <label htmlFor="cardref" className="mt-4 block text-xs font-bold uppercase tracking-widest text-white/40">Terminal receipt reference</label>
+      <input id="cardref" value={ref} onChange={(e) => setRef(e.target.value)} placeholder="Last 4 of the receipt no."
+        className="mt-2 h-11 w-full rounded-xl border border-white/15 bg-neutral-800 px-3 text-sm outline-none focus:border-primary" />
+      <button disabled={busy || ref.trim().length < 4} onClick={() => onConfirm(ref.trim())}
+        className="mt-5 inline-flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-primary font-bold text-primary-foreground disabled:opacity-50">
+        {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />} Mark paid · {money(due)}
+      </button>
+    </Modal>
+  );
+}
+
 function Modal({ title, children, onClose }: { title: string; children: React.ReactNode; onClose: () => void }) {
   return (
     <div className="fixed inset-0 z-50 grid place-items-center bg-black/70 p-4" role="dialog" aria-modal="true">
@@ -586,14 +839,15 @@ function Modal({ title, children, onClose }: { title: string; children: React.Re
 }
 
 function ReaderPay({
-  total, readers, readerId, setReaderId, onClose, onPaid, onSettings,
+  total, orderId, readers, readerId, setReaderId, onClose, onPaid, onSettings,
 }: {
   total: number;
+  orderId: string;
   readers: { id: string; name: string; status: string }[];
   readerId: string;
   setReaderId: (v: string) => void;
-  onClose: () => void;
-  onPaid: (txn: string | null) => void;
+  onClose: (reason: string) => void;
+  onPaid: (paymentAttemptId: string) => void | Promise<void>;
   onSettings: () => void;
 }) {
   const start = useServerFn(startReaderPayment);
@@ -601,22 +855,31 @@ function ReaderPay({
   const cancel = useServerFn(cancelReaderPayment);
   const [state, setState] = useState<"idle" | "waiting" | "failed">("idle");
   const [note, setNote] = useState("");
+  const [cashPart, setCashPart] = useState(0);
+  const [attemptId, setAttemptId] = useState<string | null>(null);
   const timer = useRef<ReturnType<typeof setInterval> | null>(null);
 
   useEffect(() => () => { if (timer.current) clearInterval(timer.current); }, []);
 
+  const cardPart = Math.max(total - cashPart, 0);
+
   async function begin() {
     if (!readerId) return toast.error("Pick a card reader first");
+    if (cashPart >= total) return toast.error("Cash split must leave at least 1p for the reader");
     setState("waiting"); setNote("Tap, insert or swipe on the Solo…");
     try {
-      const { client_transaction_id } = await start({ data: { reader_id: readerId, amount_cents: total } });
+      const started0 = await start({
+        data: { reader_id: readerId, order_id: orderId, cash_component_cents: cashPart },
+      });
+      const payment_attempt_id = started0.payment_attempt_id;
+      setAttemptId(payment_attempt_id);
       const started = Date.now();
       timer.current = setInterval(async () => {
         try {
-          const r = await check({ data: { client_transaction_id } });
+          const r = await check({ data: { payment_attempt_id } });
           if (r.paid) {
             if (timer.current) clearInterval(timer.current);
-            onPaid(r.transaction_id);
+            void onPaid(payment_attempt_id);
           } else if (r.failed) {
             if (timer.current) clearInterval(timer.current);
             setState("failed"); setNote("Payment declined or cancelled on the reader");
@@ -634,16 +897,38 @@ function ReaderPay({
 
   async function abort() {
     if (timer.current) clearInterval(timer.current);
-    if (readerId) { try { await cancel({ data: { reader_id: readerId } }); } catch { /* ignore */ } }
-    onClose();
+    if (readerId) {
+      try {
+        await cancel({ data: { reader_id: readerId, ...(attemptId ? { payment_attempt_id: attemptId } : {}) } });
+      } catch { /* ignore */ }
+    }
+    onClose("card payment cancelled at the till");
   }
 
   return (
     <Modal title="Card payment on SumUp Solo" onClose={abort}>
       <div className="rounded-2xl bg-neutral-800 p-4 text-center">
-        <p className="text-xs font-bold uppercase tracking-widest text-white/40">Amount</p>
-        <p className="font-display text-4xl font-black text-primary">{money(total)}</p>
+        <p className="text-xs font-bold uppercase tracking-widest text-white/40">Charge to card</p>
+        <p className="font-display text-4xl font-black text-primary">{money(cardPart)}</p>
+        {cashPart > 0 && (
+          <p className="mt-1 text-xs font-semibold text-emerald-300">plus {money(cashPart)} cash · total {money(total)}</p>
+        )}
       </div>
+
+      {state !== "waiting" && (
+        <div className="mt-4 rounded-2xl border border-white/10 p-3">
+          <label htmlFor="split-cash" className="text-xs font-bold uppercase tracking-widest text-white/40">Split with cash (optional)</label>
+          <input id="split-cash" type="number" min={0} step="0.01" inputMode="decimal"
+            value={cashPart ? (cashPart / 100).toFixed(2) : ""}
+            placeholder="0.00"
+            onChange={(e) => {
+              const v = Math.round(Number(e.target.value || 0) * 100);
+              setCashPart(Number.isFinite(v) && v > 0 ? Math.min(v, Math.max(total - 1, 0)) : 0);
+            }}
+            className="mt-2 h-11 w-full rounded-xl border border-white/15 bg-neutral-800 px-3 text-lg font-bold tabular-nums text-white outline-none focus:border-primary" />
+          <p className="mt-1.5 text-[11px] text-white/40">Take the cash first, then the reader charges the remainder.</p>
+        </div>
+      )}
 
       {readers.length > 0 ? (
         <div className="mt-4 space-y-1.5">
