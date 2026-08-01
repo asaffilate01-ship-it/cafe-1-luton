@@ -280,7 +280,7 @@ function Till() {
   useEffect(() => {
     postToDisplay(
       lines.length
-        ? { type: "order" as const, lines: lines.map((l) => ({ id: l.id, name: l.name, price_cents: l.price_cents, qty: l.qty })), subtotal: total, voucher_cents: voucherApplied, discount_cents: jurorDiscount, due, fulfilment: type }
+        ? { type: "order" as const, lines: lines.map((l) => ({ id: l.key, name: l.detail ? `${l.name} (${l.detail})` : l.name, price_cents: l.price_cents, qty: l.qty })), subtotal: total, voucher_cents: voucherApplied, discount_cents: jurorDiscount, due, fulfilment: type }
         : { type: "idle" },
     );
   }, [lines, total, voucherApplied, jurorDiscount, due, type]);
@@ -358,14 +358,14 @@ function Till() {
             order_number: res.order_number,
             fulfilment: FULFIL.find((f) => f.id === type)?.label ?? type,
             terminal: SIDE_LABEL[side],
-            lines: lines.map((l) => ({ name: l.name, qty: l.qty, price_cents: heading === "COUNTER" ? l.price_cents : undefined })),
+            lines: lines.map((l) => ({ name: l.detail ? `${l.name} — ${l.detail}` : l.name, qty: l.qty, price_cents: heading === "COUNTER" ? l.price_cents : undefined })),
             total_cents: heading === "COUNTER" ? res.total_cents : undefined,
             footer: heading === "COUNTER" ? "Thank you — cafe1stalbans.co.uk" : undefined,
           })),
       );
       if (!printed) window.open(`/print/${res.order_id}`, "_blank");
       if (res.voucher_cents > 0) toast.success(`Juror voucher ${res.voucher_code ?? ""} — ${money(res.voucher_cents)} redeemed`);
-      setLines([]); setName(""); setTable(""); setPay(null); setTendered(0); setShowOrder(false); setVoucher(null); setPrepared(null);
+      setLines([]); setName(""); setTable(""); setPay(null); setTendered(0); setShowOrder(false); setVoucher(null); setPrepared(null); setCashMode(false);
     },
     [lines, side, type],
   );
@@ -569,13 +569,16 @@ function Till() {
           <div className="min-h-0 flex-1 overflow-y-auto p-4">
             <ul className="space-y-2">
               {lines.map((l) => (
-                <li key={l.id} className="flex items-center gap-2 rounded-xl bg-neutral-800/60 p-2 text-sm">
+                <li key={l.key} className="flex items-center gap-2 rounded-xl bg-neutral-800/60 p-2 text-sm">
                   <div className="flex items-center gap-1">
-                    <button onClick={() => bump(l.id, -1)} aria-label={`Remove one ${l.name}`} className="grid h-8 w-8 place-items-center rounded-lg border border-white/15 hover:border-primary"><Minus className="h-3.5 w-3.5" /></button>
+                    <button onClick={() => bump(l.key, -1)} aria-label={`Remove one ${l.name}`} className="grid h-8 w-8 place-items-center rounded-lg border border-white/15 hover:border-primary"><Minus className="h-3.5 w-3.5" /></button>
                     <span className="w-6 text-center font-bold">{l.qty}</span>
-                    <button onClick={() => bump(l.id, 1)} aria-label={`Add one ${l.name}`} className="grid h-8 w-8 place-items-center rounded-lg border border-white/15 hover:border-primary"><Plus className="h-3.5 w-3.5" /></button>
+                    <button onClick={() => bump(l.key, 1)} aria-label={`Add one ${l.name}`} className="grid h-8 w-8 place-items-center rounded-lg border border-white/15 hover:border-primary"><Plus className="h-3.5 w-3.5" /></button>
                   </div>
-                  <span className="flex-1 truncate">{l.name}</span>
+                  <span className="min-w-0 flex-1">
+                    <span className="block truncate">{l.name}</span>
+                    {l.detail && <span className="block truncate text-[11px] text-white/45">{l.detail}</span>}
+                  </span>
                   <span className="font-semibold">{money(l.price_cents * l.qty)}</span>
                 </li>
               ))}
