@@ -4,20 +4,21 @@ import { getRequestHeader } from "@tanstack/react-start/server";
  * Throttling for public code-guessing endpoints (voucher / promo lookups).
  * Workers are stateless, so attempts are counted in the database.
  */
-export type ThrottleKind = "voucher" | "promo";
+export type ThrottleKind = "voucher" | "promo" | "account" | "payment";
 
-const LIMITS: Record<ThrottleKind, { window_s: number; max: number; lockout_s: number; lockout_after: number }> = {
+const LIMITS: Record<
+  ThrottleKind,
+  { window_s: number; max: number; lockout_s: number; lockout_after: number }
+> = {
   // per identity: 8 tries a minute, and 20 failures in 15 min = 15 min lockout
   voucher: { window_s: 60, max: 8, lockout_s: 900, lockout_after: 20 },
   promo: { window_s: 60, max: 10, lockout_s: 900, lockout_after: 25 },
+  account: { window_s: 60, max: 6, lockout_s: 1800, lockout_after: 15 },
+  payment: { window_s: 60, max: 20, lockout_s: 900, lockout_after: 40 },
 };
 
 export function requestIdentity(): string {
-  const raw =
-    getRequestHeader("cf-connecting-ip") ||
-    getRequestHeader("x-forwarded-for")?.split(",")[0] ||
-    getRequestHeader("x-real-ip") ||
-    "unknown";
+  const raw = getRequestHeader("cf-connecting-ip") || getRequestHeader("x-real-ip") || "unknown";
   return raw.trim().slice(0, 64) || "unknown";
 }
 
@@ -47,16 +48,23 @@ export async function checkThrottle(kind: ThrottleKind, ident: string): Promise<
     ]);
 
     if ((failures ?? 0) >= cfg.lockout_after) {
-      return { allowed: false, message: "Too many incorrect codes. Please try again later or ask a member of staff." };
+      return {
+        allowed: false,
+        message: "Too many incorrect codes. Please try again later or ask a member of staff.",
+      };
     }
     if ((recent ?? 0) >= cfg.max) {
       return { allowed: false, message: "Too many attempts — please wait a minute and try again." };
     }
     return { allowed: true };
   } catch (e) {
-    // Never block a genuine customer if the counter is unavailable.
+    // Code guessing and payment-probing endpoints fail closed when their
+    // shared limiter is unavailable. Staff can still assist at the counter.
     console.error("[throttle] check failed", e);
-    return { allowed: true };
+    return {
+      allowed: false,
+      message: "We cannot verify that safely right now. Please try again shortly.",
+    };
   }
 }
 

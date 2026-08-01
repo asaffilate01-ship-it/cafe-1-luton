@@ -68,7 +68,11 @@ export async function readerCheckout(input: {
       body: JSON.stringify({
         total_amount: { value: input.amount_cents, currency: "GBP", minor_unit: 2 },
         description: input.description,
-        ...(input.reference ? { affiliate: { app_id: "cafe1-till", foreign_transaction_id: input.reference } } : {}),
+        affiliate: {
+          key: env("SUMUP_AFFILIATE_KEY"),
+          app_id: "cafe1-till",
+          foreign_transaction_id: input.reference ?? crypto.randomUUID(),
+        },
       }),
     },
   );
@@ -81,12 +85,23 @@ export async function terminateReaderCheckout(readerId: string): Promise<void> {
   await call<void>(merchantPath(`/${readerId}/terminate`), { method: "POST" });
 }
 
-export type ReaderTxn = { id?: string; transaction_code?: string; status?: string; amount?: number };
+export type ReaderTxn = {
+  id?: string;
+  transaction_code?: string;
+  status?: string;
+  amount?: number;
+  currency?: string;
+};
 
 /** Polls the transaction created by a reader checkout. */
 export async function getReaderTransaction(clientTransactionId: string): Promise<ReaderTxn | null> {
   try {
-    return await call<ReaderTxn>(`/me/transactions?client_transaction_id=${encodeURIComponent(clientTransactionId)}`);
+    const result = await call<ReaderTxn | { items?: ReaderTxn[] } | ReaderTxn[]>(
+      `/me/transactions?client_transaction_id=${encodeURIComponent(clientTransactionId)}`,
+    );
+    if (Array.isArray(result)) return result[0] ?? null;
+    if ("items" in result) return result.items?.[0] ?? null;
+    return result as ReaderTxn;
   } catch {
     return null;
   }

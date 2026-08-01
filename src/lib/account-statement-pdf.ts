@@ -4,6 +4,7 @@ type Order = {
   id: string;
   order_number: number;
   total_cents: number;
+  refunded_cents: number;
   customer_name: string;
   type: string;
   payment_status: string;
@@ -21,7 +22,7 @@ type Payment = {
 const gbp = (c: number) => `GBP ${(c / 100).toFixed(2)}`;
 
 export function buildStatementPdf(opts: {
-  account: { name: string; contact_name?: string | null; contact_email?: string | null; access_code: string };
+  account: { name: string; contact_name?: string | null; contact_email?: string | null };
   orders: Order[];
   items: Item[];
   payments: Payment[];
@@ -62,13 +63,22 @@ export function buildStatementPdf(opts: {
 
   line(account.name, left, 12, true);
   y += 14;
-  if (account.contact_name) { line(account.contact_name, left, 10); y += 12; }
-  if (account.contact_email) { line(account.contact_email, left, 10); y += 12; }
-  line(`Account code: ${account.access_code}`, left, 10);
+  if (account.contact_name) {
+    line(account.contact_name, left, 10);
+    y += 12;
+  }
+  if (account.contact_email) {
+    line(account.contact_email, left, 10);
+    y += 12;
+  }
+  line("Account access code is stored securely and is not printed.", left, 9);
   y += 24;
 
   const onTab = orders.filter((o) => o.payment_status === "on_account");
-  const charges = onTab.reduce((s, o) => s + o.total_cents, 0);
+  const charges = onTab.reduce(
+    (sum, order) => sum + Math.max(0, order.total_cents - order.refunded_cents),
+    0,
+  );
   const paidOff = payments.reduce((s, p) => s + p.amount_cents, 0);
   const balance = Math.max(charges - paidOff, 0);
 
@@ -78,11 +88,19 @@ export function buildStatementPdf(opts: {
 
   line("Unsettled charges", left, 12, true);
   y += 16;
-  if (onTab.length === 0) { line("Nothing outstanding.", left, 10); y += 14; }
+  if (onTab.length === 0) {
+    line("Nothing outstanding.", left, 10);
+    y += 14;
+  }
   for (const o of onTab) {
     page();
-    line(`#${o.order_number}  ${new Date(o.created_at).toLocaleString("en-GB")}  ${o.customer_name}`, left, 10, true);
-    rightText(gbp(o.total_cents), 10, true);
+    line(
+      `#${o.order_number}  ${new Date(o.created_at).toLocaleString("en-GB")}  ${o.customer_name}`,
+      left,
+      10,
+      true,
+    );
+    rightText(gbp(Math.max(0, o.total_cents - o.refunded_cents)), 10, true);
     y += 13;
     for (const it of items.filter((i) => i.order_id === o.id)) {
       page();

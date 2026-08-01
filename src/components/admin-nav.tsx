@@ -2,111 +2,180 @@ import { Link, useRouterState } from "@tanstack/react-router";
 import { useSession, useRoles } from "@/hooks/use-auth";
 import { signOutAndRedirect } from "@/lib/sign-out";
 import {
-  LayoutDashboard,
-  BookOpen,
-  Megaphone,
-  Image as ImageIcon,
-  Ticket,
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
   BadgePercent,
-  Settings,
-  ReceiptText,
-  UserCog,
-  MonitorPlay,
-  Bike,
-  LogOut,
-  Home,
-  Newspaper,
   BarChart3,
+  Bike,
+  BookOpen,
   Calculator,
+  ChevronDown,
+  Home,
+  Image as ImageIcon,
+  LayoutDashboard,
+  LogOut,
+  Megaphone,
+  MonitorPlay,
+  Newspaper,
+  ReceiptText,
+  Settings,
+  Ticket,
+  UserCog,
 } from "lucide-react";
 
+type NavPath =
+  | "/staff"
+  | "/admin"
+  | "/admin/menu"
+  | "/admin/pos"
+  | "/admin/reports"
+  | "/admin/blog"
+  | "/admin/broadcasts"
+  | "/admin/banners"
+  | "/admin/promos"
+  | "/admin/customer-discounts"
+  | "/admin/vouchers"
+  | "/admin/settings"
+  | "/admin/accounts"
+  | "/admin/users"
+  | "/kds"
+  | "/driver";
+
 type Item = {
-  to:
-    | "/staff"
-    | "/admin"
-    | "/admin/menu"
-    | "/admin/pos"
-    | "/admin/reports"
-    | "/admin/blog"
-    | "/admin/broadcasts"
-    | "/admin/banners"
-    | "/admin/promos"
-    | "/admin/customer-discounts"
-    | "/admin/vouchers"
-    | "/admin/settings"
-    | "/admin/accounts"
-    | "/admin/users"
-    | "/kds"
-    | "/driver";
+  to: NavPath;
   label: string;
   icon: React.ComponentType<{ className?: string }>;
-  need: "any" | "admin" | "driver";
+  need?: "admin" | "driver";
 };
 
-const ITEMS: Item[] = [
-  { to: "/staff", label: "Hub", icon: Home, need: "any" },
-  { to: "/admin", label: "Orders", icon: LayoutDashboard, need: "any" },
-  { to: "/kds", label: "Kitchen", icon: MonitorPlay, need: "any" },
-  { to: "/admin/pos", label: "Till", icon: Calculator, need: "any" },
-  { to: "/driver", label: "Driver", icon: Bike, need: "driver" },
-  { to: "/admin/menu", label: "Menu", icon: BookOpen, need: "any" },
-  { to: "/admin/reports", label: "Reports", icon: BarChart3, need: "any" },
-  { to: "/admin/blog", label: "Blog", icon: Newspaper, need: "any" },
-  { to: "/admin/broadcasts", label: "Broadcasts", icon: Megaphone, need: "any" },
-  { to: "/admin/banners", label: "Banners", icon: ImageIcon, need: "any" },
-  { to: "/admin/promos", label: "Promos", icon: Ticket, need: "any" },
-  { to: "/admin/customer-discounts", label: "Members", icon: BadgePercent, need: "any" },
-  { to: "/admin/vouchers", label: "Vouchers", icon: Ticket, need: "any" },
-  { to: "/admin/accounts", label: "Tabs", icon: ReceiptText, need: "any" },
-  { to: "/admin/settings", label: "Settings", icon: Settings, need: "any" },
-  { to: "/admin/users", label: "Users", icon: UserCog, need: "admin" },
+const QUICK: Item[] = [
+  { to: "/staff", label: "Hub", icon: Home },
+  { to: "/admin", label: "Orders", icon: LayoutDashboard },
+  { to: "/kds", label: "Kitchen", icon: MonitorPlay },
+  { to: "/admin/pos", label: "Till", icon: Calculator },
 ];
+
+const GROUPS: Array<{ label: string; items: Item[] }> = [
+  {
+    label: "Operations",
+    items: [
+      { to: "/driver", label: "Driver", icon: Bike, need: "driver" },
+      { to: "/admin/menu", label: "Menu & stock", icon: BookOpen },
+    ],
+  },
+  {
+    label: "Customers",
+    items: [
+      { to: "/admin/customer-discounts", label: "Members", icon: BadgePercent },
+      { to: "/admin/vouchers", label: "Juror vouchers", icon: Ticket },
+      { to: "/admin/accounts", label: "Business tabs", icon: ReceiptText },
+    ],
+  },
+  {
+    label: "Marketing",
+    items: [
+      { to: "/admin/blog", label: "Blog", icon: Newspaper },
+      { to: "/admin/broadcasts", label: "Broadcasts", icon: Megaphone },
+      { to: "/admin/banners", label: "Display banners", icon: ImageIcon },
+      { to: "/admin/promos", label: "Promo codes", icon: Ticket },
+    ],
+  },
+  {
+    label: "Management",
+    items: [
+      { to: "/admin/reports", label: "Reports", icon: BarChart3 },
+      { to: "/admin/settings", label: "Settings", icon: Settings },
+      { to: "/admin/users", label: "Users & roles", icon: UserCog, need: "admin" },
+    ],
+  },
+];
+
+function isActive(pathname: string, to: NavPath) {
+  return pathname === to || (to !== "/staff" && pathname.startsWith(`${to}/`));
+}
 
 export function AdminNav() {
   const { user } = useSession();
   const { has } = useRoles(user);
-  const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const pathname = useRouterState({ select: (state) => state.location.pathname });
   if (!user) return null;
   const isStaff = has("admin") || has("staff");
   const isDriver = has("driver");
   if (!isStaff && !isDriver) return null;
 
-  const items = ITEMS.filter((i) => {
-    if (i.need === "admin") return has("admin");
-    if (i.need === "driver") return isDriver || has("admin");
-    // "any"
-    if (i.to === "/driver") return isDriver || has("admin");
+  const allowed = (item: Item) => {
+    if (item.need === "admin") return has("admin");
+    if (item.need === "driver") return isDriver || has("admin");
     return isStaff;
-  });
+  };
 
   return (
     <nav className="sticky top-0 z-40 border-b border-border bg-background/95 backdrop-blur print:hidden">
       <div className="mx-auto flex max-w-7xl items-center gap-2 px-3 py-2">
+        <span className="shrink-0 rounded-full bg-primary px-2.5 py-1 text-xs font-bold uppercase tracking-wide text-primary-foreground">
+          Café1
+        </span>
         <div className="flex min-w-0 flex-1 items-center gap-1 overflow-x-auto">
-          <span className="mr-2 shrink-0 rounded-full bg-primary px-2.5 py-1 text-xs font-bold uppercase tracking-wide text-primary-foreground">
-            Café1
-          </span>
-          {items.map((it) => {
-          const active = pathname === it.to || (it.to !== "/staff" && pathname.startsWith(it.to));
-          const Icon = it.icon;
-          return (
-            <Link
-              key={it.to}
-              to={it.to}
-              className={`inline-flex shrink-0 items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold transition ${
-                active
-                  ? "bg-primary text-primary-foreground shadow-brand"
-                  : "text-muted-foreground hover:bg-secondary hover:text-foreground"
-              }`}
-            >
-              <Icon className="h-3.5 w-3.5" />
-              {it.label}
-            </Link>
-          );
+          {QUICK.filter(allowed).map((item) => {
+            const Icon = item.icon;
+            return (
+              <Link
+                key={item.to}
+                to={item.to}
+                className={`inline-flex shrink-0 items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold transition ${
+                  isActive(pathname, item.to)
+                    ? "bg-primary text-primary-foreground shadow-brand"
+                    : "text-muted-foreground hover:bg-secondary hover:text-foreground"
+                }`}
+              >
+                <Icon className="h-3.5 w-3.5" />
+                {item.label}
+              </Link>
+            );
+          })}
+
+          {GROUPS.map((group) => {
+            const items = group.items.filter(allowed);
+            if (!items.length) return null;
+            const active = items.some((item) => isActive(pathname, item.to));
+            return (
+              <DropdownMenu key={group.label}>
+                <DropdownMenuTrigger asChild>
+                  <button
+                    className={`inline-flex shrink-0 items-center gap-1 rounded-full px-3 py-1.5 text-xs font-semibold outline-none transition ${
+                      active
+                        ? "bg-primary-soft text-primary"
+                        : "text-muted-foreground hover:bg-secondary hover:text-foreground"
+                    }`}
+                  >
+                    {group.label} <ChevronDown className="h-3 w-3" />
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="start" className="min-w-48">
+                  <DropdownMenuLabel>{group.label}</DropdownMenuLabel>
+                  {items.map((item) => {
+                    const Icon = item.icon;
+                    return (
+                      <DropdownMenuItem key={item.to} asChild>
+                        <Link to={item.to} className="flex cursor-pointer items-center gap-2">
+                          <Icon className="h-4 w-4" />
+                          <span>{item.label}</span>
+                        </Link>
+                      </DropdownMenuItem>
+                    );
+                  })}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            );
           })}
         </div>
         <div className="flex shrink-0 items-center gap-2 border-l border-border pl-2">
-          <span className="hidden max-w-[160px] truncate text-xs text-muted-foreground lg:inline">
+          <span className="hidden max-w-40 truncate text-xs text-muted-foreground lg:inline">
             {user.email}
           </span>
           <button
@@ -115,7 +184,7 @@ export function AdminNav() {
             title="Sign out"
           >
             <LogOut className="h-3.5 w-3.5" />
-            <span>Sign out</span>
+            <span className="hidden sm:inline">Sign out</span>
           </button>
         </div>
       </div>

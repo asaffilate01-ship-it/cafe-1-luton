@@ -95,8 +95,8 @@ function AccountsAdmin() {
                   <td className="p-3 font-semibold">{a.name}{a.contact_name && <div className="text-xs font-normal text-muted-foreground">{a.contact_name}</div>}</td>
                   <td className="p-3">
                     <div className="flex items-center gap-2">
-                      <span className="font-mono text-base font-bold tracking-widest text-primary">{a.access_code}</span>
-                      <button onClick={() => { navigator.clipboard.writeText(a.access_code); toast.success("Code copied"); }} className="text-muted-foreground hover:text-primary" title="Copy"><Copy className="h-3.5 w-3.5" /></button>
+                      <span className="font-mono text-base font-bold tracking-widest text-primary">{a.access_code ?? "—"}</span>
+                      <button onClick={() => { navigator.clipboard.writeText(a.access_code ?? ""); toast.success("Code copied"); }} className="text-muted-foreground hover:text-primary" title="Copy"><Copy className="h-3.5 w-3.5" /></button>
                       <button
                         onClick={async () => {
                           if (!confirm("Generate a new code? The old one will stop working immediately.")) return;

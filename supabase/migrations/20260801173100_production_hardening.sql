@@ -1006,7 +1006,7 @@ END $$;
 
 ALTER TABLE public.accounts ADD COLUMN IF NOT EXISTS access_code_hash text;
 UPDATE public.accounts
-SET access_code_hash = encode(digest(upper(trim(access_code)), 'sha256'), 'hex')
+SET access_code_hash = encode(sha256(convert_to(upper(trim(access_code)), 'UTF8')), 'hex')
 WHERE access_code_hash IS NULL AND access_code IS NOT NULL;
 ALTER TABLE public.accounts ALTER COLUMN access_code DROP NOT NULL;
 ALTER TABLE public.accounts DROP CONSTRAINT IF EXISTS accounts_access_code_key;
@@ -1050,7 +1050,7 @@ RETURNS TABLE(id uuid, name text)
 LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public AS $$
   SELECT a.id, a.name FROM public.accounts a
   WHERE a.active = true
-    AND a.access_code_hash = encode(digest(upper(trim(_code)), 'sha256'), 'hex')
+    AND a.access_code_hash = encode(sha256(convert_to(upper(trim(_code)), 'UTF8')), 'hex')
   LIMIT 1
 $$;
 REVOKE ALL ON FUNCTION public.verify_account_code(text) FROM PUBLIC, anon, authenticated;

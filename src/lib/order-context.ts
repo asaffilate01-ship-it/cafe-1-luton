@@ -29,7 +29,9 @@ function load() {
         state = parsed;
       }
     }
-  } catch {}
+  } catch {
+    // Ignore invalid or legacy checkout context.
+  }
 }
 function persist() {
   if (typeof window === "undefined") return;

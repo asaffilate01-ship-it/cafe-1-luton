@@ -34,6 +34,9 @@ const FULFIL_LABEL: Record<string, string> = { dine_in: "Dine in", collection: "
 function DisplayPage() {
   const [lines, setLines] = useState<DisplayLine[]>([]);
   const [total, setTotal] = useState(0);
+  const [subtotal, setSubtotal] = useState(0);
+  const [voucherCents, setVoucherCents] = useState(0);
+  const [discountCents, setDiscountCents] = useState(0);
   const [fulfilment, setFulfilment] = useState("dine_in");
   const [paid, setPaid] = useState<null | { order_number: number; total: number }>(null);
   const [jurorUrl, setJurorUrl] = useState<string | null>(null);
@@ -77,17 +80,26 @@ function DisplayPage() {
       if (msg.type === "order") {
         setPaid(null);
         setLines(msg.lines);
-        setTotal(msg.total);
+        setSubtotal(msg.subtotal);
+        setVoucherCents(msg.voucher_cents);
+        setDiscountCents(msg.discount_cents);
+        setTotal(msg.due);
         setFulfilment(msg.fulfilment);
       } else if (msg.type === "paid") {
         setLines([]);
         setTotal(0);
+        setSubtotal(0);
+        setVoucherCents(0);
+        setDiscountCents(0);
         setPaid({ order_number: msg.order_number, total: msg.total });
         if (paidTimer.current) clearTimeout(paidTimer.current);
         paidTimer.current = setTimeout(() => setPaid(null), 10_000);
       } else {
         setLines([]);
         setTotal(0);
+        setSubtotal(0);
+        setVoucherCents(0);
+        setDiscountCents(0);
       }
     };
     return () => { ch.close(); if (paidTimer.current) clearTimeout(paidTimer.current); };
@@ -210,7 +222,16 @@ function DisplayPage() {
           <span className="text-xl font-bold uppercase tracking-widest text-white/50">
             {count} item{count === 1 ? "" : "s"}
           </span>
-          <span className="font-display text-7xl font-black tabular-nums text-primary">{money(total)}</span>
+          <div className="text-right">
+            {(voucherCents > 0 || discountCents > 0) && (
+              <div className="mb-2 space-y-1 text-xl font-semibold tabular-nums text-white/60">
+                <div>Subtotal <span className="ml-3">{money(subtotal)}</span></div>
+                {voucherCents > 0 && <div className="text-emerald-400">Juror voucher <span className="ml-3">−{money(voucherCents)}</span></div>}
+                {discountCents > 0 && <div className="text-emerald-400">Juror discount <span className="ml-3">−{money(discountCents)}</span></div>}
+              </div>
+            )}
+            <span className="font-display text-7xl font-black tabular-nums text-primary">{money(total)}</span>
+          </div>
         </div>
       </section>
 

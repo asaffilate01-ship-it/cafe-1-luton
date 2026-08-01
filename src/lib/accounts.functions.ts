@@ -5,19 +5,57 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 export const verifyTabCode = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) => z.object({ code: z.string().min(3).max(40) }).parse(d))
   .handler(async ({ data }) => {
+    const { checkThrottle, recordAttempt, requestIdentity } = await import("./rate-limit.server");
+    const identity = requestIdentity();
+    const gate = await checkThrottle("account", identity);
+    if (!gate.allowed) return { ok: false as const, message: gate.message };
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { data: rows, error } = await supabaseAdmin.rpc("verify_account_code", { _code: data.code.trim() });
+    const { data: rows, error } = await supabaseAdmin.rpc("verify_account_code", {
+      _code: data.code.trim(),
+    });
     if (error) throw new Error(error.message);
     const row = (rows ?? [])[0];
+    await recordAttempt("account", identity, Boolean(row));
     if (!row) return { ok: false as const };
-    return { ok: true as const, account_id: row.id, name: row.name, code: data.code.trim().toUpperCase() };
+    return {
+      ok: true as const,
+      account_id: row.id,
+      name: row.name,
+      code: data.code.trim().toUpperCase(),
+    };
   });
 
 function randomCode(): string {
   const alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"; // no ambiguous chars
+  const random = new Uint8Array(8);
+  crypto.getRandomValues(random);
   let out = "";
-  for (let i = 0; i < 8; i++) out += alphabet[Math.floor(Math.random() * alphabet.length)];
+  for (const value of random) out += alphabet[value % alphabet.length];
   return out;
+}
+
+async function codeHash(code: string): Promise<string> {
+  const { createHash } = await import("node:crypto");
+  return createHash("sha256").update(code.trim().toUpperCase()).digest("hex");
+}
+
+async function requireAdmin(context: {
+  userId: string;
+  claims: unknown;
+  supabase: {
+    rpc: (
+      name: "has_role",
+      args: { _user_id: string; _role: "admin" },
+    ) => PromiseLike<{ data: unknown }>;
+  };
+}) {
+  const { data } = await context.supabase.rpc("has_role", {
+    _user_id: context.userId,
+    _role: "admin",
+  });
+  if (!data) throw new Error("Manager approval required");
+  const { requireManagerMfa } = await import("./elevated-auth.server");
+  requireManagerMfa(context.claims);
 }
 
 export const listAccounts = createServerFn({ method: "GET" })
@@ -25,12 +63,14 @@ export const listAccounts = createServerFn({ method: "GET" })
   .handler(async ({ context }) => {
     const { data: accounts, error } = await context.supabase
       .from("accounts")
-      .select("*")
+      .select(
+        "id,name,contact_name,contact_email,contact_phone,credit_limit_cents,notes,active,created_at,updated_at",
+      )
       .order("created_at", { ascending: false });
     if (error) throw new Error(error.message);
     const { data: orders } = await context.supabase
       .from("orders")
-      .select("account_id,total_cents,payment_status")
+      .select("account_id,total_cents,refunded_cents,payment_status")
       .not("account_id", "is", null);
     const { data: payments } = await context.supabase
       .from("account_payments")
@@ -39,28 +79,37 @@ export const listAccounts = createServerFn({ method: "GET" })
     const bal = new Map<string, number>();
     for (const o of orders ?? []) {
       if (o.payment_status === "on_account" && o.account_id)
-        bal.set(o.account_id, (bal.get(o.account_id) ?? 0) + o.total_cents);
+        bal.set(
+          o.account_id,
+          (bal.get(o.account_id) ?? 0) + Math.max(0, o.total_cents - o.refunded_cents),
+        );
     }
     for (const p of payments ?? []) {
       bal.set(p.account_id, (bal.get(p.account_id) ?? 0) - p.amount_cents);
     }
     return (accounts ?? []).map((a) => ({
       ...a,
+      access_code: null as string | null,
       outstanding_cents: Math.max(bal.get(a.id) ?? 0, 0),
     }));
   });
 
 export const createAccount = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: unknown) => z.object({
-    name: z.string().min(1).max(120),
-    contact_name: z.string().max(120).optional(),
-    contact_email: z.string().email().optional().or(z.literal("")),
-    contact_phone: z.string().max(30).optional(),
-    credit_limit_cents: z.number().int().min(0).optional(),
-    notes: z.string().max(500).optional(),
-  }).parse(d))
+  .inputValidator((d: unknown) =>
+    z
+      .object({
+        name: z.string().min(1).max(120),
+        contact_name: z.string().max(120).optional(),
+        contact_email: z.string().email().optional().or(z.literal("")),
+        contact_phone: z.string().max(30).optional(),
+        credit_limit_cents: z.number().int().min(0).optional(),
+        notes: z.string().max(500).optional(),
+      })
+      .parse(d),
+  )
   .handler(async ({ data, context }) => {
+    await requireAdmin(context);
     // retry a couple of times if the code collides
     for (let attempt = 0; attempt < 5; attempt++) {
       const code = randomCode();
@@ -73,11 +122,14 @@ export const createAccount = createServerFn({ method: "POST" })
           contact_phone: data.contact_phone || null,
           credit_limit_cents: data.credit_limit_cents ?? null,
           notes: data.notes || null,
-          access_code: code,
+          access_code: null,
+          access_code_hash: await codeHash(code),
         })
-        .select()
+        .select(
+          "id,name,contact_name,contact_email,contact_phone,credit_limit_cents,notes,active,created_at,updated_at",
+        )
         .single();
-      if (!error) return row;
+      if (!error) return { ...row, access_code: code };
       if (!/duplicate|unique/i.test(error.message)) throw new Error(error.message);
     }
     throw new Error("Could not generate a unique access code, try again.");
@@ -85,13 +137,18 @@ export const createAccount = createServerFn({ method: "POST" })
 
 export const updateAccount = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: unknown) => z.object({
-    id: z.string().uuid(),
-    active: z.boolean().optional(),
-    credit_limit_cents: z.number().int().min(0).nullable().optional(),
-    notes: z.string().max(500).nullable().optional(),
-  }).parse(d))
+  .inputValidator((d: unknown) =>
+    z
+      .object({
+        id: z.string().uuid(),
+        active: z.boolean().optional(),
+        credit_limit_cents: z.number().int().min(0).nullable().optional(),
+        notes: z.string().max(500).nullable().optional(),
+      })
+      .parse(d),
+  )
   .handler(async ({ data, context }) => {
+    await requireAdmin(context);
     const { id, ...patch } = data;
     const { error } = await context.supabase.from("accounts").update(patch).eq("id", id);
     if (error) throw new Error(error.message);
@@ -102,9 +159,13 @@ export const regenerateAccountCode = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => z.object({ id: z.string().uuid() }).parse(d))
   .handler(async ({ data, context }) => {
+    await requireAdmin(context);
     for (let attempt = 0; attempt < 5; attempt++) {
       const code = randomCode();
-      const { error } = await context.supabase.from("accounts").update({ access_code: code }).eq("id", data.id);
+      const { error } = await context.supabase
+        .from("accounts")
+        .update({ access_code: null, access_code_hash: await codeHash(code) })
+        .eq("id", data.id);
       if (!error) return { code };
       if (!/duplicate|unique/i.test(error.message)) throw new Error(error.message);
     }
@@ -116,18 +177,30 @@ export const getAccountStatement = createServerFn({ method: "GET" })
   .inputValidator((d: unknown) => z.object({ account_id: z.string().uuid() }).parse(d))
   .handler(async ({ data, context }) => {
     const { data: account, error: aErr } = await context.supabase
-      .from("accounts").select("*").eq("id", data.account_id).maybeSingle();
+      .from("accounts")
+      .select(
+        "id,name,contact_name,contact_email,contact_phone,credit_limit_cents,notes,active,created_at,updated_at",
+      )
+      .eq("id", data.account_id)
+      .maybeSingle();
     if (aErr) throw new Error(aErr.message);
     const { data: orders, error: oErr } = await context.supabase
       .from("orders")
-      .select("id,order_number,total_cents,subtotal_cents,delivery_fee_cents,customer_name,type,payment_status,status,created_at")
+      .select(
+        "id,order_number,total_cents,refunded_cents,subtotal_cents,delivery_fee_cents,customer_name,type,payment_status,status,created_at",
+      )
       .eq("account_id", data.account_id)
       .order("created_at", { ascending: false });
     if (oErr) throw new Error(oErr.message);
     const { data: items, error: iErr } = await context.supabase
       .from("order_items")
       .select("order_id,name,qty,unit_price_cents")
-      .in("order_id", (orders ?? []).map((o) => o.id).length ? (orders ?? []).map((o) => o.id) : ["00000000-0000-0000-0000-000000000000"]);
+      .in(
+        "order_id",
+        (orders ?? []).map((o) => o.id).length
+          ? (orders ?? []).map((o) => o.id)
+          : ["00000000-0000-0000-0000-000000000000"],
+      );
     if (iErr) throw new Error(iErr.message);
     const { data: payments, error: pErr } = await context.supabase
       .from("account_payments")
@@ -141,14 +214,19 @@ export const getAccountStatement = createServerFn({ method: "GET" })
 /** Record a part-payment (or full payment) against a house account. */
 export const recordAccountPayment = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: unknown) => z.object({
-    account_id: z.string().uuid(),
-    amount_cents: z.number().int().positive(),
-    method: z.enum(["cash", "card", "bank_transfer", "other"]).default("bank_transfer"),
-    reference: z.string().max(120).optional(),
-    note: z.string().max(300).optional(),
-  }).parse(d))
+  .inputValidator((d: unknown) =>
+    z
+      .object({
+        account_id: z.string().uuid(),
+        amount_cents: z.number().int().positive(),
+        method: z.enum(["cash", "card", "bank_transfer", "other"]).default("bank_transfer"),
+        reference: z.string().max(120).optional(),
+        note: z.string().max(300).optional(),
+      })
+      .parse(d),
+  )
   .handler(async ({ data, context }) => {
+    await requireAdmin(context);
     const { data: row, error } = await context.supabase
       .from("account_payments")
       .insert({
@@ -169,6 +247,7 @@ export const deleteAccountPayment = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => z.object({ id: z.string().uuid() }).parse(d))
   .handler(async ({ data, context }) => {
+    await requireAdmin(context);
     const { error } = await context.supabase.from("account_payments").delete().eq("id", data.id);
     if (error) throw new Error(error.message);
     return { ok: true };
@@ -179,6 +258,7 @@ export const settleAccount = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => z.object({ account_id: z.string().uuid() }).parse(d))
   .handler(async ({ data, context }) => {
+    await requireAdmin(context);
     const { error } = await context.supabase
       .from("orders")
       .update({ payment_status: "paid" })

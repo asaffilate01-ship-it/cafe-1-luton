@@ -1,9 +1,17 @@
 import { useEffect, useRef, useState } from "react";
 
-export type MapPoint = { lat: number; lng: number; label: string; kind: "driver" | "destination" | "store" };
+export type MapPoint = {
+  lat: number;
+  lng: number;
+  label: string;
+  kind: "driver" | "destination" | "store";
+};
 
 declare global {
-  interface Window { google?: any; __cafe1MapReady?: () => void }
+  interface Window {
+    google?: typeof google;
+    __cafe1MapReady?: () => void;
+  }
 }
 
 let loaderPromise: Promise<void> | null = null;
@@ -34,9 +42,9 @@ const PIN: Record<MapPoint["kind"], string> = {
 
 export function LiveMap({ points, className = "" }: { points: MapPoint[]; className?: string }) {
   const el = useRef<HTMLDivElement | null>(null);
-  const map = useRef<any>(null);
-  const markers = useRef<any[]>([]);
-  const infos = useRef<any[]>([]);
+  const map = useRef<google.maps.Map | null>(null);
+  const markers = useRef<google.maps.Marker[]>([]);
+  const infos = useRef<google.maps.InfoWindow[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [ready, setReady] = useState(false);
 
@@ -54,7 +62,9 @@ export function LiveMap({ points, className = "" }: { points: MapPoint[]; classN
         setReady(true);
       })
       .catch((e) => !cancelled && setError(e instanceof Error ? e.message : "Map unavailable"));
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -98,7 +108,9 @@ export function LiveMap({ points, className = "" }: { points: MapPoint[]; classN
 
   if (error) {
     return (
-      <div className={`grid place-items-center rounded-2xl border border-border bg-secondary text-sm text-muted-foreground ${className}`}>
+      <div
+        className={`grid place-items-center rounded-2xl border border-border bg-secondary text-sm text-muted-foreground ${className}`}
+      >
         Live map unavailable
       </div>
     );

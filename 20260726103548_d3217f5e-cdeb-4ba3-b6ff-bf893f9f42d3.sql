@@ -1,1 +1,0 @@
-UPDATE public.business_settings SET delivery_origin_postcode = 'AL1 3JU' WHERE delivery_origin_postcode = 'AL1 3JW';
