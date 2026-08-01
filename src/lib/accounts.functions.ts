@@ -122,7 +122,6 @@ export const createAccount = createServerFn({ method: "POST" })
           contact_phone: data.contact_phone || null,
           credit_limit_cents: data.credit_limit_cents ?? null,
           notes: data.notes || null,
-          access_code: null,
           access_code_hash: await codeHash(code),
         })
         .select(
@@ -164,7 +163,7 @@ export const regenerateAccountCode = createServerFn({ method: "POST" })
       const code = randomCode();
       const { error } = await context.supabase
         .from("accounts")
-        .update({ access_code: null, access_code_hash: await codeHash(code) })
+        .update({ access_code_hash: await codeHash(code) })
         .eq("id", data.id);
       if (!error) return { code };
       if (!/duplicate|unique/i.test(error.message)) throw new Error(error.message);
