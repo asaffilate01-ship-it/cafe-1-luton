@@ -1,14 +1,28 @@
 import { useEffect, useState } from "react";
-import { Link } from "@tanstack/react-router";
+import { Link, useRouterState } from "@tanstack/react-router";
 import { Cookie } from "lucide-react";
 import { saveConsent, useConsent } from "@/lib/cookie-consent";
 
 export function CookieBanner() {
   const { hydrated, consent } = useConsent();
+  const path = useRouterState({ select: (s) => s.location.pathname });
   const [open, setOpen] = useState(false);
   const [details, setDetails] = useState(false);
   const [analytics, setAnalytics] = useState(false);
   const [marketing, setMarketing] = useState(false);
+  /** Never stack the banner on top of another dialog (order setup, item customise…). */
+  const [dialogOpen, setDialogOpen] = useState(false);
+
+  useEffect(() => {
+    const check = () =>
+      setDialogOpen(
+        document.querySelectorAll('[role="dialog"][aria-modal="true"]').length > 0,
+      );
+    check();
+    const observer = new MutationObserver(check);
+    observer.observe(document.body, { childList: true, subtree: true, attributes: true });
+    return () => observer.disconnect();
+  }, []);
 
   useEffect(() => {
     function onOpen() {
@@ -27,7 +41,8 @@ export function CookieBanner() {
     }
   }, [hydrated, consent]);
 
-  if (!hydrated || !open) return null;
+  const staffSurface = /^\/(admin|kds|driver|pos|till|display|print|dev-login)/.test(path);
+  if (!hydrated || !open || staffSurface || dialogOpen) return null;
 
   function decide(a: boolean, m: boolean) {
     saveConsent({ analytics: a, marketing: m });
