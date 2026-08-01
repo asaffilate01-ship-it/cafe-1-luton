@@ -30,8 +30,8 @@ import { money } from "@/lib/format";
 import { toast } from "sonner";
 import {
   Banknote, CreditCard, Minus, Plus, Search, Trash2, Lock, LogOut, Settings2, X,
-  Smartphone, Loader2, Check, Printer, Inbox, ShoppingBag, HandPlatter, Bike, MonitorPlay,
-  Delete, ReceiptText, UtensilsCrossed, ChevronDown, Ticket, ShieldCheck,
+  Smartphone, Loader2, Check, Printer, Inbox, ShoppingBag, HandPlatter, MonitorPlay,
+  Delete, ReceiptText, UtensilsCrossed, ChevronDown, Ticket, ShieldCheck, Wifi, WifiOff,
 } from "lucide-react";
 
 export const Route = createFileRoute("/till")({
@@ -54,7 +54,8 @@ type Item = { id: string; name: string; price_cents: number; category_id: string
 
 type Line = { id: string; name: string; price_cents: number; qty: number; is_beverage: boolean };
 type Side = "jury" | "judge" | "public";
-type Fulfilment = "dine_in" | "collection" | "delivery";
+type Fulfilment = "dine_in" | "collection";
+type Shift = { id: string; terminal: string; opening_float_cents: number };
 
 const SIDE_TONE: Record<Side, string> = {
   jury: "bg-indigo-600 text-white",
