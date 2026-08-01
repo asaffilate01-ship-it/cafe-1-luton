@@ -349,6 +349,7 @@ export const createOrder = createServerFn({ method: "POST" })
           amount_cents: payable,
           description: compactSumupDescription,
           customer_email: data.customer_email || undefined,
+          return_url: `${process.env["SITE_URL"] ?? "https://cafe1stalbans.co.uk"}/api/public/sumup-webhook`,
         });
         checkout_id = co.id;
       } catch (e) {
