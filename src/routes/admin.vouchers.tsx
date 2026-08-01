@@ -1,4 +1,5 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { askConfirm } from "@/components/confirm-dialog";
 import { AdminNav } from "@/components/admin-nav";
 import { useEffect, useMemo, useState } from "react";
 import { useSession, useRoles } from "@/hooks/use-auth";
@@ -227,6 +228,14 @@ function AdminVouchers() {
   }
 
   async function removeHolder(h: Holder) {
+    if (
+      !(await askConfirm({
+        title: `Delete voucher code ${h.code}?`,
+        description: "This permanently removes the code and its allocations. Deactivate instead if you only want to stop it being used.",
+        confirmLabel: "Delete code",
+      }))
+    )
+      return;
     const { error } = await supabase.from("voucher_holders").delete().eq("id", h.id);
     if (error) return toast.error(error.message);
     qc.invalidateQueries({ queryKey: ["voucher-holders"] });

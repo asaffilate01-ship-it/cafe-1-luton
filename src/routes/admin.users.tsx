@@ -1,4 +1,5 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { askConfirm } from "@/components/confirm-dialog";
 import { AdminNav } from "@/components/admin-nav";
 import { useEffect, useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -64,6 +65,14 @@ function UsersAdmin() {
   }
   async function revoke(userId: string, r: Role) {
     if (r === "admin" && userId === user?.id) return toast.error("You can't remove your own admin role.");
+    if (
+      !(await askConfirm({
+        title: `Remove the ${r} role?`,
+        description: "This user will immediately lose access to anything that role unlocks.",
+        confirmLabel: "Remove role",
+      }))
+    )
+      return;
     setBusy(true);
     const { error } = await supabase.from("user_roles").delete().eq("user_id", userId).eq("role", r);
     setBusy(false);

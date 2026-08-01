@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { askConfirm } from "@/components/confirm-dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Plus, Trash2 } from "lucide-react";
@@ -44,6 +45,14 @@ export function PosDevicesCard() {
   }
 
   async function remove(id: string) {
+    if (
+      !(await askConfirm({
+        title: "Remove this card terminal?",
+        description: "Orders taken on it will no longer be tagged to a side until it is added again.",
+        confirmLabel: "Remove terminal",
+      }))
+    )
+      return;
     const { error } = await supabase.from("pos_devices").delete().eq("id", id);
     if (error) return toast.error(error.message);
     void load();
