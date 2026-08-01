@@ -711,14 +711,15 @@ function Modal({ title, children, onClose }: { title: string; children: React.Re
 }
 
 function ReaderPay({
-  total, readers, readerId, setReaderId, onClose, onPaid, onSettings,
+  total, orderId, readers, readerId, setReaderId, onClose, onPaid, onSettings,
 }: {
   total: number;
+  orderId: string;
   readers: { id: string; name: string; status: string }[];
   readerId: string;
   setReaderId: (v: string) => void;
-  onClose: () => void;
-  onPaid: (txn: string | null) => void;
+  onClose: (reason: string) => void;
+  onPaid: (paymentAttemptId: string) => void | Promise<void>;
   onSettings: () => void;
 }) {
   const start = useServerFn(startReaderPayment);
@@ -726,22 +727,31 @@ function ReaderPay({
   const cancel = useServerFn(cancelReaderPayment);
   const [state, setState] = useState<"idle" | "waiting" | "failed">("idle");
   const [note, setNote] = useState("");
+  const [cashPart, setCashPart] = useState(0);
+  const [attemptId, setAttemptId] = useState<string | null>(null);
   const timer = useRef<ReturnType<typeof setInterval> | null>(null);
 
   useEffect(() => () => { if (timer.current) clearInterval(timer.current); }, []);
 
+  const cardPart = Math.max(total - cashPart, 0);
+
   async function begin() {
     if (!readerId) return toast.error("Pick a card reader first");
+    if (cashPart >= total) return toast.error("Cash split must leave at least 1p for the reader");
     setState("waiting"); setNote("Tap, insert or swipe on the Solo…");
     try {
-      const { client_transaction_id } = await start({ data: { reader_id: readerId, amount_cents: total } });
+      const started0 = await start({
+        data: { reader_id: readerId, order_id: orderId, cash_component_cents: cashPart },
+      });
+      const payment_attempt_id = started0.payment_attempt_id;
+      setAttemptId(payment_attempt_id);
       const started = Date.now();
       timer.current = setInterval(async () => {
         try {
-          const r = await check({ data: { client_transaction_id } });
+          const r = await check({ data: { payment_attempt_id } });
           if (r.paid) {
             if (timer.current) clearInterval(timer.current);
-            onPaid(r.transaction_id);
+            void onPaid(payment_attempt_id);
           } else if (r.failed) {
             if (timer.current) clearInterval(timer.current);
             setState("failed"); setNote("Payment declined or cancelled on the reader");
@@ -759,16 +769,38 @@ function ReaderPay({
 
   async function abort() {
     if (timer.current) clearInterval(timer.current);
-    if (readerId) { try { await cancel({ data: { reader_id: readerId } }); } catch { /* ignore */ } }
-    onClose();
+    if (readerId) {
+      try {
+        await cancel({ data: { reader_id: readerId, ...(attemptId ? { payment_attempt_id: attemptId } : {}) } });
+      } catch { /* ignore */ }
+    }
+    onClose("card payment cancelled at the till");
   }
 
   return (
     <Modal title="Card payment on SumUp Solo" onClose={abort}>
       <div className="rounded-2xl bg-neutral-800 p-4 text-center">
-        <p className="text-xs font-bold uppercase tracking-widest text-white/40">Amount</p>
-        <p className="font-display text-4xl font-black text-primary">{money(total)}</p>
+        <p className="text-xs font-bold uppercase tracking-widest text-white/40">Charge to card</p>
+        <p className="font-display text-4xl font-black text-primary">{money(cardPart)}</p>
+        {cashPart > 0 && (
+          <p className="mt-1 text-xs font-semibold text-emerald-300">plus {money(cashPart)} cash · total {money(total)}</p>
+        )}
       </div>
+
+      {state !== "waiting" && (
+        <div className="mt-4 rounded-2xl border border-white/10 p-3">
+          <label htmlFor="split-cash" className="text-xs font-bold uppercase tracking-widest text-white/40">Split with cash (optional)</label>
+          <input id="split-cash" type="number" min={0} step="0.01" inputMode="decimal"
+            value={cashPart ? (cashPart / 100).toFixed(2) : ""}
+            placeholder="0.00"
+            onChange={(e) => {
+              const v = Math.round(Number(e.target.value || 0) * 100);
+              setCashPart(Number.isFinite(v) && v > 0 ? Math.min(v, Math.max(total - 1, 0)) : 0);
+            }}
+            className="mt-2 h-11 w-full rounded-xl border border-white/15 bg-neutral-800 px-3 text-lg font-bold tabular-nums text-white outline-none focus:border-primary" />
+          <p className="mt-1.5 text-[11px] text-white/40">Take the cash first, then the reader charges the remainder.</p>
+        </div>
+      )}
 
       {readers.length > 0 ? (
         <div className="mt-4 space-y-1.5">
