@@ -285,19 +285,47 @@ function Till() {
     );
   }, [lines, total, voucherApplied, jurorDiscount, due, type]);
 
-  function add(i: Item) {
-    setLines((prev) => {
-      const at = prev.findIndex((l) => l.id === i.id);
-      if (at >= 0) {
-        const next = [...prev];
-        next[at] = { ...next[at], qty: next[at].qty + 1 };
+  const modifiersFor = useCallback(
+    (i: Item) =>
+      modifiers.filter((m) => (m.item_id ? m.item_id === i.id : m.category_id && m.category_id === i.category_id)),
+    [modifiers],
+  );
+
+  const add = useCallback(
+    (i: Item, modifierIds: string[] = [], notes = "") => {
+      const chosen = modifiers.filter((m) => modifierIds.includes(m.id));
+      const extra = chosen.reduce((s, m) => s + m.price_cents, 0);
+      const detail = [chosen.map((m) => m.name).join(" · "), notes.trim()].filter(Boolean).join(" · ");
+      const key = `${i.id}|${[...modifierIds].sort().join(",")}|${notes.trim()}`;
+      setLines((prev) => {
+        const at = prev.findIndex((l) => l.key === key);
+        if (at >= 0) {
+          const next = [...prev];
+          next[at] = { ...next[at], qty: next[at].qty + 1 };
+          return next;
+        }
+        return [...prev, {
+          key, id: i.id, name: i.name, price_cents: i.price_cents + extra, qty: 1,
+          is_beverage: i.is_beverage, modifier_ids: [...modifierIds], notes: notes.trim(), detail,
+        }];
+      });
+      setRecent((prev) => {
+        const next = [i.id, ...prev.filter((id) => id !== i.id)].slice(0, 12);
+        window.localStorage.setItem(RECENT_KEY, JSON.stringify(next));
         return next;
-      }
-      return [...prev, { id: i.id, name: i.name, price_cents: i.price_cents, qty: 1, is_beverage: i.is_beverage }];
-    });
-  }
-  function bump(id: string, d: number) {
-    setLines((prev) => prev.flatMap((l) => (l.id === id ? (l.qty + d <= 0 ? [] : [{ ...l, qty: l.qty + d }]) : [l])));
+      });
+    },
+    [modifiers],
+  );
+
+  /** Configurable products open the add-on sheet straight away. */
+  const tap = useCallback(
+    (i: Item) => { if (modifiersFor(i).length) setCustomise(i); else add(i); },
+    [add, modifiersFor],
+  );
+
+  function bump(key: string, d: number) {
+    setLines((prev) => prev.flatMap((l) => (l.key === key ? (l.qty + d <= 0 ? [] : [{ ...l, qty: l.qty + d }]) : [l])));
   }
 
   const basket = useCallback(
@@ -309,7 +337,12 @@ function Till() {
       table_number: table.trim() || undefined,
       pos_terminal: side,
       voucher_code: voucher?.code,
-      items: lines.map((l) => ({ menu_item_id: l.id, qty: l.qty })),
+      items: lines.map((l) => ({
+        menu_item_id: l.id,
+        qty: l.qty,
+        ...(l.modifier_ids.length ? { modifier_ids: l.modifier_ids } : {}),
+        ...(l.notes ? { notes: l.notes } : {}),
+      })),
     }),
     [lines, name, shift, side, table, type, voucher],
   );
