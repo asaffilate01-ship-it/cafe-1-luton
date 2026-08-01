@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useSession, useRoles } from "@/hooks/use-auth";
 import { useServerFn } from "@tanstack/react-start";
@@ -51,10 +51,29 @@ export const Route = createFileRoute("/till")({
 
 type Cat = { id: string; name: string; sort_order: number };
 type Item = { id: string; name: string; price_cents: number; category_id: string | null; sort_order: number; image_url: string | null; is_beverage: boolean };
+type Modifier = {
+  id: string; item_id: string | null; category_id: string | null; name: string;
+  price_cents: number; group_name: string | null; group_type: string; required: boolean; sort_order: number;
+};
 
-type Line = { id: string; name: string; price_cents: number; qty: number; is_beverage: boolean };
+type Line = {
+  key: string; id: string; name: string; price_cents: number; qty: number;
+  is_beverage: boolean; modifier_ids: string[]; notes: string; detail: string;
+};
 type Side = "jury" | "judge" | "public";
 type Fulfilment = "dine_in" | "collection";
+
+const RECENT_KEY = "cafe1-till-recent";
+
+function readRecent(): string[] {
+  if (typeof window === "undefined") return [];
+  try {
+    const raw = JSON.parse(window.localStorage.getItem(RECENT_KEY) ?? "[]") as unknown;
+    return Array.isArray(raw) ? raw.filter((v): v is string => typeof v === "string").slice(0, 12) : [];
+  } catch {
+    return [];
+  }
+}
 type Shift = {
   id: string;
   terminal: string;
@@ -152,6 +171,9 @@ function Till() {
 
   const [cats, setCats] = useState<Cat[]>([]);
   const [items, setItems] = useState<Item[]>([]);
+  const [modifiers, setModifiers] = useState<Modifier[]>([]);
+  const [customise, setCustomise] = useState<Item | null>(null);
+  const [recent, setRecent] = useState<string[]>(() => readRecent());
   const [catId, setCatId] = useState<string | null>(null);
   const [q, setQ] = useState("");
   const [lines, setLines] = useState<Line[]>([]);
@@ -181,6 +203,9 @@ function Till() {
   const [closing, setClosing] = useState(false);
   const [prepared, setPrepared] = useState<null | { order_id: string; order_number: number; total_cents: number; voucher_cents: number; juror_discount_cents: number }>(null);
   const [online, setOnline] = useState(true);
+  const [cashMode, setCashMode] = useState(false);
+  const [printerReady, setPrinterReady] = useState(false);
+  const [drawerReady, setDrawerReady] = useState(false);
 
   useEffect(() => {
     const sync = () => setOnline(navigator.onLine);
@@ -206,17 +231,23 @@ function Till() {
 
   useEffect(() => { window.localStorage.setItem("cafe1-pos-side", side); }, [side]);
   useEffect(() => {
+    setPrinterReady(isIminDevice());
+    setDrawerReady(isIminDevice() || Boolean(getDrawerBridge()));
+  }, [settings]);
+  useEffect(() => {
     if (readerId) window.localStorage.setItem("cafe1-till-reader", readerId);
   }, [readerId]);
 
   useEffect(() => {
     (async () => {
-      const [{ data: c }, { data: i }] = await Promise.all([
+      const [{ data: c }, { data: i }, { data: m }] = await Promise.all([
         supabase.from("menu_categories").select("id, name, sort_order").eq("active", true).order("sort_order"),
         supabase.from("menu_items").select("id, name, price_cents, category_id, sort_order, image_url, is_beverage").eq("active", true).order("sort_order"),
+        supabase.from("menu_modifiers").select("id, item_id, category_id, name, price_cents, group_name, group_type, required, sort_order").eq("active", true).order("sort_order"),
       ]);
       setCats((c ?? []) as Cat[]);
       setItems((i ?? []) as Item[]);
+      setModifiers((m ?? []) as Modifier[]);
       setCatId((c ?? [])[0]?.id ?? null);
     })();
   }, []);
@@ -244,6 +275,11 @@ function Till() {
     return items.filter((i) => i.category_id === catId);
   }, [items, catId, q]);
 
+  const recentItems = useMemo(
+    () => recent.map((id) => items.find((i) => i.id === id)).filter((i): i is Item => Boolean(i)),
+    [recent, items],
+  );
+
   const total = lines.reduce((s, l) => s + l.price_cents * l.qty, 0);
   const count = lines.reduce((s, l) => s + l.qty, 0);
   const foodTotal = lines.reduce((s, l) => s + (l.is_beverage ? 0 : l.price_cents * l.qty), 0);
@@ -255,24 +291,52 @@ function Till() {
   useEffect(() => {
     postToDisplay(
       lines.length
-        ? { type: "order" as const, lines: lines.map((l) => ({ id: l.id, name: l.name, price_cents: l.price_cents, qty: l.qty })), subtotal: total, voucher_cents: voucherApplied, discount_cents: jurorDiscount, due, fulfilment: type }
+        ? { type: "order" as const, lines: lines.map((l) => ({ id: l.key, name: l.detail ? `${l.name} (${l.detail})` : l.name, price_cents: l.price_cents, qty: l.qty })), subtotal: total, voucher_cents: voucherApplied, discount_cents: jurorDiscount, due, fulfilment: type }
         : { type: "idle" },
     );
   }, [lines, total, voucherApplied, jurorDiscount, due, type]);
 
-  function add(i: Item) {
-    setLines((prev) => {
-      const at = prev.findIndex((l) => l.id === i.id);
-      if (at >= 0) {
-        const next = [...prev];
-        next[at] = { ...next[at], qty: next[at].qty + 1 };
+  const modifiersFor = useCallback(
+    (i: Item) =>
+      modifiers.filter((m) => (m.item_id ? m.item_id === i.id : m.category_id && m.category_id === i.category_id)),
+    [modifiers],
+  );
+
+  const add = useCallback(
+    (i: Item, modifierIds: string[] = [], notes = "") => {
+      const chosen = modifiers.filter((m) => modifierIds.includes(m.id));
+      const extra = chosen.reduce((s, m) => s + m.price_cents, 0);
+      const detail = [chosen.map((m) => m.name).join(" · "), notes.trim()].filter(Boolean).join(" · ");
+      const key = `${i.id}|${[...modifierIds].sort().join(",")}|${notes.trim()}`;
+      setLines((prev) => {
+        const at = prev.findIndex((l) => l.key === key);
+        if (at >= 0) {
+          const next = [...prev];
+          next[at] = { ...next[at], qty: next[at].qty + 1 };
+          return next;
+        }
+        return [...prev, {
+          key, id: i.id, name: i.name, price_cents: i.price_cents + extra, qty: 1,
+          is_beverage: i.is_beverage, modifier_ids: [...modifierIds], notes: notes.trim(), detail,
+        }];
+      });
+      setRecent((prev) => {
+        const next = [i.id, ...prev.filter((id) => id !== i.id)].slice(0, 12);
+        window.localStorage.setItem(RECENT_KEY, JSON.stringify(next));
         return next;
-      }
-      return [...prev, { id: i.id, name: i.name, price_cents: i.price_cents, qty: 1, is_beverage: i.is_beverage }];
-    });
-  }
-  function bump(id: string, d: number) {
-    setLines((prev) => prev.flatMap((l) => (l.id === id ? (l.qty + d <= 0 ? [] : [{ ...l, qty: l.qty + d }]) : [l])));
+      });
+    },
+    [modifiers],
+  );
+
+  /** Configurable products open the add-on sheet straight away. */
+  const tap = useCallback(
+    (i: Item) => { if (modifiersFor(i).length) setCustomise(i); else add(i); },
+    [add, modifiersFor],
+  );
+
+  function bump(key: string, d: number) {
+    setLines((prev) => prev.flatMap((l) => (l.key === key ? (l.qty + d <= 0 ? [] : [{ ...l, qty: l.qty + d }]) : [l])));
   }
 
   const basket = useCallback(
@@ -284,7 +348,12 @@ function Till() {
       table_number: table.trim() || undefined,
       pos_terminal: side,
       voucher_code: voucher?.code,
-      items: lines.map((l) => ({ menu_item_id: l.id, qty: l.qty })),
+      items: lines.map((l) => ({
+        menu_item_id: l.id,
+        qty: l.qty,
+        ...(l.modifier_ids.length ? { modifier_ids: l.modifier_ids } : {}),
+        ...(l.notes ? { notes: l.notes } : {}),
+      })),
     }),
     [lines, name, shift, side, table, type, voucher],
   );
@@ -300,14 +369,14 @@ function Till() {
             order_number: res.order_number,
             fulfilment: FULFIL.find((f) => f.id === type)?.label ?? type,
             terminal: SIDE_LABEL[side],
-            lines: lines.map((l) => ({ name: l.name, qty: l.qty, price_cents: heading === "COUNTER" ? l.price_cents : undefined })),
+            lines: lines.map((l) => ({ name: l.detail ? `${l.name} — ${l.detail}` : l.name, qty: l.qty, price_cents: heading === "COUNTER" ? l.price_cents : undefined })),
             total_cents: heading === "COUNTER" ? res.total_cents : undefined,
             footer: heading === "COUNTER" ? "Thank you — cafe1stalbans.co.uk" : undefined,
           })),
       );
       if (!printed) window.open(`/print/${res.order_id}`, "_blank");
       if (res.voucher_cents > 0) toast.success(`Juror voucher ${res.voucher_code ?? ""} — ${money(res.voucher_cents)} redeemed`);
-      setLines([]); setName(""); setTable(""); setPay(null); setTendered(0); setShowOrder(false); setVoucher(null); setPrepared(null);
+      setLines([]); setName(""); setTable(""); setPay(null); setTendered(0); setShowOrder(false); setVoucher(null); setPrepared(null); setCashMode(false);
     },
     [lines, side, type],
   );
@@ -405,6 +474,14 @@ function Till() {
             <Smartphone className="h-3.5 w-3.5" />
             {readerId ? readers.find((r) => r.id === readerId)?.name ?? "Solo reader" : "No reader"}
           </span>
+          <span className={`hidden items-center gap-1.5 rounded-full border px-2.5 py-1 xl:inline-flex ${printerReady ? "border-emerald-500/40 text-emerald-300" : "border-white/15"}`}
+            title={printerReady ? "Tickets print to the built-in printer" : "No built-in printer — tickets open in a print window"}>
+            <Printer className="h-3.5 w-3.5" /> {printerReady ? "Printer" : "No printer"}
+          </span>
+          <span className={`hidden items-center gap-1.5 rounded-full border px-2.5 py-1 xl:inline-flex ${drawerReady ? "border-emerald-500/40 text-emerald-300" : "border-white/15"}`}
+            title={drawerReady ? "Cash drawer connected" : "No cash drawer connection on this device"}>
+            <Inbox className="h-3.5 w-3.5" /> {drawerReady ? "Drawer" : "No drawer"}
+          </span>
           <button onClick={() => void openCashDrawer().then((r) => (r.ok ? toast.success(r.message) : toast.error(r.message)))}
             className="inline-flex items-center gap-1.5 rounded-lg border border-white/15 px-2.5 py-1.5 font-semibold text-white/80 hover:border-white/40">
             <Inbox className="h-4 w-4" /> <span className="hidden sm:inline">Drawer</span>
@@ -453,12 +530,26 @@ function Till() {
                 ))}
               </div>
             )}
+            {!q && recentItems.length > 0 && (
+              <div>
+                <p className="mb-1.5 text-[10px] font-black uppercase tracking-widest text-white/35">Quick keys · recently used</p>
+                <div className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-1">
+                  {recentItems.map((i) => (
+                    <button key={i.id} onClick={() => tap(i)}
+                      className="shrink-0 rounded-xl border border-white/10 bg-neutral-900 px-3 py-2 text-left text-xs font-bold hover:border-primary active:scale-95">
+                      <span className="block max-w-[9rem] truncate">{i.name}</span>
+                      <span className="text-[11px] font-semibold text-primary">{money(i.price_cents)}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
 
           <div className="min-h-0 flex-1 overflow-y-auto p-3 pb-24 sm:p-4 lg:pb-4">
             <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
               {visible.map((i) => (
-                <button key={i.id} onClick={() => add(i)}
+                <button key={i.id} onClick={() => tap(i)}
                   className="group flex flex-col overflow-hidden rounded-2xl border border-white/10 bg-neutral-900 text-left transition hover:border-primary hover:bg-neutral-800 active:scale-[0.98]">
                   <div className="relative aspect-[4/3] w-full overflow-hidden bg-neutral-800">
                     {i.image_url ? (
@@ -511,13 +602,16 @@ function Till() {
           <div className="min-h-0 flex-1 overflow-y-auto p-4">
             <ul className="space-y-2">
               {lines.map((l) => (
-                <li key={l.id} className="flex items-center gap-2 rounded-xl bg-neutral-800/60 p-2 text-sm">
+                <li key={l.key} className="flex items-center gap-2 rounded-xl bg-neutral-800/60 p-2 text-sm">
                   <div className="flex items-center gap-1">
-                    <button onClick={() => bump(l.id, -1)} aria-label={`Remove one ${l.name}`} className="grid h-8 w-8 place-items-center rounded-lg border border-white/15 hover:border-primary"><Minus className="h-3.5 w-3.5" /></button>
+                    <button onClick={() => bump(l.key, -1)} aria-label={`Remove one ${l.name}`} className="grid h-8 w-8 place-items-center rounded-lg border border-white/15 hover:border-primary"><Minus className="h-3.5 w-3.5" /></button>
                     <span className="w-6 text-center font-bold">{l.qty}</span>
-                    <button onClick={() => bump(l.id, 1)} aria-label={`Add one ${l.name}`} className="grid h-8 w-8 place-items-center rounded-lg border border-white/15 hover:border-primary"><Plus className="h-3.5 w-3.5" /></button>
+                    <button onClick={() => bump(l.key, 1)} aria-label={`Add one ${l.name}`} className="grid h-8 w-8 place-items-center rounded-lg border border-white/15 hover:border-primary"><Plus className="h-3.5 w-3.5" /></button>
                   </div>
-                  <span className="flex-1 truncate">{l.name}</span>
+                  <span className="min-w-0 flex-1">
+                    <span className="block truncate">{l.name}</span>
+                    {l.detail && <span className="block truncate text-[11px] text-white/45">{l.detail}</span>}
+                  </span>
                   <span className="font-semibold">{money(l.price_cents * l.qty)}</span>
                 </li>
               ))}
@@ -537,8 +631,13 @@ function Till() {
             </ul>
           </div>
 
-          {/* cash calculator — always visible */}
+          {/* cash calculator — only while taking cash, so the basket keeps the space */}
+          {cashMode && (
           <div className="shrink-0 border-t border-white/10 p-3">
+            <div className="mb-2 flex items-center justify-between">
+              <p className="text-[10px] font-black uppercase tracking-widest text-white/40">Cash</p>
+              <button onClick={() => { setCashMode(false); setTendered(0); }} className="text-[11px] font-semibold text-white/40 underline">Hide</button>
+            </div>
             <div className="mb-2 grid grid-cols-3 items-end gap-2 rounded-2xl bg-neutral-800/70 px-3 py-2">
               <div>
                 <p className="text-[10px] font-bold uppercase tracking-widest text-white/40">Tendered</p>
@@ -576,6 +675,7 @@ function Till() {
               ))}
             </div>
           </div>
+          )}
 
           {(voucher || lines.length > 0) && (
             <div className="shrink-0 space-y-1.5 border-t border-white/10 px-3 pt-2 text-sm">
@@ -620,9 +720,14 @@ function Till() {
             )}
             {due > 0 && (
               <div className="grid grid-cols-3 gap-2">
-                <button disabled={!lines.length || busy} onClick={() => { if (tendered && tendered < due) return toast.error("Tendered is less than the amount due"); void finish("cash"); }}
+                <button disabled={!lines.length || busy}
+                  onClick={() => {
+                    if (!cashMode) { setCashMode(true); return; }
+                    if (tendered && tendered < due) return toast.error("Tendered is less than the amount due");
+                    void finish("cash");
+                  }}
                   className="inline-flex h-12 items-center justify-center gap-2 rounded-xl bg-emerald-600 text-sm font-bold text-white disabled:opacity-40">
-                  <Banknote className="h-4 w-4" /> Cash
+                  <Banknote className="h-4 w-4" /> {cashMode ? "Take cash" : "Cash"}
                 </button>
                 <button onClick={() => void openCashDrawer().then((r) => (r.ok ? toast.success(r.message) : toast.error(r.message)))}
                   className="inline-flex h-12 items-center justify-center gap-2 rounded-xl border border-white/15 text-sm font-bold text-white/80 hover:border-white/40">
@@ -688,14 +793,97 @@ function Till() {
       )}
       {voucherOpen && (
         <VoucherModal
-          onClose={() => { setVoucherOpen(false); postToDisplay(lines.length ? { type: "order" as const, lines: lines.map((l) => ({ id: l.id, name: l.name, price_cents: l.price_cents, qty: l.qty })), subtotal: total, voucher_cents: voucherApplied, discount_cents: jurorDiscount, due, fulfilment: type } : { type: "idle" }); }}
+          onClose={() => { setVoucherOpen(false); postToDisplay(lines.length ? { type: "order" as const, lines: lines.map((l) => ({ id: l.key, name: l.detail ? `${l.name} (${l.detail})` : l.name, price_cents: l.price_cents, qty: l.qty })), subtotal: total, voucher_cents: voucherApplied, discount_cents: jurorDiscount, due, fulfilment: type } : { type: "idle" }); }}
           onApply={(v) => { setVoucher(v); setVoucherOpen(false); }}
         />
       )}
       {settings && (
         <TillSettings readers={readers} readerError={readerError} reload={loadReaders} onClose={() => setSettings(false)} />
       )}
+      {customise && (
+        <CustomiseSheet
+          item={customise}
+          modifiers={modifiersFor(customise)}
+          onClose={() => setCustomise(null)}
+          onAdd={(ids, notes) => { add(customise, ids, notes); setCustomise(null); }}
+        />
+      )}
     </div>
+  );
+}
+
+/* --------------------------------------------------- modifiers / notes */
+
+function CustomiseSheet({
+  item, modifiers, onClose, onAdd,
+}: {
+  item: Item;
+  modifiers: Modifier[];
+  onClose: () => void;
+  onAdd: (modifierIds: string[], notes: string) => void;
+}) {
+  const [picked, setPicked] = useState<string[]>([]);
+  const [notes, setNotes] = useState("");
+
+  const groups = useMemo(() => {
+    const map = new Map<string, Modifier[]>();
+    for (const m of modifiers) {
+      const key = m.group_name ?? "Add-ons";
+      map.set(key, [...(map.get(key) ?? []), m]);
+    }
+    return [...map.entries()];
+  }, [modifiers]);
+
+  const extra = modifiers.filter((m) => picked.includes(m.id)).reduce((s, m) => s + m.price_cents, 0);
+  const missing = groups.find(([, list]) => list.some((m) => m.required) && !list.some((m) => picked.includes(m.id)));
+
+  function toggle(m: Modifier) {
+    const single = m.group_type === "single";
+    setPicked((prev) => {
+      if (prev.includes(m.id)) return prev.filter((id) => id !== m.id);
+      if (single) {
+        const siblings = modifiers.filter((x) => (x.group_name ?? "Add-ons") === (m.group_name ?? "Add-ons")).map((x) => x.id);
+        return [...prev.filter((id) => !siblings.includes(id)), m.id];
+      }
+      return [...prev, m.id];
+    });
+  }
+
+  return (
+    <Modal title={item.name} onClose={onClose}>
+      <div className="max-h-[55vh] space-y-4 overflow-y-auto pr-1">
+        {groups.map(([label, list]) => (
+          <div key={label}>
+            <p className="text-xs font-black uppercase tracking-widest text-white/40">
+              {label}{list.some((m) => m.required) && <span className="ml-1 text-primary">required</span>}
+            </p>
+            <div className="mt-2 space-y-1.5">
+              {list.map((m) => (
+                <button key={m.id} onClick={() => toggle(m)}
+                  aria-pressed={picked.includes(m.id)}
+                  className={`flex w-full items-center gap-2 rounded-xl px-3 py-2.5 text-sm font-semibold transition ${
+                    picked.includes(m.id) ? "bg-primary text-primary-foreground" : "border border-white/10 text-white/80 hover:border-white/40"
+                  }`}>
+                  <span className="flex-1 text-left">{m.name}</span>
+                  {m.price_cents > 0 && <span className="tabular-nums">+{money(m.price_cents)}</span>}
+                </button>
+              ))}
+            </div>
+          </div>
+        ))}
+        <div>
+          <label htmlFor="line-notes" className="text-xs font-black uppercase tracking-widest text-white/40">Kitchen note</label>
+          <input id="line-notes" value={notes} onChange={(e) => setNotes(e.target.value)} maxLength={200}
+            placeholder="No butter, extra hot…"
+            className="mt-2 h-11 w-full rounded-xl border border-white/15 bg-neutral-800 px-3 text-sm outline-none focus:border-primary" />
+        </div>
+      </div>
+      <button disabled={Boolean(missing)} onClick={() => onAdd(picked, notes)}
+        className="mt-5 inline-flex h-14 w-full items-center justify-between gap-2 rounded-xl bg-primary px-5 text-base font-bold text-primary-foreground disabled:opacity-40">
+        <span className="inline-flex items-center gap-2"><Plus className="h-5 w-5" /> {missing ? `Choose ${missing[0]}` : "Add to order"}</span>
+        <span className="font-display text-lg font-black tabular-nums">{money(item.price_cents + extra)}</span>
+      </button>
+    </Modal>
   );
 }
 
@@ -825,11 +1013,37 @@ function ManualCardModal({ due, busy, onClose, onConfirm }: { due: number; busy:
 }
 
 function Modal({ title, children, onClose }: { title: string; children: React.ReactNode; onClose: () => void }) {
+  const panel = useRef<HTMLDivElement>(null);
+  const titleId = useId();
+
+  useEffect(() => {
+    const previous = document.activeElement as HTMLElement | null;
+    const focusables = () =>
+      Array.from(
+        panel.current?.querySelectorAll<HTMLElement>(
+          'button:not([disabled]), [href], input:not([disabled]), select, textarea, [tabindex]:not([tabindex="-1"])',
+        ) ?? [],
+      );
+    focusables()[0]?.focus();
+    function onKey(e: KeyboardEvent) {
+      if (e.key === "Escape") { e.stopPropagation(); onClose(); return; }
+      if (e.key !== "Tab") return;
+      const list = focusables();
+      if (!list.length) return;
+      const first = list[0];
+      const last = list[list.length - 1];
+      if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+      else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+    }
+    document.addEventListener("keydown", onKey);
+    return () => { document.removeEventListener("keydown", onKey); previous?.focus?.(); };
+  }, [onClose]);
+
   return (
-    <div className="fixed inset-0 z-50 grid place-items-center bg-black/70 p-4" role="dialog" aria-modal="true">
-      <div className="w-full max-w-md rounded-3xl border border-white/10 bg-neutral-900 p-6 text-white shadow-2xl">
+    <div className="fixed inset-0 z-50 grid place-items-center bg-black/70 p-4" role="dialog" aria-modal="true" aria-labelledby={titleId}>
+      <div ref={panel} className="w-full max-w-md rounded-3xl border border-white/10 bg-neutral-900 p-6 text-white shadow-2xl">
         <div className="mb-4 flex items-start justify-between gap-4">
-          <h2 className="font-display text-xl font-bold">{title}</h2>
+          <h2 id={titleId} className="font-display text-xl font-bold">{title}</h2>
           <button onClick={onClose} aria-label="Close" className="grid h-8 w-8 place-items-center rounded-lg border border-white/15 hover:border-white/40"><X className="h-4 w-4" /></button>
         </div>
         {children}
