@@ -22,6 +22,7 @@ type Order = {
   status: string; payment_status: string; payment_method: string | null;
   subtotal_cents: number; discount_cents: number; promo_discount_cents: number;
   voucher_cents: number; delivery_fee_cents: number; total_cents: number;
+  refunded_cents: number;
   customer_name: string; driver_id: string | null;
 };
 type Item = { order_id: string; name: string; qty: number; unit_price_cents: number };
@@ -53,7 +54,7 @@ function Reports() {
       const from = isoDaysAgo(days - 1).toISOString();
       const { data: o } = await supabase
         .from("orders")
-        .select("id, order_number, created_at, type, source, status, payment_status, payment_method, subtotal_cents, discount_cents, promo_discount_cents, voucher_cents, delivery_fee_cents, total_cents, customer_name, driver_id")
+        .select("id, order_number, created_at, type, source, status, payment_status, payment_method, subtotal_cents, discount_cents, promo_discount_cents, voucher_cents, delivery_fee_cents, total_cents, refunded_cents, customer_name, driver_id")
         .gte("created_at", from)
         .order("created_at", { ascending: false });
       if (cancelled) return;
@@ -75,13 +76,16 @@ function Reports() {
     return () => { cancelled = true; };
   }, [user, days]);
 
+  /** Net of any refund: a part-refunded order still counts for the amount kept. */
+  const netOf = (o: Order) => Math.max(0, o.total_cents - (o.refunded_cents ?? 0));
+
   const counted = useMemo(
-    () => orders.filter((o) => o.status !== "cancelled" && o.payment_status !== "refunded"),
+    () => orders.filter((o) => o.status !== "cancelled" && netOf(o) > 0),
     [orders],
   );
 
   const totals = useMemo(() => {
-    const gross = counted.reduce((s, o) => s + o.total_cents, 0);
+    const gross = counted.reduce((s, o) => s + netOf(o), 0);
     return {
       gross,
       orders: counted.length,
@@ -89,7 +93,7 @@ function Reports() {
       discounts: counted.reduce((s, o) => s + o.discount_cents, 0),
       vouchers: counted.reduce((s, o) => s + o.voucher_cents, 0),
       delivery: counted.reduce((s, o) => s + o.delivery_fee_cents, 0),
-      refunded: orders.filter((o) => o.payment_status === "refunded").reduce((s, o) => s + o.total_cents, 0),
+      refunded: orders.reduce((s, o) => s + (o.refunded_cents ?? 0), 0),
     };
   }, [counted, orders]);
 
@@ -101,7 +105,7 @@ function Reports() {
     for (const o of counted) {
       const k = new Date(o.created_at).toDateString();
       const cur = map.get(k);
-      if (cur) { cur.total += o.total_cents; cur.count += 1; }
+      if (cur) { cur.total += netOf(o); cur.count += 1; }
     }
     return [...map.entries()];
   }, [counted, days]);
@@ -114,7 +118,7 @@ function Reports() {
       for (const o of counted) {
         const k = key(o);
         const cur = m.get(k) ?? { count: 0, total: 0 };
-        cur.count++; cur.total += o.total_cents;
+        cur.count++; cur.total += netOf(o);
         m.set(k, cur);
       }
       return [...m.entries()].sort((a, b) => b[1].total - a[1].total);
