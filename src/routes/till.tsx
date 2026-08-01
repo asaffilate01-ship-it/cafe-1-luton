@@ -591,25 +591,37 @@ function Till() {
           )}
 
           <div className="shrink-0 space-y-2 border-t border-white/10 p-3">
-            <button disabled={!lines.length || busy} onClick={() => setPay("reader")}
-              className="inline-flex h-14 w-full items-center justify-between gap-2 rounded-xl bg-primary px-5 text-base font-bold text-primary-foreground disabled:opacity-40">
-              <span className="inline-flex items-center gap-2"><Smartphone className="h-5 w-5" /> Charge SumUp Solo</span>
-              <span className="font-display text-lg font-black tabular-nums">{money(due)}</span>
-            </button>
-            <div className="grid grid-cols-3 gap-2">
-              <button disabled={!lines.length || busy} onClick={() => { if (tendered && tendered < due) return toast.error("Tendered is less than the amount due"); void finish("cash"); }}
-                className="inline-flex h-12 items-center justify-center gap-2 rounded-xl bg-emerald-600 text-sm font-bold text-white disabled:opacity-40">
-                <Banknote className="h-4 w-4" /> Cash
+            {lines.length > 0 && due === 0 ? (
+              <button disabled={busy} onClick={() => void finish("cash")}
+                className="inline-flex h-14 w-full items-center justify-between gap-2 rounded-xl bg-indigo-600 px-5 text-base font-bold text-white disabled:opacity-40">
+                <span className="inline-flex items-center gap-2"><Ticket className="h-5 w-5" /> Complete voucher order</span>
+                <span className="font-display text-lg font-black tabular-nums">{money(0)}</span>
               </button>
-              <button onClick={() => void openCashDrawer().then((r) => (r.ok ? toast.success(r.message) : toast.error(r.message)))}
-                className="inline-flex h-12 items-center justify-center gap-2 rounded-xl border border-white/15 text-sm font-bold text-white/80 hover:border-white/40">
-                <Inbox className="h-4 w-4" /> Drawer
+            ) : (
+              <button disabled={!lines.length || busy} onClick={() => void beginReader()}
+                className="inline-flex h-14 w-full items-center justify-between gap-2 rounded-xl bg-primary px-5 text-base font-bold text-primary-foreground disabled:opacity-40">
+                <span className="inline-flex items-center gap-2">
+                  {busy ? <Loader2 className="h-5 w-5 animate-spin" /> : <Smartphone className="h-5 w-5" />} Charge SumUp Solo
+                </span>
+                <span className="font-display text-lg font-black tabular-nums">{money(due)}</span>
               </button>
-              <button disabled={!lines.length || busy} onClick={() => setPay("manual")}
-                className="inline-flex h-12 items-center justify-center gap-2 rounded-xl border border-white/15 text-sm font-bold text-white/80 disabled:opacity-40">
-                <CreditCard className="h-4 w-4" /> Card
-              </button>
-            </div>
+            )}
+            {due > 0 && (
+              <div className="grid grid-cols-3 gap-2">
+                <button disabled={!lines.length || busy} onClick={() => { if (tendered && tendered < due) return toast.error("Tendered is less than the amount due"); void finish("cash"); }}
+                  className="inline-flex h-12 items-center justify-center gap-2 rounded-xl bg-emerald-600 text-sm font-bold text-white disabled:opacity-40">
+                  <Banknote className="h-4 w-4" /> Cash
+                </button>
+                <button onClick={() => void openCashDrawer().then((r) => (r.ok ? toast.success(r.message) : toast.error(r.message)))}
+                  className="inline-flex h-12 items-center justify-center gap-2 rounded-xl border border-white/15 text-sm font-bold text-white/80 hover:border-white/40">
+                  <Inbox className="h-4 w-4" /> Drawer
+                </button>
+                <button disabled={!lines.length || busy} onClick={() => setPay("manual")}
+                  className="inline-flex h-12 items-center justify-center gap-2 rounded-xl border border-white/15 text-sm font-bold text-white/80 disabled:opacity-40">
+                  <CreditCard className="h-4 w-4" /> Card
+                </button>
+              </div>
+            )}
             <div className="flex items-center justify-between text-xs">
               <button disabled={!lines.length} onClick={() => { setLines([]); setTendered(0); }}
                 className="inline-flex items-center gap-1.5 rounded-lg px-2 py-1.5 font-semibold text-white/40 hover:text-white disabled:opacity-40">
@@ -638,23 +650,29 @@ function Till() {
       )}
 
       {pay === "manual" && (
-        <Modal title="Paid on another card machine" onClose={() => setPay(null)}>
-          <p className="text-sm text-white/60">Confirm once the customer&apos;s card payment has gone through on the terminal.</p>
-          <button disabled={busy} onClick={() => finish("card")} className="mt-5 inline-flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-primary font-bold text-primary-foreground disabled:opacity-50">
-            <Check className="h-4 w-4" /> Mark paid · {money(total)}
-          </button>
-        </Modal>
+        <ManualCardModal due={due} busy={busy} onClose={() => setPay(null)} onConfirm={(ref) => void finish("card", ref)} />
       )}
-      {pay === "reader" && (
+      {pay === "reader" && prepared && (
         <ReaderPay
-          total={due}
+          total={prepared.total_cents}
+          orderId={prepared.order_id}
           readers={readers}
           readerId={readerId}
           setReaderId={setReaderId}
-          onClose={() => setPay(null)}
-          onPaid={(txn) => finish("card", txn ?? undefined)}
+          onClose={(reason) => void abandonPrepared(reason)}
+          onPaid={async (attemptId) => {
+            try {
+              const res = await finalizeCard({ data: { order_id: prepared.order_id, payment_attempt_id: attemptId } });
+              completed(res, "card");
+            } catch (e) {
+              toast.error(e instanceof Error ? e.message : "Payment taken but the order could not be finalised");
+            }
+          }}
           onSettings={() => { setPay(null); setSettings(true); }}
         />
+      )}
+      {closing && shift && (
+        <CloseShiftModal shift={shift} onClose={() => setClosing(false)} onClosed={() => { setClosing(false); setShift(null); }} />
       )}
       {voucherOpen && (
         <VoucherModal
