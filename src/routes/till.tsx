@@ -204,6 +204,8 @@ function Till() {
   const [prepared, setPrepared] = useState<null | { order_id: string; order_number: number; total_cents: number; voucher_cents: number; juror_discount_cents: number }>(null);
   const [online, setOnline] = useState(true);
   const [cashMode, setCashMode] = useState(false);
+  const [printerReady, setPrinterReady] = useState(false);
+  const [drawerReady, setDrawerReady] = useState(false);
 
   useEffect(() => {
     const sync = () => setOnline(navigator.onLine);
