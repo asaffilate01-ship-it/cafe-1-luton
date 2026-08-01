@@ -55,7 +55,12 @@ type Item = { id: string; name: string; price_cents: number; category_id: string
 type Line = { id: string; name: string; price_cents: number; qty: number; is_beverage: boolean };
 type Side = "jury" | "judge" | "public";
 type Fulfilment = "dine_in" | "collection";
-type Shift = { id: string; terminal: string; opening_float_cents: number };
+type Shift = {
+  id: string;
+  terminal: string;
+  opening_float_cents: number;
+  discrepancy_cents?: number | null;
+};
 
 const SIDE_TONE: Record<Side, string> = {
   jury: "bg-indigo-600 text-white",
