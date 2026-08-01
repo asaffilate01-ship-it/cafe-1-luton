@@ -12,6 +12,7 @@ import { useSession, useRoles } from "@/hooks/use-auth";
 import { useAlertOnIncrease, useNotificationPermission, playChime } from "@/hooks/use-order-alerts";
 import { Bell, BellOff, RefreshCw, Sun, SunDim, ChevronsUp, ChevronsDown, ShoppingBag, HandPlatter, Bike } from "lucide-react";
 import { useWakeLock } from "@/hooks/use-wake-lock";
+import { useKdsHeartbeat } from "@/hooks/use-kds-presence";
 import { syncSumupPos } from "@/lib/sumup-pos.functions";
 import { orderCode } from "@/lib/order-code";
 
@@ -78,6 +79,9 @@ function KDS() {
   const [now, setNow] = useState(() => Date.now());
   const { user } = useSession();
   const { has } = useRoles(user);
+
+  // Lets the till status strip show that a kitchen display is live
+  useKdsHeartbeat();
 
   // Live kitchen timer — ticks every second
   useEffect(() => {

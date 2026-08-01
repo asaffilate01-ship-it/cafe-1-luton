@@ -21,6 +21,7 @@ import {
   closeTillShift,
 } from "@/lib/till.functions";
 import { openCashDrawer, getDrawerBridge, setDrawerBridge } from "@/lib/drawer";
+import { useKdsOnline, useBackendStatus } from "@/hooks/use-kds-presence";
 import { iminPrintTickets, isIminDevice, openCustomerScreen } from "@/lib/imin";
 import { postToDisplay } from "@/lib/customer-display";
 import { lookupVoucher } from "@/lib/vouchers.functions";
@@ -31,7 +32,7 @@ import { toast } from "sonner";
 import {
   Banknote, CreditCard, Minus, Plus, Search, Trash2, Lock, LogOut, Settings2, X,
   Smartphone, Loader2, Check, Printer, Inbox, ShoppingBag, HandPlatter, MonitorPlay,
-  Delete, ReceiptText, UtensilsCrossed, ChevronDown, Ticket, ShieldCheck, Wifi, WifiOff, Star,
+  Delete, ReceiptText, UtensilsCrossed, ChevronDown, Ticket, ShieldCheck, Wifi, WifiOff, Star, Cloud, ChefHat,
 } from "lucide-react";
 
 export const Route = createFileRoute("/till")({
@@ -218,6 +219,8 @@ function Till() {
   const [cashMode, setCashMode] = useState(false);
   const [printerReady, setPrinterReady] = useState(false);
   const [drawerReady, setDrawerReady] = useState(false);
+  const kdsOnline = useKdsOnline();
+  const backendOk = useBackendStatus();
 
   useEffect(() => {
     const sync = () => setOnline(navigator.onLine);
@@ -495,6 +498,14 @@ function Till() {
         <div className="ml-auto flex flex-wrap items-center justify-end gap-2 text-xs text-white/50">
           <span className={`hidden h-8 items-center gap-1.5 rounded-full border px-2.5 sm:inline-flex ${online ? "border-emerald-500/40 text-emerald-300" : "border-red-500/50 text-red-300"}`}>
             {online ? <Wifi className="h-3.5 w-3.5" /> : <WifiOff className="h-3.5 w-3.5" />} {online ? "Online" : "Offline"}
+          </span>
+          <span className={`hidden h-8 items-center gap-1.5 rounded-full border px-2.5 xl:inline-flex ${backendOk ? "border-emerald-500/40 text-emerald-300" : "border-red-500/50 text-red-300"}`}
+            title={backendOk ? "Connected to the ordering system" : "Cannot reach the ordering system"}>
+            <Cloud className="h-3.5 w-3.5" /> {backendOk ? "System" : "System down"}
+          </span>
+          <span className={`hidden h-8 items-center gap-1.5 rounded-full border px-2.5 xl:inline-flex ${kdsOnline > 0 ? "border-emerald-500/40 text-emerald-300" : "border-amber-500/40 text-amber-300"}`}
+            title={kdsOnline > 0 ? `${kdsOnline} kitchen display${kdsOnline === 1 ? "" : "s"} open` : "No kitchen display is open — tickets will still be saved"}>
+            <ChefHat className="h-3.5 w-3.5" /> {kdsOnline > 0 ? `KDS ${kdsOnline}` : "No KDS"}
           </span>
           <button onClick={() => setClosing(true)}
             className="hidden h-8 items-center gap-1.5 rounded-full border border-white/15 px-2.5 font-semibold text-white/70 hover:border-white/40 sm:inline-flex">
