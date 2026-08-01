@@ -511,12 +511,26 @@ function Till() {
                 ))}
               </div>
             )}
+            {!q && recentItems.length > 0 && (
+              <div>
+                <p className="mb-1.5 text-[10px] font-black uppercase tracking-widest text-white/35">Quick keys · recently used</p>
+                <div className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-1">
+                  {recentItems.map((i) => (
+                    <button key={i.id} onClick={() => tap(i)}
+                      className="shrink-0 rounded-xl border border-white/10 bg-neutral-900 px-3 py-2 text-left text-xs font-bold hover:border-primary active:scale-95">
+                      <span className="block max-w-[9rem] truncate">{i.name}</span>
+                      <span className="text-[11px] font-semibold text-primary">{money(i.price_cents)}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
 
           <div className="min-h-0 flex-1 overflow-y-auto p-3 pb-24 sm:p-4 lg:pb-4">
             <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
               {visible.map((i) => (
-                <button key={i.id} onClick={() => add(i)}
+                <button key={i.id} onClick={() => tap(i)}
                   className="group flex flex-col overflow-hidden rounded-2xl border border-white/10 bg-neutral-900 text-left transition hover:border-primary hover:bg-neutral-800 active:scale-[0.98]">
                   <div className="relative aspect-[4/3] w-full overflow-hidden bg-neutral-800">
                     {i.image_url ? (
