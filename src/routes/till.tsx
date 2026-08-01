@@ -793,7 +793,7 @@ function Till() {
       )}
       {voucherOpen && (
         <VoucherModal
-          onClose={() => { setVoucherOpen(false); postToDisplay(lines.length ? { type: "order" as const, lines: lines.map((l) => ({ id: l.id, name: l.name, price_cents: l.price_cents, qty: l.qty })), subtotal: total, voucher_cents: voucherApplied, discount_cents: jurorDiscount, due, fulfilment: type } : { type: "idle" }); }}
+          onClose={() => { setVoucherOpen(false); postToDisplay(lines.length ? { type: "order" as const, lines: lines.map((l) => ({ id: l.key, name: l.detail ? `${l.name} (${l.detail})` : l.name, price_cents: l.price_cents, qty: l.qty })), subtotal: total, voucher_cents: voucherApplied, discount_cents: jurorDiscount, due, fulfilment: type } : { type: "idle" }); }}
           onApply={(v) => { setVoucher(v); setVoucherOpen(false); }}
         />
       )}
