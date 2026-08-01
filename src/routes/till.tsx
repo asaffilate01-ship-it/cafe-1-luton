@@ -269,6 +269,11 @@ function Till() {
     return items.filter((i) => i.category_id === catId);
   }, [items, catId, q]);
 
+  const recentItems = useMemo(
+    () => recent.map((id) => items.find((i) => i.id === id)).filter((i): i is Item => Boolean(i)),
+    [recent, items],
+  );
+
   const total = lines.reduce((s, l) => s + l.price_cents * l.qty, 0);
   const count = lines.reduce((s, l) => s + l.qty, 0);
   const foodTotal = lines.reduce((s, l) => s + (l.is_beverage ? 0 : l.price_cents * l.qty), 0);
