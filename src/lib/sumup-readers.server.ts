@@ -61,6 +61,7 @@ export async function readerCheckout(input: {
   description?: string;
   reference?: string;
 }): Promise<{ client_transaction_id: string }> {
+  const affiliateKey = process.env["SUMUP_AFFILIATE_KEY"];
   const out = await call<{ data?: { client_transaction_id?: string } }>(
     merchantPath(`/${input.readerId}/checkout`),
     {
@@ -68,11 +69,15 @@ export async function readerCheckout(input: {
       body: JSON.stringify({
         total_amount: { value: input.amount_cents, currency: "GBP", minor_unit: 2 },
         description: input.description,
-        affiliate: {
-          key: env("SUMUP_AFFILIATE_KEY"),
-          app_id: "cafe1-till",
-          foreign_transaction_id: input.reference ?? crypto.randomUUID(),
-        },
+        ...(affiliateKey
+          ? {
+              affiliate: {
+                key: affiliateKey,
+                app_id: "cafe1-till",
+                foreign_transaction_id: input.reference ?? crypto.randomUUID(),
+              },
+            }
+          : {}),
       }),
     },
   );

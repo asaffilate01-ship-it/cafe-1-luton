@@ -95,12 +95,18 @@ export function OrderSetupGate({
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-[60] flex items-end justify-center bg-black/50 p-0 sm:items-center sm:p-4">
+    <div
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="order-setup-title"
+      onKeyDown={(e) => { if (e.key === "Escape" && dismissible) onClose?.(); }}
+      className="fixed inset-0 z-[60] flex items-end justify-center bg-black/50 p-0 sm:items-center sm:p-4"
+    >
       <div className="w-full max-w-lg overflow-hidden rounded-t-3xl bg-card shadow-2xl sm:rounded-3xl">
         <div className="flex items-center justify-between border-b border-border px-5 py-4">
           <div>
             <p className="text-xs font-medium uppercase tracking-widest text-primary">Cafe1</p>
-            <h2 className="font-display text-lg font-bold">
+            <h2 id="order-setup-title" className="font-display text-lg font-bold">
               {step === 1 ? "How would you like your order?" : "When?"}
             </h2>
           </div>
