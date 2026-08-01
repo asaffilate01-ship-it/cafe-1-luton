@@ -65,7 +65,6 @@ const SIDE_LABEL: Record<Side, string> = { jury: "Jury", judge: "Judge", public:
 const FULFIL: { id: Fulfilment; label: string; Icon: typeof ShoppingBag }[] = [
   { id: "dine_in", label: "Dine in", Icon: HandPlatter },
   { id: "collection", label: "Takeaway", Icon: ShoppingBag },
-  { id: "delivery", label: "Delivery", Icon: Bike },
 ];
 
 function TillPage() {
