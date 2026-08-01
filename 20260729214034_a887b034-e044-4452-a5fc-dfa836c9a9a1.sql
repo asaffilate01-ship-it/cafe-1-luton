@@ -1,2 +1,0 @@
-ALTER TABLE public.business_settings ALTER COLUMN delivery_radius_m SET DEFAULT 800;
-UPDATE public.business_settings SET delivery_radius_m = 800 WHERE delivery_radius_m IS NULL OR delivery_radius_m = 805;
