@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { askConfirm } from "@/components/confirm-dialog";
+import { askConfirm, askPrompt } from "@/components/confirm-dialog";
 import { AdminNav } from "@/components/admin-nav";
 import { RequireRole } from "@/components/require-role";
 import { signOutAndRedirect } from "@/lib/sign-out";
@@ -233,7 +233,14 @@ function KDS() {
         await setFulfil({ data: { order_id: id, type: "collection", table_number: null } });
         toast.success("Marked as pickup");
       } else {
-        const table = window.prompt("Table number (optional)") ?? "";
+        const table =
+          (await askPrompt({
+            title: "Mark as dine in",
+            description: "Add the table number so the runner knows where to take it.",
+            label: "Table number (optional)",
+            placeholder: "e.g. 4",
+            confirmLabel: "Mark dine in",
+          })) ?? "";
         await setFulfil({
           data: { order_id: id, type: "dine_in", table_number: table.trim() || null },
         });

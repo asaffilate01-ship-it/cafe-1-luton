@@ -8,6 +8,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { updateOrderStatus, markPaidManually, assignDriver, listDrivers } from "@/lib/orders.functions";
 import { refundOrder } from "@/lib/payments.functions";
 import { money } from "@/lib/format";
+import { askPrompt } from "@/components/confirm-dialog";
 import { toast } from "sonner";
 import { Printer, Check } from "lucide-react";
 import { useAlertOnIncrease, useNotificationPermission } from "@/hooks/use-order-alerts";
@@ -98,10 +99,14 @@ function Admin() {
   }
 
   async function doRefund(o: OrderRow) {
-    const raw = window.prompt(
-      `Refund order #${o.order_number}. Leave blank for the full ${money(o.total_cents)}, or enter a partial amount in £.`,
-      "",
-    );
+    const raw = await askPrompt({
+      title: `Refund order #${o.order_number}`,
+      description: `Leave blank to refund the full ${money(o.total_cents)}, or enter a partial amount in £.`,
+      label: "Refund amount (£)",
+      placeholder: money(o.total_cents).replace("£", ""),
+      inputMode: "decimal",
+      confirmLabel: "Refund",
+    });
     if (raw === null) return;
     const trimmed = raw.trim();
     let amount_cents: number | undefined;
