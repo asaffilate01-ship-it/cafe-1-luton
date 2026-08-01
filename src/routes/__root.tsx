@@ -14,6 +14,7 @@ import { reportLovableError } from "../lib/lovable-error-reporting";
 import { CookieBanner } from "../components/cookie-banner";
 import { MobileTabBar } from "../components/mobile-tabbar";
 import { BackToTop } from "../components/back-to-top";
+import { ConfirmHost } from "../components/confirm-dialog";
 import { registerServiceWorker } from "../lib/register-sw";
 
 function NotFoundComponent() {
@@ -155,6 +156,7 @@ function RootComponent() {
       <Outlet />
       <CookieBanner />
       <BackToTop />
+      <ConfirmHost />
       <MobileTabBar />
     </QueryClientProvider>
   );
