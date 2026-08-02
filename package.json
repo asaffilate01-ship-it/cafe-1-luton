@@ -13,7 +13,9 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "format": "prettier --write .",
-    "check": "npm run typecheck && npm run lint && npm run test && npm run build"
+    "check": "npm run typecheck && npm run lint && npm run test && npm run build",
+    "release:guard": "node scripts/release-guard.mjs",
+    "smoke:production": "node scripts/verify-production.mjs"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",

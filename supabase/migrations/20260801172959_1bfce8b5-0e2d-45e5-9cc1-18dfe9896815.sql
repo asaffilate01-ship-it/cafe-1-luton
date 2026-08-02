@@ -1,1 +1,1 @@
-DROP FUNCTION IF EXISTS public.__tmp_apply_hardening(text);
+-- Compatibility marker for the unused temporary migration helper.

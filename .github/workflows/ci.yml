@@ -20,16 +20,19 @@ jobs:
     timeout-minutes: 20
     steps:
       - name: Check out repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Use Node.js 22
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v7
         with:
           node-version: 22
           cache: npm
 
       - name: Clean install
         run: npm ci
+
+      - name: Verify release integrity
+        run: npm run release:guard
 
       - name: Typecheck, lint, test and build
         run: npm run check
@@ -43,18 +46,22 @@ jobs:
     timeout-minutes: 25
     steps:
       - name: Check out repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Install Supabase CLI
-        uses: supabase/setup-cli@v1
+        uses: supabase/setup-cli@v3
         with:
-          version: latest
+          version: 2.111.0
 
-      - name: Start local Supabase
-        run: supabase start
+      - name: Start local database and apply every migration
+        run: supabase db start
 
       - name: Rebuild database from every migration
         run: supabase db reset
 
       - name: Run database assertions
         run: supabase test db
+
+      - name: Stop local database
+        if: always()
+        run: supabase stop --no-backup

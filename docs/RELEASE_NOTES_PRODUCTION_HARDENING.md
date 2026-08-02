@@ -28,3 +28,11 @@ This release combines the hardened payment/till foundation, Operations v2 and th
 ## Compatibility
 
 Run Node.js 22 or newer. Apply migrations in timestamp order and deploy the application and database changes together because staff menu screens now retrieve operational fields through an authenticated server function.
+
+## Release-gate phase 2
+
+- Repairs clean Supabase rebuilds by converting the unused environment-specific migration helper into compatibility no-ops.
+- Keeps the Lovable-generated go-live migration as the single executable copy and preserves the later duplicate timestamp as a no-op.
+- Adds a repository release guard for tracked environment files, browser keys, legacy public postcode copy and executable compatibility migrations.
+- Pins Supabase CLI 2.111.0, updates GitHub actions to their Node 24-compatible majors and uses the database-only Supabase runtime in CI.
+- Adds a manual post-deployment smoke workflow that verifies public routes, protected caching, security headers and postcode consistency.
