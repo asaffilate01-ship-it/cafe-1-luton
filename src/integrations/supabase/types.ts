@@ -278,6 +278,7 @@ export type Database = {
           min_order_cents: number
           name: string
           prep_minutes: number
+          site_id: string
           updated_at: string
         }
         Insert: {
@@ -295,6 +296,7 @@ export type Database = {
           min_order_cents?: number
           name?: string
           prep_minutes?: number
+          site_id?: string
           updated_at?: string
         }
         Update: {
@@ -312,9 +314,53 @@ export type Database = {
           min_order_cents?: number
           name?: string
           prep_minutes?: number
+          site_id?: string
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "business_settings_site_id_fkey"
+            columns: ["site_id"]
+            isOneToOne: false
+            referencedRelation: "sites"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      checklist_completions: {
+        Row: {
+          business_date: string
+          checklist_id: string
+          completed_at: string
+          completed_by: string
+          id: string
+          note: string | null
+        }
+        Insert: {
+          business_date?: string
+          checklist_id: string
+          completed_at?: string
+          completed_by: string
+          id?: string
+          note?: string | null
+        }
+        Update: {
+          business_date?: string
+          checklist_id?: string
+          completed_at?: string
+          completed_by?: string
+          id?: string
+          note?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "checklist_completions_checklist_id_fkey"
+            columns: ["checklist_id"]
+            isOneToOne: false
+            referencedRelation: "operational_checklists"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       code_attempts: {
         Row: {
@@ -370,6 +416,141 @@ export type Database = {
         }
         Relationships: []
       }
+      customer_favourites: {
+        Row: {
+          created_at: string
+          customer_id: string
+          menu_item_id: string
+        }
+        Insert: {
+          created_at?: string
+          customer_id: string
+          menu_item_id: string
+        }
+        Update: {
+          created_at?: string
+          customer_id?: string
+          menu_item_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "customer_favourites_menu_item_id_fkey"
+            columns: ["menu_item_id"]
+            isOneToOne: false
+            referencedRelation: "menu_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      customer_feedback: {
+        Row: {
+          comment: string | null
+          created_at: string
+          customer_id: string | null
+          id: string
+          order_id: string
+          rating: number
+          status: string
+        }
+        Insert: {
+          comment?: string | null
+          created_at?: string
+          customer_id?: string | null
+          id?: string
+          order_id: string
+          rating: number
+          status?: string
+        }
+        Update: {
+          comment?: string | null
+          created_at?: string
+          customer_id?: string | null
+          id?: string
+          order_id?: string
+          rating?: number
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "customer_feedback_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: true
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      daily_control_summaries: {
+        Row: {
+          account_sales_cents: number
+          business_date: string
+          card_sales_cents: number
+          cash_sales_cents: number
+          discounts_cents: number
+          generated_at: string
+          generated_by: string | null
+          gross_sales_cents: number
+          id: string
+          net_sales_cents: number
+          order_count: number
+          refunds_cents: number
+          signed_off_at: string | null
+          signed_off_by: string | null
+          site_id: string
+          till_variance_cents: number
+          voucher_cents: number
+          waste_value_cents: number
+        }
+        Insert: {
+          account_sales_cents?: number
+          business_date: string
+          card_sales_cents?: number
+          cash_sales_cents?: number
+          discounts_cents?: number
+          generated_at?: string
+          generated_by?: string | null
+          gross_sales_cents?: number
+          id?: string
+          net_sales_cents?: number
+          order_count?: number
+          refunds_cents?: number
+          signed_off_at?: string | null
+          signed_off_by?: string | null
+          site_id: string
+          till_variance_cents?: number
+          voucher_cents?: number
+          waste_value_cents?: number
+        }
+        Update: {
+          account_sales_cents?: number
+          business_date?: string
+          card_sales_cents?: number
+          cash_sales_cents?: number
+          discounts_cents?: number
+          generated_at?: string
+          generated_by?: string | null
+          gross_sales_cents?: number
+          id?: string
+          net_sales_cents?: number
+          order_count?: number
+          refunds_cents?: number
+          signed_off_at?: string | null
+          signed_off_by?: string | null
+          site_id?: string
+          till_variance_cents?: number
+          voucher_cents?: number
+          waste_value_cents?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "daily_control_summaries_site_id_fkey"
+            columns: ["site_id"]
+            isOneToOne: false
+            referencedRelation: "sites"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       driver_locations: {
         Row: {
           accuracy: number | null
@@ -414,6 +595,150 @@ export type Database = {
           },
         ]
       }
+      inventory_items: {
+        Row: {
+          active: boolean
+          allergens: string[]
+          barcode: string | null
+          cost_per_unit_cents: number
+          created_at: string
+          id: string
+          name: string
+          par_level: number
+          quantity_on_hand: number
+          reorder_level: number
+          site_id: string
+          sku: string
+          supplier_code: string | null
+          unit: string
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          allergens?: string[]
+          barcode?: string | null
+          cost_per_unit_cents?: number
+          created_at?: string
+          id?: string
+          name: string
+          par_level?: number
+          quantity_on_hand?: number
+          reorder_level?: number
+          site_id: string
+          sku: string
+          supplier_code?: string | null
+          unit: string
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          allergens?: string[]
+          barcode?: string | null
+          cost_per_unit_cents?: number
+          created_at?: string
+          id?: string
+          name?: string
+          par_level?: number
+          quantity_on_hand?: number
+          reorder_level?: number
+          site_id?: string
+          sku?: string
+          supplier_code?: string | null
+          unit?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "inventory_items_site_id_fkey"
+            columns: ["site_id"]
+            isOneToOne: false
+            referencedRelation: "sites"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      juror_attendance_challenges: {
+        Row: {
+          consumed_at: string | null
+          consumed_voucher_holder_id: string | null
+          created_at: string
+          created_by: string | null
+          expires_at: string
+          id: string
+          room: string
+          token_hash: string
+        }
+        Insert: {
+          consumed_at?: string | null
+          consumed_voucher_holder_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          expires_at: string
+          id?: string
+          room: string
+          token_hash: string
+        }
+        Update: {
+          consumed_at?: string | null
+          consumed_voucher_holder_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          expires_at?: string
+          id?: string
+          room?: string
+          token_hash?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "juror_attendance_challenges_consumed_voucher_holder_id_fkey"
+            columns: ["consumed_voucher_holder_id"]
+            isOneToOne: false
+            referencedRelation: "voucher_holders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      kds_stations: {
+        Row: {
+          active: boolean
+          code: string
+          colour: string
+          id: string
+          name: string
+          site_id: string
+          sort_order: number
+          target_seconds: number
+        }
+        Insert: {
+          active?: boolean
+          code: string
+          colour?: string
+          id?: string
+          name: string
+          site_id: string
+          sort_order?: number
+          target_seconds?: number
+        }
+        Update: {
+          active?: boolean
+          code?: string
+          colour?: string
+          id?: string
+          name?: string
+          site_id?: string
+          sort_order?: number
+          target_seconds?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "kds_stations_site_id_fkey"
+            columns: ["site_id"]
+            isOneToOne: false
+            referencedRelation: "sites"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       menu_categories: {
         Row: {
           active: boolean
@@ -421,6 +746,7 @@ export type Database = {
           description: string | null
           id: string
           name: string
+          site_id: string
           sort_order: number
         }
         Insert: {
@@ -429,6 +755,7 @@ export type Database = {
           description?: string | null
           id?: string
           name: string
+          site_id?: string
           sort_order?: number
         }
         Update: {
@@ -437,16 +764,29 @@ export type Database = {
           description?: string | null
           id?: string
           name?: string
+          site_id?: string
           sort_order?: number
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "menu_categories_site_id_fkey"
+            columns: ["site_id"]
+            isOneToOne: false
+            referencedRelation: "sites"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       menu_items: {
         Row: {
           active: boolean
+          allergens: string[]
+          barcode: string | null
           category_id: string | null
+          cost_cents: number
           created_at: string
           description: string | null
+          dietary_tags: string[]
           group_label: string | null
           id: string
           image_url: string | null
@@ -456,15 +796,23 @@ export type Database = {
           loyalty_drink: boolean
           name: string
           needs_cooking: boolean
+          portion_note: string | null
+          prep_seconds: number
           price_cents: number
+          site_id: string
           sort_order: number
+          station_code: string | null
           updated_at: string
         }
         Insert: {
           active?: boolean
+          allergens?: string[]
+          barcode?: string | null
           category_id?: string | null
+          cost_cents?: number
           created_at?: string
           description?: string | null
+          dietary_tags?: string[]
           group_label?: string | null
           id?: string
           image_url?: string | null
@@ -474,15 +822,23 @@ export type Database = {
           loyalty_drink?: boolean
           name: string
           needs_cooking?: boolean
+          portion_note?: string | null
+          prep_seconds?: number
           price_cents: number
+          site_id?: string
           sort_order?: number
+          station_code?: string | null
           updated_at?: string
         }
         Update: {
           active?: boolean
+          allergens?: string[]
+          barcode?: string | null
           category_id?: string | null
+          cost_cents?: number
           created_at?: string
           description?: string | null
+          dietary_tags?: string[]
           group_label?: string | null
           id?: string
           image_url?: string | null
@@ -492,8 +848,12 @@ export type Database = {
           loyalty_drink?: boolean
           name?: string
           needs_cooking?: boolean
+          portion_note?: string | null
+          prep_seconds?: number
           price_cents?: number
+          site_id?: string
           sort_order?: number
+          station_code?: string | null
           updated_at?: string
         }
         Relationships: [
@@ -502,6 +862,13 @@ export type Database = {
             columns: ["category_id"]
             isOneToOne: false
             referencedRelation: "menu_categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "menu_items_site_id_fkey"
+            columns: ["site_id"]
+            isOneToOne: false
+            referencedRelation: "sites"
             referencedColumns: ["id"]
           },
         ]
@@ -562,6 +929,47 @@ export type Database = {
             columns: ["item_id"]
             isOneToOne: false
             referencedRelation: "menu_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      operational_checklists: {
+        Row: {
+          active: boolean
+          cadence: string
+          created_at: string
+          description: string | null
+          id: string
+          site_id: string
+          sort_order: number
+          title: string
+        }
+        Insert: {
+          active?: boolean
+          cadence: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          site_id: string
+          sort_order?: number
+          title: string
+        }
+        Update: {
+          active?: boolean
+          cadence?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          site_id?: string
+          sort_order?: number
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "operational_checklists_site_id_fkey"
+            columns: ["site_id"]
+            isOneToOne: false
+            referencedRelation: "sites"
             referencedColumns: ["id"]
           },
         ]
@@ -746,11 +1154,13 @@ export type Database = {
           guest_token: string
           id: string
           idempotency_key: string | null
+          inventory_posted_at: string | null
           juror_discount_cents: number
           jury_room: string | null
           loyalty_awarded: boolean
           loyalty_free_drinks_used: number
           loyalty_stamps_pending: number
+          operator_id: string | null
           order_number: number
           payment_method: string
           payment_status: Database["public"]["Enums"]["payment_status"]
@@ -764,6 +1174,7 @@ export type Database = {
           refunded_cents: number
           schedule_mode: string
           scheduled_for: string | null
+          site_id: string
           source: string
           status: Database["public"]["Enums"]["order_status"]
           subtotal_cents: number
@@ -777,6 +1188,7 @@ export type Database = {
           tracking_token_hash: string | null
           type: Database["public"]["Enums"]["order_type"]
           updated_at: string
+          void_reason: string | null
           voucher_cents: number
           voucher_holder_id: string | null
         }
@@ -801,11 +1213,13 @@ export type Database = {
           guest_token?: string
           id?: string
           idempotency_key?: string | null
+          inventory_posted_at?: string | null
           juror_discount_cents?: number
           jury_room?: string | null
           loyalty_awarded?: boolean
           loyalty_free_drinks_used?: number
           loyalty_stamps_pending?: number
+          operator_id?: string | null
           order_number?: number
           payment_method?: string
           payment_status?: Database["public"]["Enums"]["payment_status"]
@@ -819,6 +1233,7 @@ export type Database = {
           refunded_cents?: number
           schedule_mode?: string
           scheduled_for?: string | null
+          site_id?: string
           source?: string
           status?: Database["public"]["Enums"]["order_status"]
           subtotal_cents?: number
@@ -832,6 +1247,7 @@ export type Database = {
           tracking_token_hash?: string | null
           type: Database["public"]["Enums"]["order_type"]
           updated_at?: string
+          void_reason?: string | null
           voucher_cents?: number
           voucher_holder_id?: string | null
         }
@@ -856,11 +1272,13 @@ export type Database = {
           guest_token?: string
           id?: string
           idempotency_key?: string | null
+          inventory_posted_at?: string | null
           juror_discount_cents?: number
           jury_room?: string | null
           loyalty_awarded?: boolean
           loyalty_free_drinks_used?: number
           loyalty_stamps_pending?: number
+          operator_id?: string | null
           order_number?: number
           payment_method?: string
           payment_status?: Database["public"]["Enums"]["payment_status"]
@@ -874,6 +1292,7 @@ export type Database = {
           refunded_cents?: number
           schedule_mode?: string
           scheduled_for?: string | null
+          site_id?: string
           source?: string
           status?: Database["public"]["Enums"]["order_status"]
           subtotal_cents?: number
@@ -887,6 +1306,7 @@ export type Database = {
           tracking_token_hash?: string | null
           type?: Database["public"]["Enums"]["order_type"]
           updated_at?: string
+          void_reason?: string | null
           voucher_cents?: number
           voucher_holder_id?: string | null
         }
@@ -896,6 +1316,13 @@ export type Database = {
             columns: ["account_id"]
             isOneToOne: false
             referencedRelation: "accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "orders_site_id_fkey"
+            columns: ["site_id"]
+            isOneToOne: false
+            referencedRelation: "sites"
             referencedColumns: ["id"]
           },
           {
@@ -1147,6 +1574,503 @@ export type Database = {
         }
         Relationships: []
       }
+      purchase_order_items: {
+        Row: {
+          created_at: string
+          id: string
+          inventory_item_id: string
+          ordered_quantity: number
+          purchase_order_id: string
+          received_quantity: number
+          unit_cost_cents: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          inventory_item_id: string
+          ordered_quantity: number
+          purchase_order_id: string
+          received_quantity?: number
+          unit_cost_cents?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          inventory_item_id?: string
+          ordered_quantity?: number
+          purchase_order_id?: string
+          received_quantity?: number
+          unit_cost_cents?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "purchase_order_items_inventory_item_id_fkey"
+            columns: ["inventory_item_id"]
+            isOneToOne: false
+            referencedRelation: "inventory_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "purchase_order_items_purchase_order_id_fkey"
+            columns: ["purchase_order_id"]
+            isOneToOne: false
+            referencedRelation: "purchase_orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      purchase_orders: {
+        Row: {
+          created_at: string
+          expected_on: string | null
+          id: string
+          note: string | null
+          ordered_at: string | null
+          ordered_by: string | null
+          received_at: string | null
+          received_by: string | null
+          site_id: string
+          status: string
+          supplier_id: string | null
+          supplier_reference: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          expected_on?: string | null
+          id?: string
+          note?: string | null
+          ordered_at?: string | null
+          ordered_by?: string | null
+          received_at?: string | null
+          received_by?: string | null
+          site_id: string
+          status?: string
+          supplier_id?: string | null
+          supplier_reference?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          expected_on?: string | null
+          id?: string
+          note?: string | null
+          ordered_at?: string | null
+          ordered_by?: string | null
+          received_at?: string | null
+          received_by?: string | null
+          site_id?: string
+          status?: string
+          supplier_id?: string | null
+          supplier_reference?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "purchase_orders_site_id_fkey"
+            columns: ["site_id"]
+            isOneToOne: false
+            referencedRelation: "sites"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "purchase_orders_supplier_id_fkey"
+            columns: ["supplier_id"]
+            isOneToOne: false
+            referencedRelation: "suppliers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      recipe_components: {
+        Row: {
+          created_at: string
+          id: string
+          inventory_item_id: string
+          menu_item_id: string
+          quantity: number
+          updated_at: string
+          wastage_percent: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          inventory_item_id: string
+          menu_item_id: string
+          quantity: number
+          updated_at?: string
+          wastage_percent?: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          inventory_item_id?: string
+          menu_item_id?: string
+          quantity?: number
+          updated_at?: string
+          wastage_percent?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "recipe_components_inventory_item_id_fkey"
+            columns: ["inventory_item_id"]
+            isOneToOne: false
+            referencedRelation: "inventory_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "recipe_components_menu_item_id_fkey"
+            columns: ["menu_item_id"]
+            isOneToOne: false
+            referencedRelation: "menu_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sites: {
+        Row: {
+          active: boolean
+          code: string
+          created_at: string
+          id: string
+          legal_name: string
+          marketplace_delivery_enabled: boolean
+          name: string
+          ordering_modes: string[]
+          own_delivery_enabled: boolean
+          postcode: string | null
+          timezone: string
+          trading_name: string
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          code: string
+          created_at?: string
+          id?: string
+          legal_name: string
+          marketplace_delivery_enabled?: boolean
+          name: string
+          ordering_modes?: string[]
+          own_delivery_enabled?: boolean
+          postcode?: string | null
+          timezone?: string
+          trading_name: string
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          code?: string
+          created_at?: string
+          id?: string
+          legal_name?: string
+          marketplace_delivery_enabled?: boolean
+          name?: string
+          ordering_modes?: string[]
+          own_delivery_enabled?: boolean
+          postcode?: string | null
+          timezone?: string
+          trading_name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      staff_time_entries: {
+        Row: {
+          approved_at: string | null
+          approved_by: string | null
+          break_minutes: number
+          clocked_in_at: string
+          clocked_out_at: string | null
+          created_at: string
+          id: string
+          note: string | null
+          site_id: string
+          staff_id: string
+        }
+        Insert: {
+          approved_at?: string | null
+          approved_by?: string | null
+          break_minutes?: number
+          clocked_in_at?: string
+          clocked_out_at?: string | null
+          created_at?: string
+          id?: string
+          note?: string | null
+          site_id: string
+          staff_id: string
+        }
+        Update: {
+          approved_at?: string | null
+          approved_by?: string | null
+          break_minutes?: number
+          clocked_in_at?: string
+          clocked_out_at?: string | null
+          created_at?: string
+          id?: string
+          note?: string | null
+          site_id?: string
+          staff_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "staff_time_entries_site_id_fkey"
+            columns: ["site_id"]
+            isOneToOne: false
+            referencedRelation: "sites"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      stock_movements: {
+        Row: {
+          actor_id: string | null
+          created_at: string
+          id: string
+          inventory_item_id: string
+          movement_type: string
+          quantity_delta: number
+          reason: string
+          reference_id: string | null
+          reference_type: string | null
+          site_id: string
+          unit_cost_cents: number
+        }
+        Insert: {
+          actor_id?: string | null
+          created_at?: string
+          id?: string
+          inventory_item_id: string
+          movement_type: string
+          quantity_delta: number
+          reason: string
+          reference_id?: string | null
+          reference_type?: string | null
+          site_id: string
+          unit_cost_cents?: number
+        }
+        Update: {
+          actor_id?: string | null
+          created_at?: string
+          id?: string
+          inventory_item_id?: string
+          movement_type?: string
+          quantity_delta?: number
+          reason?: string
+          reference_id?: string | null
+          reference_type?: string | null
+          site_id?: string
+          unit_cost_cents?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "stock_movements_inventory_item_id_fkey"
+            columns: ["inventory_item_id"]
+            isOneToOne: false
+            referencedRelation: "inventory_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "stock_movements_site_id_fkey"
+            columns: ["site_id"]
+            isOneToOne: false
+            referencedRelation: "sites"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      stocktake_lines: {
+        Row: {
+          counted_quantity: number | null
+          expected_quantity: number
+          id: string
+          inventory_item_id: string
+          note: string | null
+          stocktake_id: string
+          variance_quantity: number | null
+          variance_value_cents: number | null
+        }
+        Insert: {
+          counted_quantity?: number | null
+          expected_quantity: number
+          id?: string
+          inventory_item_id: string
+          note?: string | null
+          stocktake_id: string
+          variance_quantity?: number | null
+          variance_value_cents?: number | null
+        }
+        Update: {
+          counted_quantity?: number | null
+          expected_quantity?: number
+          id?: string
+          inventory_item_id?: string
+          note?: string | null
+          stocktake_id?: string
+          variance_quantity?: number | null
+          variance_value_cents?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "stocktake_lines_inventory_item_id_fkey"
+            columns: ["inventory_item_id"]
+            isOneToOne: false
+            referencedRelation: "inventory_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "stocktake_lines_stocktake_id_fkey"
+            columns: ["stocktake_id"]
+            isOneToOne: false
+            referencedRelation: "stocktakes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      stocktakes: {
+        Row: {
+          completed_at: string | null
+          completed_by: string | null
+          id: string
+          note: string | null
+          opened_at: string
+          opened_by: string | null
+          site_id: string
+          status: string
+          title: string
+        }
+        Insert: {
+          completed_at?: string | null
+          completed_by?: string | null
+          id?: string
+          note?: string | null
+          opened_at?: string
+          opened_by?: string | null
+          site_id: string
+          status?: string
+          title: string
+        }
+        Update: {
+          completed_at?: string | null
+          completed_by?: string | null
+          id?: string
+          note?: string | null
+          opened_at?: string
+          opened_by?: string | null
+          site_id?: string
+          status?: string
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "stocktakes_site_id_fkey"
+            columns: ["site_id"]
+            isOneToOne: false
+            referencedRelation: "sites"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      suppliers: {
+        Row: {
+          account_reference: string | null
+          active: boolean
+          contact_name: string | null
+          created_at: string
+          email: string | null
+          id: string
+          lead_days: number
+          name: string
+          phone: string | null
+          site_id: string
+          updated_at: string
+        }
+        Insert: {
+          account_reference?: string | null
+          active?: boolean
+          contact_name?: string | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          lead_days?: number
+          name: string
+          phone?: string | null
+          site_id: string
+          updated_at?: string
+        }
+        Update: {
+          account_reference?: string | null
+          active?: boolean
+          contact_name?: string | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          lead_days?: number
+          name?: string
+          phone?: string | null
+          site_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "suppliers_site_id_fkey"
+            columns: ["site_id"]
+            isOneToOne: false
+            referencedRelation: "sites"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      system_alerts: {
+        Row: {
+          category: string
+          created_at: string
+          detail: string | null
+          fingerprint: string | null
+          id: string
+          resolved_at: string | null
+          resolved_by: string | null
+          severity: string
+          site_id: string | null
+          title: string
+        }
+        Insert: {
+          category: string
+          created_at?: string
+          detail?: string | null
+          fingerprint?: string | null
+          id?: string
+          resolved_at?: string | null
+          resolved_by?: string | null
+          severity: string
+          site_id?: string | null
+          title: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          detail?: string | null
+          fingerprint?: string | null
+          id?: string
+          resolved_at?: string | null
+          resolved_by?: string | null
+          severity?: string
+          site_id?: string | null
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "system_alerts_site_id_fkey"
+            columns: ["site_id"]
+            isOneToOne: false
+            referencedRelation: "sites"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       till_cash_events: {
         Row: {
           actor_id: string
@@ -1206,6 +2130,7 @@ export type Database = {
           id: string
           opened_at: string
           opening_float_cents: number
+          site_id: string
           staff_id: string
           terminal: string
         }
@@ -1219,6 +2144,7 @@ export type Database = {
           id?: string
           opened_at?: string
           opening_float_cents: number
+          site_id?: string
           staff_id: string
           terminal: string
         }
@@ -1232,10 +2158,63 @@ export type Database = {
           id?: string
           opened_at?: string
           opening_float_cents?: number
+          site_id?: string
           staff_id?: string
           terminal?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "till_shifts_site_id_fkey"
+            columns: ["site_id"]
+            isOneToOne: false
+            referencedRelation: "sites"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      trusted_devices: {
+        Row: {
+          created_at: string
+          device_name: string
+          device_type: string
+          enrolled_by: string | null
+          id: string
+          last_seen_at: string | null
+          revoked_at: string | null
+          site_id: string | null
+          token_hash: string
+        }
+        Insert: {
+          created_at?: string
+          device_name: string
+          device_type: string
+          enrolled_by?: string | null
+          id?: string
+          last_seen_at?: string | null
+          revoked_at?: string | null
+          site_id?: string | null
+          token_hash: string
+        }
+        Update: {
+          created_at?: string
+          device_name?: string
+          device_type?: string
+          enrolled_by?: string | null
+          id?: string
+          last_seen_at?: string | null
+          revoked_at?: string | null
+          site_id?: string | null
+          token_hash?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "trusted_devices_site_id_fkey"
+            columns: ["site_id"]
+            isOneToOne: false
+            referencedRelation: "sites"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_roles: {
         Row: {
@@ -1489,11 +2468,13 @@ export type Database = {
           guest_token: string
           id: string
           idempotency_key: string | null
+          inventory_posted_at: string | null
           juror_discount_cents: number
           jury_room: string | null
           loyalty_awarded: boolean
           loyalty_free_drinks_used: number
           loyalty_stamps_pending: number
+          operator_id: string | null
           order_number: number
           payment_method: string
           payment_status: Database["public"]["Enums"]["payment_status"]
@@ -1507,6 +2488,7 @@ export type Database = {
           refunded_cents: number
           schedule_mode: string
           scheduled_for: string | null
+          site_id: string
           source: string
           status: Database["public"]["Enums"]["order_status"]
           subtotal_cents: number
@@ -1520,6 +2502,7 @@ export type Database = {
           tracking_token_hash: string | null
           type: Database["public"]["Enums"]["order_type"]
           updated_at: string
+          void_reason: string | null
           voucher_cents: number
           voucher_holder_id: string | null
         }
@@ -1542,6 +2525,7 @@ export type Database = {
           id: string
           opened_at: string
           opening_float_cents: number
+          site_id: string
           staff_id: string
           terminal: string
         }
@@ -1575,11 +2559,13 @@ export type Database = {
           guest_token: string
           id: string
           idempotency_key: string | null
+          inventory_posted_at: string | null
           juror_discount_cents: number
           jury_room: string | null
           loyalty_awarded: boolean
           loyalty_free_drinks_used: number
           loyalty_stamps_pending: number
+          operator_id: string | null
           order_number: number
           payment_method: string
           payment_status: Database["public"]["Enums"]["payment_status"]
@@ -1593,6 +2579,7 @@ export type Database = {
           refunded_cents: number
           schedule_mode: string
           scheduled_for: string | null
+          site_id: string
           source: string
           status: Database["public"]["Enums"]["order_status"]
           subtotal_cents: number
@@ -1606,6 +2593,7 @@ export type Database = {
           tracking_token_hash: string | null
           type: Database["public"]["Enums"]["order_type"]
           updated_at: string
+          void_reason: string | null
           voucher_cents: number
           voucher_holder_id: string | null
         }
@@ -1640,11 +2628,13 @@ export type Database = {
           guest_token: string
           id: string
           idempotency_key: string | null
+          inventory_posted_at: string | null
           juror_discount_cents: number
           jury_room: string | null
           loyalty_awarded: boolean
           loyalty_free_drinks_used: number
           loyalty_stamps_pending: number
+          operator_id: string | null
           order_number: number
           payment_method: string
           payment_status: Database["public"]["Enums"]["payment_status"]
@@ -1658,6 +2648,7 @@ export type Database = {
           refunded_cents: number
           schedule_mode: string
           scheduled_for: string | null
+          site_id: string
           source: string
           status: Database["public"]["Enums"]["order_status"]
           subtotal_cents: number
@@ -1671,6 +2662,7 @@ export type Database = {
           tracking_token_hash: string | null
           type: Database["public"]["Enums"]["order_type"]
           updated_at: string
+          void_reason: string | null
           voucher_cents: number
           voucher_holder_id: string | null
         }
@@ -1735,6 +2727,7 @@ export type Database = {
           id: string
           opened_at: string
           opening_float_cents: number
+          site_id: string
           staff_id: string
           terminal: string
         }
@@ -1866,11 +2859,13 @@ export type Database = {
           guest_token: string
           id: string
           idempotency_key: string | null
+          inventory_posted_at: string | null
           juror_discount_cents: number
           jury_room: string | null
           loyalty_awarded: boolean
           loyalty_free_drinks_used: number
           loyalty_stamps_pending: number
+          operator_id: string | null
           order_number: number
           payment_method: string
           payment_status: Database["public"]["Enums"]["payment_status"]
@@ -1884,6 +2879,7 @@ export type Database = {
           refunded_cents: number
           schedule_mode: string
           scheduled_for: string | null
+          site_id: string
           source: string
           status: Database["public"]["Enums"]["order_status"]
           subtotal_cents: number
@@ -1897,6 +2893,7 @@ export type Database = {
           tracking_token_hash: string | null
           type: Database["public"]["Enums"]["order_type"]
           updated_at: string
+          void_reason: string | null
           voucher_cents: number
           voucher_holder_id: string | null
         }
