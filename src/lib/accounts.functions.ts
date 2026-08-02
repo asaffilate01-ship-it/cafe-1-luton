@@ -3,7 +3,7 @@ import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 /** Public: verify a tab access code — returns account id + name, or null. */
 export const verifyTabCode = createServerFn({ method: "POST" })
-  .inputValidator((d: unknown) => z.object({ code: z.string().min(3).max(40) }).parse(d))
+  .validator((d: unknown) => z.object({ code: z.string().min(3).max(40) }).parse(d))
   .handler(async ({ data }) => {
     const { checkThrottle, recordAttempt, requestIdentity } = await import("./rate-limit.server");
     const identity = requestIdentity();
@@ -96,7 +96,7 @@ export const listAccounts = createServerFn({ method: "GET" })
 
 export const createAccount = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: unknown) =>
+  .validator((d: unknown) =>
     z
       .object({
         name: z.string().min(1).max(120),
@@ -136,7 +136,7 @@ export const createAccount = createServerFn({ method: "POST" })
 
 export const updateAccount = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: unknown) =>
+  .validator((d: unknown) =>
     z
       .object({
         id: z.string().uuid(),
@@ -156,7 +156,7 @@ export const updateAccount = createServerFn({ method: "POST" })
 
 export const regenerateAccountCode = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: unknown) => z.object({ id: z.string().uuid() }).parse(d))
+  .validator((d: unknown) => z.object({ id: z.string().uuid() }).parse(d))
   .handler(async ({ data, context }) => {
     await requireAdmin(context);
     for (let attempt = 0; attempt < 5; attempt++) {
@@ -173,7 +173,7 @@ export const regenerateAccountCode = createServerFn({ method: "POST" })
 
 export const getAccountStatement = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: unknown) => z.object({ account_id: z.string().uuid() }).parse(d))
+  .validator((d: unknown) => z.object({ account_id: z.string().uuid() }).parse(d))
   .handler(async ({ data, context }) => {
     const { data: account, error: aErr } = await context.supabase
       .from("accounts")
@@ -213,7 +213,7 @@ export const getAccountStatement = createServerFn({ method: "GET" })
 /** Record a part-payment (or full payment) against a house account. */
 export const recordAccountPayment = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: unknown) =>
+  .validator((d: unknown) =>
     z
       .object({
         account_id: z.string().uuid(),
@@ -244,7 +244,7 @@ export const recordAccountPayment = createServerFn({ method: "POST" })
 
 export const deleteAccountPayment = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: unknown) => z.object({ id: z.string().uuid() }).parse(d))
+  .validator((d: unknown) => z.object({ id: z.string().uuid() }).parse(d))
   .handler(async ({ data, context }) => {
     await requireAdmin(context);
     const { error } = await context.supabase.from("account_payments").delete().eq("id", data.id);
@@ -255,7 +255,7 @@ export const deleteAccountPayment = createServerFn({ method: "POST" })
 /** Mark all currently-on-tab orders for an account as paid (settlement). */
 export const settleAccount = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: unknown) => z.object({ account_id: z.string().uuid() }).parse(d))
+  .validator((d: unknown) => z.object({ account_id: z.string().uuid() }).parse(d))
   .handler(async ({ data, context }) => {
     await requireAdmin(context);
     const { error } = await context.supabase

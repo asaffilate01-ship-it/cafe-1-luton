@@ -21,7 +21,7 @@ Read [the release notes](docs/RELEASE_NOTES_PRODUCTION_HARDENING.md) for the ful
 - Customer favourites, allergen/dietary filtering, order feedback and one-use juror attendance QR controls
 - Location/legal-entity configuration, delivery-channel switches, system alerts and manager audit views
 
-Read [the operations v2 guide](docs/OPERATIONS_CONTROLS_V2.md) before applying `20260802090000_operations_controls_v2.sql`.
+Read [the operations v2 guide](docs/OPERATIONS_CONTROLS_V2.md) before applying the release migrations. The follow-up `20260802110000_go_live_release.sql` repairs migration history, protects internal menu fields, enforces manager AAL2 and confirms AL1 3JU.
 
 ## Local setup
 
@@ -54,10 +54,10 @@ Useful commands:
 
 ## Deployment order
 
-1. Back up Supabase and apply both release migrations in timestamp order.
+1. Back up Supabase and apply all release migrations in timestamp order.
 2. Configure all production values from `.env.example` in the host secret manager.
 3. Build and deploy this revision.
 4. Configure authenticated POST cron calls.
-5. Complete every runbook smoke test before accepting live payments.
+5. Complete every item in the [go-live checklist](docs/GO_LIVE_CHECKLIST.md) before accepting live payments.
 
 This project remains compatible with the Lovable/TanStack Start workflow. Do not expose `SUPABASE_SERVICE_ROLE_KEY`, SumUp credentials, webhook secrets, or `CRON_SECRET` to browser code.

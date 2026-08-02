@@ -35,7 +35,7 @@ const TerminalSchema = z.enum(["jury", "judge", "public"]);
 
 export const getTillShift = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: unknown) => z.object({ terminal: TerminalSchema }).parse(d))
+  .validator((d: unknown) => z.object({ terminal: TerminalSchema }).parse(d))
   .handler(async ({ data, context }) => {
     await assertStaff(context);
     const { data: shift, error } = await context.supabase
@@ -50,7 +50,7 @@ export const getTillShift = createServerFn({ method: "POST" })
 
 export const openTillShift = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: unknown) =>
+  .validator((d: unknown) =>
     z
       .object({
         terminal: TerminalSchema,
@@ -70,7 +70,7 @@ export const openTillShift = createServerFn({ method: "POST" })
 
 export const closeTillShift = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: unknown) =>
+  .validator((d: unknown) =>
     z
       .object({
         shift_id: z.string().uuid(),
@@ -92,7 +92,7 @@ export const closeTillShift = createServerFn({ method: "POST" })
 
 export const recordTillCashEvent = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: unknown) =>
+  .validator((d: unknown) =>
     z
       .object({
         shift_id: z.string().uuid(),
@@ -143,7 +143,7 @@ export const listPairedReaders = createServerFn({ method: "POST" })
 /** Pairs a Solo device using the pairing code shown on its screen. */
 export const pairSumupReader = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: unknown) =>
+  .validator((d: unknown) =>
     z.object({ pairing_code: z.string().min(4).max(20), name: z.string().min(1).max(60) }).parse(d),
   )
   .handler(async ({ data, context }) => {
@@ -155,7 +155,7 @@ export const pairSumupReader = createServerFn({ method: "POST" })
 
 export const unpairSumupReader = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: unknown) => z.object({ reader_id: z.string().min(1) }).parse(d))
+  .validator((d: unknown) => z.object({ reader_id: z.string().min(1) }).parse(d))
   .handler(async ({ data, context }) => {
     await assertAdmin(context);
     const { unpairReader } = await import("./sumup-readers.server");
@@ -166,7 +166,7 @@ export const unpairSumupReader = createServerFn({ method: "POST" })
 /** Pushes the basket total to the Solo device so the customer can tap. */
 export const startReaderPayment = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: unknown) =>
+  .validator((d: unknown) =>
     z
       .object({
         reader_id: z.string().min(1),
@@ -244,7 +244,7 @@ export const startReaderPayment = createServerFn({ method: "POST" })
 
 export const checkReaderPayment = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: unknown) => z.object({ payment_attempt_id: z.string().uuid() }).parse(d))
+  .validator((d: unknown) => z.object({ payment_attempt_id: z.string().uuid() }).parse(d))
   .handler(async ({ data, context }) => {
     await assertStaff(context);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
@@ -309,7 +309,7 @@ export const checkReaderPayment = createServerFn({ method: "POST" })
 
 export const cancelReaderPayment = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: unknown) =>
+  .validator((d: unknown) =>
     z
       .object({ reader_id: z.string().min(1), payment_attempt_id: z.string().uuid().optional() })
       .parse(d),

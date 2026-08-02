@@ -7,7 +7,7 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
  * currency and checkout reference must match our immutable order record.
  */
 export const confirmPayment = createServerFn({ method: "POST" })
-  .inputValidator((d: unknown) =>
+  .validator((d: unknown) =>
     z
       .object({
         order_id: z.string().uuid(),
@@ -87,7 +87,7 @@ export const confirmPayment = createServerFn({ method: "POST" })
  */
 export const refundOrder = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: unknown) =>
+  .validator((d: unknown) =>
     z
       .object({
         order_id: z.string().uuid(),

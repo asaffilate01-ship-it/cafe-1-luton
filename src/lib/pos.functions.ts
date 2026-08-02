@@ -54,7 +54,7 @@ function firstResult<T>(rows: T[] | null, message: string): T {
  */
 export const prepareCounterOrder = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: unknown) => CounterBasketSchema.parse(input))
+  .validator((input: unknown) => CounterBasketSchema.parse(input))
   .handler(async ({ data, context }) => {
     const { data: rows, error } = await context.supabase.rpc(
       "prepare_counter_order",
@@ -70,7 +70,7 @@ export const prepareCounterOrder = createServerFn({ method: "POST" })
  */
 export const createCounterOrder = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: unknown) =>
+  .validator((input: unknown) =>
     CounterBasketSchema.extend({
       payment_method: z.enum(["cash", "card"]),
       manual_card_reference: z.string().min(4).max(120).optional(),
@@ -99,7 +99,7 @@ export const createCounterOrder = createServerFn({ method: "POST" })
 /** Finalizes a previously prepared reader order using a verified attempt. */
 export const finalizeCounterCardPayment = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: unknown) =>
+  .validator((input: unknown) =>
     z
       .object({
         order_id: z.string().uuid(),
@@ -128,7 +128,7 @@ export const finalizeCounterCardPayment = createServerFn({ method: "POST" })
 /** Releases a prepared order and voucher hold after a cancelled reader flow. */
 export const cancelCounterOrder = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: unknown) =>
+  .validator((input: unknown) =>
     z.object({ order_id: z.string().uuid(), reason: z.string().min(3).max(200) }).parse(input),
   )
   .handler(async ({ data, context }) => {

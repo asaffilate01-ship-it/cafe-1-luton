@@ -14,7 +14,7 @@ export type VoucherLookup = Awaited<ReturnType<typeof lookupVoucher>>;
 
 /** Anonymous balance check for a juror voucher code. No personal data involved. */
 export const lookupVoucher = createServerFn({ method: "POST" })
-  .inputValidator((d: unknown) => z.object({ code: z.string().min(1).max(40) }).parse(d))
+  .validator((d: unknown) => z.object({ code: z.string().min(1).max(40) }).parse(d))
   .handler(async ({ data }) => {
     const code = (data.code ?? "").trim();
     if (!code) return { found: false as const };
@@ -71,7 +71,7 @@ export const lookupVoucher = createServerFn({ method: "POST" })
  * code at the till, on the customer screen, or in the jury room.
  */
 export const optInVoucher = createServerFn({ method: "POST" })
-  .inputValidator((d: unknown) =>
+  .validator((d: unknown) =>
     z
       .object({
         code: z.string().min(1).max(40),

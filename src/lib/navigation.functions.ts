@@ -11,7 +11,7 @@ const schema = z.object({
 
 /** Turn-by-turn directions from the driver's current position to a drop-off. */
 export const getDirections = createServerFn({ method: "POST" })
-  .inputValidator((data: unknown) => schema.parse(data))
+  .validator((data: unknown) => schema.parse(data))
   .handler(async ({ data }) =>
     computeWalkingOrDrivingRoute({
       origin: { lat: data.lat, lng: data.lng },

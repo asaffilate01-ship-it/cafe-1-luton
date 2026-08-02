@@ -39,10 +39,11 @@ type Order = {
 };
 
 export const Route = createFileRoute("/order/$orderId")({
-  validateSearch: (search: Record<string, unknown>) => ({
-    token:
-      typeof search.token === "string" && search.token.length <= 200 ? search.token : undefined,
-  }),
+  validateSearch: (search: Record<string, unknown>): { token?: string } => {
+    const token =
+      typeof search.token === "string" && search.token.length <= 200 ? search.token : undefined;
+    return token ? { token } : {};
+  },
   head: () => ({
     meta: [
       { title: "Order status — Cafe1" },

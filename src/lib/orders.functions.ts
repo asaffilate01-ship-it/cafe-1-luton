@@ -55,7 +55,7 @@ const CreateOrderSchema = z.object({
 });
 
 export const createOrder = createServerFn({ method: "POST" })
-  .inputValidator((d: unknown) => CreateOrderSchema.parse(d))
+  .validator((d: unknown) => CreateOrderSchema.parse(d))
   .handler(async ({ data }) => {
     // Optional auth: signed-in customers get discount + points.
     // Clear out any baskets left unpaid for more than 5 minutes first.
@@ -488,7 +488,7 @@ export const createOrder = createServerFn({ method: "POST" })
 
 export const updateOrderStatus = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: unknown) =>
+  .validator((d: unknown) =>
     z
       .object({
         order_id: z.string().uuid(),
@@ -542,7 +542,7 @@ export const updateOrderStatus = createServerFn({ method: "POST" })
 
 export const setOrderFulfilment = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: unknown) =>
+  .validator((d: unknown) =>
     z
       .object({
         order_id: z.string().uuid(),
@@ -565,7 +565,7 @@ export const setOrderFulfilment = createServerFn({ method: "POST" })
 
 export const markPaidManually = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: unknown) =>
+  .validator((d: unknown) =>
     z
       .object({ order_id: z.string().uuid(), sumup_transaction_id: z.string().optional() })
       .parse(d),
@@ -585,7 +585,7 @@ export const markPaidManually = createServerFn({ method: "POST" })
 
 export const assignDriver = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: unknown) =>
+  .validator((d: unknown) =>
     z.object({ order_id: z.string().uuid(), driver_id: z.string().uuid() }).parse(d),
   )
   .handler(async ({ data, context }) => {
@@ -620,7 +620,7 @@ export const listDrivers = createServerFn({ method: "GET" })
  */
 export const claimDeliveryJob = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: unknown) => z.object({ order_id: z.string().uuid() }).parse(d))
+  .validator((d: unknown) => z.object({ order_id: z.string().uuid() }).parse(d))
   .handler(async ({ data, context }) => {
     const [{ data: isDriver }, { data: isAdmin }] = await Promise.all([
       context.supabase.rpc("has_role", { _user_id: context.userId, _role: "driver" }),

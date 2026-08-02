@@ -1,6 +1,6 @@
 # Operations and controls v2
 
-This release extends the production-hardened Cafe 1 platform with day-to-day operating controls. It is an additive application and database release; apply `20260801090000_production_hardening.sql` first and `20260802090000_operations_controls_v2.sql` second.
+This release extends the production-hardened Cafe 1 platform with day-to-day operating controls. It is an additive application and database release; apply `20260801173100_production_hardening.sql`, `20260802090000_operations_controls_v2.sql`, then `20260802110000_go_live_release.sql` in timestamp order. The three intervening `20260802094...` compatibility migrations are deliberately safe no-ops because their content was already present in the complete Operations v2 migration.
 
 ## New operating areas
 

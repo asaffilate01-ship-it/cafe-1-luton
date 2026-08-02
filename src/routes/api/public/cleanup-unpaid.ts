@@ -20,7 +20,8 @@ export const Route = createFileRoute("/api/public/cleanup-unpaid")({
   server: {
     handlers: {
       POST: async ({ request }) => run(request),
-      GET: async ({ request }) => run(request),
+      GET: async () =>
+        new Response("Method not allowed", { status: 405, headers: { Allow: "POST" } }),
     },
   },
 });
