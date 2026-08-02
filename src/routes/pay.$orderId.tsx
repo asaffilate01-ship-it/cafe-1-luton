@@ -8,12 +8,27 @@ import { toast } from "sonner";
 import { Lock, ShieldCheck, Smartphone } from "lucide-react";
 
 export const Route = createFileRoute("/pay/$orderId")({
+  validateSearch: (search: Record<string, unknown>): { token?: string } => {
+    const token =
+      typeof search.token === "string" && search.token.length >= 32 && search.token.length <= 200
+        ? search.token
+        : undefined;
+    return token ? { token } : {};
+  },
   head: () => ({
     meta: [
       { title: "Pay for your order — Café 1 St Albans" },
-      { name: "description", content: "Securely pay for your Café 1 St Albans order by card, Apple Pay or Google Pay, with confirmation sent straight to our kitchen." },
+      {
+        name: "description",
+        content:
+          "Securely pay for your Café 1 St Albans order by card, Apple Pay or Google Pay, with confirmation sent straight to our kitchen.",
+      },
       { property: "og:title", content: "Pay for your order — Café 1 St Albans" },
-      { property: "og:description", content: "Securely pay for your Café 1 St Albans order by card, Apple Pay or Google Pay, with confirmation sent straight to our kitchen." },
+      {
+        property: "og:description",
+        content:
+          "Securely pay for your Café 1 St Albans order by card, Apple Pay or Google Pay, with confirmation sent straight to our kitchen.",
+      },
       { property: "og:type", content: "website" },
       { name: "robots", content: "noindex" },
     ],
@@ -74,22 +89,34 @@ function loadSumUpSdk(): Promise<void> {
 
 function PayView() {
   const { orderId } = Route.useParams();
+  const { token } = Route.useSearch();
   const navigate = useNavigate();
   const [order, setOrder] = useState<Order | null>(null);
-  const [status, setStatus] = useState<"loading" | "ready" | "processing" | "paid" | "error">("loading");
+  const [status, setStatus] = useState<"loading" | "ready" | "processing" | "paid" | "error">(
+    "loading",
+  );
   const [errorMsg, setErrorMsg] = useState<string>("");
   const mountedRef = useRef(false);
 
   useEffect(() => {
     let cancelled = false;
     (async () => {
-      const res = await getPublicOrder({ data: { order_id: orderId } });
+      const res = await getPublicOrder({ data: { order_id: orderId, tracking_token: token } });
       const data = res.order as (Order & { sumup_checkout_id: string | null }) | null;
       if (cancelled) return;
-      if (!data) { setStatus("error"); setErrorMsg("Order not found."); return; }
+      if (!data) {
+        setStatus("error");
+        setErrorMsg("Order not found.");
+        return;
+      }
       setOrder(data as Order);
       if (data.payment_status === "paid") {
-        navigate({ to: "/order/$orderId", params: { orderId }, replace: true });
+        navigate({
+          to: "/order/$orderId",
+          params: { orderId },
+          search: token ? { token } : {},
+          replace: true,
+        });
         return;
       }
       if (!data.sumup_checkout_id) {
@@ -131,14 +158,21 @@ function PayView() {
               // Confirm server-side with SumUp (independent of the webhook), then route.
               try {
                 for (let i = 0; i < 5; i++) {
-                  const r = await confirmPayment({ data: { order_id: orderId } });
+                  const r = await confirmPayment({
+                    data: { order_id: orderId, tracking_token: token },
+                  });
                   if (r.paid) break;
                   await new Promise((res) => setTimeout(res, 1000));
                 }
               } catch (e) {
                 console.error("[pay] confirm failed", e);
               }
-              navigate({ to: "/order/$orderId", params: { orderId }, replace: true });
+              navigate({
+                to: "/order/$orderId",
+                params: { orderId },
+                search: token ? { token } : {},
+                replace: true,
+              });
             }
           }
           if (type === "error" || type === "invalid") {
@@ -149,8 +183,10 @@ function PayView() {
         },
       });
     })();
-    return () => { cancelled = true; };
-  }, [orderId, navigate]);
+    return () => {
+      cancelled = true;
+    };
+  }, [orderId, navigate, token]);
 
   return (
     <div className="min-h-screen bg-background">
@@ -162,7 +198,8 @@ function PayView() {
         </h1>
         {order && (
           <p className="mt-1 text-muted-foreground">
-            Total due: <span className="font-semibold text-foreground">{money(order.total_cents)}</span>
+            Total due:{" "}
+            <span className="font-semibold text-foreground">{money(order.total_cents)}</span>
           </p>
         )}
 
@@ -175,22 +212,29 @@ function PayView() {
               <Smartphone className="mt-0.5 h-3.5 w-3.5 shrink-0" />
               <span>
                 On a phone? Pay in one tap with <strong>Apple&nbsp;Pay</strong> or{" "}
-                <strong>Google&nbsp;Pay</strong> — the wallet button appears above the card
-                form when your device supports it.
+                <strong>Google&nbsp;Pay</strong> — the wallet button appears above the card form
+                when your device supports it.
               </span>
             </div>
           )}
           {status === "error" ? (
-            <div className="rounded-xl border border-destructive/40 bg-destructive/5 p-4 text-sm text-destructive">{errorMsg}</div>
+            <div
+              role="alert"
+              className="rounded-xl border border-destructive/40 bg-destructive/5 p-4 text-sm text-destructive"
+            >
+              {errorMsg}
+            </div>
           ) : (
             <div id="sumup-card" />
           )}
-          {status === "processing" && (
-            <p className="mt-3 text-sm text-muted-foreground">Authorising your card…</p>
-          )}
-          {status === "paid" && (
-            <p className="mt-3 text-sm text-primary">Paid! Redirecting to your order…</p>
-          )}
+          <div aria-live="polite" aria-atomic="true">
+            {status === "processing" && (
+              <p className="mt-3 text-sm text-muted-foreground">Authorising your card…</p>
+            )}
+            {status === "paid" && (
+              <p className="mt-3 text-sm text-primary">Paid! Redirecting to your order…</p>
+            )}
+          </div>
         </div>
 
         <p className="mt-4 flex items-center gap-2 text-xs text-muted-foreground">

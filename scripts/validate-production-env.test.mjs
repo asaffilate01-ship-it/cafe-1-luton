@@ -1,0 +1,59 @@
+import assert from "node:assert/strict";
+import test from "node:test";
+
+import { validateProductionEnvironment } from "./validate-production-env.mjs";
+
+function validEnvironment(overrides = {}) {
+  return {
+    VITE_SUPABASE_URL: "https://cafe1.supabase.co",
+    VITE_SUPABASE_PUBLISHABLE_KEY: "publishable-key",
+    SUPABASE_URL: "https://cafe1.supabase.co",
+    SUPABASE_PUBLISHABLE_KEY: "publishable-key",
+    SUPABASE_SERVICE_ROLE_KEY: "service-role-key",
+    PUBLIC_APP_URL: "https://cafe1stalbans.co.uk",
+    SUMUP_API_KEY: "live-sumup-key",
+    SUMUP_MERCHANT_CODE: "merchant-code",
+    SUMUP_AFFILIATE_KEY: "affiliate-key",
+    CRON_SECRET: "0123456789abcdefghijklmnopqrstuvwxyz",
+    REQUIRE_ADMIN_MFA: "true",
+    ENABLE_DEV_LOGIN: "false",
+    LOVABLE_API_KEY: "email-key",
+    GOOGLE_MAPS_API_KEY: "maps-key",
+    ...overrides,
+  };
+}
+
+test("accepts a complete canonical production environment", () => {
+  assert.deepEqual(validateProductionEnvironment(validEnvironment()), {
+    errors: [],
+    warnings: [],
+  });
+});
+
+test("rejects test payments, disabled MFA and production dev access", () => {
+  const result = validateProductionEnvironment(
+    validEnvironment({
+      SUMUP_API_KEY: `sk_${"test"}_key`,
+      REQUIRE_ADMIN_MFA: "false",
+      ENABLE_DEV_LOGIN: "true",
+      DEV_ADMIN_PASSWORD: "should-not-be-in-production",
+    }),
+  );
+
+  assert.ok(result.errors.some((message) => message.includes("test key")));
+  assert.ok(result.errors.some((message) => message.includes("MFA")));
+  assert.ok(result.errors.some((message) => message.includes("ENABLE_DEV_LOGIN")));
+  assert.ok(result.errors.some((message) => message.includes("DEV_ADMIN_PASSWORD")));
+});
+
+test("rejects inconsistent projects and partial integrations", () => {
+  const result = validateProductionEnvironment(
+    validEnvironment({
+      VITE_SUPABASE_URL: "https://different.supabase.co",
+      DELIVEROO_CLIENT_ID: "client-id",
+    }),
+  );
+
+  assert.ok(result.errors.some((message) => message.includes("same project")));
+  assert.ok(result.errors.some((message) => message.includes("partially configured")));
+});

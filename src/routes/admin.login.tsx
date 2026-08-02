@@ -30,6 +30,7 @@ function AdminLogin() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
 
   function homeForRoles(rs: string[]) {
     if (rs.includes("admin") || rs.includes("staff")) return "/staff";
@@ -45,6 +46,7 @@ function AdminLogin() {
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     setBusy(true);
+    setError("");
     try {
       const { data, error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) throw error;
@@ -65,7 +67,9 @@ function AdminLogin() {
       toast.success("Signed in");
       navigate({ to: safeNext ?? homeForRoles(rs) });
     } catch (err: unknown) {
-      toast.error(err instanceof Error ? err.message : "Sign in failed");
+      const message = err instanceof Error ? err.message : "Sign in failed";
+      setError(message);
+      toast.error(message);
     } finally {
       setBusy(false);
     }
@@ -74,7 +78,10 @@ function AdminLogin() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary-soft/40">
       <div className="mx-auto max-w-md px-4 py-16">
-        <Link to="/" className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
+        <Link
+          to="/"
+          className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
+        >
           <ChevronLeft className="h-4 w-4" /> Back to site
         </Link>
         {alreadyStaff && (
@@ -108,26 +115,48 @@ function AdminLogin() {
             Restricted to Cafe1 admins, kitchen and drivers.
           </p>
 
-          <form onSubmit={onSubmit} className="mt-6 space-y-3">
-            <input
-              type="email"
-              placeholder="Work email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-              autoComplete="email"
-              className="h-11 w-full rounded-xl border border-border bg-background px-4"
-            />
-            <input
-              type="password"
-              placeholder="Password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              minLength={6}
-              autoComplete="current-password"
-              className="h-11 w-full rounded-xl border border-border bg-background px-4"
-            />
+          {error && (
+            <p
+              role="alert"
+              className="mt-6 rounded-xl border border-destructive/40 bg-destructive/5 p-3 text-sm text-destructive"
+            >
+              {error}
+            </p>
+          )}
+
+          <form onSubmit={onSubmit} className="mt-6 space-y-3" aria-busy={busy}>
+            <div>
+              <label htmlFor="staff-email" className="mb-1.5 block text-sm font-medium">
+                Work email
+              </label>
+              <input
+                id="staff-email"
+                name="email"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+                autoComplete="username"
+                inputMode="email"
+                className="h-11 w-full rounded-xl border border-border bg-background px-4"
+              />
+            </div>
+            <div>
+              <label htmlFor="staff-password" className="mb-1.5 block text-sm font-medium">
+                Password
+              </label>
+              <input
+                id="staff-password"
+                name="password"
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                minLength={6}
+                autoComplete="current-password"
+                className="h-11 w-full rounded-xl border border-border bg-background px-4"
+              />
+            </div>
             <button
               disabled={busy}
               className="h-11 w-full rounded-full bg-primary font-semibold text-primary-foreground shadow-brand transition hover:bg-primary-hover disabled:opacity-60"
@@ -137,7 +166,11 @@ function AdminLogin() {
           </form>
 
           <div className="mt-6 rounded-xl border border-border bg-muted/40 p-3 text-xs text-muted-foreground">
-            Are you a customer? <Link to="/auth" className="font-medium text-primary hover:underline">Sign in here</Link> to place an order.
+            Are you a customer?{" "}
+            <Link to="/auth" className="font-medium text-primary hover:underline">
+              Sign in here
+            </Link>{" "}
+            to place an order.
           </div>
         </div>
       </div>

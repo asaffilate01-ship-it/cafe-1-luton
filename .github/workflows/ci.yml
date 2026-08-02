@@ -20,10 +20,10 @@ jobs:
     timeout-minutes: 20
     steps:
       - name: Check out repository
-        uses: actions/checkout@v7
+        uses: actions/checkout@v7.0.1
 
       - name: Use Node.js 22
-        uses: actions/setup-node@v7
+        uses: actions/setup-node@v7.0.0
         with:
           node-version: 22
           cache: npm
@@ -37,6 +37,9 @@ jobs:
       - name: Typecheck, lint, test and build
         run: npm run check
 
+      - name: Verify generated routes are committed
+        run: git diff --exit-code -- src/routeTree.gen.ts
+
       - name: Audit production dependency graph
         run: npm audit --omit=dev --audit-level=high
 
@@ -46,7 +49,7 @@ jobs:
     timeout-minutes: 25
     steps:
       - name: Check out repository
-        uses: actions/checkout@v7
+        uses: actions/checkout@v7.0.1
 
       - name: Install Supabase CLI
         uses: supabase/setup-cli@v3
