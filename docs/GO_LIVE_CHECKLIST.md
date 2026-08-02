@@ -29,6 +29,7 @@ Do not enable live ordering or live SumUp charging until every mandatory box is 
 - [ ] Restrict the Google Maps browser key to `https://cafe1stalbans.co.uk/*` and only required APIs.
 - [ ] Enable GitHub secret scanning and Supabase security notifications.
 - [ ] Verify CSP, HSTS, frame blocking and `Cache-Control: no-store` on protected routes at the production edge.
+- [ ] Confirm `npm run verify:build-output` passes and the deployed `/admin/security` response contains `private, no-store`.
 
 ## 4. Payments and till
 
