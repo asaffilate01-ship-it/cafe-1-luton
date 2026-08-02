@@ -121,6 +121,16 @@ export async function verifyProduction({ baseUrl, fetchImpl = fetch, timeoutMs =
         if (!/private/i.test(cache) || !/no-store/i.test(cache)) {
           fail("protected response must use private, no-store caching");
         }
+
+        const cacheStatus = response.headers.get("cf-cache-status") ?? "";
+        if (/^(?:HIT|STALE|REVALIDATED|UPDATING)$/i.test(cacheStatus)) {
+          fail(`protected response was served from Cloudflare cache (${cacheStatus})`);
+        }
+
+        const age = Number(response.headers.get("age") ?? "0");
+        if (Number.isFinite(age) && age > 0) {
+          fail(`protected response has a reusable cache age of ${age}`);
+        }
       }
 
       const contentType = response.headers.get("content-type") ?? "";

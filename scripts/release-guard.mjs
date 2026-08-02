@@ -50,6 +50,7 @@ for (const required of [
   "docs/OPERATIONAL_ACCEPTANCE_RECORD.md",
   "docs/RELEASE_GATE_PHASE_6_7.md",
   "docs/RELEASE_GATE_PHASE_8_9.md",
+  "docs/RELEASE_GATE_PHASE_10.md",
   "e2e/go-live.spec.ts",
   "nitro.config.ts",
   "playwright.config.ts",
