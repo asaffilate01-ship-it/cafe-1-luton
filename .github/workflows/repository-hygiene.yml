@@ -1,0 +1,56 @@
+name: Remove tracked environment files
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirmation:
+        description: Type DELETE-TRACKED-ENV to create the cleanup commit
+        required: true
+        type: string
+
+permissions:
+  contents: write
+
+concurrency:
+  group: cafe1-repository-hygiene-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  remove-environment-files:
+    name: Commit environment-file removal
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Confirm destructive scope
+        env:
+          CONFIRMATION: ${{ inputs.confirmation }}
+        run: |
+          if [ "$CONFIRMATION" != "DELETE-TRACKED-ENV" ]; then
+            echo "Confirmation did not match DELETE-TRACKED-ENV. No repository changes were made."
+            exit 1
+          fi
+
+      - name: Check out selected branch
+        uses: actions/checkout@v7.0.1
+        with:
+          ref: ${{ github.ref_name }}
+          fetch-depth: 0
+
+      - name: Use Node.js 22
+        uses: actions/setup-node@v7.0.0
+        with:
+          node-version: 22
+
+      - name: Remove environment files from Git tracking
+        run: node scripts/repository-hygiene.mjs --apply
+
+      - name: Commit cleanup normally
+        run: |
+          if git diff --cached --quiet; then
+            echo "No tracked environment files remain."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "Remove tracked environment files"
+          git push origin "HEAD:${GITHUB_REF_NAME}"

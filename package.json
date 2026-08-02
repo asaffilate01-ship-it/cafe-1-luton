@@ -13,11 +13,13 @@
     "test": "vitest run && node --test scripts/*.test.mjs",
     "test:watch": "vitest",
     "format": "prettier --write .",
-    "check": "npm run typecheck && npm run lint && npm run test && npm run build && npm run verify:build-output",
+    "check": "npm run typecheck && npm run lint && npm run test && npm run build && npm run verify:build-output && npm run verify:routes",
     "release:guard": "node scripts/release-guard.mjs",
     "release:status": "node scripts/release-status.mjs",
+    "repository:hygiene": "node scripts/repository-hygiene.mjs",
     "validate:production-env": "node scripts/validate-production-env.mjs",
     "verify:build-output": "node scripts/verify-build-output.mjs",
+    "verify:routes": "node scripts/verify-routes.mjs",
     "smoke:production": "node scripts/verify-production.mjs"
   },
   "dependencies": {

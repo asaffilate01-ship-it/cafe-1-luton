@@ -4,7 +4,7 @@ Do not enable live ordering or live SumUp charging until every mandatory box is 
 
 ## 1. Repository and release
 
-- [ ] Delete the tracked `.env` and legacy `env.example` files from GitHub; keep `.env.example`.
+- [ ] Run **Remove tracked environment files** with confirmation `DELETE-TRACKED-ENV`; confirm `.env` and legacy `env.example` are no longer tracked and keep `.env.example`.
 - [ ] Upload this release without rewriting Lovable/Git history.
 - [ ] Confirm GitHub Actions passes both **Application** and **Supabase migrations and pgTAP**.
 - [ ] Confirm **CodeQL** passes with no unresolved high-severity alert.
@@ -68,3 +68,5 @@ Do not enable live ordering or live SumUp charging until every mandatory box is 
 - [ ] Configure application/server logs, 5xx alerts, payment failures and till variance alerts.
 - [ ] Document the incident owner, SumUp escalation route, database restore owner and rollback procedure.
 - [ ] Complete a staff rehearsal, then run a monitored soft launch before public promotion.
+
+Record payment, hardware, recovery and staff evidence in `docs/OPERATIONAL_ACCEPTANCE_RECORD.md`.
