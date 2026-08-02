@@ -38,6 +38,9 @@ jobs:
       - name: Clean install
         run: npm ci
 
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+
       - name: Verify, test and build release tree
         run: npm run release:guard && npm run check
 
@@ -53,7 +56,12 @@ jobs:
       - name: Verify deployed production
         env:
           PRODUCTION_BASE_URL: ${{ inputs.base_url }}
-        run: set -o pipefail; npm run smoke:production 2>&1 | tee release-evidence/production-smoke.log
+        run: set -o pipefail; npm run smoke:production -- --json release-evidence/production-smoke.json 2>&1 | tee release-evidence/production-smoke.log
+
+      - name: Run deployed desktop and mobile journeys
+        env:
+          E2E_BASE_URL: ${{ inputs.base_url }}
+        run: npm run test:e2e
 
       - name: Record repository status
         if: always()
@@ -71,6 +79,8 @@ jobs:
         uses: actions/upload-artifact@v7.0.1
         with:
           name: cafe1-release-evidence-${{ github.sha }}
-          path: release-evidence/
+          path: |
+            release-evidence/
+            test-results/playwright/
           if-no-files-found: error
           retention-days: 90

@@ -13,7 +13,9 @@ Complete this record with real evidence. A code build cannot prove payment settl
 | Production checks — Application              | ☐ Pass ☐ Fail |                        |                 |
 | Production checks — Database                 | ☐ Pass ☐ Fail |                        |                 |
 | CodeQL                                       | ☐ Pass ☐ Fail |                        |                 |
+| Browser journeys — desktop and mobile        | ☐ Pass ☐ Fail |                        |                 |
 | Production smoke                             | ☐ Pass ☐ Fail |                        |                 |
+| Scheduled production smoke                   | ☐ Pass ☐ Fail |                        |                 |
 | Release Candidate Evidence artifact retained | ☐ Yes ☐ No    |                        |                 |
 | Release tag and rollback commit recorded     | ☐ Yes ☐ No    |                        |                 |
 
