@@ -34,6 +34,7 @@ export function validateProductionEnvironment(env) {
     "SUPABASE_PUBLISHABLE_KEY",
     "SUPABASE_SERVICE_ROLE_KEY",
     "PUBLIC_APP_URL",
+    "PUBLIC_RELEASE_SHA",
     "SUMUP_API_KEY",
     "SUMUP_MERCHANT_CODE",
     "CRON_SECRET",
@@ -55,6 +56,9 @@ export function validateProductionEnvironment(env) {
 
   if (value(env, "PUBLIC_APP_URL").replace(/\/$/, "") !== CANONICAL_ORIGIN) {
     errors.push(`PUBLIC_APP_URL must be the canonical origin ${CANONICAL_ORIGIN}`);
+  }
+  if (!/^[0-9a-f]{40}$/i.test(value(env, "PUBLIC_RELEASE_SHA"))) {
+    errors.push("PUBLIC_RELEASE_SHA must be the exact 40-character deployed Git commit");
   }
   if (
     value(env, "VITE_SUPABASE_URL").replace(/\/$/, "") !==

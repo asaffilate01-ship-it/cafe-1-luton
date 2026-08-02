@@ -10,6 +10,10 @@ on:
         required: true
         default: https://cafe1stalbans.co.uk
         type: string
+      expected_release_sha:
+        description: Expected deployed 40-character Git commit; blank uses the workflow commit
+        required: false
+        type: string
 
 permissions:
   contents: read
@@ -45,6 +49,7 @@ jobs:
       - name: Verify deployed release
         env:
           PRODUCTION_BASE_URL: ${{ inputs.base_url || env.DEFAULT_PRODUCTION_BASE_URL }}
+          EXPECTED_RELEASE_SHA: ${{ inputs.expected_release_sha || github.sha }}
         run: mkdir -p release-evidence && set -o pipefail; npm run smoke:production -- --json release-evidence/production-smoke.json 2>&1 | tee release-evidence/production-smoke.log
 
       - name: Record repository status

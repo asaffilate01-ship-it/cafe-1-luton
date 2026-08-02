@@ -58,6 +58,7 @@ import { Route as AdminBannersRouteImport } from './routes/admin.banners'
 import { Route as AdminAccountsRouteImport } from './routes/admin.accounts'
 import { Route as ApiPublicSumupWebhookRouteImport } from './routes/api/public/sumup-webhook'
 import { Route as ApiPublicJurorDailyRouteImport } from './routes/api/public/juror-daily'
+import { Route as ApiPublicHealthRouteImport } from './routes/api/public/health'
 import { Route as ApiPublicCleanupUnpaidRouteImport } from './routes/api/public/cleanup-unpaid'
 import { Route as LovableEmailAuthWebhookRouteImport } from './routes/lovable/email/auth/webhook'
 import { Route as LovableEmailAuthPreviewRouteImport } from './routes/lovable/email/auth/preview'
@@ -308,6 +309,11 @@ const ApiPublicJurorDailyRoute = ApiPublicJurorDailyRouteImport.update({
   path: '/api/public/juror-daily',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicHealthRoute = ApiPublicHealthRouteImport.update({
+  id: '/api/public/health',
+  path: '/api/public/health',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicCleanupUnpaidRoute = ApiPublicCleanupUnpaidRouteImport.update({
   id: '/api/public/cleanup-unpaid',
   path: '/api/public/cleanup-unpaid',
@@ -379,6 +385,7 @@ export interface FileRoutesByFullPath {
   '/admin/': typeof AdminIndexRoute
   '/blog/': typeof BlogIndexRoute
   '/api/public/cleanup-unpaid': typeof ApiPublicCleanupUnpaidRoute
+  '/api/public/health': typeof ApiPublicHealthRoute
   '/api/public/juror-daily': typeof ApiPublicJurorDailyRoute
   '/api/public/sumup-webhook': typeof ApiPublicSumupWebhookRoute
   '/api/public/deliveroo/webhook': typeof ApiPublicDeliverooWebhookRoute
@@ -434,6 +441,7 @@ export interface FileRoutesByTo {
   '/admin': typeof AdminIndexRoute
   '/blog': typeof BlogIndexRoute
   '/api/public/cleanup-unpaid': typeof ApiPublicCleanupUnpaidRoute
+  '/api/public/health': typeof ApiPublicHealthRoute
   '/api/public/juror-daily': typeof ApiPublicJurorDailyRoute
   '/api/public/sumup-webhook': typeof ApiPublicSumupWebhookRoute
   '/api/public/deliveroo/webhook': typeof ApiPublicDeliverooWebhookRoute
@@ -490,6 +498,7 @@ export interface FileRoutesById {
   '/admin/': typeof AdminIndexRoute
   '/blog/': typeof BlogIndexRoute
   '/api/public/cleanup-unpaid': typeof ApiPublicCleanupUnpaidRoute
+  '/api/public/health': typeof ApiPublicHealthRoute
   '/api/public/juror-daily': typeof ApiPublicJurorDailyRoute
   '/api/public/sumup-webhook': typeof ApiPublicSumupWebhookRoute
   '/api/public/deliveroo/webhook': typeof ApiPublicDeliverooWebhookRoute
@@ -547,6 +556,7 @@ export interface FileRouteTypes {
     | '/admin/'
     | '/blog/'
     | '/api/public/cleanup-unpaid'
+    | '/api/public/health'
     | '/api/public/juror-daily'
     | '/api/public/sumup-webhook'
     | '/api/public/deliveroo/webhook'
@@ -602,6 +612,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/blog'
     | '/api/public/cleanup-unpaid'
+    | '/api/public/health'
     | '/api/public/juror-daily'
     | '/api/public/sumup-webhook'
     | '/api/public/deliveroo/webhook'
@@ -657,6 +668,7 @@ export interface FileRouteTypes {
     | '/admin/'
     | '/blog/'
     | '/api/public/cleanup-unpaid'
+    | '/api/public/health'
     | '/api/public/juror-daily'
     | '/api/public/sumup-webhook'
     | '/api/public/deliveroo/webhook'
@@ -713,6 +725,7 @@ export interface RootRouteChildren {
   AdminIndexRoute: typeof AdminIndexRoute
   BlogIndexRoute: typeof BlogIndexRoute
   ApiPublicCleanupUnpaidRoute: typeof ApiPublicCleanupUnpaidRoute
+  ApiPublicHealthRoute: typeof ApiPublicHealthRoute
   ApiPublicJurorDailyRoute: typeof ApiPublicJurorDailyRoute
   ApiPublicSumupWebhookRoute: typeof ApiPublicSumupWebhookRoute
   ApiPublicDeliverooWebhookRoute: typeof ApiPublicDeliverooWebhookRoute
@@ -1065,6 +1078,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicJurorDailyRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/health': {
+      id: '/api/public/health'
+      path: '/api/public/health'
+      fullPath: '/api/public/health'
+      preLoaderRoute: typeof ApiPublicHealthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/cleanup-unpaid': {
       id: '/api/public/cleanup-unpaid'
       path: '/api/public/cleanup-unpaid'
@@ -1145,6 +1165,7 @@ const rootRouteChildren: RootRouteChildren = {
   AdminIndexRoute: AdminIndexRoute,
   BlogIndexRoute: BlogIndexRoute,
   ApiPublicCleanupUnpaidRoute: ApiPublicCleanupUnpaidRoute,
+  ApiPublicHealthRoute: ApiPublicHealthRoute,
   ApiPublicJurorDailyRoute: ApiPublicJurorDailyRoute,
   ApiPublicSumupWebhookRoute: ApiPublicSumupWebhookRoute,
   ApiPublicDeliverooWebhookRoute: ApiPublicDeliverooWebhookRoute,

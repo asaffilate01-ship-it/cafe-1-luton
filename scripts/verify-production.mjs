@@ -56,6 +56,14 @@ export const PRODUCTION_CHECKS = [
     protectedRoute: true,
     browserDocument: false,
   },
+  {
+    path: "/api/public/health",
+    statuses: [200],
+    contentType: /application\/json/i,
+    protectedRoute: true,
+    browserDocument: false,
+    inspectRelease: true,
+  },
 ];
 
 export function parseProductionOrigin(supplied) {
@@ -71,7 +79,12 @@ export function parseProductionOrigin(supplied) {
   return base;
 }
 
-export async function verifyProduction({ baseUrl, fetchImpl = fetch, timeoutMs = 15_000 } = {}) {
+export async function verifyProduction({
+  baseUrl,
+  expectedRelease,
+  fetchImpl = fetch,
+  timeoutMs = 15_000,
+} = {}) {
   const base = parseProductionOrigin(baseUrl);
   const checks = await Promise.all(
     PRODUCTION_CHECKS.map(async (specification) => {
@@ -139,7 +152,10 @@ export async function verifyProduction({ baseUrl, fetchImpl = fetch, timeoutMs =
       }
 
       const shouldInspectBody =
-        response.status === 200 && (specification.inspectPostcode || specification.inspectRobots);
+        response.status === 200 &&
+        (specification.inspectPostcode ||
+          specification.inspectRobots ||
+          specification.inspectRelease);
       if (shouldInspectBody) {
         const body = await response.text();
         if (specification.inspectPostcode) {
@@ -150,6 +166,32 @@ export async function verifyProduction({ baseUrl, fetchImpl = fetch, timeoutMs =
           if (!/Disallow:\s*\/admin/i.test(body)) fail("robots.txt does not block admin routes");
           if (!body.includes("https://cafe1stalbans.co.uk/sitemap.xml")) {
             fail("robots.txt does not reference the canonical sitemap");
+          }
+        }
+        if (specification.inspectRelease) {
+          let payload;
+          try {
+            payload = JSON.parse(body);
+          } catch {
+            fail("release health response is not valid JSON");
+          }
+          if (payload) {
+            if (payload.status !== "ok" || payload.service !== "cafe1-st-albans") {
+              fail("release health identity is invalid");
+            }
+            if (payload.postcode !== "AL1 3JU") {
+              fail("release health postcode is invalid");
+            }
+            if (!/^[0-9a-f]{40}$/i.test(payload.release ?? "")) {
+              fail("release health does not expose a 40-character Git commit");
+            } else if (
+              expectedRelease &&
+              payload.release.toLowerCase() !== expectedRelease.toLowerCase()
+            ) {
+              fail(
+                `deployed release ${payload.release} does not match expected ${expectedRelease}`,
+              );
+            }
           }
         }
       }
@@ -169,6 +211,7 @@ export async function verifyProduction({ baseUrl, fetchImpl = fetch, timeoutMs =
     schema_version: 1,
     generated_at: new Date().toISOString(),
     origin: base.origin,
+    expected_release: expectedRelease ?? null,
     passed: failures.length === 0,
     check_count: checks.length,
     failures,
@@ -208,7 +251,10 @@ async function main() {
 
   let report;
   try {
-    report = await verifyProduction({ baseUrl: options.baseUrl });
+    report = await verifyProduction({
+      baseUrl: options.baseUrl,
+      expectedRelease: process.env.EXPECTED_RELEASE_SHA?.trim() || undefined,
+    });
   } catch (error) {
     console.error(error instanceof Error ? error.message : "Production smoke could not start.");
     process.exitCode = 1;

@@ -1,0 +1,146 @@
+name: Promote verified production
+
+on:
+  workflow_dispatch:
+    inputs:
+      release_tag:
+        description: Semantic release tag, for example v1.0.0
+        required: true
+        type: string
+      base_url:
+        description: Deployed Cafe 1 HTTPS origin
+        required: true
+        default: https://cafe1stalbans.co.uk
+        type: string
+      database_check_run_url:
+        description: Successful Production checks URL for this exact commit
+        required: true
+        type: string
+      confirmation:
+        description: Type PROMOTE-CAFE1 to create the production release
+        required: true
+        type: string
+
+permissions:
+  actions: read
+  contents: write
+  deployments: write
+
+concurrency:
+  group: cafe1-production-promotion
+  cancel-in-progress: false
+
+jobs:
+  promote:
+    name: Verify, evidence, tag and release
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    environment:
+      name: production
+      url: ${{ inputs.base_url }}
+    env:
+      GH_TOKEN: ${{ github.token }}
+      RELEASE_TAG: ${{ inputs.release_tag }}
+      PRODUCTION_BASE_URL: ${{ inputs.base_url }}
+      DATABASE_CHECK_RUN_URL: ${{ inputs.database_check_run_url }}
+      EXPECTED_RELEASE_SHA: ${{ github.sha }}
+    steps:
+      - name: Validate promotion request
+        env:
+          CONFIRMATION: ${{ inputs.confirmation }}
+        run: |
+          if [ "$CONFIRMATION" != "PROMOTE-CAFE1" ]; then
+            echo "Confirmation did not match PROMOTE-CAFE1."
+            exit 1
+          fi
+          if [[ ! "$RELEASE_TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+([+-][0-9A-Za-z.-]+)?$ ]]; then
+            echo "release_tag must use semantic version form such as v1.0.0."
+            exit 1
+          fi
+          if [ "$PRODUCTION_BASE_URL" != "https://cafe1stalbans.co.uk" ]; then
+            echo "Production promotion is restricted to https://cafe1stalbans.co.uk."
+            exit 1
+          fi
+
+      - name: Check out repository
+        uses: actions/checkout@v7.0.1
+        with:
+          fetch-depth: 0
+
+      - name: Use Node.js 22
+        uses: actions/setup-node@v7.0.0
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Verify matching database workflow
+        run: |
+          expected_prefix="https://github.com/${GITHUB_REPOSITORY}/actions/runs/"
+          if [[ "$DATABASE_CHECK_RUN_URL" != "$expected_prefix"* ]]; then
+            echo "Database workflow URL must belong to this repository."
+            exit 1
+          fi
+          run_id="${DATABASE_CHECK_RUN_URL##*/}"
+          if [[ ! "$run_id" =~ ^[0-9]+$ ]]; then
+            echo "Database workflow URL does not end in a numeric run id."
+            exit 1
+          fi
+          run_name="$(gh api "repos/${GITHUB_REPOSITORY}/actions/runs/${run_id}" --jq .name)"
+          run_sha="$(gh api "repos/${GITHUB_REPOSITORY}/actions/runs/${run_id}" --jq .head_sha)"
+          conclusion="$(gh api "repos/${GITHUB_REPOSITORY}/actions/runs/${run_id}" --jq .conclusion)"
+          if [ "$run_name" != "Production checks" ] || [ "$run_sha" != "$GITHUB_SHA" ] || [ "$conclusion" != "success" ]; then
+            echo "Database workflow must be a successful Production checks run for $GITHUB_SHA."
+            exit 1
+          fi
+
+      - name: Clean install
+        run: npm ci
+
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: Verify release tree
+        run: mkdir -p release-evidence && npm run release:guard && npm run check
+
+      - name: Require completed operational acceptance
+        run: npm run operational:check -- --output release-evidence/operational-acceptance.json
+
+      - name: Audit and generate SBOM
+        run: |
+          npm audit --omit=dev --audit-level=high --json > release-evidence/npm-audit.json
+          npm sbom --sbom-format cyclonedx > release-evidence/sbom.cdx.json
+
+      - name: Verify exact deployed release
+        run: set -o pipefail; npm run smoke:production -- --json release-evidence/production-smoke.json 2>&1 | tee release-evidence/production-smoke.log
+
+      - name: Run deployed desktop and mobile journeys
+        env:
+          E2E_BASE_URL: ${{ inputs.base_url }}
+        run: npm run test:e2e
+
+      - name: Record release status
+        if: always()
+        run: npm run release:status -- --output release-evidence/release-status.json
+
+      - name: Write evidence manifest
+        if: always()
+        run: node scripts/write-release-evidence.mjs
+
+      - name: Create immutable GitHub release
+        run: |
+          if git ls-remote --exit-code --tags origin "refs/tags/${RELEASE_TAG}" >/dev/null 2>&1; then
+            echo "Tag ${RELEASE_TAG} already exists."
+            exit 1
+          fi
+          gh release create "$RELEASE_TAG" --target "$GITHUB_SHA" --title "Cafe 1 ${RELEASE_TAG}" --generate-notes --latest
+
+      - name: Upload production evidence
+        if: always()
+        uses: actions/upload-artifact@v7.0.1
+        with:
+          name: cafe1-production-release-${{ github.sha }}-${{ github.run_id }}
+          path: |
+            release-evidence/
+            test-results/playwright/
+          if-no-files-found: error
+          retention-days: 365

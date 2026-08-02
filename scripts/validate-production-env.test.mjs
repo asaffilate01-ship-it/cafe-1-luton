@@ -11,6 +11,7 @@ function validEnvironment(overrides = {}) {
     SUPABASE_PUBLISHABLE_KEY: "publishable-key",
     SUPABASE_SERVICE_ROLE_KEY: "service-role-key",
     PUBLIC_APP_URL: "https://cafe1stalbans.co.uk",
+    PUBLIC_RELEASE_SHA: "3e0b4f1e1c51a1b9437faa8a2eb0e7ee5c7c55c6",
     SUMUP_API_KEY: "live-sumup-key",
     SUMUP_MERCHANT_CODE: "merchant-code",
     SUMUP_AFFILIATE_KEY: "affiliate-key",
@@ -56,4 +57,10 @@ test("rejects inconsistent projects and partial integrations", () => {
 
   assert.ok(result.errors.some((message) => message.includes("same project")));
   assert.ok(result.errors.some((message) => message.includes("partially configured")));
+});
+
+test("requires an exact deployed release commit", () => {
+  const result = validateProductionEnvironment(validEnvironment({ PUBLIC_RELEASE_SHA: "main" }));
+
+  assert.ok(result.errors.some((message) => message.includes("40-character deployed Git commit")));
 });

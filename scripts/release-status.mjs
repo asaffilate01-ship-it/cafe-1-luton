@@ -5,6 +5,7 @@ import { fileURLToPath } from "node:url";
 
 import { getTrackedEnvironmentFiles } from "./repository-hygiene.mjs";
 import { getRouteCoverageReport } from "./verify-routes.mjs";
+import { validateOperationalAcceptance } from "./verify-operational-acceptance.mjs";
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 
@@ -16,6 +17,9 @@ const checklist = readFileSync(resolve(root, "docs/GO_LIVE_CHECKLIST.md"), "utf8
 const completed = (checklist.match(/^- \[[xX]\]/gm) ?? []).length;
 const unchecked = (checklist.match(/^- \[ \]/gm) ?? []).length;
 const trackedEnvironmentFiles = getTrackedEnvironmentFiles(root);
+const operationalAcceptance = validateOperationalAcceptance(
+  JSON.parse(readFileSync(resolve(root, "release/operational-acceptance.json"), "utf8")),
+);
 let routeCoverage;
 try {
   routeCoverage = getRouteCoverageReport(root);
@@ -37,14 +41,23 @@ const requiredWorkflows = [
   ".github/workflows/production-smoke.yml",
   ".github/workflows/release-candidate.yml",
   ".github/workflows/repository-hygiene.yml",
+  ".github/workflows/production-promotion.yml",
 ];
 
 const report = {
-  schema_version: 3,
+  schema_version: 4,
   generated_at: new Date().toISOString(),
   commit: git(["rev-parse", "HEAD"]),
   branch: git(["branch", "--show-current"]) || null,
   checklist: { completed, unchecked, total: completed + unchecked },
+  operational_acceptance: {
+    ready: operationalAcceptance.ready,
+    passed: operationalAcceptance.passed,
+    pending: operationalAcceptance.pending,
+    failed: operationalAcceptance.failed,
+    total: operationalAcceptance.total,
+    schema_valid: operationalAcceptance.schema_valid,
+  },
   release_tree: {
     tracked_environment_file_count: trackedEnvironmentFiles.length,
     tracked_environment_files: trackedEnvironmentFiles,
@@ -61,6 +74,12 @@ const report = {
       existsSync(resolve(root, "e2e/go-live.spec.ts")),
     production_smoke_contract_present: existsSync(
       resolve(root, "scripts/verify-production.test.mjs"),
+    ),
+    release_health_present:
+      existsSync(resolve(root, "src/routes/api/public/health.ts")) &&
+      existsSync(resolve(root, "src/lib/release-health.server.ts")),
+    production_promotion_present: existsSync(
+      resolve(root, ".github/workflows/production-promotion.yml"),
     ),
   },
 };
