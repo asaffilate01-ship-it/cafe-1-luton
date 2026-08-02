@@ -34,6 +34,15 @@ function successfulFetch(input) {
     body = '<?xml version="1.0"?><urlset />';
     contentType = "application/xml";
   }
+  if (url.pathname === "/api/public/health") {
+    body = JSON.stringify({
+      status: "ok",
+      service: "cafe1-st-albans",
+      postcode: "AL1 3JU",
+      release: "3e0b4f1e1c51a1b9437faa8a2eb0e7ee5c7c55c6",
+    });
+    contentType = "application/json";
+  }
 
   const headers = new Headers({ ...securityHeaders, "content-type": contentType });
   if (specification.protectedRoute) {
@@ -57,6 +66,7 @@ test("accepts only a credential-free HTTPS production origin", () => {
 test("passes the full production contract and records structured checks", async () => {
   const report = await verifyProduction({
     baseUrl: "https://cafe1stalbans.co.uk",
+    expectedRelease: "3e0b4f1e1c51a1b9437faa8a2eb0e7ee5c7c55c6",
     fetchImpl: successfulFetch,
   });
 
@@ -64,6 +74,20 @@ test("passes the full production contract and records structured checks", async 
   assert.equal(report.check_count, PRODUCTION_CHECKS.length);
   assert.equal(
     report.checks.every((check) => check.passed),
+    true,
+  );
+});
+
+test("rejects an unversioned or mismatched deployment", async () => {
+  const report = await verifyProduction({
+    baseUrl: "https://cafe1stalbans.co.uk",
+    expectedRelease: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    fetchImpl: successfulFetch,
+  });
+
+  assert.equal(report.passed, false);
+  assert.equal(
+    report.failures.some((failure) => failure.includes("does not match expected")),
     true,
   );
 });

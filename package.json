@@ -21,7 +21,9 @@
     "validate:production-env": "node scripts/validate-production-env.mjs",
     "verify:build-output": "node scripts/verify-build-output.mjs",
     "verify:routes": "node scripts/verify-routes.mjs",
-    "smoke:production": "node scripts/verify-production.mjs"
+    "smoke:production": "node scripts/verify-production.mjs",
+    "operational:status": "node scripts/verify-operational-acceptance.mjs",
+    "operational:check": "node scripts/verify-operational-acceptance.mjs --strict"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",

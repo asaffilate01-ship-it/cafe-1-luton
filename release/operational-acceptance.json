@@ -1,0 +1,195 @@
+{
+  "schema_version": 1,
+  "gates": [
+    {
+      "id": "application_ci",
+      "status": "pending",
+      "evidence": "",
+      "checked_by": "",
+      "checked_at": ""
+    },
+    {
+      "id": "database_ci",
+      "status": "pending",
+      "evidence": "",
+      "checked_by": "",
+      "checked_at": ""
+    },
+    { "id": "codeql", "status": "pending", "evidence": "", "checked_by": "", "checked_at": "" },
+    {
+      "id": "browser_journeys",
+      "status": "pending",
+      "evidence": "",
+      "checked_by": "",
+      "checked_at": ""
+    },
+    {
+      "id": "production_smoke",
+      "status": "pending",
+      "evidence": "",
+      "checked_by": "",
+      "checked_at": ""
+    },
+    {
+      "id": "release_evidence",
+      "status": "pending",
+      "evidence": "",
+      "checked_by": "",
+      "checked_at": ""
+    },
+    {
+      "id": "website_sumup",
+      "status": "pending",
+      "evidence": "",
+      "checked_by": "",
+      "checked_at": ""
+    },
+    {
+      "id": "reader_sumup",
+      "status": "pending",
+      "evidence": "",
+      "checked_by": "",
+      "checked_at": ""
+    },
+    {
+      "id": "declined_cancelled_payment",
+      "status": "pending",
+      "evidence": "",
+      "checked_by": "",
+      "checked_at": ""
+    },
+    {
+      "id": "cash_voucher_split_tender",
+      "status": "pending",
+      "evidence": "",
+      "checked_by": "",
+      "checked_at": ""
+    },
+    {
+      "id": "partial_remaining_refund",
+      "status": "pending",
+      "evidence": "",
+      "checked_by": "",
+      "checked_at": ""
+    },
+    {
+      "id": "idempotency",
+      "status": "pending",
+      "evidence": "",
+      "checked_by": "",
+      "checked_at": ""
+    },
+    {
+      "id": "settlement_reconciliation",
+      "status": "pending",
+      "evidence": "",
+      "checked_by": "",
+      "checked_at": ""
+    },
+    {
+      "id": "printer_cash_drawer",
+      "status": "pending",
+      "evidence": "",
+      "checked_by": "",
+      "checked_at": ""
+    },
+    {
+      "id": "customer_display",
+      "status": "pending",
+      "evidence": "",
+      "checked_by": "",
+      "checked_at": ""
+    },
+    {
+      "id": "kds_routing_recovery",
+      "status": "pending",
+      "evidence": "",
+      "checked_by": "",
+      "checked_at": ""
+    },
+    {
+      "id": "fulfilment_flows",
+      "status": "pending",
+      "evidence": "",
+      "checked_by": "",
+      "checked_at": ""
+    },
+    {
+      "id": "manager_mfa_aal2",
+      "status": "pending",
+      "evidence": "",
+      "checked_by": "",
+      "checked_at": ""
+    },
+    {
+      "id": "production_environment",
+      "status": "pending",
+      "evidence": "",
+      "checked_by": "",
+      "checked_at": ""
+    },
+    {
+      "id": "google_key_rotated",
+      "status": "pending",
+      "evidence": "",
+      "checked_by": "",
+      "checked_at": ""
+    },
+    {
+      "id": "supabase_restore_rls",
+      "status": "pending",
+      "evidence": "",
+      "checked_by": "",
+      "checked_at": ""
+    },
+    {
+      "id": "scheduler_history",
+      "status": "pending",
+      "evidence": "",
+      "checked_by": "",
+      "checked_at": ""
+    },
+    {
+      "id": "email_delivery_bounces",
+      "status": "pending",
+      "evidence": "",
+      "checked_by": "",
+      "checked_at": ""
+    },
+    {
+      "id": "monitoring_alerts",
+      "status": "pending",
+      "evidence": "",
+      "checked_by": "",
+      "checked_at": ""
+    },
+    {
+      "id": "legal_hmcts_retention",
+      "status": "pending",
+      "evidence": "",
+      "checked_by": "",
+      "checked_at": ""
+    },
+    {
+      "id": "incident_rollback_owners",
+      "status": "pending",
+      "evidence": "",
+      "checked_by": "",
+      "checked_at": ""
+    },
+    {
+      "id": "staff_rehearsal_soft_launch",
+      "status": "pending",
+      "evidence": "",
+      "checked_by": "",
+      "checked_at": ""
+    }
+  ],
+  "exceptions": [],
+  "approvals": {
+    "go_live_decision": "pending",
+    "operations_owner": "",
+    "technical_owner": "",
+    "approved_at": ""
+  }
+}
