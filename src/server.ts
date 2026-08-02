@@ -2,30 +2,13 @@ import "./lib/error-capture";
 
 import { consumeLastCapturedError } from "./lib/error-capture";
 import { renderErrorPage } from "./lib/error-page";
+import { isPrivatePath, PRIVATE_CACHE_HEADERS } from "./lib/private-cache";
 
 type ServerEntry = {
   fetch: (request: Request, env: unknown, ctx: unknown) => Promise<Response> | Response;
 };
 
 let serverEntryPromise: Promise<ServerEntry> | undefined;
-
-const PRIVATE_PATH_PREFIXES = [
-  "/api/",
-  "/admin",
-  "/staff",
-  "/till",
-  "/kds",
-  "/driver",
-  "/display",
-  "/pay",
-  "/order",
-  "/print",
-  "/account",
-  "/tab",
-  "/checkout",
-  "/cart",
-  "/lovable/",
-];
 
 // The Lovable editor renders the app inside an iframe on its preview hosts.
 // Production hosts stay fully frame-denied.
@@ -70,10 +53,10 @@ export function withProductionHeaders(request: Request, response: Response): Res
   }
 
   const pathname = url.pathname;
-  if (PRIVATE_PATH_PREFIXES.some((prefix) => pathname.startsWith(prefix))) {
-    headers.set("Cache-Control", "private, no-store, max-age=0");
-    headers.set("Pragma", "no-cache");
-    headers.set("Expires", "0");
+  if (isPrivatePath(pathname)) {
+    for (const [name, value] of Object.entries(PRIVATE_CACHE_HEADERS)) {
+      headers.set(name, value);
+    }
   }
 
   return new Response(response.body, {

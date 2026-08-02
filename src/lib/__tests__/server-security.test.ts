@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { isH3SwallowedErrorBody, isPreviewHost, withProductionHeaders } from "../../server";
+import { isPrivatePath, PRIVATE_ROUTE_ROOTS } from "../private-cache";
 
 describe("production response security", () => {
   it("sets browser security headers on the production origin", () => {
@@ -26,6 +27,17 @@ describe("production response security", () => {
     expect(response.headers.get("cache-control")).toContain("no-store");
     expect(response.headers.get("pragma")).toBe("no-cache");
     expect(response.headers.get("expires")).toBe("0");
+  });
+
+  it("keeps application and edge private-route matching aligned", () => {
+    for (const root of PRIVATE_ROUTE_ROOTS) {
+      expect(isPrivatePath(root)).toBe(true);
+      expect(isPrivatePath(`${root}/example`)).toBe(true);
+    }
+
+    expect(isPrivatePath("/menu")).toBe(false);
+    expect(isPrivatePath("/administrator")).toBe(false);
+    expect(isPrivatePath("/orders-public")).toBe(false);
   });
 
   it("allows Lovable preview framing without weakening production", () => {
