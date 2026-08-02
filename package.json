@@ -11,6 +11,7 @@
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
     "test": "vitest run && node --test scripts/*.test.mjs",
+    "test:e2e": "playwright test",
     "test:watch": "vitest",
     "format": "prettier --write .",
     "check": "npm run typecheck && npm run lint && npm run test && npm run build && npm run verify:build-output && npm run verify:routes",
@@ -87,8 +88,9 @@
   "devDependencies": {
     "@eslint/js": "^9.32.0",
     "@lovable.dev/vite-tanstack-config": "2.8.5",
-    "@types/node": "^22.16.5",
+    "@playwright/test": "^1.62.1",
     "@types/google.maps": "^3.58.1",
+    "@types/node": "^22.16.5",
     "@types/qrcode": "^1.5.6",
     "@types/react": "^19.2.0",
     "@types/react-dom": "^19.2.0",

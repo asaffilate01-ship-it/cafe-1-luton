@@ -12,6 +12,8 @@ dist
 dist-ssr
 .output
 release-evidence/
+playwright-report/
+test-results/
 .vinxi
 .tanstack/**
 .nitro

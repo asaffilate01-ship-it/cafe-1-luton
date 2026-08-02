@@ -8,6 +8,7 @@ Do not enable live ordering or live SumUp charging until every mandatory box is 
 - [ ] Upload this release without rewriting Lovable/Git history.
 - [ ] Confirm GitHub Actions passes both **Application** and **Supabase migrations and pgTAP**.
 - [ ] Confirm **CodeQL** passes with no unresolved high-severity alert.
+- [ ] Confirm **Browser journeys** passes on desktop Chromium and the Pixel 7 viewport.
 - [ ] After deployment, run **Release candidate evidence** and retain its workflow URL and artifact.
 - [ ] Protect `main`: require pull requests, passing checks and no force pushes.
 - [ ] Create a release tag for the deployed commit and record the rollback commit.
@@ -57,6 +58,7 @@ Do not enable live ordering or live SumUp charging until every mandatory box is 
 - [ ] Generate a 32+ character `CRON_SECRET`.
 - [ ] Schedule authenticated POST calls to `/api/public/cleanup-unpaid` and `/api/public/juror-daily`.
 - [ ] Confirm GET calls return 405 and missing/incorrect bearer secrets return 401/503.
+- [ ] Confirm the scheduled **Production smoke** workflow has a recent successful run and retained JSON evidence.
 - [ ] Verify email delivery, bounce handling and the correct sender/domain records.
 - [ ] If Deliveroo is enabled, verify webhook signature rejection, duplicate delivery handling and cancellation sync.
 

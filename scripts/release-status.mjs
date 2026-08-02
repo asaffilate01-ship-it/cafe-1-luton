@@ -32,6 +32,7 @@ try {
 }
 const requiredWorkflows = [
   ".github/workflows/ci.yml",
+  ".github/workflows/browser-e2e.yml",
   ".github/workflows/codeql.yml",
   ".github/workflows/production-smoke.yml",
   ".github/workflows/release-candidate.yml",
@@ -39,7 +40,7 @@ const requiredWorkflows = [
 ];
 
 const report = {
-  schema_version: 2,
+  schema_version: 3,
   generated_at: new Date().toISOString(),
   commit: git(["rev-parse", "HEAD"]),
   branch: git(["branch", "--show-current"]) || null,
@@ -55,6 +56,12 @@ const report = {
     route_duplicates: routeCoverage.duplicates,
     route_validation_error: routeCoverage.error ?? null,
     required_workflows_present: requiredWorkflows.every((path) => existsSync(resolve(root, path))),
+    browser_e2e_present:
+      existsSync(resolve(root, "playwright.config.ts")) &&
+      existsSync(resolve(root, "e2e/go-live.spec.ts")),
+    production_smoke_contract_present: existsSync(
+      resolve(root, "scripts/verify-production.test.mjs"),
+    ),
   },
 };
 
