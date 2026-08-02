@@ -1,7 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { askConfirm } from "@/components/confirm-dialog";
 import { AdminNav } from "@/components/admin-nav";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useSession, useRoles } from "@/hooks/use-auth";
 import { money } from "@/lib/format";
@@ -12,24 +11,58 @@ export const Route = createFileRoute("/admin/menu")({
   head: () => ({
     meta: [
       { title: "Menu manager — Cafe1" },
-      { name: "description", content: "Manage Cafe1 menu categories, items, modifiers, prices and images." },
+      {
+        name: "description",
+        content: "Manage Cafe1 menu categories, items, modifiers, prices and images.",
+      },
       { name: "robots", content: "noindex" },
     ],
   }),
   component: MenuManager,
 });
 
-type Cat = { id: string; name: string; description: string | null; sort_order: number; active: boolean };
+type Cat = {
+  id: string;
+  name: string;
+  description: string | null;
+  sort_order: number;
+  active: boolean;
+};
 type Item = {
-  id: string; category_id: string | null; name: string; description: string | null;
-  price_cents: number; image_url: string | null; is_veg: boolean; loyalty_drink?: boolean; needs_cooking?: boolean; juror_menu?: boolean; is_beverage?: boolean;
-  group_label: string | null; sort_order: number; active: boolean;
+  id: string;
+  category_id: string | null;
+  name: string;
+  description: string | null;
+  price_cents: number;
+  image_url: string | null;
+  is_veg: boolean;
+  loyalty_drink?: boolean;
+  needs_cooking?: boolean;
+  juror_menu?: boolean;
+  is_beverage?: boolean;
+  group_label: string | null;
+  barcode: string | null;
+  allergens: string[];
+  dietary_tags: string[];
+  cost_cents: number;
+  prep_seconds: number;
+  station_code: string;
+  portion_note: string | null;
+  sort_order: number;
+  active: boolean;
 };
 type Mod = {
-  id: string; category_id: string | null; item_id: string | null;
-  name: string; description: string | null; price_cents: number;
-  sort_order: number; active: boolean;
-  group_name: string | null; group_type: string; required: boolean;
+  id: string;
+  category_id: string | null;
+  item_id: string | null;
+  name: string;
+  description: string | null;
+  price_cents: number;
+  sort_order: number;
+  active: boolean;
+  group_name: string | null;
+  group_type: string;
+  required: boolean;
 };
 
 function MenuManager() {
@@ -46,7 +79,7 @@ function MenuManager() {
     if (!loading && !user) navigate({ to: "/admin/login", search: { next: "/admin/menu" } });
   }, [loading, user, navigate]);
 
-  async function refresh() {
+  const refresh = useCallback(async () => {
     const [c, i, m] = await Promise.all([
       supabase.from("menu_categories").select("*").order("sort_order"),
       supabase.from("menu_items").select("*").order("sort_order"),
@@ -55,18 +88,24 @@ function MenuManager() {
     setCats((c.data ?? []) as Cat[]);
     setItems((i.data ?? []) as Item[]);
     setMods((m.data ?? []) as Mod[]);
-    if (!selectedCat && c.data?.length) setSelectedCat(c.data[0].id);
-  }
+    if (c.data?.length) setSelectedCat((current) => current ?? c.data[0].id);
+  }, []);
 
-  useEffect(() => { refresh(); /* eslint-disable-next-line */ }, []);
+  useEffect(() => {
+    void refresh();
+  }, [refresh]);
 
   if (loading || rolesLoading) return <div className="p-8 text-muted-foreground">Loading…</div>;
   if (!has("admin") && !has("staff")) {
     return (
       <div className="mx-auto max-w-xl px-4 py-16">
         <h1 className="font-display text-3xl font-bold">Access denied</h1>
-        <p className="mt-2 text-muted-foreground">You need staff or admin role to manage the menu.</p>
-        <Link to="/" className="mt-4 inline-block text-primary">← Home</Link>
+        <p className="mt-2 text-muted-foreground">
+          You need staff or admin role to manage the menu.
+        </p>
+        <Link to="/" className="mt-4 inline-block text-primary">
+          ← Home
+        </Link>
       </div>
     );
   }
@@ -81,13 +120,22 @@ function MenuManager() {
       <div className="border-b border-border bg-card">
         <div className="mx-auto grid max-w-7xl grid-cols-[minmax(0,1fr)_auto] items-center gap-3 px-4 py-4">
           <div className="min-w-0">
-            <Link to="/admin" className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
+            <Link
+              to="/admin"
+              className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
+            >
               <ChevronLeft className="h-4 w-4" /> Admin
             </Link>
-            <h1 className="mt-1 truncate font-display text-2xl font-bold sm:text-3xl">Menu manager</h1>
+            <h1 className="mt-1 truncate font-display text-2xl font-bold sm:text-3xl">
+              Menu manager
+            </h1>
           </div>
           <p className="shrink-0 text-right text-xs text-muted-foreground sm:text-sm">
-            {cats.length} categories<span className="hidden sm:inline"> · {items.length} items · {mods.length} modifiers</span>
+            {cats.length} categories
+            <span className="hidden sm:inline">
+              {" "}
+              · {items.length} items · {mods.length} modifiers
+            </span>
           </p>
         </div>
       </div>
@@ -102,21 +150,27 @@ function MenuManager() {
                 const name = prompt("New category name");
                 if (!name) return;
                 const sort = (cats.at(-1)?.sort_order ?? 0) + 10;
-                const { data, error } = await supabase.from("menu_categories").insert({ name, sort_order: sort, active: true }).select().single();
+                const { data, error } = await supabase
+                  .from("menu_categories")
+                  .insert({ name, sort_order: sort, active: true })
+                  .select()
+                  .single();
                 if (error) return toast.error(error.message);
                 setSelectedCat(data.id);
                 refresh();
               }}
               className="grid h-8 w-8 place-items-center rounded-full bg-primary text-primary-foreground"
               aria-label="Add category"
-            ><Plus className="h-4 w-4" /></button>
+            >
+              <Plus className="h-4 w-4" />
+            </button>
           </div>
           <ul className="mt-3 space-y-1">
             {cats.map((c) => (
               <li key={c.id}>
                 <button
                   onClick={() => setSelectedCat(c.id)}
-                  className={`w-full rounded-lg px-3 py-2 text-left text-sm transition ${selectedCat===c.id ? "bg-primary text-primary-foreground" : "hover:bg-accent"}`}
+                  className={`w-full rounded-lg px-3 py-2 text-left text-sm transition ${selectedCat === c.id ? "bg-primary text-primary-foreground" : "hover:bg-accent"}`}
                 >
                   <span className="font-medium">{c.name}</span>
                   {!c.active && <span className="ml-2 text-xs opacity-70">(hidden)</span>}
@@ -129,7 +183,14 @@ function MenuManager() {
         {/* Editor */}
         <div className="space-y-6">
           {cat && (
-            <CategoryEditor cat={cat} onSaved={refresh} onDeleted={() => { setSelectedCat(cats.find(c=>c.id!==cat.id)?.id ?? null); refresh(); }} />
+            <CategoryEditor
+              cat={cat}
+              onSaved={refresh}
+              onDeleted={() => {
+                setSelectedCat(cats.find((c) => c.id !== cat.id)?.id ?? null);
+                refresh();
+              }}
+            />
           )}
 
           {cat && (
@@ -140,16 +201,25 @@ function MenuManager() {
                   onClick={async () => {
                     const sort = (catItems.at(-1)?.sort_order ?? 0) + 10;
                     const { error } = await supabase.from("menu_items").insert({
-                      category_id: cat.id, name: "New item", price_cents: 0, sort_order: sort, active: true, is_veg: false,
+                      category_id: cat.id,
+                      name: "New item",
+                      price_cents: 0,
+                      sort_order: sort,
+                      active: true,
+                      is_veg: false,
                     });
                     if (error) return toast.error(error.message);
                     refresh();
                   }}
                   className="inline-flex items-center gap-1 rounded-lg bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground"
-                ><Plus className="h-4 w-4" /> Add item</button>
+                >
+                  <Plus className="h-4 w-4" /> Add item
+                </button>
               </div>
               <div className="mt-4 space-y-3">
-                {catItems.length === 0 && <p className="text-sm text-muted-foreground">No items yet.</p>}
+                {catItems.length === 0 && (
+                  <p className="text-sm text-muted-foreground">No items yet.</p>
+                )}
                 {catItems.map((it) => (
                   <ItemRow key={it.id} it={it} onChanged={refresh} />
                 ))}
@@ -165,16 +235,24 @@ function MenuManager() {
                   onClick={async () => {
                     const sort = (catMods.at(-1)?.sort_order ?? 0) + 10;
                     const { error } = await supabase.from("menu_modifiers").insert({
-                      category_id: cat.id, name: "New modifier", price_cents: 0, sort_order: sort, active: true,
+                      category_id: cat.id,
+                      name: "New modifier",
+                      price_cents: 0,
+                      sort_order: sort,
+                      active: true,
                     });
                     if (error) return toast.error(error.message);
                     refresh();
                   }}
                   className="inline-flex items-center gap-1 rounded-lg bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground"
-                ><Plus className="h-4 w-4" /> Add modifier</button>
+                >
+                  <Plus className="h-4 w-4" /> Add modifier
+                </button>
               </div>
               <div className="mt-4 space-y-2">
-                {catMods.length === 0 && <p className="text-sm text-muted-foreground">No modifiers yet.</p>}
+                {catMods.length === 0 && (
+                  <p className="text-sm text-muted-foreground">No modifiers yet.</p>
+                )}
                 {catMods.map((m) => (
                   <ModRow key={m.id} m={m} onChanged={refresh} />
                 ))}
@@ -187,9 +265,17 @@ function MenuManager() {
   );
 }
 
-function CategoryEditor({ cat, onSaved, onDeleted }: { cat: Cat; onSaved: () => void; onDeleted: () => void }) {
+function CategoryEditor({
+  cat,
+  onSaved,
+  onDeleted,
+}: {
+  cat: Cat;
+  onSaved: () => void;
+  onDeleted: () => void;
+}) {
   const [form, setForm] = useState(cat);
-  useEffect(() => setForm(cat), [cat.id]);
+  useEffect(() => setForm(cat), [cat]);
   const dirty = JSON.stringify(form) !== JSON.stringify(cat);
 
   return (
@@ -198,18 +284,35 @@ function CategoryEditor({ cat, onSaved, onDeleted }: { cat: Cat; onSaved: () => 
       <div className="mt-4 grid gap-3 sm:grid-cols-2">
         <label className="text-sm">
           <span className="text-muted-foreground">Name</span>
-          <input value={form.name} onChange={(e)=>setForm({...form, name:e.target.value})} className="mt-1 w-full rounded-lg border border-input bg-background px-3 py-2" />
+          <input
+            value={form.name}
+            onChange={(e) => setForm({ ...form, name: e.target.value })}
+            className="mt-1 w-full rounded-lg border border-input bg-background px-3 py-2"
+          />
         </label>
         <label className="text-sm">
           <span className="text-muted-foreground">Sort order</span>
-          <input type="number" value={form.sort_order} onChange={(e)=>setForm({...form, sort_order:Number(e.target.value)})} className="mt-1 w-full rounded-lg border border-input bg-background px-3 py-2" />
+          <input
+            type="number"
+            value={form.sort_order}
+            onChange={(e) => setForm({ ...form, sort_order: Number(e.target.value) })}
+            className="mt-1 w-full rounded-lg border border-input bg-background px-3 py-2"
+          />
         </label>
         <label className="text-sm sm:col-span-2">
           <span className="text-muted-foreground">Description</span>
-          <input value={form.description ?? ""} onChange={(e)=>setForm({...form, description:e.target.value || null})} className="mt-1 w-full rounded-lg border border-input bg-background px-3 py-2" />
+          <input
+            value={form.description ?? ""}
+            onChange={(e) => setForm({ ...form, description: e.target.value || null })}
+            className="mt-1 w-full rounded-lg border border-input bg-background px-3 py-2"
+          />
         </label>
         <label className="inline-flex items-center gap-2 text-sm">
-          <input type="checkbox" checked={form.active} onChange={(e)=>setForm({...form, active:e.target.checked})} />
+          <input
+            type="checkbox"
+            checked={form.active}
+            onChange={(e) => setForm({ ...form, active: e.target.checked })}
+          />
           Active (visible on menu)
         </label>
       </div>
@@ -217,25 +320,35 @@ function CategoryEditor({ cat, onSaved, onDeleted }: { cat: Cat; onSaved: () => 
         <button
           disabled={!dirty}
           onClick={async () => {
-            const { error } = await supabase.from("menu_categories").update({
-              name: form.name, description: form.description, sort_order: form.sort_order, active: form.active,
-            }).eq("id", cat.id);
+            const { error } = await supabase
+              .from("menu_categories")
+              .update({
+                name: form.name,
+                description: form.description,
+                sort_order: form.sort_order,
+                active: form.active,
+              })
+              .eq("id", cat.id);
             if (error) return toast.error(error.message);
             toast.success("Saved");
             onSaved();
           }}
           className="inline-flex items-center gap-1 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground disabled:opacity-50"
-        ><Save className="h-4 w-4" /> Save</button>
+        >
+          <Save className="h-4 w-4" /> Save
+        </button>
         <button
           onClick={async () => {
-            if (!(await askConfirm(`Delete category "${cat.name}" and all its items?`))) return;
+            if (!confirm(`Delete category "${cat.name}" and all its items?`)) return;
             const { error } = await supabase.from("menu_categories").delete().eq("id", cat.id);
             if (error) return toast.error(error.message);
             toast.success("Deleted");
             onDeleted();
           }}
           className="inline-flex items-center gap-1 rounded-lg border border-destructive px-3 py-2 text-sm text-destructive"
-        ><Trash2 className="h-4 w-4" /> Delete</button>
+        >
+          <Trash2 className="h-4 w-4" /> Delete
+        </button>
       </div>
     </section>
   );
@@ -245,7 +358,10 @@ function ItemRow({ it, onChanged }: { it: Item; onChanged: () => void }) {
   const [form, setForm] = useState(it);
   const [priceText, setPriceText] = useState((it.price_cents / 100).toFixed(2));
   const [uploading, setUploading] = useState(false);
-  useEffect(() => { setForm(it); setPriceText((it.price_cents/100).toFixed(2)); }, [it.id]);
+  useEffect(() => {
+    setForm(it);
+    setPriceText((it.price_cents / 100).toFixed(2));
+  }, [it]);
 
   async function save(patch: Partial<Item>) {
     const next = { ...form, ...patch };
@@ -259,15 +375,21 @@ function ItemRow({ it, onChanged }: { it: Item; onChanged: () => void }) {
     setUploading(true);
     try {
       const path = `${it.id}/${Date.now()}-${f.name.replace(/[^a-zA-Z0-9._-]/g, "_")}`;
-      const up = await supabase.storage.from("menu-images").upload(path, f, { upsert: true, contentType: f.type });
+      const up = await supabase.storage
+        .from("menu-images")
+        .upload(path, f, { upsert: true, contentType: f.type });
       if (up.error) throw up.error;
-      const { data } = await supabase.storage.from("menu-images").createSignedUrl(path, 60 * 60 * 24 * 365 * 5);
+      const { data } = await supabase.storage
+        .from("menu-images")
+        .createSignedUrl(path, 60 * 60 * 24 * 365 * 5);
       const url = data?.signedUrl ?? null;
       await save({ image_url: url });
       toast.success("Image uploaded");
-    } catch (e: any) {
-      toast.error(e.message ?? "Upload failed");
-    } finally { setUploading(false); }
+    } catch (e: unknown) {
+      toast.error(e instanceof Error ? e.message : "Upload failed");
+    } finally {
+      setUploading(false);
+    }
   }
 
   return (
@@ -281,18 +403,32 @@ function ItemRow({ it, onChanged }: { it: Item; onChanged: () => void }) {
               <ImageIcon className="h-5 w-5" /> Add photo
             </span>
           )}
-          <input type="file" accept="image/*" className="absolute inset-0 cursor-pointer opacity-0"
-            onChange={(e) => { const f = e.target.files?.[0]; if (f) onFile(f); }} />
+          <input
+            type="file"
+            accept="image/*"
+            className="absolute inset-0 cursor-pointer opacity-0"
+            onChange={(e) => {
+              const f = e.target.files?.[0];
+              if (f) onFile(f);
+            }}
+          />
           {form.image_url && (
             <span className="pointer-events-none absolute inset-x-0 bottom-0 bg-black/60 py-0.5 text-center text-[10px] font-semibold uppercase tracking-wide text-white opacity-0 transition group-hover:opacity-100">
               Replace
             </span>
           )}
-          {uploading && <span className="absolute inset-0 grid place-items-center bg-black/60 text-xs text-white">Uploading…</span>}
+          {uploading && (
+            <span className="absolute inset-0 grid place-items-center bg-black/60 text-xs text-white">
+              Uploading…
+            </span>
+          )}
         </label>
         {form.image_url && (
-          <button type="button" onClick={() => save({ image_url: null })}
-            className="w-24 rounded-lg border border-border py-1 text-[11px] font-semibold text-muted-foreground hover:text-destructive">
+          <button
+            type="button"
+            onClick={() => save({ image_url: null })}
+            className="w-24 rounded-lg border border-border py-1 text-[11px] font-semibold text-muted-foreground hover:text-destructive"
+          >
             Remove
           </button>
         )}
@@ -301,8 +437,8 @@ function ItemRow({ it, onChanged }: { it: Item; onChanged: () => void }) {
       <div className="grid min-w-0 gap-2 sm:grid-cols-2">
         <input
           value={form.name}
-          onChange={(e)=>setForm({...form, name:e.target.value})}
-          onBlur={()=>form.name!==it.name && save({ name: form.name })}
+          onChange={(e) => setForm({ ...form, name: e.target.value })}
+          onBlur={() => form.name !== it.name && save({ name: form.name })}
           className="rounded-lg border border-input bg-background px-3 py-2 text-sm font-medium"
           placeholder="Item name"
         />
@@ -310,11 +446,11 @@ function ItemRow({ it, onChanged }: { it: Item; onChanged: () => void }) {
           <span className="text-sm text-muted-foreground">£</span>
           <input
             value={priceText}
-            onChange={(e)=>setPriceText(e.target.value)}
-            onBlur={()=>{
+            onChange={(e) => setPriceText(e.target.value)}
+            onBlur={() => {
               const n = Math.round(parseFloat(priceText || "0") * 100);
               if (!Number.isFinite(n)) return;
-              setPriceText((n/100).toFixed(2));
+              setPriceText((n / 100).toFixed(2));
               if (n !== it.price_cents) save({ price_cents: n });
             }}
             className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm"
@@ -323,8 +459,8 @@ function ItemRow({ it, onChanged }: { it: Item; onChanged: () => void }) {
         </div>
         <input
           value={form.description ?? ""}
-          onChange={(e)=>setForm({...form, description:e.target.value})}
-          onBlur={()=>{
+          onChange={(e) => setForm({ ...form, description: e.target.value })}
+          onBlur={() => {
             const v = form.description?.trim() || null;
             if (v !== it.description) save({ description: v });
           }}
@@ -333,41 +469,195 @@ function ItemRow({ it, onChanged }: { it: Item; onChanged: () => void }) {
         />
         <input
           value={form.group_label ?? ""}
-          onChange={(e)=>setForm({...form, group_label:e.target.value})}
-          onBlur={()=>{
+          onChange={(e) => setForm({ ...form, group_label: e.target.value })}
+          onBlur={() => {
             const v = form.group_label?.trim() || null;
             if (v !== it.group_label) save({ group_label: v });
           }}
           className="rounded-lg border border-input bg-background px-3 py-2 text-sm"
           placeholder="Sub-group label (optional)"
         />
+        <input
+          value={form.barcode ?? ""}
+          onChange={(e) => setForm({ ...form, barcode: e.target.value })}
+          onBlur={() => {
+            const value = form.barcode?.trim() || null;
+            if (value !== it.barcode) void save({ barcode: value });
+          }}
+          className="rounded-lg border border-input bg-background px-3 py-2 text-sm"
+          placeholder="Barcode / SKU"
+          inputMode="numeric"
+        />
+        <select
+          value={form.station_code || "PASS"}
+          onChange={(e) => void save({ station_code: e.target.value })}
+          className="rounded-lg border border-input bg-background px-3 py-2 text-sm"
+          aria-label="Kitchen station"
+        >
+          <option value="HOT">Hot kitchen</option>
+          <option value="SANDWICH">Sandwich</option>
+          <option value="DRINKS">Drinks</option>
+          <option value="PASS">Pass / general</option>
+        </select>
+        <label className="grid grid-cols-[1fr_90px] items-center gap-2 rounded-lg border border-input px-3 text-sm">
+          <span className="text-muted-foreground">Target prep</span>
+          <input
+            type="number"
+            min={0}
+            step={30}
+            value={form.prep_seconds ?? 0}
+            onChange={(e) => setForm({ ...form, prep_seconds: Number(e.target.value) })}
+            onBlur={() => {
+              const value = Math.max(0, Math.round(form.prep_seconds || 0));
+              if (value !== it.prep_seconds) void save({ prep_seconds: value });
+            }}
+            className="w-full bg-transparent py-2 text-right outline-none"
+            aria-label="Target preparation seconds"
+          />
+        </label>
+        <label className="grid grid-cols-[1fr_90px] items-center gap-2 rounded-lg border border-input px-3 text-sm">
+          <span className="text-muted-foreground">Unit cost</span>
+          <input
+            inputMode="decimal"
+            defaultValue={(form.cost_cents / 100).toFixed(2)}
+            onBlur={(e) => {
+              const raw = e.target.value.trim();
+              const value = raw ? Math.max(0, Math.round(Number(raw) * 100)) : 0;
+              if (Number.isFinite(value) && value !== it.cost_cents) {
+                void save({ cost_cents: value });
+              }
+            }}
+            className="w-full bg-transparent py-2 text-right outline-none"
+            aria-label="Unit cost in pounds"
+            placeholder="£0.00"
+          />
+        </label>
+        <input
+          value={form.portion_note ?? ""}
+          onChange={(e) => setForm({ ...form, portion_note: e.target.value })}
+          onBlur={() => {
+            const value = form.portion_note?.trim() || null;
+            if (value !== it.portion_note) void save({ portion_note: value });
+          }}
+          className="rounded-lg border border-input bg-background px-3 py-2 text-sm"
+          placeholder="Portion / recipe note"
+        />
+        <input
+          value={(form.allergens ?? []).join(", ")}
+          onChange={(e) =>
+            setForm({
+              ...form,
+              allergens: e.target.value
+                .split(",")
+                .map((value) => value.trim())
+                .filter(Boolean),
+            })
+          }
+          onBlur={() => {
+            if (JSON.stringify(form.allergens ?? []) !== JSON.stringify(it.allergens ?? [])) {
+              void save({ allergens: form.allergens ?? [] });
+            }
+          }}
+          className="rounded-lg border border-input bg-background px-3 py-2 text-sm"
+          placeholder="Allergens, comma separated"
+        />
+        <input
+          value={(form.dietary_tags ?? []).join(", ")}
+          onChange={(e) =>
+            setForm({
+              ...form,
+              dietary_tags: e.target.value
+                .split(",")
+                .map((value) => value.trim())
+                .filter(Boolean),
+            })
+          }
+          onBlur={() => {
+            if (JSON.stringify(form.dietary_tags ?? []) !== JSON.stringify(it.dietary_tags ?? [])) {
+              void save({ dietary_tags: form.dietary_tags ?? [] });
+            }
+          }}
+          className="rounded-lg border border-input bg-background px-3 py-2 text-sm"
+          placeholder="Dietary tags, comma separated"
+        />
         <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-muted-foreground sm:col-span-2">
           <button
             type="button"
-            onClick={()=>{ const next = !form.active; setForm({...form, active: next}); save({ active: next }); }}
+            onClick={() => {
+              const next = !form.active;
+              setForm({ ...form, active: next });
+              save({ active: next });
+            }}
             className={`rounded-full px-3 py-1 text-xs font-bold uppercase tracking-wide ${form.active ? "bg-emerald-600 text-white" : "bg-destructive text-destructive-foreground"}`}
             title="Hide this item from the menu when you run out"
           >
             {form.active ? "Available" : "Sold out"}
           </button>
           <label className="inline-flex items-center gap-1">
-            <input type="checkbox" checked={form.is_veg} onChange={(e)=>{ setForm({...form, is_veg:e.target.checked}); save({ is_veg:e.target.checked }); }} />
+            <input
+              type="checkbox"
+              checked={form.is_veg}
+              onChange={(e) => {
+                setForm({ ...form, is_veg: e.target.checked });
+                save({ is_veg: e.target.checked });
+              }}
+            />
             Veg
           </label>
-          <label className="inline-flex items-center gap-1" title="Counts towards the buy 10 get the 11th free coffee/tea card">
-            <input type="checkbox" checked={!!form.loyalty_drink} onChange={(e)=>{ setForm({...form, loyalty_drink:e.target.checked}); save({ loyalty_drink:e.target.checked }); }} />
+          <label
+            className="inline-flex items-center gap-1"
+            title="Counts towards the buy 10 get the 11th free coffee/tea card"
+          >
+            <input
+              type="checkbox"
+              checked={!!form.loyalty_drink}
+              onChange={(e) => {
+                setForm({ ...form, loyalty_drink: e.target.checked });
+                save({ loyalty_drink: e.target.checked });
+              }}
+            />
             Loyalty drink
           </label>
-          <label className="inline-flex items-center gap-1" title="Hot/cooked item — kitchen tickets containing it show BLUE">
-            <input type="checkbox" checked={!!form.needs_cooking} onChange={(e)=>{ setForm({...form, needs_cooking:e.target.checked}); save({ needs_cooking:e.target.checked }); }} />
+          <label
+            className="inline-flex items-center gap-1"
+            title="Hot/cooked item — kitchen tickets containing it show BLUE"
+          >
+            <input
+              type="checkbox"
+              checked={!!form.needs_cooking}
+              onChange={(e) => {
+                setForm({ ...form, needs_cooking: e.target.checked });
+                save({ needs_cooking: e.target.checked });
+              }}
+            />
             Needs cooking
           </label>
-          <label className="inline-flex items-center gap-1" title="Shown on the dedicated Juror Menu">
-            <input type="checkbox" checked={!!form.juror_menu} onChange={(e)=>{ setForm({...form, juror_menu:e.target.checked}); save({ juror_menu:e.target.checked }); }} />
+          <label
+            className="inline-flex items-center gap-1"
+            title="Shown on the dedicated Juror Menu"
+          >
+            <input
+              type="checkbox"
+              checked={!!form.juror_menu}
+              onChange={(e) => {
+                setForm({ ...form, juror_menu: e.target.checked });
+                save({ juror_menu: e.target.checked });
+              }}
+            />
             Juror menu
           </label>
-          <label className="inline-flex items-center gap-1" title="Drink — excluded from the juror 10% food discount">
-            <input type="checkbox" checked={!!form.is_beverage} onChange={(e)=>{ setForm({...form, is_beverage:e.target.checked}); save({ is_beverage:e.target.checked }); }} />
+          <label
+            className="inline-flex items-center gap-1"
+            title="Drink — excluded from the juror 10% food discount"
+          >
+            <input
+              type="checkbox"
+              checked={!!form.is_beverage}
+              onChange={(e) => {
+                setForm({ ...form, is_beverage: e.target.checked });
+                save({ is_beverage: e.target.checked });
+              }}
+            />
             Beverage
           </label>
           <span className="ml-auto font-semibold text-foreground">{money(form.price_cents)}</span>
@@ -376,15 +666,17 @@ function ItemRow({ it, onChanged }: { it: Item; onChanged: () => void }) {
 
       <div className="col-span-2 flex items-start justify-end md:col-span-1">
         <button
-          onClick={async ()=>{
-            if (!(await askConfirm(`Delete "${it.name}"?`))) return;
+          onClick={async () => {
+            if (!confirm(`Delete "${it.name}"?`)) return;
             const { error } = await supabase.from("menu_items").delete().eq("id", it.id);
             if (error) return toast.error(error.message);
             onChanged();
           }}
           className="rounded-lg border border-destructive p-2 text-destructive"
           aria-label="Delete item"
-        ><Trash2 className="h-4 w-4" /></button>
+        >
+          <Trash2 className="h-4 w-4" />
+        </button>
       </div>
     </div>
   );
@@ -392,28 +684,32 @@ function ItemRow({ it, onChanged }: { it: Item; onChanged: () => void }) {
 
 function ModRow({ m, onChanged }: { m: Mod; onChanged: () => void }) {
   const [form, setForm] = useState(m);
-  const [priceText, setPriceText] = useState((m.price_cents/100).toFixed(2));
-  useEffect(() => { setForm(m); setPriceText((m.price_cents/100).toFixed(2)); }, [m.id]);
+  const [priceText, setPriceText] = useState((m.price_cents / 100).toFixed(2));
+  useEffect(() => {
+    setForm(m);
+    setPriceText((m.price_cents / 100).toFixed(2));
+  }, [m]);
 
   async function save(patch: Partial<Mod>) {
     setForm({ ...form, ...patch });
     const { error } = await supabase.from("menu_modifiers").update(patch).eq("id", m.id);
-    if (error) toast.error(error.message); else onChanged();
+    if (error) toast.error(error.message);
+    else onChanged();
   }
 
   return (
     <div className="grid items-center gap-2 rounded-lg border border-border bg-background p-2 md:grid-cols-[1fr_1fr_1fr_120px_auto_auto_auto]">
       <input
         value={form.name}
-        onChange={(e)=>setForm({...form, name:e.target.value})}
-        onBlur={()=>form.name!==m.name && save({ name: form.name })}
+        onChange={(e) => setForm({ ...form, name: e.target.value })}
+        onBlur={() => form.name !== m.name && save({ name: form.name })}
         className="rounded-lg border border-input bg-background px-3 py-2 text-sm font-medium"
         placeholder="Name"
       />
       <input
         value={form.group_name ?? ""}
-        onChange={(e)=>setForm({...form, group_name:e.target.value})}
-        onBlur={()=>{
+        onChange={(e) => setForm({ ...form, group_name: e.target.value })}
+        onBlur={() => {
           const v = form.group_name?.trim() || null;
           if (v !== m.group_name) save({ group_name: v });
         }}
@@ -422,8 +718,8 @@ function ModRow({ m, onChanged }: { m: Mod; onChanged: () => void }) {
       />
       <input
         value={form.description ?? ""}
-        onChange={(e)=>setForm({...form, description:e.target.value})}
-        onBlur={()=>{
+        onChange={(e) => setForm({ ...form, description: e.target.value })}
+        onBlur={() => {
           const v = form.description?.trim() || null;
           if (v !== m.description) save({ description: v });
         }}
@@ -434,11 +730,11 @@ function ModRow({ m, onChanged }: { m: Mod; onChanged: () => void }) {
         <span className="text-sm text-muted-foreground">£</span>
         <input
           value={priceText}
-          onChange={(e)=>setPriceText(e.target.value)}
-          onBlur={()=>{
+          onChange={(e) => setPriceText(e.target.value)}
+          onBlur={() => {
             const n = Math.round(parseFloat(priceText || "0") * 100);
             if (!Number.isFinite(n)) return;
-            setPriceText((n/100).toFixed(2));
+            setPriceText((n / 100).toFixed(2));
             if (n !== m.price_cents) save({ price_cents: n });
           }}
           className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm"
@@ -446,12 +742,22 @@ function ModRow({ m, onChanged }: { m: Mod; onChanged: () => void }) {
         />
       </div>
       <label className="inline-flex items-center gap-1 text-sm text-muted-foreground">
-        <input type="checkbox" checked={form.active} onChange={(e)=>{ setForm({...form, active:e.target.checked}); save({ active:e.target.checked }); }} />
+        <input
+          type="checkbox"
+          checked={form.active}
+          onChange={(e) => {
+            setForm({ ...form, active: e.target.checked });
+            save({ active: e.target.checked });
+          }}
+        />
         Active
       </label>
       <select
         value={form.group_type ?? "multi"}
-        onChange={(e)=>{ setForm({...form, group_type:e.target.value}); save({ group_type: e.target.value }); }}
+        onChange={(e) => {
+          setForm({ ...form, group_type: e.target.value });
+          save({ group_type: e.target.value });
+        }}
         className="rounded-lg border border-input bg-background px-2 py-2 text-sm"
         aria-label="Selection type"
       >
@@ -459,19 +765,28 @@ function ModRow({ m, onChanged }: { m: Mod; onChanged: () => void }) {
         <option value="single">Choose one</option>
       </select>
       <label className="inline-flex items-center gap-1 text-sm text-muted-foreground">
-        <input type="checkbox" checked={!!form.required} onChange={(e)=>{ setForm({...form, required:e.target.checked}); save({ required:e.target.checked }); }} />
+        <input
+          type="checkbox"
+          checked={!!form.required}
+          onChange={(e) => {
+            setForm({ ...form, required: e.target.checked });
+            save({ required: e.target.checked });
+          }}
+        />
         Required
       </label>
       <button
-        onClick={async ()=>{
-          if (!(await askConfirm(`Delete modifier "${m.name}"?`))) return;
+        onClick={async () => {
+          if (!confirm(`Delete modifier "${m.name}"?`)) return;
           const { error } = await supabase.from("menu_modifiers").delete().eq("id", m.id);
           if (error) return toast.error(error.message);
           onChanged();
         }}
         className="rounded-lg border border-destructive p-2 text-destructive"
         aria-label="Delete modifier"
-      ><Trash2 className="h-4 w-4" /></button>
+      >
+        <Trash2 className="h-4 w-4" />
+      </button>
     </div>
   );
 }

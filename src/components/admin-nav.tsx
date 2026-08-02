@@ -13,8 +13,12 @@ import {
   BarChart3,
   Bike,
   BookOpen,
+  Boxes,
+  Building2,
   Calculator,
   ChevronDown,
+  ClipboardCheck,
+  Clock3,
   Home,
   Image as ImageIcon,
   LayoutDashboard,
@@ -24,8 +28,10 @@ import {
   Newspaper,
   ReceiptText,
   Settings,
+  ShieldCheck,
   Ticket,
   UserCog,
+  QrCode,
 } from "lucide-react";
 
 type NavPath =
@@ -34,6 +40,12 @@ type NavPath =
   | "/admin/menu"
   | "/admin/pos"
   | "/admin/reports"
+  | "/admin/operations"
+  | "/admin/inventory"
+  | "/admin/staff-ops"
+  | "/admin/security"
+  | "/admin/locations"
+  | "/admin/juror-attendance"
   | "/admin/blog"
   | "/admin/broadcasts"
   | "/admin/banners"
@@ -64,6 +76,9 @@ const GROUPS: Array<{ label: string; items: Item[] }> = [
   {
     label: "Operations",
     items: [
+      { to: "/admin/operations", label: "Daily controls", icon: ClipboardCheck },
+      { to: "/admin/inventory", label: "Inventory & recipes", icon: Boxes },
+      { to: "/admin/staff-ops", label: "Staff time", icon: Clock3 },
       { to: "/driver", label: "Driver", icon: Bike, need: "driver" },
       { to: "/admin/menu", label: "Menu & stock", icon: BookOpen },
     ],
@@ -73,6 +88,7 @@ const GROUPS: Array<{ label: string; items: Item[] }> = [
     items: [
       { to: "/admin/customer-discounts", label: "Members", icon: BadgePercent },
       { to: "/admin/vouchers", label: "Juror vouchers", icon: Ticket },
+      { to: "/admin/juror-attendance", label: "Attendance QR", icon: QrCode },
       { to: "/admin/accounts", label: "Business tabs", icon: ReceiptText },
     ],
   },
@@ -90,6 +106,8 @@ const GROUPS: Array<{ label: string; items: Item[] }> = [
     items: [
       { to: "/admin/reports", label: "Reports", icon: BarChart3 },
       { to: "/admin/settings", label: "Settings", icon: Settings },
+      { to: "/admin/security", label: "Security & alerts", icon: ShieldCheck, need: "admin" },
+      { to: "/admin/locations", label: "Sites & legal entities", icon: Building2, need: "admin" },
       { to: "/admin/users", label: "Users & roles", icon: UserCog, need: "admin" },
     ],
   },
