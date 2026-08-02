@@ -28,20 +28,30 @@ jobs:
           node-version: 22
           cache: npm
 
-      - name: Clean install
-        run: npm ci
-
       - name: Verify release integrity
         run: npm run release:guard
+
+      - name: Clean install
+        run: npm ci
 
       - name: Typecheck, lint, test and build
         run: npm run check
 
-      - name: Verify generated routes are committed
-        run: git diff --exit-code -- src/routeTree.gen.ts
-
       - name: Audit production dependency graph
         run: npm audit --omit=dev --audit-level=high
+
+      - name: Record application evidence
+        if: always()
+        run: npm run release:status -- --output release-evidence/release-status.json
+
+      - name: Upload application evidence
+        if: always()
+        uses: actions/upload-artifact@v7.0.1
+        with:
+          name: cafe1-application-evidence-${{ github.sha }}
+          path: release-evidence/
+          if-no-files-found: error
+          retention-days: 30
 
   database:
     name: Supabase migrations and pgTAP

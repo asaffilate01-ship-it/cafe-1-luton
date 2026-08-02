@@ -3,6 +3,9 @@ import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
+import { getTrackedEnvironmentFiles } from "./repository-hygiene.mjs";
+import { getRouteCoverageReport } from "./verify-routes.mjs";
+
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 
 function git(args) {
@@ -12,23 +15,45 @@ function git(args) {
 const checklist = readFileSync(resolve(root, "docs/GO_LIVE_CHECKLIST.md"), "utf8");
 const completed = (checklist.match(/^- \[[xX]\]/gm) ?? []).length;
 const unchecked = (checklist.match(/^- \[ \]/gm) ?? []).length;
-const routeDiff = git(["diff", "--", "src/routeTree.gen.ts"]);
+const trackedEnvironmentFiles = getTrackedEnvironmentFiles(root);
+let routeCoverage;
+try {
+  routeCoverage = getRouteCoverageReport(root);
+} catch (error) {
+  routeCoverage = {
+    valid: false,
+    source_count: null,
+    generated_count: null,
+    missing: [],
+    extra: [],
+    duplicates: [],
+    error: error instanceof Error ? error.message : "unknown route validation error",
+  };
+}
 const requiredWorkflows = [
   ".github/workflows/ci.yml",
   ".github/workflows/codeql.yml",
   ".github/workflows/production-smoke.yml",
   ".github/workflows/release-candidate.yml",
+  ".github/workflows/repository-hygiene.yml",
 ];
 
 const report = {
-  schema_version: 1,
+  schema_version: 2,
   generated_at: new Date().toISOString(),
   commit: git(["rev-parse", "HEAD"]),
   branch: git(["branch", "--show-current"]) || null,
   checklist: { completed, unchecked, total: completed + unchecked },
   release_tree: {
-    tracked_env_present_on_disk: existsSync(resolve(root, ".env")),
-    generated_route_matches_commit: routeDiff.length === 0,
+    tracked_environment_file_count: trackedEnvironmentFiles.length,
+    tracked_environment_files: trackedEnvironmentFiles,
+    generated_routes_semantically_valid: routeCoverage.valid,
+    route_source_count: routeCoverage.source_count,
+    route_generated_count: routeCoverage.generated_count,
+    route_missing: routeCoverage.missing,
+    route_extra: routeCoverage.extra,
+    route_duplicates: routeCoverage.duplicates,
+    route_validation_error: routeCoverage.error ?? null,
     required_workflows_present: requiredWorkflows.every((path) => existsSync(resolve(root, path))),
   },
 };

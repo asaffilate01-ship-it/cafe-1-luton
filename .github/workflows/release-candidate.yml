@@ -41,8 +41,8 @@ jobs:
       - name: Verify, test and build release tree
         run: npm run release:guard && npm run check
 
-      - name: Verify generated routes are committed
-        run: git diff --exit-code -- src/routeTree.gen.ts
+      - name: Verify generated route coverage
+        run: npm run verify:routes
 
       - name: Audit production dependencies
         run: mkdir -p release-evidence && npm audit --omit=dev --audit-level=high --json > release-evidence/npm-audit.json
