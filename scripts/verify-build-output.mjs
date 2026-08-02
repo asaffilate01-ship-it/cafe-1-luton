@@ -1,16 +1,26 @@
 import { readFile } from "node:fs/promises";
 import { resolve } from "node:path";
 
-const outputHeaders = resolve(".output/public/_headers");
+// Nitro writes _headers to .output/public on classic builds and to dist/client
+// on the Vite/Cloudflare build used by this project.
+const candidateHeaderFiles = [resolve(".output/public/_headers"), resolve("dist/client/_headers")];
 let content;
+let lastError;
 
-try {
-  content = await readFile(outputHeaders, "utf8");
-} catch (error) {
+for (const candidate of candidateHeaderFiles) {
+  try {
+    content = await readFile(candidate, "utf8");
+    break;
+  } catch (error) {
+    lastError = error;
+  }
+}
+
+if (content === undefined) {
   console.error(
-    `Build output verification failed: ${outputHeaders} is missing. Run npm run build first.`,
+    `Build output verification failed: none of ${candidateHeaderFiles.join(", ")} exist. Run npm run build first.`,
   );
-  if (process.env.CI !== "true") console.error(error);
+  if (process.env.CI !== "true") console.error(lastError);
   process.exit(1);
 }
 
