@@ -2441,6 +2441,75 @@ export type Database = {
     }
     Functions: {
       award_loyalty_for_order: { Args: { _order_id: string }; Returns: boolean }
+      cafe1_assert_operator: {
+        Args: { _admin_only?: boolean }
+        Returns: string
+      }
+      cafe1_clock_staff: {
+        Args: {
+          _action: string
+          _break_minutes?: number
+          _note?: string
+          _site_id: string
+        }
+        Returns: Json
+      }
+      cafe1_complete_checklist: {
+        Args: { _business_date: string; _checklist_id: string; _note: string }
+        Returns: Json
+      }
+      cafe1_complete_stocktake: {
+        Args: { _counts: Json; _stocktake_id: string }
+        Returns: Json
+      }
+      cafe1_consume_juror_challenge: {
+        Args: { _token_hash: string; _voucher_code: string }
+        Returns: Json
+      }
+      cafe1_create_juror_challenge: {
+        Args: { _room: string; _token_hash: string }
+        Returns: Json
+      }
+      cafe1_customer_favourites: { Args: never; Returns: string[] }
+      cafe1_delete_recipe_component: {
+        Args: { _component_id: string }
+        Returns: boolean
+      }
+      cafe1_generate_daily_summary: {
+        Args: { _business_date: string; _site_id: string }
+        Returns: Json
+      }
+      cafe1_inventory_dashboard: { Args: { _site_id: string }; Returns: Json }
+      cafe1_list_sites: { Args: never; Returns: Json }
+      cafe1_operations_dashboard: {
+        Args: { _business_date: string; _site_id: string }
+        Returns: Json
+      }
+      cafe1_record_stock_movement: { Args: { _payload: Json }; Returns: Json }
+      cafe1_resolve_alert: { Args: { _alert_id: string }; Returns: boolean }
+      cafe1_save_inventory_item: {
+        Args: { _payload: Json; _site_id: string }
+        Returns: Json
+      }
+      cafe1_save_recipe_component: { Args: { _payload: Json }; Returns: Json }
+      cafe1_save_site: { Args: { _payload: Json }; Returns: Json }
+      cafe1_security_dashboard: { Args: { _site_id: string }; Returns: Json }
+      cafe1_staff_dashboard: {
+        Args: { _from: string; _site_id: string; _to: string }
+        Returns: Json
+      }
+      cafe1_start_stocktake: {
+        Args: { _site_id: string; _title: string }
+        Returns: string
+      }
+      cafe1_submit_feedback: {
+        Args: { _comment: string; _order_id: string; _rating: number }
+        Returns: string
+      }
+      cafe1_toggle_favourite: {
+        Args: { _menu_item_id: string }
+        Returns: boolean
+      }
       cancel_counter_order: {
         Args: { _order_id: string; _reason: string }
         Returns: boolean
