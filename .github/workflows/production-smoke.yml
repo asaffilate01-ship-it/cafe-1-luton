@@ -1,0 +1,43 @@
+name: Production smoke
+
+on:
+  workflow_dispatch:
+    inputs:
+      base_url:
+        description: HTTPS origin to verify after deployment
+        required: true
+        default: https://cafe1stalbans.co.uk
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: cafe1-production-smoke
+  cancel-in-progress: false
+
+jobs:
+  smoke:
+    name: Public deployment and headers
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v7
+
+      - name: Use Node.js 22
+        uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Clean install
+        run: npm ci
+
+      - name: Verify release integrity
+        run: npm run release:guard
+
+      - name: Verify deployed release
+        env:
+          PRODUCTION_BASE_URL: ${{ inputs.base_url }}
+        run: npm run smoke:production

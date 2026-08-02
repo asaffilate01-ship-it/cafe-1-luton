@@ -7,6 +7,7 @@ Do not enable live ordering or live SumUp charging until every mandatory box is 
 - [ ] Delete the tracked `.env` and legacy `env.example` files from GitHub; keep `.env.example`.
 - [ ] Upload this release without rewriting Lovable/Git history.
 - [ ] Confirm GitHub Actions passes both **Application** and **Supabase migrations and pgTAP**.
+- [ ] After deployment, run **Production smoke** and retain the successful workflow URL.
 - [ ] Protect `main`: require pull requests, passing checks and no force pushes.
 - [ ] Create a release tag for the deployed commit and record the rollback commit.
 

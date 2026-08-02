@@ -21,7 +21,7 @@ Read [the release notes](docs/RELEASE_NOTES_PRODUCTION_HARDENING.md) for the ful
 - Customer favourites, allergen/dietary filtering, order feedback and one-use juror attendance QR controls
 - Location/legal-entity configuration, delivery-channel switches, system alerts and manager audit views
 
-Read [the operations v2 guide](docs/OPERATIONS_CONTROLS_V2.md) before applying the release migrations. The follow-up `20260802110000_go_live_release.sql` repairs migration history, protects internal menu fields, enforces manager AAL2 and confirms AL1 3JU.
+Read [the operations v2 guide](docs/OPERATIONS_CONTROLS_V2.md) before applying the release migrations. The follow-up `20260802102930_5d58aeb2-21c2-49b4-95d6-e60e3fec1ff6.sql` protects internal menu fields, enforces manager AAL2 and confirms AL1 3JU. Later duplicate migration timestamps are compatibility no-ops.
 
 ## Local setup
 
@@ -43,21 +43,24 @@ npm audit --audit-level=high
 
 Useful commands:
 
-| Command             | Purpose                                       |
-| ------------------- | --------------------------------------------- |
-| `npm run typecheck` | Strict TypeScript validation                  |
-| `npm run lint`      | ESLint validation                             |
-| `npm test`          | Unit tests                                    |
-| `npm run build`     | Production bundle                             |
-| `npm run check`     | Typecheck, lint, tests, and build             |
-| `supabase test db`  | Database pgTAP assertions with local Supabase |
+| Command                    | Purpose                                                                     |
+| -------------------------- | --------------------------------------------------------------------------- |
+| `npm run typecheck`        | Strict TypeScript validation                                                |
+| `npm run lint`             | ESLint validation                                                           |
+| `npm test`                 | Unit tests                                                                  |
+| `npm run build`            | Production bundle                                                           |
+| `npm run check`            | Typecheck, lint, tests, and build                                           |
+| `npm run release:guard`    | Reject tracked secrets, legacy postcode and unsafe compatibility migrations |
+| `npm run smoke:production` | Verify the deployed pages, postcode and security headers                    |
+| `supabase test db`         | Database pgTAP assertions with local Supabase                               |
 
 ## Deployment order
 
 1. Back up Supabase and apply all release migrations in timestamp order.
 2. Configure all production values from `.env.example` in the host secret manager.
-3. Build and deploy this revision.
-4. Configure authenticated POST cron calls.
-5. Complete every item in the [go-live checklist](docs/GO_LIVE_CHECKLIST.md) before accepting live payments.
+3. Run `npm run release:guard`, build and deploy this revision.
+4. Run the **Production smoke** GitHub workflow against the deployed HTTPS origin.
+5. Configure authenticated POST cron calls.
+6. Complete every item in the [go-live checklist](docs/GO_LIVE_CHECKLIST.md) before accepting live payments.
 
 This project remains compatible with the Lovable/TanStack Start workflow. Do not expose `SUPABASE_SERVICE_ROLE_KEY`, SumUp credentials, webhook secrets, or `CRON_SECRET` to browser code.

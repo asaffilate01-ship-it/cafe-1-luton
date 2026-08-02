@@ -4,9 +4,9 @@
 
 1. Take a Supabase database backup and test the release against a staging project restored from recent production data.
 2. Configure every variable in `.env.example`. Generate `CRON_SECRET` with at least 32 random characters. Keep service-role, SumUp, email, and webhook values server-only.
-3. Apply all database migrations in timestamp order with the Supabase CLI (`supabase db push`) or the hosted migration workflow. The release sequence is `20260801173100_production_hardening.sql`, `20260802090000_operations_controls_v2.sql`, then `20260802110000_go_live_release.sql`.
-4. Run `npm ci && npm run check && npm audit --audit-level=high`.
-5. Deploy the web application, then run the smoke tests below before reopening online ordering.
+3. Apply all database migrations in timestamp order with the Supabase CLI (`supabase db push`) or the hosted migration workflow. The executable release sequence is `20260801173100_production_hardening.sql`, `20260802090000_operations_controls_v2.sql`, then `20260802102930_5d58aeb2-21c2-49b4-95d6-e60e3fec1ff6.sql`. The surrounding compatibility timestamps are deliberate no-ops.
+4. Run `npm ci && npm run release:guard && npm run check && npm audit --audit-level=high`.
+5. Deploy the web application, run the **Production smoke** GitHub workflow, then complete the manual smoke tests below before reopening online ordering.
 6. Configure authenticated POST scheduler calls for `/api/public/cleanup-unpaid` and `/api/public/juror-daily` using `Authorization: Bearer $CRON_SECRET`. There are deliberately no GET scheduler endpoints.
 7. Each manager must open **Admin → Security**, enrol an authenticator and verify the session at AAL2. Then set `REQUIRE_ADMIN_MFA=true` and redeploy.
 
