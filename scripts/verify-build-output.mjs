@@ -55,6 +55,12 @@ for (const pattern of requiredPrivatePatterns) {
   if (!/^  cache-control:.*\bprivate\b.*\bno-store\b/im.test(block)) {
     failures.push(`${pattern}: private, no-store cache-control is missing`);
   }
+  if (!/^  cloudflare-cdn-cache-control:\s*no-store\s*$/im.test(block)) {
+    failures.push(`${pattern}: Cloudflare CDN no-store policy is missing`);
+  }
+  if (!/^  cdn-cache-control:\s*no-store\s*$/im.test(block)) {
+    failures.push(`${pattern}: shared CDN no-store policy is missing`);
+  }
   if (!/^  pragma:\s*no-cache\s*$/im.test(block)) {
     failures.push(`${pattern}: pragma no-cache is missing`);
   }

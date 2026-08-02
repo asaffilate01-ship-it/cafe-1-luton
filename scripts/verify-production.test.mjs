@@ -96,3 +96,30 @@ test("reports protected caching and postcode regressions", async () => {
     true,
   );
 });
+
+test("rejects protected content served from an intermediary cache", async () => {
+  const report = await verifyProduction({
+    baseUrl: "https://cafe1stalbans.co.uk",
+    fetchImpl: async (input) => {
+      const response = await successfulFetch(input);
+      const url = new URL(input);
+      if (url.pathname === "/checkout") {
+        const headers = new Headers(response.headers);
+        headers.set("cf-cache-status", "HIT");
+        headers.set("age", "60");
+        return new Response(response.body, { status: response.status, headers });
+      }
+      return response;
+    },
+  });
+
+  assert.equal(report.passed, false);
+  assert.equal(
+    report.failures.some((failure) => failure.includes("served from Cloudflare cache")),
+    true,
+  );
+  assert.equal(
+    report.failures.some((failure) => failure.includes("reusable cache age")),
+    true,
+  );
+});

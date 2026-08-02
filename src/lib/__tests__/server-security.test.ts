@@ -25,6 +25,8 @@ describe("production response security", () => {
 
     expect(response.headers.get("cache-control")).toContain("private");
     expect(response.headers.get("cache-control")).toContain("no-store");
+    expect(response.headers.get("cloudflare-cdn-cache-control")).toBe("no-store");
+    expect(response.headers.get("cdn-cache-control")).toBe("no-store");
     expect(response.headers.get("pragma")).toBe("no-cache");
     expect(response.headers.get("expires")).toBe("0");
   });

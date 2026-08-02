@@ -18,6 +18,11 @@ export const PRIVATE_ROUTE_ROOTS = [
 
 export const PRIVATE_CACHE_HEADERS = {
   "Cache-Control": "private, no-store, max-age=0",
+  // Cloudflare may normalise the browser-facing Cache-Control header unless
+  // explicit CDN policy is supplied. These directives keep both Cloudflare
+  // and any upstream CDN from storing authenticated or checkout responses.
+  "Cloudflare-CDN-Cache-Control": "no-store",
+  "CDN-Cache-Control": "no-store",
   Pragma: "no-cache",
   Expires: "0",
 } as const;

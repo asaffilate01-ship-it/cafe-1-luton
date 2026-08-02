@@ -26,6 +26,8 @@ test("build output verifier checks every private route family", async () => {
   }
 
   assert.match(source, /private\\b.*no-store/);
+  assert.match(source, /cloudflare-cdn-cache-control/);
+  assert.match(source, /cdn-cache-control/);
   assert.match(source, /pragma:\\s\*no-cache/);
   assert.match(source, /expires:\\s\*0/);
 });
