@@ -1,5 +1,4 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { askConfirm, askPrompt } from "@/components/confirm-dialog";
 import { AdminNav } from "@/components/admin-nav";
 import { RequireRole } from "@/components/require-role";
 import { signOutAndRedirect } from "@/lib/sign-out";
@@ -10,16 +9,43 @@ import { updateOrderStatus, setOrderFulfilment } from "@/lib/orders.functions";
 import { toast } from "sonner";
 import { useSession, useRoles } from "@/hooks/use-auth";
 import { useAlertOnIncrease, useNotificationPermission, playChime } from "@/hooks/use-order-alerts";
-import { Bell, BellOff, RefreshCw, Sun, SunDim, ChevronsUp, ChevronsDown, ShoppingBag, HandPlatter, Bike } from "lucide-react";
+import {
+  Bell,
+  BellOff,
+  RefreshCw,
+  Sun,
+  SunDim,
+  ChevronsUp,
+  ChevronsDown,
+  ShoppingBag,
+  HandPlatter,
+  Bike,
+} from "lucide-react";
 import { useWakeLock } from "@/hooks/use-wake-lock";
-import { useKdsHeartbeat } from "@/hooks/use-kds-presence";
 import { syncSumupPos } from "@/lib/sumup-pos.functions";
 import { orderCode } from "@/lib/order-code";
 
-type Item = { id: string; order_id: string; menu_item_id: string | null; name: string; qty: number; notes: string | null; cook?: boolean };
+type Item = {
+  id: string;
+  order_id: string;
+  menu_item_id: string | null;
+  name: string;
+  qty: number;
+  notes: string | null;
+  cook?: boolean;
+  station_code?: string;
+  prep_seconds?: number;
+};
 type Order = {
-  id: string; order_number: number; status: string; type: string; customer_name: string; created_at: string;
-  schedule_mode: string | null; scheduled_for: string | null; table_number: string | null;
+  id: string;
+  order_number: number;
+  status: string;
+  type: string;
+  customer_name: string;
+  created_at: string;
+  schedule_mode: string | null;
+  scheduled_for: string | null;
+  table_number: string | null;
   source: string | null;
   payment_method: string | null;
   payment_status: string | null;
@@ -34,13 +60,19 @@ type Order = {
 };
 type Ticket = Order & { items: Item[]; needsCooking: boolean };
 
-const TYPE_LABEL: Record<string, string> = { dine_in: "DINE IN", collection: "PICKUP", delivery: "DELIVERY" };
+const TYPE_LABEL: Record<string, string> = {
+  dine_in: "DINE IN",
+  collection: "PICKUP",
+  delivery: "DELIVERY",
+};
 /** Which counter rang the sale up — jury, judge or public side. */
 const SIDE_TONE: Record<string, string> = {
   jury: "bg-indigo-600",
   judge: "bg-fuchsia-700",
   public: "bg-teal-600",
 };
+const STATIONS = ["ALL", "HOT", "SANDWICH", "DRINKS", "PASS"] as const;
+type Station = (typeof STATIONS)[number];
 
 function whenLabel(o: { schedule_mode: string | null; scheduled_for: string | null }) {
   if (o.schedule_mode === "scheduled" && o.scheduled_for)
@@ -77,11 +109,13 @@ function KDS() {
   const sync = useServerFn(syncSumupPos);
   const [syncing, setSyncing] = useState(false);
   const [now, setNow] = useState(() => Date.now());
+  const [station, setStation] = useState<Station>(() => {
+    if (typeof window === "undefined") return "ALL";
+    const saved = window.localStorage.getItem("cafe1-kds-station") as Station | null;
+    return saved && STATIONS.includes(saved) ? saved : "ALL";
+  });
   const { user } = useSession();
   const { has } = useRoles(user);
-
-  // Lets the till status strip show that a kitchen display is live
-  useKdsHeartbeat();
 
   // Live kitchen timer — ticks every second
   useEffect(() => {
@@ -103,32 +137,67 @@ function KDS() {
     async function load() {
       const { data: orders } = await supabase
         .from("orders")
-        .select("id, order_number, status, type, customer_name, created_at, schedule_mode, scheduled_for, table_number, source, payment_method, payment_status, customer_phone, company_name, address_line1, address_line2, city, postcode, delivery_notes, pos_terminal")
+        .select(
+          "id, order_number, status, type, customer_name, created_at, schedule_mode, scheduled_for, table_number, source, payment_method, payment_status, customer_phone, company_name, address_line1, address_line2, city, postcode, delivery_notes, pos_terminal",
+        )
         .in("status", ["preparing", "ready"])
         .order("created_at");
       // Cancelled / refunded orders must never sit on the kitchen display.
       const live = ((orders ?? []) as Order[]).filter(
-        (o) => o.payment_status !== "refunded" && o.status !== "cancelled" && o.status !== "refunded",
+        (o) =>
+          o.payment_status !== "refunded" && o.status !== "cancelled" && o.status !== "refunded",
       );
       const ids = live.map((o) => o.id);
       const { data: items } = ids.length
-        ? await supabase.from("order_items").select("id, order_id, menu_item_id, name, qty, notes").in("order_id", ids)
+        ? await supabase
+            .from("order_items")
+            .select("id, order_id, menu_item_id, name, qty, notes")
+            .in("order_id", ids)
         : { data: [] as Item[] };
-      const { data: menu } = await supabase.from("menu_items").select("id, name, needs_cooking");
-      const byId = new Map<string, boolean>();
-      const byName = new Map<string, boolean>();
-      for (const m of (menu ?? []) as { id: string; name: string; needs_cooking: boolean }[]) {
-        byId.set(m.id, !!m.needs_cooking);
-        byName.set(m.name.trim().toLowerCase(), !!m.needs_cooking);
+      const { data: menu } = await supabase
+        .from("menu_items")
+        .select("id, name, needs_cooking, station_code, prep_seconds");
+      type MenuMeta = {
+        needs_cooking: boolean;
+        station_code: string;
+        prep_seconds: number;
+      };
+      const byId = new Map<string, MenuMeta>();
+      const byName = new Map<string, MenuMeta>();
+      for (const m of (menu ?? []) as Array<{
+        id: string;
+        name: string;
+        needs_cooking: boolean;
+        station_code: string;
+        prep_seconds: number;
+      }>) {
+        const meta: MenuMeta = {
+          needs_cooking: !!m.needs_cooking,
+          station_code: m.station_code || "PASS",
+          prep_seconds: Math.max(0, m.prep_seconds || 0),
+        };
+        byId.set(m.id, meta);
+        byName.set(m.name.trim().toLowerCase(), meta);
       }
-      const cooks = (i: Item) =>
-        (i.menu_item_id ? byId.get(i.menu_item_id) : undefined) ??
-        byName.get(i.name.trim().toLowerCase()) ??
-        false;
+      const metadata = (item: Item): MenuMeta =>
+        (item.menu_item_id ? byId.get(item.menu_item_id) : undefined) ??
+        byName.get(item.name.trim().toLowerCase()) ?? {
+          needs_cooking: false,
+          station_code: "PASS",
+          prep_seconds: 0,
+        };
       const grouped: Ticket[] = live.map((o) => {
         const its = ((items ?? []) as Item[])
           .filter((i) => i.order_id === o.id)
-          .map((i) => ({ ...i, cook: cooks(i) }));
+          .map((item) => {
+            const meta = metadata(item);
+            return {
+              ...item,
+              cook: meta.needs_cooking,
+              station_code: meta.station_code,
+              prep_seconds: meta.prep_seconds,
+            };
+          });
         return { ...o, items: its, needsCooking: its.some((i) => i.cook) };
       });
       liveIds.current = new Set(grouped.map((g) => g.id));
@@ -139,7 +208,10 @@ function KDS() {
       .channel("kds")
       .on("postgres_changes", { event: "*", schema: "public", table: "orders" }, (payload) => {
         const o = payload.new as Partial<Order> | null;
-        if (o && (o.status === "cancelled" || o.status === "refunded" || o.payment_status === "refunded")) {
+        if (
+          o &&
+          (o.status === "cancelled" || o.status === "refunded" || o.payment_status === "refunded")
+        ) {
           if (liveIds.current.has(o.id as string)) {
             liveIds.current.delete(o.id as string);
             toast.error(
@@ -153,7 +225,9 @@ function KDS() {
       })
       .on("postgres_changes", { event: "*", schema: "public", table: "order_items" }, () => load())
       .subscribe();
-    return () => { supabase.removeChannel(ch); };
+    return () => {
+      supabase.removeChannel(ch);
+    };
   }, []);
 
   // Auto-poll SumUp POS every 30s while KDS is open (staff/admin only)
@@ -164,16 +238,25 @@ function KDS() {
       try {
         const r = await sync({ data: undefined as never });
         if (!cancelled && r?.imported && r.imported > 0) {
-          toast.success(`${r.imported} SumUp POS ${r.imported === 1 ? "order" : "orders"} imported`);
+          toast.success(
+            `${r.imported} SumUp POS ${r.imported === 1 ? "order" : "orders"} imported`,
+          );
         }
         if (!cancelled && r?.voided && r.voided > 0) {
-          toast.warning(`${r.voided} SumUp ${r.voided === 1 ? "order" : "orders"} refunded/cancelled — removed`);
+          toast.warning(
+            `${r.voided} SumUp ${r.voided === 1 ? "order" : "orders"} refunded/cancelled — removed`,
+          );
         }
-      } catch { /* silent */ }
+      } catch {
+        /* silent */
+      }
     }
     tick();
     const iv = window.setInterval(tick, 30000);
-    return () => { cancelled = true; window.clearInterval(iv); };
+    return () => {
+      cancelled = true;
+      window.clearInterval(iv);
+    };
   }, [user, has, sync]);
 
   async function manualSync() {
@@ -208,14 +291,19 @@ function KDS() {
   function toggleChrome() {
     setChromeHidden((v) => {
       const next = !v;
-      try { window.localStorage.setItem("kds_chrome_hidden", next ? "1" : "0"); } catch { /* ignore */ }
+      try {
+        window.localStorage.setItem("kds_chrome_hidden", next ? "1" : "0");
+      } catch {
+        /* ignore */
+      }
       return next;
     });
   }
   async function setAll(from: string, status: "ready" | "completed") {
     const ids = tickets.filter((t) => t.status === from).map((t) => t.id);
     if (!ids.length) return;
-    if (!(await askConfirm(`Mark ${ids.length} ticket${ids.length === 1 ? "" : "s"} as ${status}?`))) return;
+    if (!window.confirm(`Mark ${ids.length} ticket${ids.length === 1 ? "" : "s"} as ${status}?`))
+      return;
     setBulking(true);
     try {
       await Promise.all(ids.map((id) => update({ data: { order_id: id, status } })));
@@ -233,14 +321,7 @@ function KDS() {
         await setFulfil({ data: { order_id: id, type: "collection", table_number: null } });
         toast.success("Marked as pickup");
       } else {
-        const table =
-          (await askPrompt({
-            title: "Mark as dine in",
-            description: "Add the table number so the runner knows where to take it.",
-            label: "Table number (optional)",
-            placeholder: "e.g. 4",
-            confirmLabel: "Mark dine in",
-          })) ?? "";
+        const table = window.prompt("Table number (optional)") ?? "";
         await setFulfil({
           data: { order_id: id, type: "dine_in", table_number: table.trim() || null },
         });
@@ -252,7 +333,22 @@ function KDS() {
   }
 
   const preparingCount = tickets.filter((t) => t.status === "preparing").length;
-  useAlertOnIncrease(preparingCount, "New ticket · Kitchen", "A new order was accepted — start preparing.");
+  useAlertOnIncrease(
+    preparingCount,
+    "New ticket · Kitchen",
+    "A new order was accepted — start preparing.",
+  );
+
+  const visibleTickets = tickets
+    .map((ticket) => ({
+      ...ticket,
+      items:
+        station === "ALL" || station === "PASS"
+          ? ticket.items
+          : ticket.items.filter((item) => item.station_code === station),
+    }))
+    .filter((ticket) => ticket.items.length > 0);
+  const canCompleteOrders = station === "ALL" || station === "PASS";
 
   if (user && !has("admin") && !has("staff"))
     return <div className="p-10 text-center text-muted-foreground">Not authorised.</div>;
@@ -262,18 +358,22 @@ function KDS() {
       {!chromeHidden && <AdminNav />}
       {chromeHidden ? (
         <div className="sticky top-0 z-30 flex items-center justify-between gap-2 border-b border-border bg-primary px-3 py-1 text-primary-foreground">
-          <span className="text-xs font-bold uppercase tracking-wide opacity-90">{tickets.length} active</span>
+          <span className="text-xs font-bold uppercase tracking-wide opacity-90">
+            {visibleTickets.length} active · {station}
+          </span>
           <div className="flex items-center gap-2">
             <button
               onClick={() => setAll("preparing", "ready")}
-              disabled={bulking || !tickets.some((t) => t.status === "preparing")}
+              disabled={
+                bulking || !canCompleteOrders || !tickets.some((t) => t.status === "preparing")
+              }
               className="rounded-full bg-primary-foreground px-2.5 py-1 text-[11px] font-bold text-primary disabled:opacity-40"
             >
               All ready
             </button>
             <button
               onClick={() => setAll("ready", "completed")}
-              disabled={bulking || !tickets.some((t) => t.status === "ready")}
+              disabled={bulking || !canCompleteOrders || !tickets.some((t) => t.status === "ready")}
               className="rounded-full bg-emerald-600 px-2.5 py-1 text-[11px] font-bold text-white disabled:opacity-40"
             >
               All complete
@@ -289,94 +389,131 @@ function KDS() {
           </div>
         </div>
       ) : (
-      <header className="border-b border-border bg-primary text-primary-foreground">
-        <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-4">
-          <h1 className="font-display text-2xl font-bold">Kitchen Display · Cafe1</h1>
-          <div className="flex items-center gap-3">
-            <AlertsToggle />
-            <WakeToggle />
+        <header className="border-b border-border bg-primary text-primary-foreground">
+          <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-4">
+            <h1 className="font-display text-2xl font-bold">Kitchen Display · Cafe1</h1>
+            <div className="flex items-center gap-3">
+              <AlertsToggle />
+              <WakeToggle />
+              <button
+                onClick={toggleChrome}
+                className="flex items-center gap-1 rounded-full bg-primary-foreground/10 px-3 py-1.5 text-xs font-semibold hover:bg-primary-foreground/20"
+                title="Hide toolbar for more screen space"
+                aria-label="Hide toolbar"
+              >
+                <ChevronsUp className="h-4 w-4" /> Hide bar
+              </button>
+              <button
+                onClick={() => void signOutAndRedirect()}
+                className="flex items-center gap-1 rounded-full bg-primary-foreground px-3 py-1.5 text-xs font-bold text-primary hover:opacity-90"
+                title="Sign out of this device"
+              >
+                Sign out
+              </button>
+              <button
+                onClick={manualSync}
+                disabled={syncing}
+                className="flex items-center gap-1 rounded-full bg-primary-foreground/10 px-3 py-1.5 text-xs font-semibold hover:bg-primary-foreground/20 disabled:opacity-50"
+                title="Pull latest transactions from your SumUp terminal"
+              >
+                <RefreshCw className={`h-4 w-4 ${syncing ? "animate-spin" : ""}`} />
+                <span>{syncing ? "Syncing…" : "Sync SumUp POS"}</span>
+              </button>
+              <a
+                href={`/print/test?paper=${kdsPaper}&preview=1`}
+                target="_blank"
+                rel="noreferrer"
+                className="rounded-full bg-primary-foreground/10 px-3 py-1.5 text-xs font-semibold hover:bg-primary-foreground/20"
+                title="Print a sample ticket on this device — no order is created"
+              >
+                Test print
+              </a>
+              <div className="flex items-center gap-1 rounded-full bg-primary-foreground/10 p-1">
+                {([58, 80] as const).map((w) => (
+                  <button
+                    key={w}
+                    onClick={() => pickPaper(w)}
+                    className={`rounded-full px-2.5 py-1 text-xs font-semibold ${kdsPaper === w ? "bg-primary-foreground text-primary" : "opacity-80"}`}
+                    title="Kitchen printer paper width"
+                  >
+                    {w}mm
+                  </button>
+                ))}
+              </div>
+              <span className="text-sm opacity-80">{visibleTickets.length} active</span>
+            </div>
+          </div>
+          <div className="mx-auto flex max-w-7xl items-center gap-3 px-4 pb-3 text-xs font-semibold">
             <button
-              onClick={toggleChrome}
-              className="flex items-center gap-1 rounded-full bg-primary-foreground/10 px-3 py-1.5 text-xs font-semibold hover:bg-primary-foreground/20"
-              title="Hide toolbar for more screen space"
-              aria-label="Hide toolbar"
+              onClick={() => setAll("preparing", "ready")}
+              disabled={
+                bulking || !canCompleteOrders || !tickets.some((t) => t.status === "preparing")
+              }
+              className="rounded-full bg-primary-foreground px-3 py-1.5 text-xs font-bold text-primary hover:opacity-90 disabled:opacity-40"
+              title="Mark every preparing ticket as ready"
             >
-              <ChevronsUp className="h-4 w-4" /> Hide bar
+              Mark all ready
             </button>
             <button
-              onClick={() => void signOutAndRedirect()}
-              className="flex items-center gap-1 rounded-full bg-primary-foreground px-3 py-1.5 text-xs font-bold text-primary hover:opacity-90"
-              title="Sign out of this device"
+              onClick={() => setAll("ready", "completed")}
+              disabled={bulking || !canCompleteOrders || !tickets.some((t) => t.status === "ready")}
+              className="rounded-full bg-emerald-600 px-3 py-1.5 text-xs font-bold text-white hover:bg-emerald-700 disabled:opacity-40"
+              title="Mark every ready ticket as complete"
             >
-              Sign out
+              Mark all complete
             </button>
-            <button
-              onClick={manualSync}
-              disabled={syncing}
-              className="flex items-center gap-1 rounded-full bg-primary-foreground/10 px-3 py-1.5 text-xs font-semibold hover:bg-primary-foreground/20 disabled:opacity-50"
-              title="Pull latest transactions from your SumUp terminal"
-            >
-              <RefreshCw className={`h-4 w-4 ${syncing ? "animate-spin" : ""}`} />
-              <span>{syncing ? "Syncing…" : "Sync SumUp POS"}</span>
-            </button>
-            <a
-              href={`/print/test?paper=${kdsPaper}&preview=1`}
-              target="_blank"
-              rel="noreferrer"
-              className="rounded-full bg-primary-foreground/10 px-3 py-1.5 text-xs font-semibold hover:bg-primary-foreground/20"
-              title="Print a sample ticket on this device — no order is created"
-            >
-              Test print
-            </a>
-            <div className="flex items-center gap-1 rounded-full bg-primary-foreground/10 p-1">
-              {([58, 80] as const).map((w) => (
+            <span className="mx-1 h-4 w-px bg-primary-foreground/30" />
+            <div className="flex items-center gap-1" aria-label="Kitchen station filter">
+              {STATIONS.map((value) => (
                 <button
-                  key={w}
-                  onClick={() => pickPaper(w)}
-                  className={`rounded-full px-2.5 py-1 text-xs font-semibold ${kdsPaper === w ? "bg-primary-foreground text-primary" : "opacity-80"}`}
-                  title="Kitchen printer paper width"
+                  key={value}
+                  type="button"
+                  onClick={() => {
+                    setStation(value);
+                    window.localStorage.setItem("cafe1-kds-station", value);
+                  }}
+                  className={`rounded-full px-2.5 py-1 text-[10px] font-black tracking-wide ${
+                    station === value
+                      ? "bg-primary-foreground text-primary"
+                      : "bg-primary-foreground/10"
+                  }`}
                 >
-                  {w}mm
+                  {value}
                 </button>
               ))}
             </div>
-            <span className="text-sm opacity-80">{tickets.length} active</span>
+            <span className="mx-1 h-4 w-px bg-primary-foreground/30" />
+            <span className="inline-flex items-center gap-1.5">
+              <span className="h-3 w-3 rounded-full bg-blue-600 ring-2 ring-white/60" /> Cooked /
+              hot food
+            </span>
+            <span className="inline-flex items-center gap-1.5">
+              <span className="h-3 w-3 rounded-full bg-amber-400 ring-2 ring-white/60" /> No cooking
+              (drinks &amp; cold)
+            </span>
+            <span className="inline-flex items-center gap-1.5">
+              <span className="h-3 w-3 rounded-full bg-emerald-500 ring-2 ring-white/60" /> Ready →
+              complete
+            </span>
           </div>
-        </div>
-        <div className="mx-auto flex max-w-7xl items-center gap-3 px-4 pb-3 text-xs font-semibold">
-          <button
-            onClick={() => setAll("preparing", "ready")}
-            disabled={bulking || !tickets.some((t) => t.status === "preparing")}
-            className="rounded-full bg-primary-foreground px-3 py-1.5 text-xs font-bold text-primary hover:opacity-90 disabled:opacity-40"
-            title="Mark every preparing ticket as ready"
-          >
-            Mark all ready
-          </button>
-          <button
-            onClick={() => setAll("ready", "completed")}
-            disabled={bulking || !tickets.some((t) => t.status === "ready")}
-            className="rounded-full bg-emerald-600 px-3 py-1.5 text-xs font-bold text-white hover:bg-emerald-700 disabled:opacity-40"
-            title="Mark every ready ticket as complete"
-          >
-            Mark all complete
-          </button>
-          <span className="mx-1 h-4 w-px bg-primary-foreground/30" />
-          <span className="inline-flex items-center gap-1.5"><span className="h-3 w-3 rounded-full bg-blue-600 ring-2 ring-white/60" /> Cooked / hot food</span>
-          <span className="inline-flex items-center gap-1.5"><span className="h-3 w-3 rounded-full bg-amber-400 ring-2 ring-white/60" /> No cooking (drinks &amp; cold)</span>
-          <span className="inline-flex items-center gap-1.5"><span className="h-3 w-3 rounded-full bg-emerald-500 ring-2 ring-white/60" /> Ready → complete</span>
-          </div>
-      </header>
+        </header>
       )}
       <div className="mx-auto grid max-w-[110rem] gap-3 p-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
-        {tickets.map((t) => {
-          const elapsedSec = Math.max(0, Math.floor((now - new Date(t.created_at).getTime()) / 1000));
+        {visibleTickets.map((t) => {
+          const elapsedSec = Math.max(
+            0,
+            Math.floor((now - new Date(t.created_at).getTime()) / 1000),
+          );
           const mins = Math.floor(elapsedSec / 60);
           const clock = `${mins}:${String(elapsedSec % 60).padStart(2, "0")}`;
-          const hot = mins >= 10;
+          const targetSeconds = Math.max(600, ...t.items.map((item) => item.prep_seconds ?? 0));
+          const hot = elapsedSec >= targetSeconds;
           const timerTone =
-            mins >= 20 ? "bg-red-600 text-white animate-pulse"
-            : mins >= 10 ? "bg-amber-500 text-white"
-            : "bg-slate-800 text-white";
+            elapsedSec >= targetSeconds * 2
+              ? "bg-red-600 text-white animate-pulse"
+              : elapsedSec >= targetSeconds
+                ? "bg-amber-500 text-white"
+                : "bg-slate-800 text-white";
           const cook = t.needsCooking;
           return (
             <div
@@ -385,47 +522,74 @@ function KDS() {
                 cook ? "border-blue-600" : "border-amber-400"
               } ${hot ? "shadow-brand" : ""}`}
             >
-              <div className={`-mx-3 -mt-3 mb-2 px-3 py-1 text-center text-[10px] font-black uppercase tracking-[0.14em] text-white ${cook ? "bg-blue-600" : "bg-amber-500"}`}>
+              <div
+                className={`-mx-3 -mt-3 mb-2 px-3 py-1 text-center text-[10px] font-black uppercase tracking-[0.14em] text-white ${cook ? "bg-blue-600" : "bg-amber-500"}`}
+              >
                 {cook ? "Cook / hot food" : "No cooking needed"}
               </div>
               <div className="flex items-start justify-between gap-2">
                 <p className="font-display text-lg font-bold leading-none">#{t.order_number}</p>
                 <div className="flex flex-wrap items-center justify-end gap-1">
                   {t.source === "sumup_pos" && (
-                    <span className="rounded-full bg-blue-600 px-1.5 py-px text-[9px] font-black uppercase tracking-wide text-white">SumUp POS</span>
+                    <span className="rounded-full bg-blue-600 px-1.5 py-px text-[9px] font-black uppercase tracking-wide text-white">
+                      SumUp POS
+                    </span>
                   )}
                   {t.source === "deliveroo" && (
-                    <span className="rounded-full bg-[#00CCBC] px-1.5 py-px text-[9px] font-black uppercase tracking-wide text-white">Deliveroo</span>
+                    <span className="rounded-full bg-[#00CCBC] px-1.5 py-px text-[9px] font-black uppercase tracking-wide text-white">
+                      Deliveroo
+                    </span>
                   )}
                   {t.source === "counter" && (
-                    <span className="rounded-full bg-slate-700 px-1.5 py-px text-[9px] font-black uppercase tracking-wide text-white">Counter</span>
+                    <span className="rounded-full bg-slate-700 px-1.5 py-px text-[9px] font-black uppercase tracking-wide text-white">
+                      Counter
+                    </span>
                   )}
                   {SIDE_TONE[t.pos_terminal ?? ""] && (
-                    <span className={`rounded-full px-1.5 py-px text-[9px] font-black uppercase tracking-wide text-white ${SIDE_TONE[t.pos_terminal!]}`}>
+                    <span
+                      className={`rounded-full px-1.5 py-px text-[9px] font-black uppercase tracking-wide text-white ${SIDE_TONE[t.pos_terminal!]}`}
+                    >
                       {t.pos_terminal === "public" ? "Public side" : t.pos_terminal}
                     </span>
                   )}
-                  {t.source !== "sumup_pos" && t.source !== "deliveroo" && t.source !== "counter" && (
-                    <span className="rounded-full bg-purple-600 px-1.5 py-px text-[9px] font-black uppercase tracking-wide text-white">Website</span>
-                  )}
-                  <span className={`rounded-full px-1.5 py-px text-[9px] font-black uppercase tracking-wide ${t.payment_method === "cash" ? "bg-emerald-600 text-white" : "bg-slate-800 text-white"}`}>
+                  {t.source !== "sumup_pos" &&
+                    t.source !== "deliveroo" &&
+                    t.source !== "counter" && (
+                      <span className="rounded-full bg-purple-600 px-1.5 py-px text-[9px] font-black uppercase tracking-wide text-white">
+                        Website
+                      </span>
+                    )}
+                  <span
+                    className={`rounded-full px-1.5 py-px text-[9px] font-black uppercase tracking-wide ${t.payment_method === "cash" ? "bg-emerald-600 text-white" : "bg-slate-800 text-white"}`}
+                  >
                     {t.payment_method === "cash" ? "Cash" : "Card"}
                   </span>
                   <span
                     className={`rounded-full px-2 py-px font-mono text-xs font-black tabular-nums ${timerTone}`}
-                    title="Time in kitchen since the order was accepted"
+                    title={`Time in kitchen · target ${Math.ceil(targetSeconds / 60)} minutes`}
                   >
                     {clock}
                   </span>
                 </div>
               </div>
               <p className="mt-0.5 text-[10px] font-semibold text-muted-foreground">
-                {new Date(t.created_at).toLocaleString([], { weekday: "short", day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" })}
+                {new Date(t.created_at).toLocaleString([], {
+                  weekday: "short",
+                  day: "2-digit",
+                  month: "short",
+                  hour: "2-digit",
+                  minute: "2-digit",
+                })}
               </p>
               <div className="mt-1.5 rounded-lg bg-primary px-2.5 py-1.5 text-primary-foreground">
                 <p className="flex items-center gap-1.5 font-display text-lg font-black uppercase leading-none tracking-wide">
                   {(() => {
-                    const Icon = t.type === "dine_in" ? HandPlatter : t.type === "delivery" ? Bike : ShoppingBag;
+                    const Icon =
+                      t.type === "dine_in"
+                        ? HandPlatter
+                        : t.type === "delivery"
+                          ? Bike
+                          : ShoppingBag;
                     return <Icon className="h-5 w-5 shrink-0" aria-hidden="true" />;
                   })()}
                   {t.source === "sumup_pos" && t.type === "collection"
@@ -446,9 +610,13 @@ function KDS() {
                   {t.type === "dine_in" ? "Change to pickup" : "Mark as dine in"}
                 </button>
               </div>
-              <p className="mt-1.5 text-xs font-black uppercase tracking-wide text-foreground">{t.customer_name}</p>
+              <p className="mt-1.5 text-xs font-black uppercase tracking-wide text-foreground">
+                {t.customer_name}
+              </p>
               {SIDE_TONE[t.pos_terminal ?? ""] && (
-                <p className={`mt-1.5 rounded-lg px-2.5 py-1.5 text-center font-display text-base font-black uppercase tracking-widest text-white ${SIDE_TONE[t.pos_terminal!]}`}>
+                <p
+                  className={`mt-1.5 rounded-lg px-2.5 py-1.5 text-center font-display text-base font-black uppercase tracking-widest text-white ${SIDE_TONE[t.pos_terminal!]}`}
+                >
                   {t.pos_terminal === "public" ? "Public side" : t.pos_terminal}
                 </p>
               )}
@@ -462,9 +630,13 @@ function KDS() {
               </p>
               {t.type === "delivery" && (
                 <div className="mt-1.5 rounded-lg border border-slate-900 bg-white p-1.5 text-xs">
-                  <p className="text-[9px] font-black uppercase tracking-widest text-slate-500">Deliver to</p>
+                  <p className="text-[9px] font-black uppercase tracking-widest text-slate-500">
+                    Deliver to
+                  </p>
                   {t.postcode && (
-                    <p className="font-display text-base font-black uppercase leading-none">{t.postcode}</p>
+                    <p className="font-display text-base font-black uppercase leading-none">
+                      {t.postcode}
+                    </p>
                   )}
                   {t.company_name && <p className="mt-0.5 font-bold">{t.company_name}</p>}
                   {t.address_line1 && <p className="font-semibold">{t.address_line1}</p>}
@@ -478,16 +650,28 @@ function KDS() {
                   )}
                 </div>
               )}
-              <ul className={`mt-2 flex-1 space-y-0.5 rounded-lg p-2 text-xs ${cook ? "bg-blue-50" : "bg-amber-50"}`}>
+              <ul
+                className={`mt-2 flex-1 space-y-0.5 rounded-lg p-2 text-xs ${cook ? "bg-blue-50" : "bg-amber-50"}`}
+              >
                 {t.items.map((i) => (
                   <li key={i.id} className="flex items-start gap-1.5 leading-snug">
-                    <span className={`mt-1 h-2 w-2 shrink-0 rounded-full ${i.cook ? "bg-blue-600" : "bg-amber-400"}`} />
-                    <span><span className="font-bold text-primary">{i.qty}×</span> {i.name}{i.notes ? <em className="text-muted-foreground"> — {i.notes}</em> : null}</span>
+                    <span
+                      className={`mt-1 h-2 w-2 shrink-0 rounded-full ${i.cook ? "bg-blue-600" : "bg-amber-400"}`}
+                    />
+                    <span>
+                      <span className="font-bold text-primary">{i.qty}×</span> {i.name}
+                      {station === "ALL" && i.station_code && (
+                        <span className="ml-1 rounded bg-slate-200 px-1 py-px text-[9px] font-bold text-slate-700">
+                          {i.station_code}
+                        </span>
+                      )}
+                      {i.notes ? <em className="text-muted-foreground"> — {i.notes}</em> : null}
+                    </span>
                   </li>
                 ))}
               </ul>
               <div className="mt-2 flex gap-1.5">
-                {t.status === "preparing" && (
+                {canCompleteOrders && t.status === "preparing" && (
                   <button
                     onClick={() => set(t.id, "ready")}
                     className={`h-8 flex-1 rounded-full text-xs font-bold ${cook ? "bg-blue-600 text-white hover:bg-blue-700" : "bg-amber-400 text-amber-950 hover:bg-amber-500"}`}
@@ -495,18 +679,43 @@ function KDS() {
                     Mark ready
                   </button>
                 )}
-                {t.status === "ready" && (
-                  <button onClick={() => set(t.id, "completed")} className="h-8 flex-1 rounded-full bg-emerald-600 text-xs font-semibold text-white hover:bg-emerald-700">
+                {canCompleteOrders && t.status === "ready" && (
+                  <button
+                    onClick={() => set(t.id, "completed")}
+                    className="h-8 flex-1 rounded-full bg-emerald-600 text-xs font-semibold text-white hover:bg-emerald-700"
+                  >
                     Mark complete
                   </button>
                 )}
-                <a href={`/print/${t.id}?paper=${kdsPaper}&preview=1`} target="_blank" rel="noreferrer" className="grid h-8 w-8 place-items-center rounded-full border border-border text-xs hover:border-primary hover:text-primary" aria-label="Print preview" title="Preview then print">👁</a>
-                <a href={`/print/${t.id}?paper=${kdsPaper}`} target="_blank" rel="noreferrer" className="grid h-8 w-8 place-items-center rounded-full border border-border text-xs hover:border-primary hover:text-primary" aria-label="Print" title="Print now">🖨</a>
+                <a
+                  href={`/print/${t.id}?paper=${kdsPaper}&preview=1`}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="grid h-8 w-8 place-items-center rounded-full border border-border text-xs hover:border-primary hover:text-primary"
+                  aria-label="Print preview"
+                  title="Preview then print"
+                >
+                  👁
+                </a>
+                <a
+                  href={`/print/${t.id}?paper=${kdsPaper}`}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="grid h-8 w-8 place-items-center rounded-full border border-border text-xs hover:border-primary hover:text-primary"
+                  aria-label="Print"
+                  title="Print now"
+                >
+                  🖨
+                </a>
               </div>
             </div>
           );
         })}
-        {!tickets.length && <div className="col-span-full p-16 text-center text-muted-foreground">No active tickets. Enjoy the quiet ☕</div>}
+        {!visibleTickets.length && (
+          <div className="col-span-full p-16 text-center text-muted-foreground">
+            No active tickets for {station === "ALL" ? "the kitchen" : station}.
+          </div>
+        )}
       </div>
     </div>
   );
@@ -522,7 +731,13 @@ function AlertsToggle() {
         title={perm === "granted" ? "Alerts on" : "Enable alerts"}
       >
         {perm === "granted" ? <Bell className="h-4 w-4" /> : <BellOff className="h-4 w-4" />}
-        <span>{perm === "granted" ? "Alerts on" : perm === "unsupported" ? "No alerts" : "Enable alerts"}</span>
+        <span>
+          {perm === "granted"
+            ? "Alerts on"
+            : perm === "unsupported"
+              ? "No alerts"
+              : "Enable alerts"}
+        </span>
       </button>
       <button
         onClick={() => playChime()}
@@ -541,7 +756,13 @@ function WakeToggle() {
     <button
       onClick={toggle}
       className={`flex items-center gap-1 rounded-full px-3 py-1.5 text-xs font-semibold ${enabled ? "bg-primary-foreground text-primary" : "bg-primary-foreground/10 hover:bg-primary-foreground/20"}`}
-      title={enabled ? (active ? "Screen kept awake" : "Keep awake on — will re-arm when tab is visible") : "Keep this screen awake during service"}
+      title={
+        enabled
+          ? active
+            ? "Screen kept awake"
+            : "Keep awake on — will re-arm when tab is visible"
+          : "Keep this screen awake during service"
+      }
     >
       {enabled ? <Sun className="h-4 w-4" /> : <SunDim className="h-4 w-4" />}
       <span>{enabled ? "Screen awake" : "Keep awake"}</span>

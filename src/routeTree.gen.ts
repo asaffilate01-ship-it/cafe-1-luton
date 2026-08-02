@@ -39,12 +39,18 @@ import { Route as OrderOrderIdRouteImport } from './routes/order.$orderId'
 import { Route as BlogSlugRouteImport } from './routes/blog.$slug'
 import { Route as AdminVouchersRouteImport } from './routes/admin.vouchers'
 import { Route as AdminUsersRouteImport } from './routes/admin.users'
+import { Route as AdminStaffOpsRouteImport } from './routes/admin.staff-ops'
 import { Route as AdminSettingsRouteImport } from './routes/admin.settings'
+import { Route as AdminSecurityRouteImport } from './routes/admin.security'
 import { Route as AdminReportsRouteImport } from './routes/admin.reports'
 import { Route as AdminPromosRouteImport } from './routes/admin.promos'
 import { Route as AdminPosRouteImport } from './routes/admin.pos'
+import { Route as AdminOperationsRouteImport } from './routes/admin.operations'
 import { Route as AdminMenuRouteImport } from './routes/admin.menu'
 import { Route as AdminLoginRouteImport } from './routes/admin.login'
+import { Route as AdminLocationsRouteImport } from './routes/admin.locations'
+import { Route as AdminJurorAttendanceRouteImport } from './routes/admin.juror-attendance'
+import { Route as AdminInventoryRouteImport } from './routes/admin.inventory'
 import { Route as AdminCustomerDiscountsRouteImport } from './routes/admin.customer-discounts'
 import { Route as AdminBroadcastsRouteImport } from './routes/admin.broadcasts'
 import { Route as AdminBlogRouteImport } from './routes/admin.blog'
@@ -207,9 +213,19 @@ const AdminUsersRoute = AdminUsersRouteImport.update({
   path: '/admin/users',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminStaffOpsRoute = AdminStaffOpsRouteImport.update({
+  id: '/admin/staff-ops',
+  path: '/admin/staff-ops',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AdminSettingsRoute = AdminSettingsRouteImport.update({
   id: '/admin/settings',
   path: '/admin/settings',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminSecurityRoute = AdminSecurityRouteImport.update({
+  id: '/admin/security',
+  path: '/admin/security',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AdminReportsRoute = AdminReportsRouteImport.update({
@@ -227,6 +243,11 @@ const AdminPosRoute = AdminPosRouteImport.update({
   path: '/admin/pos',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminOperationsRoute = AdminOperationsRouteImport.update({
+  id: '/admin/operations',
+  path: '/admin/operations',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AdminMenuRoute = AdminMenuRouteImport.update({
   id: '/admin/menu',
   path: '/admin/menu',
@@ -235,6 +256,21 @@ const AdminMenuRoute = AdminMenuRouteImport.update({
 const AdminLoginRoute = AdminLoginRouteImport.update({
   id: '/admin/login',
   path: '/admin/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminLocationsRoute = AdminLocationsRouteImport.update({
+  id: '/admin/locations',
+  path: '/admin/locations',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminJurorAttendanceRoute = AdminJurorAttendanceRouteImport.update({
+  id: '/admin/juror-attendance',
+  path: '/admin/juror-attendance',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminInventoryRoute = AdminInventoryRouteImport.update({
+  id: '/admin/inventory',
+  path: '/admin/inventory',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AdminCustomerDiscountsRoute = AdminCustomerDiscountsRouteImport.update({
@@ -322,12 +358,18 @@ export interface FileRoutesByFullPath {
   '/admin/blog': typeof AdminBlogRoute
   '/admin/broadcasts': typeof AdminBroadcastsRoute
   '/admin/customer-discounts': typeof AdminCustomerDiscountsRoute
+  '/admin/inventory': typeof AdminInventoryRoute
+  '/admin/juror-attendance': typeof AdminJurorAttendanceRoute
+  '/admin/locations': typeof AdminLocationsRoute
   '/admin/login': typeof AdminLoginRoute
   '/admin/menu': typeof AdminMenuRoute
+  '/admin/operations': typeof AdminOperationsRoute
   '/admin/pos': typeof AdminPosRoute
   '/admin/promos': typeof AdminPromosRoute
   '/admin/reports': typeof AdminReportsRoute
+  '/admin/security': typeof AdminSecurityRoute
   '/admin/settings': typeof AdminSettingsRoute
+  '/admin/staff-ops': typeof AdminStaffOpsRoute
   '/admin/users': typeof AdminUsersRoute
   '/admin/vouchers': typeof AdminVouchersRoute
   '/blog/$slug': typeof BlogSlugRoute
@@ -371,12 +413,18 @@ export interface FileRoutesByTo {
   '/admin/blog': typeof AdminBlogRoute
   '/admin/broadcasts': typeof AdminBroadcastsRoute
   '/admin/customer-discounts': typeof AdminCustomerDiscountsRoute
+  '/admin/inventory': typeof AdminInventoryRoute
+  '/admin/juror-attendance': typeof AdminJurorAttendanceRoute
+  '/admin/locations': typeof AdminLocationsRoute
   '/admin/login': typeof AdminLoginRoute
   '/admin/menu': typeof AdminMenuRoute
+  '/admin/operations': typeof AdminOperationsRoute
   '/admin/pos': typeof AdminPosRoute
   '/admin/promos': typeof AdminPromosRoute
   '/admin/reports': typeof AdminReportsRoute
+  '/admin/security': typeof AdminSecurityRoute
   '/admin/settings': typeof AdminSettingsRoute
+  '/admin/staff-ops': typeof AdminStaffOpsRoute
   '/admin/users': typeof AdminUsersRoute
   '/admin/vouchers': typeof AdminVouchersRoute
   '/blog/$slug': typeof BlogSlugRoute
@@ -421,12 +469,18 @@ export interface FileRoutesById {
   '/admin/blog': typeof AdminBlogRoute
   '/admin/broadcasts': typeof AdminBroadcastsRoute
   '/admin/customer-discounts': typeof AdminCustomerDiscountsRoute
+  '/admin/inventory': typeof AdminInventoryRoute
+  '/admin/juror-attendance': typeof AdminJurorAttendanceRoute
+  '/admin/locations': typeof AdminLocationsRoute
   '/admin/login': typeof AdminLoginRoute
   '/admin/menu': typeof AdminMenuRoute
+  '/admin/operations': typeof AdminOperationsRoute
   '/admin/pos': typeof AdminPosRoute
   '/admin/promos': typeof AdminPromosRoute
   '/admin/reports': typeof AdminReportsRoute
+  '/admin/security': typeof AdminSecurityRoute
   '/admin/settings': typeof AdminSettingsRoute
+  '/admin/staff-ops': typeof AdminStaffOpsRoute
   '/admin/users': typeof AdminUsersRoute
   '/admin/vouchers': typeof AdminVouchersRoute
   '/blog/$slug': typeof BlogSlugRoute
@@ -472,12 +526,18 @@ export interface FileRouteTypes {
     | '/admin/blog'
     | '/admin/broadcasts'
     | '/admin/customer-discounts'
+    | '/admin/inventory'
+    | '/admin/juror-attendance'
+    | '/admin/locations'
     | '/admin/login'
     | '/admin/menu'
+    | '/admin/operations'
     | '/admin/pos'
     | '/admin/promos'
     | '/admin/reports'
+    | '/admin/security'
     | '/admin/settings'
+    | '/admin/staff-ops'
     | '/admin/users'
     | '/admin/vouchers'
     | '/blog/$slug'
@@ -521,12 +581,18 @@ export interface FileRouteTypes {
     | '/admin/blog'
     | '/admin/broadcasts'
     | '/admin/customer-discounts'
+    | '/admin/inventory'
+    | '/admin/juror-attendance'
+    | '/admin/locations'
     | '/admin/login'
     | '/admin/menu'
+    | '/admin/operations'
     | '/admin/pos'
     | '/admin/promos'
     | '/admin/reports'
+    | '/admin/security'
     | '/admin/settings'
+    | '/admin/staff-ops'
     | '/admin/users'
     | '/admin/vouchers'
     | '/blog/$slug'
@@ -570,12 +636,18 @@ export interface FileRouteTypes {
     | '/admin/blog'
     | '/admin/broadcasts'
     | '/admin/customer-discounts'
+    | '/admin/inventory'
+    | '/admin/juror-attendance'
+    | '/admin/locations'
     | '/admin/login'
     | '/admin/menu'
+    | '/admin/operations'
     | '/admin/pos'
     | '/admin/promos'
     | '/admin/reports'
+    | '/admin/security'
     | '/admin/settings'
+    | '/admin/staff-ops'
     | '/admin/users'
     | '/admin/vouchers'
     | '/blog/$slug'
@@ -620,12 +692,18 @@ export interface RootRouteChildren {
   AdminBlogRoute: typeof AdminBlogRoute
   AdminBroadcastsRoute: typeof AdminBroadcastsRoute
   AdminCustomerDiscountsRoute: typeof AdminCustomerDiscountsRoute
+  AdminInventoryRoute: typeof AdminInventoryRoute
+  AdminJurorAttendanceRoute: typeof AdminJurorAttendanceRoute
+  AdminLocationsRoute: typeof AdminLocationsRoute
   AdminLoginRoute: typeof AdminLoginRoute
   AdminMenuRoute: typeof AdminMenuRoute
+  AdminOperationsRoute: typeof AdminOperationsRoute
   AdminPosRoute: typeof AdminPosRoute
   AdminPromosRoute: typeof AdminPromosRoute
   AdminReportsRoute: typeof AdminReportsRoute
+  AdminSecurityRoute: typeof AdminSecurityRoute
   AdminSettingsRoute: typeof AdminSettingsRoute
+  AdminStaffOpsRoute: typeof AdminStaffOpsRoute
   AdminUsersRoute: typeof AdminUsersRoute
   AdminVouchersRoute: typeof AdminVouchersRoute
   BlogSlugRoute: typeof BlogSlugRoute
@@ -854,11 +932,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminUsersRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin/staff-ops': {
+      id: '/admin/staff-ops'
+      path: '/admin/staff-ops'
+      fullPath: '/admin/staff-ops'
+      preLoaderRoute: typeof AdminStaffOpsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/admin/settings': {
       id: '/admin/settings'
       path: '/admin/settings'
       fullPath: '/admin/settings'
       preLoaderRoute: typeof AdminSettingsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin/security': {
+      id: '/admin/security'
+      path: '/admin/security'
+      fullPath: '/admin/security'
+      preLoaderRoute: typeof AdminSecurityRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/admin/reports': {
@@ -882,6 +974,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminPosRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin/operations': {
+      id: '/admin/operations'
+      path: '/admin/operations'
+      fullPath: '/admin/operations'
+      preLoaderRoute: typeof AdminOperationsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/admin/menu': {
       id: '/admin/menu'
       path: '/admin/menu'
@@ -894,6 +993,27 @@ declare module '@tanstack/react-router' {
       path: '/admin/login'
       fullPath: '/admin/login'
       preLoaderRoute: typeof AdminLoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin/locations': {
+      id: '/admin/locations'
+      path: '/admin/locations'
+      fullPath: '/admin/locations'
+      preLoaderRoute: typeof AdminLocationsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin/juror-attendance': {
+      id: '/admin/juror-attendance'
+      path: '/admin/juror-attendance'
+      fullPath: '/admin/juror-attendance'
+      preLoaderRoute: typeof AdminJurorAttendanceRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin/inventory': {
+      id: '/admin/inventory'
+      path: '/admin/inventory'
+      fullPath: '/admin/inventory'
+      preLoaderRoute: typeof AdminInventoryRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/admin/customer-discounts': {
@@ -1004,12 +1124,18 @@ const rootRouteChildren: RootRouteChildren = {
   AdminBlogRoute: AdminBlogRoute,
   AdminBroadcastsRoute: AdminBroadcastsRoute,
   AdminCustomerDiscountsRoute: AdminCustomerDiscountsRoute,
+  AdminInventoryRoute: AdminInventoryRoute,
+  AdminJurorAttendanceRoute: AdminJurorAttendanceRoute,
+  AdminLocationsRoute: AdminLocationsRoute,
   AdminLoginRoute: AdminLoginRoute,
   AdminMenuRoute: AdminMenuRoute,
+  AdminOperationsRoute: AdminOperationsRoute,
   AdminPosRoute: AdminPosRoute,
   AdminPromosRoute: AdminPromosRoute,
   AdminReportsRoute: AdminReportsRoute,
+  AdminSecurityRoute: AdminSecurityRoute,
   AdminSettingsRoute: AdminSettingsRoute,
+  AdminStaffOpsRoute: AdminStaffOpsRoute,
   AdminUsersRoute: AdminUsersRoute,
   AdminVouchersRoute: AdminVouchersRoute,
   BlogSlugRoute: BlogSlugRoute,

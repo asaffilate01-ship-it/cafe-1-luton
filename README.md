@@ -13,6 +13,16 @@ Single-merchant ordering and operations platform for Cafe 1 at St Albans Crown C
 
 Read [the release notes](docs/RELEASE_NOTES_PRODUCTION_HARDENING.md) for the full change list and [the production runbook](docs/PRODUCTION_RUNBOOK.md) before deployment.
 
+## Operations v2 included
+
+- Inventory ledger, recipe/portion costing, theoretical usage, waste, reorder warnings and controlled stocktakes
+- Opening/closing/Friday/month-end checklists and daily cash/card/account/refund/variance snapshots
+- Barcode till entry with basket recovery, staff clocking, KDS stations and preparation targets
+- Customer favourites, allergen/dietary filtering, order feedback and one-use juror attendance QR controls
+- Location/legal-entity configuration, delivery-channel switches, system alerts and manager audit views
+
+Read [the operations v2 guide](docs/OPERATIONS_CONTROLS_V2.md) before applying `20260802090000_operations_controls_v2.sql`.
+
 ## Local setup
 
 Requirements: Node.js 22+, npm, and a Supabase project.
@@ -44,7 +54,7 @@ Useful commands:
 
 ## Deployment order
 
-1. Back up and migrate Supabase.
+1. Back up Supabase and apply both release migrations in timestamp order.
 2. Configure all production values from `.env.example` in the host secret manager.
 3. Build and deploy this revision.
 4. Configure authenticated POST cron calls.
