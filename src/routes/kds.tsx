@@ -24,6 +24,7 @@ import {
 import { useWakeLock } from "@/hooks/use-wake-lock";
 import { syncSumupPos } from "@/lib/sumup-pos.functions";
 import { orderCode } from "@/lib/order-code";
+import { getStaffMenuItems } from "@/lib/menu-operations.functions";
 
 type Item = {
   id: string;
@@ -107,6 +108,7 @@ function KDS() {
   const update = useServerFn(updateOrderStatus);
   const setFulfil = useServerFn(setOrderFulfilment);
   const sync = useServerFn(syncSumupPos);
+  const getMenuItems = useServerFn(getStaffMenuItems);
   const [syncing, setSyncing] = useState(false);
   const [now, setNow] = useState(() => Date.now());
   const [station, setStation] = useState<Station>(() => {
@@ -154,9 +156,7 @@ function KDS() {
             .select("id, order_id, menu_item_id, name, qty, notes")
             .in("order_id", ids)
         : { data: [] as Item[] };
-      const { data: menu } = await supabase
-        .from("menu_items")
-        .select("id, name, needs_cooking, station_code, prep_seconds");
+      const menu = await getMenuItems();
       type MenuMeta = {
         needs_cooking: boolean;
         station_code: string;
@@ -228,7 +228,7 @@ function KDS() {
     return () => {
       supabase.removeChannel(ch);
     };
-  }, []);
+  }, [getMenuItems]);
 
   // Auto-poll SumUp POS every 30s while KDS is open (staff/admin only)
   useEffect(() => {

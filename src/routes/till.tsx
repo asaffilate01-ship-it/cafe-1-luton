@@ -30,6 +30,7 @@ import { JUROR_DAILY_ALLOWANCE_CENTS, JUROR_FOOD_DISCOUNT_PERCENT } from "@/lib/
 import { money } from "@/lib/format";
 import { calculateCounterDue } from "@/lib/counter-pricing";
 import { toast } from "sonner";
+import { getStaffMenuItems } from "@/lib/menu-operations.functions";
 import {
   Banknote,
   CreditCard,
@@ -307,6 +308,7 @@ function Till() {
   const openShift = useServerFn(openTillShift);
   const closeShift = useServerFn(closeTillShift);
   const cashEvent = useServerFn(recordTillCashEvent);
+  const getMenuItems = useServerFn(getStaffMenuItems);
 
   const [cats, setCats] = useState<Cat[]>([]);
   const [items, setItems] = useState<Item[]>([]);
@@ -387,17 +389,13 @@ function Till() {
   useEffect(() => {
     let active = true;
     const loadMenu = async () => {
-      const [{ data: c }, { data: i }, { data: m }] = await Promise.all([
+      const [{ data: c }, i, { data: m }] = await Promise.all([
         supabase
           .from("menu_categories")
           .select("id, name, sort_order")
           .eq("active", true)
           .order("sort_order"),
-        supabase
-          .from("menu_items")
-          .select("id, name, price_cents, category_id, sort_order, image_url, is_beverage, barcode")
-          .eq("active", true)
-          .order("sort_order"),
+        getMenuItems(),
         supabase
           .from("menu_modifiers")
           .select("id, name, price_cents, category_id, item_id")
@@ -406,7 +404,7 @@ function Till() {
       ]);
       if (!active) return;
       setCats((c ?? []) as Cat[]);
-      setItems((i ?? []) as Item[]);
+      setItems((i ?? []).filter((item) => item.active) as Item[]);
       setModifiers((m ?? []) as Modifier[]);
       setCatId((current) =>
         current && (c ?? []).some((category) => category.id === current)
@@ -419,14 +417,15 @@ function Till() {
     const channel = supabase
       .channel("till-live-menu")
       .on("postgres_changes", { event: "*", schema: "public", table: "menu_categories" }, loadMenu)
-      .on("postgres_changes", { event: "*", schema: "public", table: "menu_items" }, loadMenu)
       .on("postgres_changes", { event: "*", schema: "public", table: "menu_modifiers" }, loadMenu)
       .subscribe();
+    const interval = window.setInterval(loadMenu, 60000);
     return () => {
       active = false;
+      window.clearInterval(interval);
       void supabase.removeChannel(channel);
     };
-  }, []);
+  }, [getMenuItems]);
 
   const loadShift = useCallback(async () => {
     setShiftLoading(true);

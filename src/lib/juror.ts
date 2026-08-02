@@ -27,14 +27,14 @@ export const JUROR_DELIVERY_VENUES = [
     label: "St Albans Crown Court",
     address_line1: "St Albans Crown Court, Bricket Road",
     city: "St Albans",
-    postcode: "AL1 3JW",
+    postcode: "AL1 3JU",
   },
   {
     id: "magistrates",
     label: "St Albans Magistrates' Court",
     address_line1: "St Albans Magistrates' Court, Bricket Road",
     city: "St Albans",
-    postcode: "AL1 3JW",
+    postcode: "AL1 3JU",
   },
 ] as const;
 
@@ -43,7 +43,10 @@ export type JurorVenueId = (typeof JUROR_DELIVERY_VENUES)[number]["id"];
 const norm = (s: string) => s.toLowerCase().replace(/[^a-z0-9]/g, "");
 
 /** True when a delivery address is one of the permitted court buildings. */
-export function isCourtDeliveryAddress(addressLine1?: string | null, postcode?: string | null): boolean {
+export function isCourtDeliveryAddress(
+  addressLine1?: string | null,
+  postcode?: string | null,
+): boolean {
   const a = norm(addressLine1 ?? "");
   const p = norm(postcode ?? "");
   return JUROR_DELIVERY_VENUES.some((v) => norm(v.address_line1) === a && norm(v.postcode) === p);
@@ -57,7 +60,9 @@ export const JUROR_DEFAULT_SERVICE_DAYS = 10;
 /** 10% of the food value, capped at what is still payable after the voucher. */
 export function jurorFoodDiscount(payableAfterVoucher: number, foodSubtotalCents: number): number {
   if (payableAfterVoucher <= 0 || foodSubtotalCents <= 0) return 0;
-  return Math.round((Math.min(foodSubtotalCents, payableAfterVoucher) * JUROR_FOOD_DISCOUNT_PERCENT) / 100);
+  return Math.round(
+    (Math.min(foodSubtotalCents, payableAfterVoucher) * JUROR_FOOD_DISCOUNT_PERCENT) / 100,
+  );
 }
 
 /** Adds N working days (Mon–Fri) to a date — bank holidays are handled server-side. */

@@ -1,0 +1,66 @@
+# Cafe 1 go-live checklist
+
+Do not enable live ordering or live SumUp charging until every mandatory box is complete and recorded with the release date and operator.
+
+## 1. Repository and release
+
+- [ ] Delete the tracked `.env` and legacy `env.example` files from GitHub; keep `.env.example`.
+- [ ] Upload this release without rewriting Lovable/Git history.
+- [ ] Confirm GitHub Actions passes both **Application** and **Supabase migrations and pgTAP**.
+- [ ] Protect `main`: require pull requests, passing checks and no force pushes.
+- [ ] Create a release tag for the deployed commit and record the rollback commit.
+
+## 2. Database
+
+- [ ] Take a production Supabase backup and confirm it can be restored.
+- [ ] Restore recent data to staging and run `supabase db push`.
+- [ ] Run `supabase test db`; retain the output with the release record.
+- [ ] Confirm the St Albans site and delivery origin both use `AL1 3JU`.
+- [ ] Test anonymous, customer, staff, driver and manager RLS separately.
+- [ ] Confirm customers cannot query internal menu costs, barcodes or KDS routing fields.
+
+## 3. Identity and security
+
+- [ ] Give every operator a named account; remove shared or unused accounts.
+- [ ] Enrol and verify authenticator MFA for every manager in **Admin → Security**.
+- [ ] Set `REQUIRE_ADMIN_MFA=true` only after every manager can reach AAL2.
+- [ ] Restrict the Google Maps browser key to `https://cafe1stalbans.co.uk/*` and only required APIs.
+- [ ] Enable GitHub secret scanning and Supabase security notifications.
+- [ ] Verify CSP, HSTS, frame blocking and `Cache-Control: no-store` on protected routes at the production edge.
+
+## 4. Payments and till
+
+- [ ] Configure production SumUp merchant/API/affiliate values in the host secret manager.
+- [ ] Test one real low-value website charge, one reader charge and one manual-reference transaction.
+- [ ] Cancel and decline a payment; confirm no paid KDS ticket appears and vouchers are released.
+- [ ] Test cash, voucher, split tender, partial refund and remaining refund.
+- [ ] Confirm duplicate requests do not create a second order, charge, refund or loyalty award.
+- [ ] Reconcile the test transactions against the SumUp settlement export.
+- [ ] Test the receipt printer, cash drawer and customer display on the production till device.
+
+## 5. Ordering and operations
+
+- [ ] Verify menu names, prices, VAT/accounting treatment, allergens, dietary labels and availability.
+- [ ] Verify opening hours, delivery window, half-mile radius, minimum order and AL1 3JU map origin.
+- [ ] Test delivery, collection, dine-in and jury-room orders from phone and desktop.
+- [ ] Test barcode search, held/recovered baskets and every KDS station.
+- [ ] Enter opening stock, build recipes, post waste and complete a controlled stocktake.
+- [ ] Clock staff in/out and generate/sign off a daily control summary.
+- [ ] Confirm two drivers cannot claim the same delivery.
+
+## 6. Scheduled work and integrations
+
+- [ ] Generate a 32+ character `CRON_SECRET`.
+- [ ] Schedule authenticated POST calls to `/api/public/cleanup-unpaid` and `/api/public/juror-daily`.
+- [ ] Confirm GET calls return 405 and missing/incorrect bearer secrets return 401/503.
+- [ ] Verify email delivery, bounce handling and the correct sender/domain records.
+- [ ] If Deliveroo is enabled, verify webhook signature rejection, duplicate delivery handling and cancellation sync.
+
+## 7. Compliance and launch operations
+
+- [ ] Confirm privacy, cookies, terms, complaints, company/legal name, phone, opening hours and AL1 3JU.
+- [ ] Obtain HMCTS/privacy approval before enabling attendance QR functionality.
+- [ ] Confirm retention periods for orders, addresses, audit events, staff time and voucher records.
+- [ ] Configure application/server logs, 5xx alerts, payment failures and till variance alerts.
+- [ ] Document the incident owner, SumUp escalation route, database restore owner and rollback procedure.
+- [ ] Complete a staff rehearsal, then run a monitored soft launch before public promotion.

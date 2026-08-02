@@ -3,7 +3,7 @@ import { addWorkingDays, isCourtDeliveryAddress, jurorFoodDiscount } from "@/lib
 
 describe("juror rules", () => {
   it("matches only approved court delivery addresses", () => {
-    expect(isCourtDeliveryAddress("St Albans Crown Court, Bricket Road", "AL1 3JW")).toBe(true);
+    expect(isCourtDeliveryAddress("St Albans Crown Court, Bricket Road", "AL1 3JU")).toBe(true);
     expect(isCourtDeliveryAddress("1 High Street", "AL1 1AA")).toBe(false);
   });
 

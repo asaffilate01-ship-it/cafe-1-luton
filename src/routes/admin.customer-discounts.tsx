@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { askConfirm } from "@/components/confirm-dialog";
+import { askConfirm } from "@/lib/confirm";
 import { AdminNav } from "@/components/admin-nav";
 import { useState } from "react";
 import { RequireRole } from "@/components/require-role";
@@ -12,9 +12,15 @@ export const Route = createFileRoute("/admin/customer-discounts")({
   head: () => ({
     meta: [
       { title: "Approved members — Cafe1 Admin" },
-      { name: "description", content: "Approve individual customers for an automatic member discount at Cafe1." },
+      {
+        name: "description",
+        content: "Approve individual customers for an automatic member discount at Cafe1.",
+      },
       { property: "og:title", content: "Approved members — Cafe1 Admin" },
-      { property: "og:description", content: "Approve individual customers for an automatic member discount at Cafe1." },
+      {
+        property: "og:description",
+        content: "Approve individual customers for an automatic member discount at Cafe1.",
+      },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
       { name: "robots", content: "noindex" },
@@ -66,7 +72,10 @@ function AdminCustomerDiscounts() {
       active: true,
     });
     setBusy(false);
-    if (error) return toast.error(error.message.includes("duplicate") ? "That email already has a discount." : error.message);
+    if (error)
+      return toast.error(
+        error.message.includes("duplicate") ? "That email already has a discount." : error.message,
+      );
     toast.success("Discount saved");
     setForm({ email: "", percent: 10, label: "" });
     qc.invalidateQueries({ queryKey: ["admin-customer-discounts"] });
@@ -96,15 +105,20 @@ function AdminCustomerDiscounts() {
     );
     if (!emails.length) return toast.error("No valid email addresses found");
     setBulkBusy(true);
-    const { error } = await supabase
-      .from("customer_discounts")
-      .upsert(
-        emails.map((email) => ({ email, percent: form.percent, label: form.label.trim() || null, active: true })),
-        { onConflict: "email" },
-      );
+    const { error } = await supabase.from("customer_discounts").upsert(
+      emails.map((email) => ({
+        email,
+        percent: form.percent,
+        label: form.label.trim() || null,
+        active: true,
+      })),
+      { onConflict: "email" },
+    );
     setBulkBusy(false);
     if (error) return toast.error(error.message);
-    toast.success(`${emails.length} member${emails.length === 1 ? "" : "s"} approved at ${form.percent}%`);
+    toast.success(
+      `${emails.length} member${emails.length === 1 ? "" : "s"} approved at ${form.percent}%`,
+    );
     setBulk("");
     qc.invalidateQueries({ queryKey: ["admin-customer-discounts"] });
   }
@@ -120,13 +134,17 @@ function AdminCustomerDiscounts() {
           <div>
             <h1 className="font-display text-3xl font-bold">Approved members</h1>
             <p className="text-sm text-muted-foreground">
-              Only people on this list get a member discount. It applies automatically at checkout when they
-              use their approved email address — no code needed. Everyone else pays full price.
+              Only people on this list get a member discount. It applies automatically at checkout
+              when they use their approved email address — no code needed. Everyone else pays full
+              price.
             </p>
           </div>
         </div>
 
-        <form onSubmit={create} className="mt-8 space-y-3 rounded-2xl border border-border bg-card p-5">
+        <form
+          onSubmit={create}
+          className="mt-8 space-y-3 rounded-2xl border border-border bg-card p-5"
+        >
           <p className="font-semibold">Approve a member</p>
           <div className="grid gap-3 sm:grid-cols-3">
             <input
@@ -164,7 +182,8 @@ function AdminCustomerDiscounts() {
           <div className="rounded-xl border border-dashed border-border p-4">
             <p className="text-sm font-semibold">Approve several at once</p>
             <p className="mt-1 text-xs text-muted-foreground">
-              Paste emails separated by commas, spaces or new lines. They'll all get the % and label above.
+              Paste emails separated by commas, spaces or new lines. They'll all get the % and label
+              above.
             </p>
             <textarea
               rows={3}
@@ -187,7 +206,10 @@ function AdminCustomerDiscounts() {
         <h2 className="mt-10 font-display text-xl font-bold">Approved members</h2>
         <ul className="mt-3 space-y-2">
           {(rows ?? []).map((r) => (
-            <li key={r.id} className="flex flex-wrap items-center gap-3 rounded-2xl border border-border bg-card p-4">
+            <li
+              key={r.id}
+              className="flex flex-wrap items-center gap-3 rounded-2xl border border-border bg-card p-4"
+            >
               <span className="rounded-lg border border-dashed border-primary bg-primary-soft px-3 py-1 text-sm font-bold text-primary">
                 {r.percent}%
               </span>
@@ -196,7 +218,11 @@ function AdminCustomerDiscounts() {
                 {r.label && <p className="text-xs text-muted-foreground">{r.label}</p>}
               </div>
               <label className="flex items-center gap-2 text-xs text-muted-foreground">
-                <input type="checkbox" checked={r.active} onChange={(e) => update(r.id, { active: e.target.checked })} />
+                <input
+                  type="checkbox"
+                  checked={r.active}
+                  onChange={(e) => update(r.id, { active: e.target.checked })}
+                />
                 Active
               </label>
               <input

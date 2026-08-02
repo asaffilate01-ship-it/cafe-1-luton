@@ -7,7 +7,7 @@ import { z } from "zod";
  * safe projection instead of exposing the whole table to anonymous readers.
  */
 export const getPublicOrder = createServerFn({ method: "POST" })
-  .inputValidator((d: unknown) =>
+  .validator((d: unknown) =>
     z
       .object({
         order_id: z.string().uuid(),

@@ -1,4 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { useServerFn } from "@tanstack/react-start";
 import { AdminNav } from "@/components/admin-nav";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -6,6 +7,7 @@ import { useSession, useRoles } from "@/hooks/use-auth";
 import { money } from "@/lib/format";
 import { toast } from "sonner";
 import { Plus, Trash2, Image as ImageIcon, ChevronLeft, Save } from "lucide-react";
+import { getStaffMenuItems } from "@/lib/menu-operations.functions";
 
 export const Route = createFileRoute("/admin/menu")({
   head: () => ({
@@ -67,8 +69,10 @@ type Mod = {
 
 function MenuManager() {
   const { user, loading } = useSession();
-  const { has, loading: rolesLoading } = useRoles(user);
+  const { roles, loading: rolesLoading } = useRoles(user);
+  const canManage = roles.includes("admin") || roles.includes("staff");
   const navigate = useNavigate();
+  const getMenuItems = useServerFn(getStaffMenuItems);
 
   const [cats, setCats] = useState<Cat[]>([]);
   const [items, setItems] = useState<Item[]>([]);
@@ -82,21 +86,21 @@ function MenuManager() {
   const refresh = useCallback(async () => {
     const [c, i, m] = await Promise.all([
       supabase.from("menu_categories").select("*").order("sort_order"),
-      supabase.from("menu_items").select("*").order("sort_order"),
+      getMenuItems(),
       supabase.from("menu_modifiers").select("*").order("sort_order"),
     ]);
     setCats((c.data ?? []) as Cat[]);
-    setItems((i.data ?? []) as Item[]);
+    setItems(i as Item[]);
     setMods((m.data ?? []) as Mod[]);
     if (c.data?.length) setSelectedCat((current) => current ?? c.data[0].id);
-  }, []);
+  }, [getMenuItems]);
 
   useEffect(() => {
-    void refresh();
-  }, [refresh]);
+    if (user && !rolesLoading && canManage) void refresh();
+  }, [refresh, user, rolesLoading, canManage]);
 
   if (loading || rolesLoading) return <div className="p-8 text-muted-foreground">Loading…</div>;
-  if (!has("admin") && !has("staff")) {
+  if (!canManage) {
     return (
       <div className="mx-auto max-w-xl px-4 py-16">
         <h1 className="font-display text-3xl font-bold">Access denied</h1>

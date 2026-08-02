@@ -18,8 +18,11 @@ import { useOrderContext, describeContext } from "@/lib/order-context";
 import { OrderSetupGate } from "@/components/order-setup-gate";
 import { Settings2 } from "lucide-react";
 import {
-  JUROR_CODE_KEY, JUROR_FOOD_DISCOUNT_PERCENT, jurorFoodDiscount,
-  JUROR_DELIVERY_VENUES, isCourtDeliveryAddress,
+  JUROR_CODE_KEY,
+  JUROR_FOOD_DISCOUNT_PERCENT,
+  jurorFoodDiscount,
+  JUROR_DELIVERY_VENUES,
+  isCourtDeliveryAddress,
 } from "@/lib/juror";
 
 export const Route = createFileRoute("/checkout")({
@@ -28,7 +31,10 @@ export const Route = createFileRoute("/checkout")({
       { title: "Checkout — Cafe1" },
       { name: "description", content: "Complete your Cafe1 order — pay securely with SumUp." },
       { property: "og:title", content: "Checkout — Cafe1" },
-      { property: "og:description", content: "Complete your Cafe1 order — pay securely with SumUp." },
+      {
+        property: "og:description",
+        content: "Complete your Cafe1 order — pay securely with SumUp.",
+      },
       { name: "robots", content: "noindex" },
     ],
   }),
@@ -59,7 +65,12 @@ function Checkout() {
     [hours, holidays, settings, mode],
   );
   const [promoInput, setPromoInput] = useState("");
-  const [promo, setPromo] = useState<null | { code: string; discount_cents: number; discount_type: string; message: string | null }>(null);
+  const [promo, setPromo] = useState<null | {
+    code: string;
+    discount_cents: number;
+    discount_type: string;
+    message: string | null;
+  }>(null);
   const [promoBusy, setPromoBusy] = useState(false);
   const [form, setForm] = useState({
     customer_name: "",
@@ -75,7 +86,10 @@ function Checkout() {
   const [busy, setBusy] = useState(false);
   const [area, setArea] = useState<null | { ok: boolean; message: string }>(
     ctx?.mode === "delivery" && ctx.postcode && ctx.distance_m != null
-      ? { ok: true, message: `You're in our delivery area (${(ctx.distance_m / 1609.34).toFixed(2)} mi away).` }
+      ? {
+          ok: true,
+          message: `You're in our delivery area (${(ctx.distance_m / 1609.34).toFixed(2)} mi away).`,
+        }
       : null,
   );
   const [areaBusy, setAreaBusy] = useState(false);
@@ -102,16 +116,22 @@ function Checkout() {
         });
       }
     }
-  }, [ctx?.mode, ctx?.schedule_mode, ctx?.scheduled_for, ctx?.postcode, ctx?.distance_m]);
+  }, [ctx]);
 
   async function verifyPostcode(pc: string) {
-    if (!pc.trim()) { setArea(null); return; }
+    if (!pc.trim()) {
+      setArea(null);
+      return;
+    }
     setAreaBusy(true);
     try {
       const res = await checkArea({ data: { postcode: pc } });
       setArea(
         res.ok
-          ? { ok: true, message: `Great — you're in our delivery area (${((res.distance_m ?? 0) / 1609.34).toFixed(2)} miles away).` }
+          ? {
+              ok: true,
+              message: `Great — you're in our delivery area (${((res.distance_m ?? 0) / 1609.34).toFixed(2)} miles away).`,
+            }
           : { ok: false, message: res.reason },
       );
     } catch {
@@ -127,7 +147,10 @@ function Checkout() {
   }, [user, form.customer_email]);
 
   // Fixed per-customer discount, recognised from the email address.
-  const [emailDiscount, setEmailDiscount] = useState<null | { percent: number; label: string | null }>(null);
+  const [emailDiscount, setEmailDiscount] = useState<null | {
+    percent: number;
+    label: string | null;
+  }>(null);
   const emailForDiscount = (form.customer_email || "").trim().toLowerCase();
   useEffect(() => {
     if (!emailForDiscount || !emailForDiscount.includes("@")) {
@@ -144,15 +167,24 @@ function Checkout() {
         if (!cancelled) setEmailDiscount(null);
       }
     }, 400);
-    return () => { cancelled = true; clearTimeout(t); };
-  }, [emailForDiscount]);
+    return () => {
+      cancelled = true;
+      clearTimeout(t);
+    };
+  }, [emailForDiscount, fetchEmailDiscount]);
 
   // Coffee/tea loyalty: stamps on the profile + which cart lines are eligible drinks.
-  const [stamps, setStamps] = useState<{ drink_stamps: number; free_drinks_available: number } | null>(null);
+  const [stamps, setStamps] = useState<{
+    drink_stamps: number;
+    free_drinks_available: number;
+  } | null>(null);
   const [drinkItemIds, setDrinkItemIds] = useState<string[]>([]);
   const cartItemIds = c.items.map((i) => i.menu_item_id).join(",");
   useEffect(() => {
-    if (!user) { setStamps(null); return; }
+    if (!user) {
+      setStamps(null);
+      return;
+    }
     let cancelled = false;
     supabase
       .from("profiles")
@@ -160,47 +192,74 @@ function Checkout() {
       .eq("id", user.id)
       .maybeSingle()
       .then(({ data }) => {
-        if (!cancelled) setStamps(data ? { drink_stamps: data.drink_stamps ?? 0, free_drinks_available: data.free_drinks_available ?? 0 } : null);
+        if (!cancelled)
+          setStamps(
+            data
+              ? {
+                  drink_stamps: data.drink_stamps ?? 0,
+                  free_drinks_available: data.free_drinks_available ?? 0,
+                }
+              : null,
+          );
       });
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [user]);
   useEffect(() => {
     const ids = cartItemIds ? cartItemIds.split(",") : [];
-    if (!ids.length) { setDrinkItemIds([]); return; }
+    if (!ids.length) {
+      setDrinkItemIds([]);
+      return;
+    }
     let cancelled = false;
     supabase
       .from("menu_items")
       .select("id")
       .in("id", ids)
       .eq("loyalty_drink", true)
-      .then(({ data }) => { if (!cancelled) setDrinkItemIds((data ?? []).map((r) => r.id)); });
-    return () => { cancelled = true; };
+      .then(({ data }) => {
+        if (!cancelled) setDrinkItemIds((data ?? []).map((r) => r.id));
+      });
+    return () => {
+      cancelled = true;
+    };
   }, [cartItemIds]);
 
   useEffect(() => {
     const ids = cartItemIds ? cartItemIds.split(",") : [];
-    if (!ids.length) { setBeverageIds([]); return; }
+    if (!ids.length) {
+      setBeverageIds([]);
+      return;
+    }
     let cancelled = false;
     supabase
       .from("menu_items")
       .select("id")
       .in("id", ids)
       .eq("is_beverage", true)
-      .then(({ data }) => { if (!cancelled) setBeverageIds((data ?? []).map((r) => r.id)); });
-    return () => { cancelled = true; };
+      .then(({ data }) => {
+        if (!cancelled) setBeverageIds((data ?? []).map((r) => r.id));
+      });
+    return () => {
+      cancelled = true;
+    };
   }, [cartItemIds]);
 
   const subtotal = c.items.reduce((s, i) => s + i.price_cents * i.qty, 0);
   const baseDelivery = settings?.delivery_fee_cents ?? 299;
   const freeThreshold = settings?.free_delivery_threshold_cents ?? null;
-  const freeDeliveryByThreshold = mode === "delivery" && !!freeThreshold && subtotal >= (freeThreshold ?? 0);
+  const freeDeliveryByThreshold =
+    mode === "delivery" && !!freeThreshold && subtotal >= (freeThreshold ?? 0);
   const freeDeliveryByPromo = promo?.discount_type === "free_delivery";
-  const delivery = mode === "delivery" && !freeDeliveryByThreshold && !freeDeliveryByPromo ? baseDelivery : 0;
+  const delivery =
+    mode === "delivery" && !freeDeliveryByThreshold && !freeDeliveryByPromo ? baseDelivery : 0;
   const onTab = !!tabSession;
   // Discounts are only for approved members set up in the admin dashboard.
   const discountPercent = emailDiscount?.percent ?? 0;
   const loyaltyDiscount = Math.round(subtotal * (discountPercent / 100));
-  const promoDiscount = promo && !freeDeliveryByPromo ? Math.min(promo.discount_cents, subtotal) : 0;
+  const promoDiscount =
+    promo && !freeDeliveryByPromo ? Math.min(promo.discount_cents, subtotal) : 0;
   // Free drinks earned (every 11th) auto-apply to the cheapest eligible drinks.
   const drinkUnitPrices = c.items
     .filter((i) => drinkItemIds.includes(i.menu_item_id))
@@ -208,12 +267,17 @@ function Checkout() {
     .sort((a, b) => a - b);
   const freeDrinksUsed = Math.min(stamps?.free_drinks_available ?? 0, drinkUnitPrices.length);
   const freeDrinkDiscount = drinkUnitPrices.slice(0, freeDrinksUsed).reduce((s, p) => s + p, 0);
-  const stampsAfter = ((stamps?.drink_stamps ?? 0) + Math.max(0, drinkUnitPrices.length - freeDrinksUsed)) % 10;
+  const stampsAfter =
+    ((stamps?.drink_stamps ?? 0) + Math.max(0, drinkUnitPrices.length - freeDrinksUsed)) % 10;
   const discount = Math.min(subtotal, loyaltyDiscount + promoDiscount + freeDrinkDiscount);
   const grossTotal = Math.max(0, subtotal - discount) + delivery;
   // Court voucher: recognised from an anonymous code the court gives the customer.
   const [voucherInput, setVoucherInput] = useState("");
-  const [voucher, setVoucher] = useState<null | { code: string; remaining_cents: number; allocated_cents: number }>(null);
+  const [voucher, setVoucher] = useState<null | {
+    code: string;
+    remaining_cents: number;
+    allocated_cents: number;
+  }>(null);
   const [beverageIds, setBeverageIds] = useState<string[]>([]);
   const [voucherBusy, setVoucherBusy] = useState(false);
   const [juryRoom, setJuryRoom] = useState("");
@@ -237,7 +301,11 @@ function Checkout() {
         setVoucher(null);
         setVoucherError("This voucher has no allowance left for today.");
       } else {
-        setVoucher({ code: res.code, remaining_cents: res.remaining_cents, allocated_cents: res.allocated_cents });
+        setVoucher({
+          code: res.code,
+          remaining_cents: res.remaining_cents,
+          allocated_cents: res.allocated_cents,
+        });
       }
     } catch {
       setVoucherError("Couldn't check the voucher code. Please try again.");
@@ -252,13 +320,19 @@ function Checkout() {
   }, []);
 
   const voucherApplied = voucher ? Math.min(voucher.remaining_cents, grossTotal) : 0;
-  const foodSubtotal = c.items.reduce((s, i) => s + (beverageIds.includes(i.menu_item_id) ? 0 : i.price_cents * i.qty), 0);
-  const jurorDiscount = voucher ? jurorFoodDiscount(Math.max(0, grossTotal - voucherApplied), foodSubtotal) : 0;
+  const foodSubtotal = c.items.reduce(
+    (s, i) => s + (beverageIds.includes(i.menu_item_id) ? 0 : i.price_cents * i.qty),
+    0,
+  );
+  const jurorDiscount = voucher
+    ? jurorFoodDiscount(Math.max(0, grossTotal - voucherApplied), foodSubtotal)
+    : 0;
   const total = Math.max(0, grossTotal - voucherApplied - jurorDiscount);
   const pointsEarn = user && !onTab ? Math.floor(Math.max(0, subtotal - discount) / 100) : 0;
   const minOrder = settings?.min_order_cents ?? 0;
   const belowMin = minOrder > 0 && subtotal < minOrder;
-  const storeBlocks = !status.open && !(settings?.allow_preorder_when_closed && scheduleMode === "scheduled");
+  const storeBlocks =
+    !status.open && !(settings?.allow_preorder_when_closed && scheduleMode === "scheduled");
   // Prevent unused import warning when navigate not used
   void navigate;
 
@@ -268,14 +342,24 @@ function Checkout() {
     setPromoBusy(true);
     try {
       const row = await checkPromo({
-        data: { code, subtotal_cents: subtotal, order_type: mode, email: emailForDiscount || undefined },
+        data: {
+          code,
+          subtotal_cents: subtotal,
+          order_type: mode,
+          email: emailForDiscount || undefined,
+        },
       });
       if (!row.valid) {
         toast.error(row.message || "That code isn't valid.");
         setPromo(null);
         return;
       }
-      setPromo({ code: row.code, discount_cents: row.discount_cents, discount_type: row.discount_type, message: row.message });
+      setPromo({
+        code: row.code,
+        discount_cents: row.discount_cents,
+        discount_type: row.discount_type,
+        message: row.message,
+      });
       toast.success(row.message || "Promo applied");
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "That code isn't valid.");
@@ -288,7 +372,11 @@ function Checkout() {
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     if (!c.items.length) return;
-    if (voucher && mode === "delivery" && !isCourtDeliveryAddress(form.address_line1, form.postcode)) {
+    if (
+      voucher &&
+      mode === "delivery" &&
+      !isCourtDeliveryAddress(form.address_line1, form.postcode)
+    ) {
       toast.error("Voucher deliveries must go to St Albans Crown Court or the Magistrates' Court.");
       return;
     }
@@ -342,7 +430,9 @@ function Checkout() {
     return (
       <div className="min-h-screen bg-background">
         <SiteHeader />
-        <div className="mx-auto max-w-md px-4 py-24 text-center text-muted-foreground">Your basket is empty.</div>
+        <div className="mx-auto max-w-md px-4 py-24 text-center text-muted-foreground">
+          Your basket is empty.
+        </div>
       </div>
     );
 
@@ -354,8 +444,19 @@ function Checkout() {
           <h1 className="font-display text-4xl font-bold">Checkout</h1>
           <div className="flex items-center justify-between gap-3 rounded-2xl border border-primary/30 bg-primary/5 p-4 text-sm">
             <div>
-              <p className="text-xs font-semibold uppercase tracking-wider text-primary">Your order</p>
-              <p className="mt-1 font-semibold">{describeContext(ctx ?? { mode, schedule_mode: scheduleMode, scheduled_for: scheduledFor, postcode: form.postcode })}</p>
+              <p className="text-xs font-semibold uppercase tracking-wider text-primary">
+                Your order
+              </p>
+              <p className="mt-1 font-semibold">
+                {describeContext(
+                  ctx ?? {
+                    mode,
+                    schedule_mode: scheduleMode,
+                    scheduled_for: scheduledFor,
+                    postcode: form.postcode,
+                  },
+                )}
+              </p>
             </div>
             <button
               type="button"
@@ -367,13 +468,19 @@ function Checkout() {
           </div>
           <OrderSetupGate open={gateOpen} onClose={() => setGateOpen(false)} />
           {!status.open && (
-            <div className={`rounded-2xl border p-4 text-sm ${settings?.allow_preorder_when_closed ? "border-amber-500/40 bg-amber-500/10 text-amber-900" : "border-destructive/40 bg-destructive/10 text-destructive"}`}>
+            <div
+              className={`rounded-2xl border p-4 text-sm ${settings?.allow_preorder_when_closed ? "border-amber-500/40 bg-amber-500/10 text-amber-900" : "border-destructive/40 bg-destructive/10 text-destructive"}`}
+            >
               <p className="font-semibold">
                 {settings?.closed_message || "We're currently closed."}
-                {status.nextOpenLabel && <span className="ml-1 font-normal opacity-80">Opens {status.nextOpenLabel}.</span>}
+                {status.nextOpenLabel && (
+                  <span className="ml-1 font-normal opacity-80">Opens {status.nextOpenLabel}.</span>
+                )}
               </p>
               {settings?.allow_preorder_when_closed && (
-                <p className="mt-1 opacity-90">You can still pre-order — pick “Schedule for later” below.</p>
+                <p className="mt-1 opacity-90">
+                  You can still pre-order — pick “Schedule for later” below.
+                </p>
               )}
             </div>
           )}
@@ -381,29 +488,52 @@ function Checkout() {
             <div className="flex items-start justify-between gap-3 rounded-2xl border border-primary/40 bg-primary/10 p-4 text-sm">
               <div>
                 <p className="font-semibold text-primary">Charging to {tabSession.name}'s tab</p>
-                <p className="mt-1 text-muted-foreground">This order will be added to the running bill — no payment now.</p>
+                <p className="mt-1 text-muted-foreground">
+                  This order will be added to the running bill — no payment now.
+                </p>
               </div>
-              <button type="button" onClick={() => tab.clear()} className="rounded-full border border-primary/40 px-3 py-1 text-xs font-semibold text-primary hover:bg-primary/20">Leave tab</button>
+              <button
+                type="button"
+                onClick={() => tab.clear()}
+                className="rounded-full border border-primary/40 px-3 py-1 text-xs font-semibold text-primary hover:bg-primary/20"
+              >
+                Leave tab
+              </button>
             </div>
           )}
           {!user && !loading && !tabSession && (
             <div className="rounded-2xl border border-primary/30 bg-primary/5 p-4">
-              <p className="font-semibold text-primary">Earn loyalty points & get access to offers</p>
+              <p className="font-semibold text-primary">
+                Earn loyalty points & get access to offers
+              </p>
               <p className="mt-1 text-sm text-muted-foreground">
-                <Link to="/auth" search={{ next: "/checkout" }} className="font-semibold text-primary underline">Sign in or create an account</Link>{" "}
+                <Link
+                  to="/auth"
+                  search={{ next: "/checkout" }}
+                  className="font-semibold text-primary underline"
+                >
+                  Sign in or create an account
+                </Link>{" "}
                 to earn 1 point per £1 and save your details — or continue as guest below.
               </p>
               <p className="mt-2 text-xs text-muted-foreground">
-                Got a business tab code? <Link to="/tab" className="font-semibold text-primary underline">Sign in with your account code</Link>.
+                Got a business tab code?{" "}
+                <Link to="/tab" className="font-semibold text-primary underline">
+                  Sign in with your account code
+                </Link>
+                .
               </p>
             </div>
           )}
           {user && !tabSession && (
             <div className="rounded-2xl border border-primary/40 bg-primary/10 p-4 text-sm">
               <span className="font-semibold text-primary">
-                {emailDiscount ? `${emailDiscount.label || "Approved member discount"} applied` : "Signed in"}
+                {emailDiscount
+                  ? `${emailDiscount.label || "Approved member discount"} applied`
+                  : "Signed in"}
               </span>{" "}
-              — {emailDiscount ? `${emailDiscount.percent}% off this order and ` : ""}you'll earn {pointsEarn} points.
+              — {emailDiscount ? `${emailDiscount.percent}% off this order and ` : ""}you'll earn{" "}
+              {pointsEarn} points.
             </div>
           )}
           <div className="rounded-2xl border border-border bg-card p-5">
@@ -415,7 +545,9 @@ function Checkout() {
                   key={m}
                   onClick={() => setMode(m)}
                   className={`h-11 rounded-xl border text-sm font-semibold capitalize transition ${
-                    mode === m ? "border-primary bg-primary text-primary-foreground" : "border-border bg-background hover:border-primary"
+                    mode === m
+                      ? "border-primary bg-primary text-primary-foreground"
+                      : "border-border bg-background hover:border-primary"
                   }`}
                 >
                   {m === "collection" ? "Pickup" : m === "dine_in" ? "Dine in" : "Delivery"}
@@ -433,7 +565,9 @@ function Checkout() {
                   key={s}
                   onClick={() => setScheduleMode(s)}
                   className={`h-11 rounded-xl border text-sm font-semibold transition ${
-                    scheduleMode === s ? "border-primary bg-primary text-primary-foreground" : "border-border bg-background hover:border-primary"
+                    scheduleMode === s
+                      ? "border-primary bg-primary text-primary-foreground"
+                      : "border-border bg-background hover:border-primary"
                   }`}
                 >
                   {s === "asap" ? "ASAP" : "Schedule for later"}
@@ -450,7 +584,9 @@ function Checkout() {
                 <option value="">Select a time slot…</option>
                 {timeSlots.length === 0 && <option disabled>No slots available</option>}
                 {timeSlots.map((s) => (
-                  <option key={s.value} value={s.value}>{s.label}</option>
+                  <option key={s.value} value={s.value}>
+                    {s.label}
+                  </option>
                 ))}
               </select>
             )}
@@ -465,10 +601,33 @@ function Checkout() {
           <div className="rounded-2xl border border-border bg-card p-5">
             <p className="font-semibold">Your details</p>
             <div className="mt-3 grid gap-3 sm:grid-cols-2">
-              <input required placeholder="Contact person's name" value={form.customer_name} onChange={(e) => setForm({ ...form, customer_name: e.target.value })} className="h-11 rounded-xl border border-border bg-background px-4" />
-              <input required={!voucher} placeholder={voucher ? "Phone (optional)" : "Phone"} value={form.customer_phone} onChange={(e) => setForm({ ...form, customer_phone: e.target.value })} className="h-11 rounded-xl border border-border bg-background px-4" />
-              <input type="email" placeholder="Email (optional)" value={form.customer_email} onChange={(e) => setForm({ ...form, customer_email: e.target.value })} className="h-11 rounded-xl border border-border bg-background px-4 sm:col-span-2" />
-              {voucher && <p className="text-xs text-muted-foreground sm:col-span-2">With a court voucher code, only your name is required so we can label your order. Phone and email are optional.</p>}
+              <input
+                required
+                placeholder="Contact person's name"
+                value={form.customer_name}
+                onChange={(e) => setForm({ ...form, customer_name: e.target.value })}
+                className="h-11 rounded-xl border border-border bg-background px-4"
+              />
+              <input
+                required={!voucher}
+                placeholder={voucher ? "Phone (optional)" : "Phone"}
+                value={form.customer_phone}
+                onChange={(e) => setForm({ ...form, customer_phone: e.target.value })}
+                className="h-11 rounded-xl border border-border bg-background px-4"
+              />
+              <input
+                type="email"
+                placeholder="Email (optional)"
+                value={form.customer_email}
+                onChange={(e) => setForm({ ...form, customer_email: e.target.value })}
+                className="h-11 rounded-xl border border-border bg-background px-4 sm:col-span-2"
+              />
+              {voucher && (
+                <p className="text-xs text-muted-foreground sm:col-span-2">
+                  With a court voucher code, only your name is required so we can label your order.
+                  Phone and email are optional.
+                </p>
+              )}
             </div>
           </div>
 
@@ -481,12 +640,22 @@ function Checkout() {
                     Voucher orders are delivered inside the court only. Choose the building:
                   </p>
                   {JUROR_DELIVERY_VENUES.map((v) => {
-                    const selected = isCourtDeliveryAddress(form.address_line1, form.postcode) && form.address_line1 === v.address_line1;
+                    const selected =
+                      isCourtDeliveryAddress(form.address_line1, form.postcode) &&
+                      form.address_line1 === v.address_line1;
                     return (
                       <button
                         key={v.id}
                         type="button"
-                        onClick={() => { setForm({ ...form, address_line1: v.address_line1, city: v.city, postcode: v.postcode }); setArea(null); }}
+                        onClick={() => {
+                          setForm({
+                            ...form,
+                            address_line1: v.address_line1,
+                            city: v.city,
+                            postcode: v.postcode,
+                          });
+                          setArea(null);
+                        }}
                         className={`flex w-full items-center justify-between rounded-xl border px-4 py-3 text-left text-sm ${selected ? "border-primary bg-primary/10 font-semibold text-primary" : "border-border bg-background"}`}
                       >
                         <span>{v.label}</span>
@@ -494,28 +663,72 @@ function Checkout() {
                       </button>
                     );
                   })}
-                  <textarea placeholder="Jury room / court room and any notes (optional)" value={form.delivery_notes} onChange={(e) => setForm({ ...form, delivery_notes: e.target.value })} className="min-h-20 w-full rounded-xl border border-border bg-background p-3" />
+                  <textarea
+                    placeholder="Jury room / court room and any notes (optional)"
+                    value={form.delivery_notes}
+                    onChange={(e) => setForm({ ...form, delivery_notes: e.target.value })}
+                    className="min-h-20 w-full rounded-xl border border-border bg-background p-3"
+                  />
                   {!isCourtDeliveryAddress(form.address_line1, form.postcode) && (
-                    <p className="text-xs text-destructive">Please pick a court building, or switch to collection.</p>
+                    <p className="text-xs text-destructive">
+                      Please pick a court building, or switch to collection.
+                    </p>
                   )}
                 </div>
               ) : (
-              <div className="mt-3 grid gap-3 sm:grid-cols-2">
-                <input required placeholder="Postcode" value={form.postcode} onChange={(e) => { setForm({ ...form, postcode: e.target.value }); setArea(null); }} onBlur={(e) => void verifyPostcode(e.target.value)} className="h-11 rounded-xl border border-border bg-background px-4" />
-                <input placeholder="Office / company name (optional)" value={form.company_name} onChange={(e) => setForm({ ...form, company_name: e.target.value })} className="h-11 rounded-xl border border-border bg-background px-4" />
-                <input required placeholder="Street address" value={form.address_line1} onChange={(e) => setForm({ ...form, address_line1: e.target.value })} className="h-11 rounded-xl border border-border bg-background px-4 sm:col-span-2" />
-                <input required placeholder="City" value={form.city} onChange={(e) => setForm({ ...form, city: e.target.value })} className="h-11 rounded-xl border border-border bg-background px-4" />
-                <textarea placeholder="Delivery notes — buzzer, floor, gate code (optional)" value={form.delivery_notes} onChange={(e) => setForm({ ...form, delivery_notes: e.target.value })} className="min-h-20 rounded-xl border border-border bg-background p-3 sm:col-span-2" />
-              </div>
+                <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                  <input
+                    required
+                    placeholder="Postcode"
+                    value={form.postcode}
+                    onChange={(e) => {
+                      setForm({ ...form, postcode: e.target.value });
+                      setArea(null);
+                    }}
+                    onBlur={(e) => void verifyPostcode(e.target.value)}
+                    className="h-11 rounded-xl border border-border bg-background px-4"
+                  />
+                  <input
+                    placeholder="Office / company name (optional)"
+                    value={form.company_name}
+                    onChange={(e) => setForm({ ...form, company_name: e.target.value })}
+                    className="h-11 rounded-xl border border-border bg-background px-4"
+                  />
+                  <input
+                    required
+                    placeholder="Street address"
+                    value={form.address_line1}
+                    onChange={(e) => setForm({ ...form, address_line1: e.target.value })}
+                    className="h-11 rounded-xl border border-border bg-background px-4 sm:col-span-2"
+                  />
+                  <input
+                    required
+                    placeholder="City"
+                    value={form.city}
+                    onChange={(e) => setForm({ ...form, city: e.target.value })}
+                    className="h-11 rounded-xl border border-border bg-background px-4"
+                  />
+                  <textarea
+                    placeholder="Delivery notes — buzzer, floor, gate code (optional)"
+                    value={form.delivery_notes}
+                    onChange={(e) => setForm({ ...form, delivery_notes: e.target.value })}
+                    className="min-h-20 rounded-xl border border-border bg-background p-3 sm:col-span-2"
+                  />
+                </div>
               )}
               <p className="mt-3 text-xs text-muted-foreground">
-                We deliver up to ½ mile from {settings?.delivery_origin_postcode ?? "AL1 3JU"}, between{" "}
-                {(settings?.delivery_open_time ?? "08:30").slice(0, 5)}–{(settings?.delivery_close_time ?? "16:30").slice(0, 5)}.
-                Typical delivery time {settings?.delivery_minutes ?? 45} min.
+                We deliver up to ½ mile from {settings?.delivery_origin_postcode ?? "AL1 3JU"},
+                between {(settings?.delivery_open_time ?? "08:30").slice(0, 5)}–
+                {(settings?.delivery_close_time ?? "16:30").slice(0, 5)}. Typical delivery time{" "}
+                {settings?.delivery_minutes ?? 45} min.
               </p>
-              {areaBusy && <p className="mt-2 text-xs text-muted-foreground">Checking your postcode…</p>}
+              {areaBusy && (
+                <p className="mt-2 text-xs text-muted-foreground">Checking your postcode…</p>
+              )}
               {area && (
-                <p className={`mt-2 rounded-xl px-3 py-2 text-xs font-medium ${area.ok ? "bg-primary/10 text-primary" : "bg-destructive/10 text-destructive"}`}>
+                <p
+                  className={`mt-2 rounded-xl px-3 py-2 text-xs font-medium ${area.ok ? "bg-primary/10 text-primary" : "bg-destructive/10 text-destructive"}`}
+                >
                   {area.message}
                 </p>
               )}
@@ -542,38 +755,77 @@ function Checkout() {
           </ul>
           {!onTab && (
             <div className="mt-4 border-t border-border pt-4">
-              <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Promo code</p>
+              <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                Promo code
+              </p>
               {promo ? (
                 <div className="mt-2 flex items-center justify-between gap-2 rounded-xl border border-primary/40 bg-primary/10 p-2 text-sm">
                   <div>
                     <span className="font-mono font-bold text-primary">{promo.code}</span>
                     <p className="text-xs text-muted-foreground">{promo.message}</p>
                   </div>
-                  <button type="button" onClick={() => { setPromo(null); setPromoInput(""); }} className="text-xs font-semibold text-primary underline">Remove</button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setPromo(null);
+                      setPromoInput("");
+                    }}
+                    className="text-xs font-semibold text-primary underline"
+                  >
+                    Remove
+                  </button>
                 </div>
               ) : (
                 <div className="mt-2 flex gap-2">
-                  <input value={promoInput} onChange={(e) => setPromoInput(e.target.value.toUpperCase())} placeholder="Enter code" className="h-10 flex-1 rounded-lg border border-border bg-background px-3 font-mono text-sm uppercase" />
-                  <button type="button" onClick={applyPromo} disabled={promoBusy || !promoInput.trim()} className="h-10 rounded-lg bg-primary px-4 text-sm font-semibold text-primary-foreground hover:bg-primary-hover disabled:opacity-50">Apply</button>
+                  <input
+                    value={promoInput}
+                    onChange={(e) => setPromoInput(e.target.value.toUpperCase())}
+                    placeholder="Enter code"
+                    className="h-10 flex-1 rounded-lg border border-border bg-background px-3 font-mono text-sm uppercase"
+                  />
+                  <button
+                    type="button"
+                    onClick={applyPromo}
+                    disabled={promoBusy || !promoInput.trim()}
+                    className="h-10 rounded-lg bg-primary px-4 text-sm font-semibold text-primary-foreground hover:bg-primary-hover disabled:opacity-50"
+                  >
+                    Apply
+                  </button>
                 </div>
               )}
             </div>
           )}
           {!onTab && (
             <div className="mt-4 border-t border-border pt-4">
-              <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Court voucher code</p>
+              <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                Court voucher code
+              </p>
               {voucher ? (
                 <div className="mt-2 flex items-center justify-between gap-2 rounded-xl border border-primary/40 bg-primary/10 p-2 text-sm">
                   <div>
                     <span className="font-mono font-bold text-primary">{voucher.code}</span>
-                    <p className="text-xs text-muted-foreground">{money(voucher.remaining_cents)} left today</p>
+                    <p className="text-xs text-muted-foreground">
+                      {money(voucher.remaining_cents)} left today
+                    </p>
                   </div>
-                  <button type="button" onClick={() => { setVoucher(null); setVoucherInput(""); setVoucherError(null); }} className="text-xs font-semibold text-primary underline">Remove</button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setVoucher(null);
+                      setVoucherInput("");
+                      setVoucherError(null);
+                    }}
+                    className="text-xs font-semibold text-primary underline"
+                  >
+                    Remove
+                  </button>
                 </div>
               ) : null}
               {voucher && (
                 <label className="mt-2 block">
-                  <span className="text-xs font-semibold text-muted-foreground">Jury room / court room (for delivery)</span>
+                  <span className="text-xs font-semibold text-muted-foreground">
+                    Jury room / court room (for delivery)
+                  </span>
                   <input
                     value={juryRoom}
                     onChange={(e) => setJuryRoom(e.target.value)}
@@ -585,17 +837,38 @@ function Checkout() {
               {voucher ? null : (
                 <>
                   <div className="mt-2 flex gap-2">
-                    <input value={voucherInput} onChange={(e) => { setVoucherInput(e.target.value.toUpperCase()); setVoucherError(null); }} placeholder="Enter court code" className="h-10 flex-1 rounded-lg border border-border bg-background px-3 font-mono text-sm uppercase" />
-                    <button type="button" onClick={applyVoucher} disabled={voucherBusy || !voucherInput.trim()} className="h-10 rounded-lg bg-primary px-4 text-sm font-semibold text-primary-foreground hover:bg-primary-hover disabled:opacity-50">Apply</button>
+                    <input
+                      value={voucherInput}
+                      onChange={(e) => {
+                        setVoucherInput(e.target.value.toUpperCase());
+                        setVoucherError(null);
+                      }}
+                      placeholder="Enter court code"
+                      className="h-10 flex-1 rounded-lg border border-border bg-background px-3 font-mono text-sm uppercase"
+                    />
+                    <button
+                      type="button"
+                      onClick={applyVoucher}
+                      disabled={voucherBusy || !voucherInput.trim()}
+                      className="h-10 rounded-lg bg-primary px-4 text-sm font-semibold text-primary-foreground hover:bg-primary-hover disabled:opacity-50"
+                    >
+                      Apply
+                    </button>
                   </div>
                   {voucherError && <p className="mt-1 text-xs text-destructive">{voucherError}</p>}
-                  <p className="mt-1 text-xs text-muted-foreground">If the court issued you a voucher code, enter it here to deduct today's allowance.</p>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    If the court issued you a voucher code, enter it here to deduct today's
+                    allowance.
+                  </p>
                 </>
               )}
             </div>
           )}
           <div className="mt-3 space-y-1 text-sm">
-            <div className="flex justify-between"><span className="text-muted-foreground">Subtotal</span><span>{money(subtotal)}</span></div>
+            <div className="flex justify-between">
+              <span className="text-muted-foreground">Subtotal</span>
+              <span>{money(subtotal)}</span>
+            </div>
             {user && (
               <div className="!mt-3 rounded-xl border border-dashed border-primary/50 bg-primary-soft/50 p-3">
                 <div className="flex items-center justify-between text-xs font-semibold text-primary">
@@ -604,7 +877,10 @@ function Checkout() {
                 </div>
                 <div className="mt-2 flex gap-1">
                   {Array.from({ length: 10 }, (_, n) => (
-                    <span key={n} className={`h-2 flex-1 rounded-full ${n < stampsAfter ? "bg-primary" : "bg-primary/20"}`} />
+                    <span
+                      key={n}
+                      className={`h-2 flex-1 rounded-full ${n < stampsAfter ? "bg-primary" : "bg-primary/20"}`}
+                    />
                   ))}
                 </div>
                 <p className="mt-2 text-xs text-muted-foreground">
@@ -625,7 +901,10 @@ function Checkout() {
               </div>
             )}
             {promoDiscount > 0 && (
-              <div className="flex justify-between text-primary"><span>Promo {promo?.code}</span><span>−{money(promoDiscount)}</span></div>
+              <div className="flex justify-between text-primary">
+                <span>Promo {promo?.code}</span>
+                <span>−{money(promoDiscount)}</span>
+              </div>
             )}
             {freeDrinkDiscount > 0 && (
               <div className="flex justify-between text-primary">
@@ -634,7 +913,12 @@ function Checkout() {
               </div>
             )}
             {mode === "delivery" && (
-              <div className="flex justify-between"><span className="text-muted-foreground">Delivery{freeDeliveryByPromo || freeDeliveryByThreshold ? " (free)" : ""}</span><span>{money(delivery)}</span></div>
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">
+                  Delivery{freeDeliveryByPromo || freeDeliveryByThreshold ? " (free)" : ""}
+                </span>
+                <span>{money(delivery)}</span>
+              </div>
             )}
             {voucher && (
               <div className="!mt-3 rounded-xl border border-primary/40 bg-primary/10 p-3 text-xs">
@@ -644,26 +928,47 @@ function Checkout() {
                     ? `${money(voucher.remaining_cents)} of today's ${money(voucher.allocated_cents)} allowance left.${voucherApplied < grossTotal ? ` You'll pay the ${money(total)} difference by card.` : " This order is fully covered."}`
                     : `Today's ${money(voucher.allocated_cents)} allowance has already been used.`}
                 </p>
-                <button type="button" onClick={() => { setVoucher(null); setVoucherInput(""); }} className="mt-2 text-xs font-semibold text-primary underline">Remove voucher</button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setVoucher(null);
+                    setVoucherInput("");
+                  }}
+                  className="mt-2 text-xs font-semibold text-primary underline"
+                >
+                  Remove voucher
+                </button>
               </div>
             )}
             {jurorDiscount > 0 && (
-              <div className="flex justify-between text-primary"><span>Juror {JUROR_FOOD_DISCOUNT_PERCENT}% off food</span><span>−{money(jurorDiscount)}</span></div>
+              <div className="flex justify-between text-primary">
+                <span>Juror {JUROR_FOOD_DISCOUNT_PERCENT}% off food</span>
+                <span>−{money(jurorDiscount)}</span>
+              </div>
             )}
             {voucherApplied > 0 && (
-              <div className="flex justify-between text-primary"><span>Court voucher</span><span>−{money(voucherApplied)}</span></div>
+              <div className="flex justify-between text-primary">
+                <span>Court voucher</span>
+                <span>−{money(voucherApplied)}</span>
+              </div>
             )}
-            <div className="mt-2 flex justify-between border-t border-border pt-2 font-display text-lg font-bold"><span>Total</span><span className="text-primary">{money(total)}</span></div>
+            <div className="mt-2 flex justify-between border-t border-border pt-2 font-display text-lg font-bold">
+              <span>Total</span>
+              <span className="text-primary">{money(total)}</span>
+            </div>
             {belowMin && (
               <p className="mt-2 rounded-lg bg-destructive/10 p-2 text-center text-xs font-semibold text-destructive">
-                Minimum order £{(minOrder/100).toFixed(2)} — add £{((minOrder-subtotal)/100).toFixed(2)} more.
+                Minimum order £{(minOrder / 100).toFixed(2)} — add £
+                {((minOrder - subtotal) / 100).toFixed(2)} more.
               </p>
             )}
           </div>
           <button
             type="submit"
             form="checkout-form"
-            disabled={busy || belowMin || storeBlocks || (mode === "delivery" && area?.ok === false)}
+            disabled={
+              busy || belowMin || storeBlocks || (mode === "delivery" && area?.ok === false)
+            }
             className="mt-4 h-12 w-full rounded-full bg-primary font-semibold text-primary-foreground shadow-brand transition hover:bg-primary-hover disabled:opacity-60"
           >
             {busy
@@ -673,13 +978,17 @@ function Checkout() {
                 : mode === "delivery" && area?.ok === false
                   ? "Outside delivery area"
                   : belowMin
-                    ? `Add £${((minOrder-subtotal)/100).toFixed(2)} more`
+                    ? `Add £${((minOrder - subtotal) / 100).toFixed(2)} more`
                     : onTab
                       ? "Add to tab"
                       : "Place order & pay"}
           </button>
           <p className="mt-2 text-center text-xs text-muted-foreground">
-            {onTab ? "Billed to your account — settle later" : user ? "Secured by SumUp" : "Guest checkout · Secured by SumUp"}
+            {onTab
+              ? "Billed to your account — settle later"
+              : user
+                ? "Secured by SumUp"
+                : "Guest checkout · Secured by SumUp"}
           </p>
         </aside>
       </div>

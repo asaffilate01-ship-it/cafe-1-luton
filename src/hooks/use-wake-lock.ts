@@ -2,11 +2,21 @@ import { useCallback, useEffect, useRef, useState } from "react";
 
 const KEY = "cafe1_kds_wakelock";
 
+type ScreenWakeLockSentinel = EventTarget & {
+  release: () => Promise<void>;
+};
+
+type NavigatorWithWakeLock = Navigator & {
+  wakeLock: {
+    request: (type: "screen") => Promise<ScreenWakeLockSentinel>;
+  };
+};
+
 /** Keeps the device screen awake (Screen Wake Lock API). Re-acquires after tab switches. */
 export function useWakeLock() {
   const [enabled, setEnabled] = useState(false);
   const [active, setActive] = useState(false);
-  const ref = useRef<any>(null);
+  const ref = useRef<ScreenWakeLockSentinel | null>(null);
 
   const supported = typeof navigator !== "undefined" && "wakeLock" in navigator;
 
@@ -16,7 +26,11 @@ export function useWakeLock() {
   }, []);
 
   const release = useCallback(async () => {
-    try { await ref.current?.release?.(); } catch { /* ignore */ }
+    try {
+      await ref.current?.release?.();
+    } catch {
+      /* ignore */
+    }
     ref.current = null;
     setActive(false);
   }, []);
@@ -24,8 +38,8 @@ export function useWakeLock() {
   const acquire = useCallback(async () => {
     if (!supported || document.visibilityState !== "visible") return;
     try {
-      ref.current = await (navigator as any).wakeLock.request("screen");
-      ref.current.addEventListener?.("release", () => setActive(false));
+      ref.current = await (navigator as NavigatorWithWakeLock).wakeLock.request("screen");
+      ref.current.addEventListener("release", () => setActive(false));
       setActive(true);
     } catch {
       setActive(false);
@@ -33,17 +47,29 @@ export function useWakeLock() {
   }, [supported]);
 
   useEffect(() => {
-    if (!enabled) { release(); return; }
+    if (!enabled) {
+      release();
+      return;
+    }
     acquire();
-    const onVis = () => { if (document.visibilityState === "visible") acquire(); };
+    const onVis = () => {
+      if (document.visibilityState === "visible") acquire();
+    };
     document.addEventListener("visibilitychange", onVis);
-    return () => { document.removeEventListener("visibilitychange", onVis); release(); };
+    return () => {
+      document.removeEventListener("visibilitychange", onVis);
+      release();
+    };
   }, [enabled, acquire, release]);
 
   const toggle = useCallback(() => {
     setEnabled((e) => {
       const next = !e;
-      try { window.localStorage.setItem(KEY, next ? "1" : "0"); } catch { /* ignore */ }
+      try {
+        window.localStorage.setItem(KEY, next ? "1" : "0");
+      } catch {
+        /* ignore */
+      }
       return next;
     });
   }, []);

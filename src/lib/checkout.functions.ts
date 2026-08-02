@@ -7,7 +7,7 @@ import { z } from "zod";
  * through these validated server functions.
  */
 export const getEmailDiscount = createServerFn({ method: "POST" })
-  .inputValidator((d: unknown) => z.object({ email: z.string().email().max(200) }).parse(d))
+  .validator((d: unknown) => z.object({ email: z.string().email().max(200) }).parse(d))
   .handler(async ({ data }) => {
     const { checkThrottle, recordAttempt, requestIdentity } = await import("./rate-limit.server");
     const ident = requestIdentity();
@@ -23,7 +23,7 @@ export const getEmailDiscount = createServerFn({ method: "POST" })
   });
 
 export const validatePromo = createServerFn({ method: "POST" })
-  .inputValidator((d: unknown) =>
+  .validator((d: unknown) =>
     z
       .object({
         code: z.string().min(2).max(40),

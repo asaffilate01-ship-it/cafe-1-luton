@@ -70,7 +70,13 @@ function MenuPage() {
     queryFn: async () => {
       const [cats, items, mods] = await Promise.all([
         supabase.from("menu_categories").select("*").eq("active", true).order("sort_order"),
-        supabase.from("menu_items").select("*").eq("active", true).order("sort_order"),
+        supabase
+          .from("menu_items")
+          .select(
+            "id, category_id, site_id, name, description, price_cents, image_url, active, is_veg, loyalty_drink, needs_cooking, juror_menu, is_beverage, group_label, allergens, dietary_tags, sort_order, created_at, updated_at",
+          )
+          .eq("active", true)
+          .order("sort_order"),
         supabase.from("menu_modifiers").select("*").eq("active", true).order("sort_order"),
       ]);
       return { cats: cats.data ?? [], items: items.data ?? [], mods: mods.data ?? [] };

@@ -10,7 +10,7 @@ export const NAP = {
   streetAddress: "St Albans Crown Court, Bricket Road",
   addressLocality: "St Albans",
   addressRegion: "Hertfordshire",
-  postalCode: "AL1 3JW",
+  postalCode: "AL1 3JU",
   addressCountry: "GB",
   latitude: 51.7508,
   longitude: -0.3352,

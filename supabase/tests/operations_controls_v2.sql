@@ -1,6 +1,6 @@
 begin;
 
-select plan(32);
+select plan(41);
 
 select has_table('public', 'sites', 'sites table exists');
 select has_table('public', 'inventory_items', 'inventory table exists');
@@ -36,6 +36,46 @@ select has_function('public', 'cafe1_submit_feedback', 'feedback RPC exists');
 select has_function('public', 'cafe1_security_dashboard', 'security dashboard RPC exists');
 select has_function('public', 'cafe1_create_juror_challenge', 'juror challenge RPC exists');
 select has_function('public', 'cafe1_consume_juror_challenge', 'juror verification RPC exists');
+
+select is(
+  (select postcode from public.sites where code = 'STALBANS'),
+  'AL1 3JU',
+  'confirmed St Albans postcode is applied'
+);
+select ok(
+  not has_column_privilege('anon', 'public.menu_items', 'cost_cents', 'SELECT'),
+  'anonymous menu reads cannot see internal cost'
+);
+select ok(
+  not has_column_privilege('authenticated', 'public.menu_items', 'barcode', 'SELECT'),
+  'customer tokens cannot read operational barcodes directly'
+);
+select ok(
+  has_column_privilege('anon', 'public.menu_items', 'price_cents', 'SELECT'),
+  'public menu price remains readable'
+);
+select ok(
+  has_column_privilege('authenticated', 'public.menu_items', 'allergens', 'SELECT'),
+  'authenticated customers can read allergen information'
+);
+select ok(
+  position('auth.jwt()' in pg_get_functiondef('public.cafe1_assert_operator(boolean)'::regprocedure)) > 0
+    and position('aal2' in pg_get_functiondef('public.cafe1_assert_operator(boolean)'::regprocedure)) > 0,
+  'manager database actions enforce AAL2'
+);
+select ok(
+  not has_function_privilege('anon', 'public.cafe1_assert_operator(boolean)', 'EXECUTE'),
+  'operator guard is not anonymous'
+);
+select ok(
+  has_function_privilege('authenticated', 'public.cafe1_assert_operator(boolean)', 'EXECUTE'),
+  'authenticated operators can call the guarded RPC boundary'
+);
+select is(
+  (select count(*)::integer from pg_policies where schemaname = 'public' and policyname = 'sites_public_read'),
+  1,
+  'operations policies are installed once'
+);
 
 select * from finish();
 rollback;

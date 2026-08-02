@@ -4,11 +4,11 @@
 
 1. Take a Supabase database backup and test the release against a staging project restored from recent production data.
 2. Configure every variable in `.env.example`. Generate `CRON_SECRET` with at least 32 random characters. Keep service-role, SumUp, email, and webhook values server-only.
-3. Apply all database migrations in timestamp order with the Supabase CLI (`supabase db push`) or the hosted migration workflow. Apply `20260801090000_production_hardening.sql` before `20260802090000_operations_controls_v2.sql`.
+3. Apply all database migrations in timestamp order with the Supabase CLI (`supabase db push`) or the hosted migration workflow. The release sequence is `20260801173100_production_hardening.sql`, `20260802090000_operations_controls_v2.sql`, then `20260802110000_go_live_release.sql`.
 4. Run `npm ci && npm run check && npm audit --audit-level=high`.
 5. Deploy the web application, then run the smoke tests below before reopening online ordering.
 6. Configure authenticated POST scheduler calls for `/api/public/cleanup-unpaid` and `/api/public/juror-daily` using `Authorization: Bearer $CRON_SECRET`. There are deliberately no GET scheduler endpoints.
-7. After managers have enrolled a Supabase MFA factor and can reach AAL2, set `REQUIRE_ADMIN_MFA=true` and redeploy.
+7. Each manager must open **Admin → Security**, enrol an authenticator and verify the session at AAL2. Then set `REQUIRE_ADMIN_MFA=true` and redeploy.
 
 ## Required smoke tests
 
@@ -21,6 +21,7 @@
 - Account tab: create/regenerate code, verify it is shown once, test the credit limit, record payment, and settle.
 - Shift close: count the drawer and compare opening float + cash ledger with the displayed expected amount.
 - Security: confirm guest UUID order URLs cannot read another order, staff cannot call manager actions, scheduler requests without the bearer secret fail, and sensitive pages return `Cache-Control: no-store`.
+- Public data: confirm anonymous and customer tokens can read menu prices/allergens but cannot select `cost_cents`, `barcode`, `station_code`, `prep_seconds` or `portion_note`.
 - Operations v2: scan a menu barcode, reload and recover an active basket, route items through each KDS station, post a waste movement, complete a stocktake, clock a staff member in/out, generate the daily snapshot, and verify an attendance QR expires and cannot be reused.
 
 ## Monitoring and reconciliation

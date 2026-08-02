@@ -9,6 +9,80 @@ type ServerEntry = {
 
 let serverEntryPromise: Promise<ServerEntry> | undefined;
 
+const PRIVATE_PATH_PREFIXES = [
+  "/api/",
+  "/admin",
+  "/staff",
+  "/till",
+  "/kds",
+  "/driver",
+  "/display",
+  "/pay",
+  "/order",
+  "/print",
+  "/account",
+  "/tab",
+  "/checkout",
+  "/cart",
+  "/lovable/",
+];
+
+// The Lovable editor renders the app inside an iframe on its preview hosts.
+// Production hosts stay fully frame-denied.
+const FRAMEABLE_HOST_SUFFIXES = [".lovableproject.com", ".lovable.app", ".lovable.dev"];
+
+function isPreviewHost(hostname: string): boolean {
+  return (
+    hostname === "localhost" ||
+    hostname === "127.0.0.1" ||
+    FRAMEABLE_HOST_SUFFIXES.some((suffix) => hostname.endsWith(suffix))
+  );
+}
+
+function withProductionHeaders(request: Request, response: Response): Response {
+  const url = new URL(request.url);
+  const previewHost = isPreviewHost(url.hostname);
+  const headers = new Headers(response.headers);
+  headers.set("X-Content-Type-Options", "nosniff");
+  if (previewHost) {
+    headers.delete("X-Frame-Options");
+  } else {
+    headers.set("X-Frame-Options", "DENY");
+  }
+  headers.set("Referrer-Policy", "strict-origin-when-cross-origin");
+  headers.set(
+    "Permissions-Policy",
+    "camera=(self), geolocation=(self), microphone=(), payment=(self), usb=()",
+  );
+  headers.set(
+    "Content-Security-Policy",
+    [
+      "base-uri 'self'",
+      "object-src 'none'",
+      previewHost
+        ? "frame-ancestors 'self' https://lovable.dev https://*.lovable.dev https://*.lovable.app https://*.lovableproject.com"
+        : "frame-ancestors 'none'",
+      "upgrade-insecure-requests",
+    ].join("; "),
+  );
+  if (url.protocol === "https:") {
+    headers.set("Strict-Transport-Security", "max-age=31536000; includeSubDomains");
+  }
+
+  const pathname = url.pathname;
+  if (PRIVATE_PATH_PREFIXES.some((prefix) => pathname.startsWith(prefix))) {
+    headers.set("Cache-Control", "private, no-store, max-age=0");
+    headers.set("Pragma", "no-cache");
+    headers.set("Expires", "0");
+  }
+
+  return new Response(response.body, {
+    status: response.status,
+    statusText: response.statusText,
+    headers,
+  });
+}
+
 async function getServerEntry(): Promise<ServerEntry> {
   if (!serverEntryPromise) {
     serverEntryPromise = import("@tanstack/react-start/server-entry").then(
@@ -49,13 +123,16 @@ export default {
     try {
       const handler = await getServerEntry();
       const response = await handler.fetch(request, env, ctx);
-      return await normalizeCatastrophicSsrResponse(response);
+      return withProductionHeaders(request, await normalizeCatastrophicSsrResponse(response));
     } catch (error) {
       console.error(error);
-      return new Response(renderErrorPage(), {
-        status: 500,
-        headers: { "content-type": "text/html; charset=utf-8" },
-      });
+      return withProductionHeaders(
+        request,
+        new Response(renderErrorPage(), {
+          status: 500,
+          headers: { "content-type": "text/html; charset=utf-8" },
+        }),
+      );
     }
   },
 };

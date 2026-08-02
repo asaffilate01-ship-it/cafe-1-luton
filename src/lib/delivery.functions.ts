@@ -5,7 +5,7 @@ import type { Database } from "@/integrations/supabase/types";
 
 /** Public: check whether a postcode is inside the delivery radius. */
 export const checkDeliveryPostcode = createServerFn({ method: "POST" })
-  .inputValidator((d: unknown) => z.object({ postcode: z.string().min(3).max(20) }).parse(d))
+  .validator((d: unknown) => z.object({ postcode: z.string().min(3).max(20) }).parse(d))
   .handler(async ({ data }) => {
     const supabase = createClient<Database>(
       process.env.SUPABASE_URL!,
