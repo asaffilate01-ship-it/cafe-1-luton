@@ -2486,6 +2486,10 @@ export type Database = {
         Returns: Json
       }
       cafe1_record_stock_movement: { Args: { _payload: Json }; Returns: Json }
+      cafe1_refresh_operational_alerts: {
+        Args: { _site_id: string }
+        Returns: number
+      }
       cafe1_resolve_alert: { Args: { _alert_id: string }; Returns: boolean }
       cafe1_save_inventory_item: {
         Args: { _payload: Json; _site_id: string }
