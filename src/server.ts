@@ -27,10 +27,28 @@ const PRIVATE_PATH_PREFIXES = [
   "/lovable/",
 ];
 
+// The Lovable editor renders the app inside an iframe on its preview hosts.
+// Production hosts stay fully frame-denied.
+const FRAMEABLE_HOST_SUFFIXES = [".lovableproject.com", ".lovable.app", ".lovable.dev"];
+
+function isPreviewHost(hostname: string): boolean {
+  return (
+    hostname === "localhost" ||
+    hostname === "127.0.0.1" ||
+    FRAMEABLE_HOST_SUFFIXES.some((suffix) => hostname.endsWith(suffix))
+  );
+}
+
 function withProductionHeaders(request: Request, response: Response): Response {
+  const url = new URL(request.url);
+  const previewHost = isPreviewHost(url.hostname);
   const headers = new Headers(response.headers);
   headers.set("X-Content-Type-Options", "nosniff");
-  headers.set("X-Frame-Options", "DENY");
+  if (previewHost) {
+    headers.delete("X-Frame-Options");
+  } else {
+    headers.set("X-Frame-Options", "DENY");
+  }
   headers.set("Referrer-Policy", "strict-origin-when-cross-origin");
   headers.set(
     "Permissions-Policy",
@@ -38,13 +56,20 @@ function withProductionHeaders(request: Request, response: Response): Response {
   );
   headers.set(
     "Content-Security-Policy",
-    "base-uri 'self'; object-src 'none'; frame-ancestors 'none'; upgrade-insecure-requests",
+    [
+      "base-uri 'self'",
+      "object-src 'none'",
+      previewHost
+        ? "frame-ancestors 'self' https://lovable.dev https://*.lovable.dev https://*.lovable.app https://*.lovableproject.com"
+        : "frame-ancestors 'none'",
+      "upgrade-insecure-requests",
+    ].join("; "),
   );
-  if (new URL(request.url).protocol === "https:") {
+  if (url.protocol === "https:") {
     headers.set("Strict-Transport-Security", "max-age=31536000; includeSubDomains");
   }
 
-  const pathname = new URL(request.url).pathname;
+  const pathname = url.pathname;
   if (PRIVATE_PATH_PREFIXES.some((prefix) => pathname.startsWith(prefix))) {
     headers.set("Cache-Control", "private, no-store, max-age=0");
     headers.set("Pragma", "no-cache");
