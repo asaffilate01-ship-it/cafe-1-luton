@@ -42,7 +42,13 @@ for (const path of tracked) {
 for (const required of [
   ".env.example",
   ".github/workflows/ci.yml",
+  ".github/workflows/codeql.yml",
   ".github/workflows/production-smoke.yml",
+  ".github/workflows/release-candidate.yml",
+  "scripts/release-status.mjs",
+  "scripts/validate-production-env.mjs",
+  "scripts/validate-production-env.test.mjs",
+  "scripts/write-release-evidence.mjs",
   "supabase/migrations/20260802102930_5d58aeb2-21c2-49b4-95d6-e60e3fec1ff6.sql",
   "supabase/tests/operations_controls_v2.sql",
   "supabase/tests/production_hardening.sql",
@@ -90,6 +96,10 @@ for (const path of activeTextFiles) {
 const secretPatterns = [
   [/AIza[0-9A-Za-z_-]{30,}/, "Google API key"],
   [/sb_secret_[0-9A-Za-z_-]{20,}/, "Supabase secret key"],
+  [/AKIA[0-9A-Z]{16}/, "AWS access key"],
+  [/gh[pousr]_[0-9A-Za-z]{30,}/, "GitHub token"],
+  [/sk_live_[0-9A-Za-z]{20,}/, "live payment key"],
+  [/xox[baprs]-[0-9A-Za-z-]{20,}/, "Slack token"],
   [/-----BEGIN (?:RSA |EC |OPENSSH )?PRIVATE KEY-----/, "private key"],
   [/eyJ[0-9A-Za-z_-]{20,}\.[0-9A-Za-z_-]{20,}\.[0-9A-Za-z_-]{10,}/, "JWT-like token"],
 ];
@@ -111,6 +121,31 @@ for (const path of releaseFiles) {
   for (const [pattern, label] of secretPatterns) {
     if (pattern.test(content))
       fail(`${label} detected in tracked file: ${relative(root, join(root, path))}`);
+  }
+}
+
+const environmentExample = read(".env.example");
+for (const name of [
+  "VITE_SUPABASE_URL",
+  "VITE_SUPABASE_PUBLISHABLE_KEY",
+  "SUPABASE_URL",
+  "SUPABASE_PUBLISHABLE_KEY",
+  "SUPABASE_SERVICE_ROLE_KEY",
+  "PUBLIC_APP_URL",
+  "SUMUP_API_KEY",
+  "SUMUP_MERCHANT_CODE",
+  "CRON_SECRET",
+  "REQUIRE_ADMIN_MFA",
+]) {
+  if (!new RegExp(`^${name}=`, "m").test(environmentExample)) {
+    fail(`.env.example is missing production variable: ${name}`);
+  }
+}
+
+for (const forbidden of ["process.env.SITE_URL", 'process.env["SITE_URL"]']) {
+  for (const path of activeTextFiles) {
+    if (read(path).includes(forbidden))
+      fail(`legacy SITE_URL reference remains in active file: ${path}`);
   }
 }
 

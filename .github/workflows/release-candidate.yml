@@ -1,0 +1,76 @@
+name: Release candidate evidence
+
+on:
+  workflow_dispatch:
+    inputs:
+      base_url:
+        description: Deployed HTTPS origin to verify
+        required: true
+        default: https://cafe1stalbans.co.uk
+        type: string
+      database_check_run_url:
+        description: Successful Production checks workflow URL containing the database job
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: cafe1-release-candidate
+  cancel-in-progress: false
+
+jobs:
+  evidence:
+    name: Build, audit, smoke and evidence
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v7.0.1
+
+      - name: Use Node.js 22
+        uses: actions/setup-node@v7.0.0
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Clean install
+        run: npm ci
+
+      - name: Verify, test and build release tree
+        run: npm run release:guard && npm run check
+
+      - name: Verify generated routes are committed
+        run: git diff --exit-code -- src/routeTree.gen.ts
+
+      - name: Audit production dependencies
+        run: mkdir -p release-evidence && npm audit --omit=dev --audit-level=high --json > release-evidence/npm-audit.json
+
+      - name: Generate CycloneDX SBOM
+        run: npm sbom --sbom-format cyclonedx > release-evidence/sbom.cdx.json
+
+      - name: Verify deployed production
+        env:
+          PRODUCTION_BASE_URL: ${{ inputs.base_url }}
+        run: set -o pipefail; npm run smoke:production 2>&1 | tee release-evidence/production-smoke.log
+
+      - name: Record repository status
+        if: always()
+        run: npm run release:status -- --output release-evidence/release-status.json
+
+      - name: Write evidence manifest
+        if: always()
+        env:
+          PRODUCTION_BASE_URL: ${{ inputs.base_url }}
+          DATABASE_CHECK_RUN_URL: ${{ inputs.database_check_run_url }}
+        run: node scripts/write-release-evidence.mjs
+
+      - name: Upload release evidence
+        if: always()
+        uses: actions/upload-artifact@v7.0.1
+        with:
+          name: cafe1-release-evidence-${{ github.sha }}
+          path: release-evidence/
+          if-no-files-found: error
+          retention-days: 90

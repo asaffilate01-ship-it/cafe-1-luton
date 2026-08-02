@@ -31,7 +31,7 @@ const PRIVATE_PATH_PREFIXES = [
 // Production hosts stay fully frame-denied.
 const FRAMEABLE_HOST_SUFFIXES = [".lovableproject.com", ".lovable.app", ".lovable.dev"];
 
-function isPreviewHost(hostname: string): boolean {
+export function isPreviewHost(hostname: string): boolean {
   return (
     hostname === "localhost" ||
     hostname === "127.0.0.1" ||
@@ -39,7 +39,7 @@ function isPreviewHost(hostname: string): boolean {
   );
 }
 
-function withProductionHeaders(request: Request, response: Response): Response {
+export function withProductionHeaders(request: Request, response: Response): Response {
   const url = new URL(request.url);
   const previewHost = isPreviewHost(url.hostname);
   const headers = new Headers(response.headers);
@@ -109,7 +109,7 @@ async function normalizeCatastrophicSsrResponse(response: Response): Promise<Res
   });
 }
 
-function isH3SwallowedErrorBody(body: string): boolean {
+export function isH3SwallowedErrorBody(body: string): boolean {
   try {
     const payload = JSON.parse(body) as { unhandled?: unknown; message?: unknown };
     return payload.unhandled === true && payload.message === "HTTPError";

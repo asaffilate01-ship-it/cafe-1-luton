@@ -10,11 +10,13 @@
     "preview": "vite preview",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
-    "test": "vitest run",
+    "test": "vitest run && node --test scripts/*.test.mjs",
     "test:watch": "vitest",
     "format": "prettier --write .",
     "check": "npm run typecheck && npm run lint && npm run test && npm run build",
     "release:guard": "node scripts/release-guard.mjs",
+    "release:status": "node scripts/release-status.mjs",
+    "validate:production-env": "node scripts/validate-production-env.mjs",
     "smoke:production": "node scripts/verify-production.mjs"
   },
   "dependencies": {

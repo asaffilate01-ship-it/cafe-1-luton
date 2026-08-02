@@ -13,7 +13,8 @@ function createServerSupabase(bearer?: string) {
     global: {
       fetch: (input, init) => {
         const h = new Headers(init?.headers);
-        if (key.startsWith("sb_") && h.get("Authorization") === `Bearer ${key}`) h.delete("Authorization");
+        if (key.startsWith("sb_") && h.get("Authorization") === `Bearer ${key}`)
+          h.delete("Authorization");
         h.set("apikey", key);
         if (bearer) h.set("Authorization", `Bearer ${bearer}`);
         return fetch(input, { ...init, headers: h });
@@ -81,7 +82,10 @@ export const createOrder = createServerFn({ method: "POST" })
     const ids = data.items.map((i) => i.menu_item_id);
     const modIds = [...new Set(data.items.flatMap((i) => i.modifier_ids ?? []))];
     const [{ data: menu, error: menuErr }, { data: modRows, error: modErr }] = await Promise.all([
-      supabase.from("menu_items").select("id,name,price_cents,active,category_id,loyalty_drink,is_beverage").in("id", ids),
+      supabase
+        .from("menu_items")
+        .select("id,name,price_cents,active,category_id,loyalty_drink,is_beverage")
+        .in("id", ids),
       modIds.length
         ? supabase
             .from("menu_modifiers")
@@ -119,10 +123,7 @@ export const createOrder = createServerFn({ method: "POST" })
       if (m.loyalty_drink) {
         for (let n = 0; n < i.qty; n++) drinkUnitPrices.push(m.price_cents);
       }
-      const noteParts = [
-        ...chosen.map((mod) => mod.name),
-        ...(i.notes ? [i.notes] : []),
-      ];
+      const noteParts = [...chosen.map((mod) => mod.name), ...(i.notes ? [i.notes] : [])];
       return {
         menu_item_id: m.id,
         name: m.name,
@@ -159,10 +160,16 @@ export const createOrder = createServerFn({ method: "POST" })
     // Delivery-only rules: service window + half-mile radius from the shop.
     if (data.type === "delivery" && settings) {
       const ds = settings as unknown as import("./delivery.server").DeliverySettings;
-      const { isWithinDeliveryWindow, formatWindow, checkDeliveryArea } = await import("./delivery.server");
-      const when = data.schedule_mode === "scheduled" && data.scheduled_for ? new Date(data.scheduled_for) : new Date();
+      const { isWithinDeliveryWindow, formatWindow, checkDeliveryArea } =
+        await import("./delivery.server");
+      const when =
+        data.schedule_mode === "scheduled" && data.scheduled_for
+          ? new Date(data.scheduled_for)
+          : new Date();
       if (!isWithinDeliveryWindow(ds, when)) {
-        throw new Error(`We deliver between ${formatWindow(ds)}. Please pick a delivery time in that window, or choose collection.`);
+        throw new Error(
+          `We deliver between ${formatWindow(ds)}. Please pick a delivery time in that window, or choose collection.`,
+        );
       }
       const area = await checkDeliveryArea(data.postcode ?? "", ds);
       if (!area.ok) throw new Error(area.reason);
@@ -179,9 +186,12 @@ export const createOrder = createServerFn({ method: "POST" })
     }
 
     const freeThreshold = settings?.free_delivery_threshold_cents ?? null;
-    let delivery_fee = data.type === "delivery"
-      ? (freeThreshold && subtotal >= freeThreshold ? 0 : baseDeliveryFee)
-      : 0;
+    let delivery_fee =
+      data.type === "delivery"
+        ? freeThreshold && subtotal >= freeThreshold
+          ? 0
+          : baseDeliveryFee
+        : 0;
 
     // Validate and apply promo code (public RPC).
     let promo_discount = 0;
@@ -214,7 +224,9 @@ export const createOrder = createServerFn({ method: "POST" })
     const discountEmail = (data.customer_email || authEmail || "").trim();
     if (discountEmail) {
       const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-      const { data: dRows } = await supabaseAdmin.rpc("get_customer_discount", { _email: discountEmail });
+      const { data: dRows } = await supabaseAdmin.rpc("get_customer_discount", {
+        _email: discountEmail,
+      });
       const p = (dRows ?? [])[0]?.percent ?? 0;
       if (p > discount_percent) discount_percent = p;
     }
@@ -237,9 +249,7 @@ export const createOrder = createServerFn({ method: "POST" })
       if (free_drinks_available > 0 && drinkUnitPrices.length > 0) {
         const cheapestFirst = [...drinkUnitPrices].sort((a, b) => a - b);
         free_drinks_used = Math.min(free_drinks_available, cheapestFirst.length);
-        free_drink_discount = cheapestFirst
-          .slice(0, free_drinks_used)
-          .reduce((s, p) => s + p, 0);
+        free_drink_discount = cheapestFirst.slice(0, free_drinks_used).reduce((s, p) => s + p, 0);
       }
     }
 
@@ -251,8 +261,14 @@ export const createOrder = createServerFn({ method: "POST" })
     const drink_stamps_after = stamps_total % 10;
     const free_drinks_after = free_drinks_available - free_drinks_used + new_free_drinks;
     const total = Math.max(0, subtotal - discount) + delivery_fee;
-    const points_earned = userId ? Math.floor(Math.max(0, subtotal - discount) / 100) * POINTS_PER_POUND : 0;
+    const points_earned = userId
+      ? Math.floor(Math.max(0, subtotal - discount) / 100) * POINTS_PER_POUND
+      : 0;
     const reference = `WEBSITE-ORDER-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+    const { randomBytes } = await import("node:crypto");
+    const { hashTrackingToken } = await import("./order-access.server");
+    const tracking_token = randomBytes(32).toString("base64url");
+    const tracking_token_hash = hashTrackingToken(tracking_token);
 
     // Court vouchers: a daily allowance held against a person's email/phone.
     // Any amount above the remaining allowance is paid by the customer.
@@ -300,7 +316,9 @@ export const createOrder = createServerFn({ method: "POST" })
     let juror_discount = 0;
     let payable = Math.max(0, total - voucher_cents);
     if (voucher_holder_id && payable > 0 && food_subtotal > 0) {
-      juror_discount = Math.round((Math.min(food_subtotal, payable) * JUROR_FOOD_DISCOUNT_PERCENT) / 100);
+      juror_discount = Math.round(
+        (Math.min(food_subtotal, payable) * JUROR_FOOD_DISCOUNT_PERCENT) / 100,
+      );
       payable = Math.max(0, payable - juror_discount);
     }
 
@@ -308,20 +326,33 @@ export const createOrder = createServerFn({ method: "POST" })
     let account_id: string | null = null;
     if (data.account_code) {
       const { supabaseAdmin: sbAdmin } = await import("@/integrations/supabase/client.server");
-      const { data: rows, error: acctErr } = await sbAdmin
-        .rpc("verify_account_code", { _code: data.account_code.trim() });
-      if (acctErr) { await releaseVoucher(); throw new Error(acctErr.message); }
+      const { data: rows, error: acctErr } = await sbAdmin.rpc("verify_account_code", {
+        _code: data.account_code.trim(),
+      });
+      if (acctErr) {
+        await releaseVoucher();
+        throw new Error(acctErr.message);
+      }
       const row = (rows ?? [])[0];
-      if (!row) { await releaseVoucher(); throw new Error("That tab access code isn't valid or is no longer active."); }
+      if (!row) {
+        await releaseVoucher();
+        throw new Error("That tab access code isn't valid or is no longer active.");
+      }
       account_id = row.id;
 
       // Enforce the account's credit limit against the unsettled balance.
       const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
       const { data: acct } = await supabaseAdmin
-        .from("accounts").select("credit_limit_cents").eq("id", account_id).maybeSingle();
+        .from("accounts")
+        .select("credit_limit_cents")
+        .eq("id", account_id)
+        .maybeSingle();
       if (acct?.credit_limit_cents) {
         const { data: openOrders } = await supabaseAdmin
-          .from("orders").select("total_cents").eq("account_id", account_id).eq("payment_status", "on_account");
+          .from("orders")
+          .select("total_cents")
+          .eq("account_id", account_id)
+          .eq("payment_status", "on_account");
         const outstanding = (openOrders ?? []).reduce((s, o) => s + o.total_cents, 0);
         if (outstanding + payable > acct.credit_limit_cents) {
           await releaseVoucher();
@@ -340,16 +371,18 @@ export const createOrder = createServerFn({ method: "POST" })
         .map((l) => `${l.qty}x ${l.name}${l.notes ? ` (${l.notes})` : ""}`)
         .join("; ");
       const sumupDescription = `WEBSITE ORDER — ${data.customer_name} — ${itemSummary}`;
-      const compactSumupDescription = sumupDescription.length > 500
-        ? `${sumupDescription.slice(0, 497)}...`
-        : sumupDescription;
+      const compactSumupDescription =
+        sumupDescription.length > 500 ? `${sumupDescription.slice(0, 497)}...` : sumupDescription;
       try {
+        const publicAppUrl = (
+          process.env["PUBLIC_APP_URL"] ?? "https://cafe1stalbans.co.uk"
+        ).replace(/\/+$/, "");
         const co = await createSumUpCheckout({
           reference,
           amount_cents: payable,
           description: compactSumupDescription,
           customer_email: data.customer_email || undefined,
-          return_url: `${process.env["SITE_URL"] ?? "https://cafe1stalbans.co.uk"}/api/public/sumup-webhook`,
+          return_url: `${publicAppUrl}/api/public/sumup-webhook`,
         });
         checkout_id = co.id;
       } catch (e) {
@@ -397,7 +430,7 @@ export const createOrder = createServerFn({ method: "POST" })
         company_name: data.company_name || null,
         table_number: data.table_number || null,
         schedule_mode: data.schedule_mode,
-        scheduled_for: data.schedule_mode === "scheduled" ? data.scheduled_for ?? null : null,
+        scheduled_for: data.schedule_mode === "scheduled" ? (data.scheduled_for ?? null) : null,
         subtotal_cents: subtotal,
         delivery_fee_cents: delivery_fee,
         discount_cents: discount,
@@ -408,6 +441,7 @@ export const createOrder = createServerFn({ method: "POST" })
         total_cents: payable,
         sumup_reference: reference,
         sumup_checkout_id: checkout_id,
+        tracking_token_hash,
         promo_code: applied_promo,
         promo_discount_cents: free_delivery_promo ? 0 : promo_discount,
         ...(account_id ? { payment_status: "on_account" as const, status: "paid" as const } : {}),
@@ -416,7 +450,10 @@ export const createOrder = createServerFn({ method: "POST" })
       })
       .select()
       .single();
-    if (orderErr) { await releaseVoucher(); throw new Error(orderErr.message); }
+    if (orderErr) {
+      await releaseVoucher();
+      throw new Error(orderErr.message);
+    }
 
     // Attach the reserved voucher redemption to this order for the court report.
     if (voucher_holder_id && voucher_cents > 0) {
@@ -446,7 +483,9 @@ export const createOrder = createServerFn({ method: "POST" })
     if (userId && (settled_now || free_drinks_used > 0)) {
       const { data: prof } = await supabase
         .from("profiles")
-        .select("loyalty_points, lifetime_points, free_drinks_redeemed, drink_stamps, free_drinks_available")
+        .select(
+          "loyalty_points, lifetime_points, free_drinks_redeemed, drink_stamps, free_drinks_available",
+        )
         .eq("id", userId)
         .maybeSingle();
       await supabase
@@ -462,7 +501,10 @@ export const createOrder = createServerFn({ method: "POST" })
               }
             : {
                 // unpaid: no points, no new stamps — only the redemption is held
-                free_drinks_available: Math.max(0, (prof?.free_drinks_available ?? 0) - free_drinks_used),
+                free_drinks_available: Math.max(
+                  0,
+                  (prof?.free_drinks_available ?? 0) - free_drinks_used,
+                ),
                 free_drinks_redeemed: (prof?.free_drinks_redeemed ?? 0) + free_drinks_used,
               },
         )
@@ -477,6 +519,7 @@ export const createOrder = createServerFn({ method: "POST" })
       voucher_cents,
       voucher_holder_name,
       checkout_id,
+      tracking_token,
       payment_configured: !!checkout_id || fully_covered,
       on_tab: !!account_id,
       fully_covered,
@@ -511,14 +554,9 @@ export const updateOrderStatus = createServerFn({ method: "POST" })
       status: data.status,
       ...(data.status === "ready" ? { ready_at: now } : {}),
       ...(data.status === "out_for_delivery" ? { picked_up_at: now } : {}),
-      ...(data.status === "delivered" || data.status === "completed"
-        ? { delivered_at: now }
-        : {}),
+      ...(data.status === "delivered" || data.status === "completed" ? { delivered_at: now } : {}),
     };
-    const { error } = await context.supabase
-      .from("orders")
-      .update(patch)
-      .eq("id", data.order_id);
+    const { error } = await context.supabase.from("orders").update(patch).eq("id", data.order_id);
     if (error) throw new Error(error.message);
 
     // If this ticket originated on Deliveroo, mirror the status back to their
@@ -566,9 +604,7 @@ export const setOrderFulfilment = createServerFn({ method: "POST" })
 export const markPaidManually = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .validator((d: unknown) =>
-    z
-      .object({ order_id: z.string().uuid(), sumup_transaction_id: z.string().optional() })
-      .parse(d),
+    z.object({ order_id: z.string().uuid(), sumup_transaction_id: z.string().optional() }).parse(d),
   )
   .handler(async ({ data, context }) => {
     const { error } = await context.supabase
@@ -591,7 +627,11 @@ export const assignDriver = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const { error } = await context.supabase
       .from("orders")
-      .update({ driver_id: data.driver_id, status: "out_for_delivery", picked_up_at: new Date().toISOString() })
+      .update({
+        driver_id: data.driver_id,
+        status: "out_for_delivery",
+        picked_up_at: new Date().toISOString(),
+      })
       .eq("id", data.order_id);
     if (error) throw new Error(error.message);
     return { ok: true };

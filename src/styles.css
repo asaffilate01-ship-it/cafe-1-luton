@@ -162,17 +162,48 @@
     -webkit-font-smoothing: antialiased;
     overscroll-behavior-y: contain;
   }
-  html, body {
+  html,
+  body {
     /* iOS/Android standalone safe areas */
     padding-top: env(safe-area-inset-top);
     padding-bottom: env(safe-area-inset-bottom);
   }
-  h1, h2, h3, .font-display {
+  h1,
+  h2,
+  h3,
+  .font-display {
     font-family: var(--font-display);
     letter-spacing: -0.01em;
   }
   /* Better tap targets & no double-tap zoom on interactive controls */
-  button, a, [role="button"] { touch-action: manipulation; }
+  button,
+  a,
+  [role="button"] {
+    touch-action: manipulation;
+  }
+
+  :focus-visible {
+    outline: 3px solid var(--color-ring);
+    outline-offset: 3px;
+  }
+}
+
+.skip-link {
+  position: fixed;
+  left: 1rem;
+  top: 1rem;
+  z-index: 1000;
+  transform: translateY(-200%);
+  border-radius: 999px;
+  background: var(--color-foreground);
+  color: var(--color-background);
+  padding: 0.75rem 1rem;
+  font-weight: 700;
+  transition: transform 150ms ease;
+}
+
+.skip-link:focus {
+  transform: translateY(0);
 }
 
 @utility bg-hero {
@@ -219,11 +250,7 @@
     position: absolute;
     inset: 1px 1px 52%;
     border-radius: inherit;
-    background-image: linear-gradient(
-      180deg,
-      oklch(1 0 0 / 0.4) 0%,
-      oklch(1 0 0 / 0) 100%
-    );
+    background-image: linear-gradient(180deg, oklch(1 0 0 / 0.4) 0%, oklch(1 0 0 / 0) 100%);
     pointer-events: none;
   }
   & > svg {
@@ -266,11 +293,7 @@
   position: relative;
   border-radius: 1.25rem;
   background-color: var(--card);
-  background-image: linear-gradient(
-    180deg,
-    oklch(1 0 0) 0%,
-    oklch(0.988 0.005 27) 100%
-  );
+  background-image: linear-gradient(180deg, oklch(1 0 0) 0%, oklch(0.988 0.005 27) 100%);
   border: 1px solid oklch(0.93 0.012 27);
   box-shadow:
     inset 0 1px 0 oklch(1 0 0 / 0.95),
@@ -316,11 +339,23 @@
 
 /* Print styles for kitchen/counter tickets */
 /* Default: iMin D4-504 built-in 58mm thermal printer */
-@page { size: 58mm auto; margin: 0; }
+@page {
+  size: 58mm auto;
+  margin: 0;
+}
 @media print {
-  .no-print { display: none !important; }
-  body { background: white !important; }
-  html, body { width: 58mm; margin: 0 !important; padding: 0 !important; }
+  .no-print {
+    display: none !important;
+  }
+  body {
+    background: white !important;
+  }
+  html,
+  body {
+    width: 58mm;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
   .ticket-page {
     page-break-after: always;
     width: 58mm !important;
@@ -329,7 +364,9 @@
     font-size: 11px !important;
     color: #000 !important;
   }
-  .ticket-page:last-child { page-break-after: auto; }
+  .ticket-page:last-child {
+    page-break-after: auto;
+  }
 }
 
 /* Metric-matched local fallbacks so the LCP headline paints instantly

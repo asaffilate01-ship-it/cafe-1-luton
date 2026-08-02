@@ -8,8 +8,9 @@ Single-merchant ordering and operations platform for Cafe 1 at St Albans Crown C
 - SumUp Solo payment-attempt verification and refund ledger
 - Till shifts, cash movements, close variance, held orders, modifiers, notes, printing, and customer display
 - Least-privilege RLS, hashed account codes, audited manager actions, protected scheduler routes, security headers, and optional manager MFA enforcement
+- Per-order guest bearer tokens stored only as hashes, passed through checkout, payment verification and order tracking
 - Driver claim/state controls, atomic loyalty award, reconciliation-aware unpaid cleanup, net revenue/refund reporting
-- TypeScript, ESLint, Vitest, dependency audit, production build, and GitHub Actions CI
+- TypeScript, ESLint, Vitest, dependency audit, deterministic production build, CodeQL and GitHub Actions CI
 
 Read [the release notes](docs/RELEASE_NOTES_PRODUCTION_HARDENING.md) for the full change list and [the production runbook](docs/PRODUCTION_RUNBOOK.md) before deployment.
 
@@ -43,23 +44,25 @@ npm audit --audit-level=high
 
 Useful commands:
 
-| Command                    | Purpose                                                                     |
-| -------------------------- | --------------------------------------------------------------------------- |
-| `npm run typecheck`        | Strict TypeScript validation                                                |
-| `npm run lint`             | ESLint validation                                                           |
-| `npm test`                 | Unit tests                                                                  |
-| `npm run build`            | Production bundle                                                           |
-| `npm run check`            | Typecheck, lint, tests, and build                                           |
-| `npm run release:guard`    | Reject tracked secrets, legacy postcode and unsafe compatibility migrations |
-| `npm run smoke:production` | Verify the deployed pages, postcode and security headers                    |
-| `supabase test db`         | Database pgTAP assertions with local Supabase                               |
+| Command                           | Purpose                                                                     |
+| --------------------------------- | --------------------------------------------------------------------------- |
+| `npm run typecheck`               | Strict TypeScript validation                                                |
+| `npm run lint`                    | ESLint validation                                                           |
+| `npm test`                        | Unit tests                                                                  |
+| `npm run build`                   | Production bundle                                                           |
+| `npm run check`                   | Typecheck, lint, tests, and build                                           |
+| `npm run release:guard`           | Reject tracked secrets, legacy postcode and unsafe compatibility migrations |
+| `npm run release:status`          | Print machine-readable release/checklist status                             |
+| `npm run validate:production-env` | Fail on missing, unsafe or inconsistent production configuration            |
+| `npm run smoke:production`        | Verify the deployed pages, postcode and security headers                    |
+| `supabase test db`                | Database pgTAP assertions with local Supabase                               |
 
 ## Deployment order
 
 1. Back up Supabase and apply all release migrations in timestamp order.
-2. Configure all production values from `.env.example` in the host secret manager.
+2. Configure all production values from `.env.example` in the host secret manager and run `npm run validate:production-env` in that secret-bearing environment.
 3. Run `npm run release:guard`, build and deploy this revision.
-4. Run the **Production smoke** GitHub workflow against the deployed HTTPS origin.
+4. Run the **Release candidate evidence** GitHub workflow against the deployed HTTPS origin and retain its artifact.
 5. Configure authenticated POST cron calls.
 6. Complete every item in the [go-live checklist](docs/GO_LIVE_CHECKLIST.md) before accepting live payments.
 
