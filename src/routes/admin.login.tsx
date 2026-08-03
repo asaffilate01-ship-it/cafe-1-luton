@@ -13,8 +13,11 @@ export const Route = createFileRoute("/admin/login")({
   validateSearch: search,
   head: () => ({
     meta: [
-      { title: "Staff sign in — Cafe1" },
-      { name: "description", content: "Restricted sign in for Cafe1 staff, kitchen and drivers." },
+      { title: "Team sign in — Cafe1" },
+      {
+        name: "description",
+        content: "Restricted sign in for Cafe1 admins, staff, kitchen and drivers.",
+      },
       { name: "robots", content: "noindex" },
     ],
   }),
@@ -111,9 +114,10 @@ function AdminLogin() {
           <div className="grid h-12 w-12 place-items-center rounded-2xl bg-primary text-primary-foreground">
             <ShieldCheck className="h-6 w-6" />
           </div>
-          <h1 className="mt-4 font-display text-3xl font-bold">Staff sign in</h1>
+          <h1 className="mt-4 font-display text-3xl font-bold">Cafe1 team sign in</h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            Restricted to Cafe1 admins, kitchen and drivers.
+            One sign in for admins, staff, kitchen and drivers — you'll land on the right dashboard
+            for your role.
           </p>
 
           {error && (
