@@ -444,7 +444,9 @@ export const createOrder = createServerFn({ method: "POST" })
         tracking_token_hash,
         promo_code: applied_promo,
         promo_discount_cents: free_delivery_promo ? 0 : promo_discount,
-        ...(account_id ? { payment_status: "on_account" as const, status: "paid" as const } : {}),
+        ...(account_id
+          ? { payment_status: "on_account" as const, status: "preparing" as const }
+          : {}),
         ...(fully_covered ? { payment_status: "paid" as const, status: "paid" as const } : {}),
         ...(account_id || fully_covered ? { loyalty_awarded: true } : {}),
       })
