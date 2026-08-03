@@ -114,7 +114,7 @@ function Home() {
               <span className="icon-3d h-14 w-14">
                 <f.icon className="h-6 w-6" />
               </span>
-              <h3 className="mt-5 font-display text-xl font-semibold">{f.title}</h3>
+              <h2 className="mt-5 font-display text-xl font-semibold">{f.title}</h2>
               <p className="mt-2 text-sm text-muted-foreground">{f.body}</p>
             </div>
           ))}
