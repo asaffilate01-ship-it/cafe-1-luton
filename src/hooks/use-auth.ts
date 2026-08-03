@@ -37,7 +37,9 @@ function startAuthStore() {
 function subscribeAuth(listener: () => void) {
   authListeners.add(listener);
   startAuthStore();
-  return () => authListeners.delete(listener);
+  return () => {
+    authListeners.delete(listener);
+  };
 }
 
 function getAuthSnapshot() {
@@ -79,6 +81,11 @@ export function useRoles(user: User | null) {
       .then(({ data }) => {
         if (!active) return;
         setRoles(((data ?? []).map((r) => r.role) as Role[]) ?? []);
+        setLoading(false);
+      })
+      .catch(() => {
+        if (!active) return;
+        setRoles([]);
         setLoading(false);
       });
     return () => {
