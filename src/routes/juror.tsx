@@ -88,7 +88,7 @@ function JurorPage() {
         setBalance(null);
         setError(
           ("message" in res && res.message) ||
-            "That voucher code isn't recognised. Please check it with the Jury Officer.",
+            "Sorry, that voucher code isn't valid. Please double-check it or ask the Jury Officer.",
         );
       } else {
         setBalance(res);
