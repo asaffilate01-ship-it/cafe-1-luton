@@ -168,6 +168,63 @@ function deriveFulfilment(t: SumupTxn, products: SumupTxn["products"]): {
   return { type: "collection", table_number: null };
 }
 
+/** Builds a UTC Date for a wall-clock time on a given day in Europe/London. */
+function londonTimeToUtc(reference: Date, hours: number, minutes: number): Date {
+  const parts = new Intl.DateTimeFormat("en-GB", {
+    timeZone: "Europe/London",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).formatToParts(reference);
+  const get = (type: string) => Number(parts.find((p) => p.type === type)?.value ?? "0");
+  const y = get("year");
+  const m = get("month");
+  const d = get("day");
+  // Guess UTC, then correct by the zone offset at that instant.
+  const guess = Date.UTC(y, m - 1, d, hours, minutes, 0, 0);
+  const asLondon = new Date(
+    new Date(guess).toLocaleString("en-US", { timeZone: "Europe/London" }),
+  ).getTime();
+  const asUtc = new Date(new Date(guess).toLocaleString("en-US", { timeZone: "UTC" })).getTime();
+  return new Date(guess - (asLondon - asUtc));
+}
+
+/**
+ * Pre-orders from the SumUp till: the operator types the wanted time into the
+ * sale note or a line description, e.g. "LATER 14:30", "FOR 2:30pm", "@ 14:30".
+ * Times already passed roll over to the next day, matching the Till app.
+ */
+function deriveSchedule(
+  t: SumupTxn,
+  products: SumupTxn["products"],
+): { schedule_mode: "asap" | "scheduled"; scheduled_for: string | null } {
+  const haystack = [
+    sumupOrderNote(t) ?? "",
+    t.product_summary ?? "",
+    ...(products ?? []).map((p) => sumupLineNote(p) ?? ""),
+  ].join(" | ");
+
+  const m = haystack.match(
+    /\b(?:later|pre[-\s]?order|preorder|for|due|@|at)\s*:?\s*(\d{1,2})[:.\s]?(\d{2})?\s*(am|pm)?\b/i,
+  );
+  if (!m) return { schedule_mode: "asap", scheduled_for: null };
+
+  let hh = Number(m[1]);
+  const mm = Number(m[2] ?? "0");
+  const suffix = (m[3] ?? "").toLowerCase();
+  if (suffix === "pm" && hh < 12) hh += 12;
+  if (suffix === "am" && hh === 12) hh = 0;
+  if (hh > 23 || mm > 59) return { schedule_mode: "asap", scheduled_for: null };
+
+  const placed = t.timestamp ? new Date(t.timestamp) : new Date();
+  let when = londonTimeToUtc(placed, hh, mm);
+  // Ignore near-immediate times; roll anything already gone to tomorrow.
+  if (when.getTime() - placed.getTime() < 5 * 60 * 1000) {
+    when = londonTimeToUtc(new Date(placed.getTime() + 24 * 60 * 60 * 1000), hh, mm);
+  }
+  return { schedule_mode: "scheduled", scheduled_for: when.toISOString() };
+}
+
 export const syncSumupPos = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
@@ -258,6 +315,7 @@ export const syncSumupPos = createServerFn({ method: "POST" })
       const cardTail = t.card?.last_4_digits ? ` ••${t.card.last_4_digits}` : "";
       const fulfilment = deriveFulfilment(t, products);
       const posSide = derivePosSide(t, products, mapping);
+      const schedule = deriveSchedule(t, products);
 
       const { data: inserted, error: insErr } = await supabaseAdmin
         .from("orders")
@@ -277,7 +335,8 @@ export const syncSumupPos = createServerFn({ method: "POST" })
           voucher_cents: 0,
           points_earned: 0,
           total_cents: totalCents,
-          schedule_mode: "asap",
+          schedule_mode: schedule.schedule_mode,
+          scheduled_for: schedule.scheduled_for,
           source: "sumup_pos",
           sumup_order_ref: ref,
           sumup_transaction_id: t.id,
