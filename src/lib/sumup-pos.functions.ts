@@ -19,12 +19,23 @@ type SumupTxn = {
     description?: string;
     quantity?: number;
     price?: number;
+    /** Free-text note the till operator added to this line. Field name varies. */
+    comment?: string;
+    note?: string;
+    notes?: string;
+    remark?: string;
+    modifiers?: Array<string | { name?: string; comment?: string }>;
     /** SumUp's product catalogue category; the field name varies by product. */
     category?: string;
     category_name?: string;
     categories?: Array<string | { name?: string }>;
   }>;
   internal_id?: string | number;
+  /** Order-level note from the SumUp till. Field name varies by product. */
+  description?: string;
+  comment?: string;
+  note?: string;
+  notes?: string;
   tip_amount?: number;
   // Terminal / reader identity varies by SumUp product; we probe a few shapes.
   reader_id?: string;
@@ -43,6 +54,33 @@ function sumupCategory(p: NonNullable<SumupTxn["products"]>[number]): string | n
   const fromList = typeof first === "string" ? first : first?.name;
   const label = (p.category ?? p.category_name ?? fromList ?? "").trim();
   return label || null;
+}
+
+/** Reads whichever note/comment field a SumUp basket line happens to carry. */
+function sumupLineNote(p: NonNullable<SumupTxn["products"]>[number]): string | null {
+  const mods = (p.modifiers ?? [])
+    .map((m) => (typeof m === "string" ? m : [m?.name, m?.comment].filter(Boolean).join(" ")))
+    .map((s) => (s ?? "").trim())
+    .filter(Boolean);
+  const parts = [p.description, p.comment, p.note, p.notes, p.remark, ...mods]
+    .map((s) => (s ?? "").trim())
+    .filter(Boolean);
+  const seen = new Set<string>();
+  const unique = parts.filter((s) => {
+    const k = s.toLowerCase();
+    if (seen.has(k)) return false;
+    seen.add(k);
+    return true;
+  });
+  return unique.length ? unique.join(" · ") : null;
+}
+
+/** Reads whichever order-level note the SumUp till sent with the sale. */
+function sumupOrderNote(t: SumupTxn): string | null {
+  const note = [t.description, t.comment, t.note, t.notes]
+    .map((s) => (s ?? "").trim())
+    .filter(Boolean)[0];
+  return note || null;
 }
 
 /** A sale is void when SumUp cancelled/failed it, or the full amount was refunded. */
@@ -229,6 +267,7 @@ export const syncSumupPos = createServerFn({ method: "POST" })
           type: fulfilment.type,
           table_number: fulfilment.table_number,
           pos_terminal: posSide,
+          delivery_notes: sumupOrderNote(t),
           status: "preparing",
           payment_status: "paid",
           subtotal_cents: totalCents,
@@ -275,7 +314,7 @@ export const syncSumupPos = createServerFn({ method: "POST" })
             name: p.name || "Item",
             qty: Math.max(1, Number(p.quantity ?? 1)),
             unit_price_cents: Math.round(Number(p.price ?? 0) * 100),
-            notes: (p.description ?? "").trim() || null,
+            notes: sumupLineNote(p),
           }))
         : [{
             order_id: inserted.id,
