@@ -78,7 +78,7 @@ const STATIONS = ["ALL", "HOT", "SANDWICH", "DRINKS", "PASS"] as const;
 type Station = (typeof STATIONS)[number];
 
 function whenLabel(o: { schedule_mode: string | null; scheduled_for: string | null }) {
-  if (o.schedule_mode === "scheduled" && o.scheduled_for)
+  if (o.scheduled_for && o.schedule_mode !== "asap")
     return new Date(o.scheduled_for).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
   return "ASAP";
 }
