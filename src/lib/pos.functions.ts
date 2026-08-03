@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { callOperationsRpc } from "./ops-rpc";
 
 const CounterLineSchema = z.object({
   menu_item_id: z.string().uuid(),
@@ -46,6 +47,28 @@ function firstResult<T>(rows: T[] | null, message: string): T {
   if (!row) throw new Error(message);
   return row;
 }
+
+/**
+ * Marks a counter order as being wanted for a later time so the kitchen
+ * display shows it as a pre-order instead of starting it straight away.
+ */
+export const setCounterOrderSchedule = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .validator((input: unknown) =>
+    z
+      .object({
+        order_id: z.string().uuid(),
+        scheduled_for: z.string().datetime().nullable(),
+      })
+      .parse(input),
+  )
+  .handler(({ data, context }) =>
+    callOperationsRpc<{ id: string; scheduled_for: string | null }>(
+      context.supabase,
+      "set_counter_order_schedule",
+      { _order_id: data.order_id, _scheduled_for: data.scheduled_for },
+    ),
+  );
 
 /**
  * Reserves a counter order, including any juror allowance, before a reader is

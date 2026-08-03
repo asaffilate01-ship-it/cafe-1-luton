@@ -8,6 +8,7 @@ import {
   createCounterOrder,
   finalizeCounterCardPayment,
   prepareCounterOrder,
+  setCounterOrderSchedule,
 } from "@/lib/pos.functions";
 import {
   closeTillShift,
@@ -202,6 +203,20 @@ function loadDraftBasket(): DraftBasket {
   }
 }
 
+/**
+ * Turns an "HH:MM" counter entry into an absolute time. A time that has
+ * already passed today is treated as tomorrow so staff can take next-morning
+ * pre-orders without picking a date.
+ */
+function laterTimeToIso(value: string): string | null {
+  const match = /^(\d{2}):(\d{2})$/.exec(value.trim());
+  if (!match) return null;
+  const when = new Date();
+  when.setHours(Number(match[1]), Number(match[2]), 0, 0);
+  if (when.getTime() <= Date.now() + 5 * 60_000) when.setDate(when.getDate() + 1);
+  return when.toISOString();
+}
+
 function TillPage() {
   const { user, loading } = useSession();
   const { has, loading: rolesLoading } = useRoles(user);
@@ -309,6 +324,7 @@ function Till() {
   const closeShift = useServerFn(closeTillShift);
   const cashEvent = useServerFn(recordTillCashEvent);
   const getMenuItems = useServerFn(getStaffMenuItems);
+  const scheduleOrder = useServerFn(setCounterOrderSchedule);
 
   const [cats, setCats] = useState<Cat[]>([]);
   const [items, setItems] = useState<Item[]>([]);
@@ -320,6 +336,8 @@ function Till() {
   const [name, setName] = useState(draft.name);
   const [type, setType] = useState<Fulfilment>(draft.type);
   const [table, setTable] = useState(draft.table);
+  // "Later" pre-orders taken at the counter — HH:MM for today, blank = ASAP.
+  const [laterTime, setLaterTime] = useState("");
   const [side, setSide] = useState<Side>(() => {
     if (typeof window === "undefined") return "public";
     return (window.localStorage.getItem("cafe1-pos-side") as Side) || "public";
@@ -600,6 +618,17 @@ function Till() {
   const completeSale = useCallback(
     async (res: CounterResult, paymentMethod: "cash" | "card" | "split") => {
       setLastOrder({ n: res.order_number, total: res.total_cents, id: res.order_id });
+      const laterIso = laterTime ? laterTimeToIso(laterTime) : null;
+      if (laterIso) {
+        try {
+          await scheduleOrder({ data: { order_id: res.order_id, scheduled_for: laterIso } });
+          toast.success(
+            `Order #${res.order_number} saved for ${new Date(laterIso).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}`,
+          );
+        } catch {
+          toast.error("Order taken, but the later time could not be saved — tell the kitchen");
+        }
+      }
       postToDisplay({
         type: "paid",
         order_number: res.order_number,
@@ -611,7 +640,11 @@ function Till() {
         (["KITCHEN", "COUNTER"] as const).map((heading) => ({
           heading,
           order_number: res.order_number,
-          fulfilment: FULFIL.find((f) => f.id === type)?.label ?? type,
+          fulfilment: `${FULFIL.find((f) => f.id === type)?.label ?? type}${
+            laterIso
+              ? ` · FOR ${new Date(laterIso).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}`
+              : ""
+          }`,
           terminal: SIDE_LABEL[side],
           lines: lines.map((line) => ({
             name: [line.name, ...line.modifier_names].join(" · "),
@@ -633,13 +666,14 @@ function Till() {
       setLines([]);
       setName("");
       setTable("");
+      setLaterTime("");
       setPay(null);
       setTendered(0);
       setShowOrder(false);
       setVoucher(null);
       setSplitCash(0);
     },
-    [lines, side, type],
+    [lines, side, type, laterTime, scheduleOrder],
   );
 
   const finish = useCallback(
@@ -941,6 +975,32 @@ function Till() {
                 </button>
               ))}
             </div>
+            <div className="flex items-center gap-1.5 rounded-xl border border-white/10 bg-neutral-800 p-1.5">
+              <button
+                onClick={() => setLaterTime("")}
+                className={`h-9 flex-1 rounded-lg text-[11px] font-bold uppercase tracking-wide transition ${laterTime ? "text-white/60 hover:text-white" : "bg-primary text-primary-foreground"}`}
+              >
+                ASAP
+              </button>
+              <label className="flex flex-1 items-center gap-1.5">
+                <span className="text-[11px] font-bold uppercase tracking-wide text-white/60">
+                  Later
+                </span>
+                <input
+                  type="time"
+                  step={300}
+                  value={laterTime}
+                  onChange={(e) => setLaterTime(e.target.value)}
+                  aria-label="Time this order is wanted for"
+                  className="h-9 w-full rounded-lg border border-white/10 bg-neutral-900 px-2 text-sm tabular-nums outline-none focus:border-primary"
+                />
+              </label>
+            </div>
+            {laterTime && (
+              <p className="rounded-lg bg-violet-700/20 px-2.5 py-1.5 text-[11px] font-bold uppercase tracking-wide text-violet-200">
+                Pre-order · kitchen will hold this until {laterTime}
+              </p>
+            )}
             <div className="grid gap-2 sm:grid-cols-2">
               <input
                 value={name}
