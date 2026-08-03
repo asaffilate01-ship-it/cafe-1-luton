@@ -140,9 +140,9 @@ const steps: Step[] = [
         <div className="my-3 border-t border-border" />
         <Row label="Subtotal" value="£8.50" />
         <Row label={`Voucher (${money(JUROR_DAILY_ALLOWANCE_CENTS)})`} value="−£5.71" green />
-        <Row label="Scheme member 10% off food" value="−£0.16" green />
+        <Row label="Scheme member 10% off food" value="−£0.28" green />
         <div className="my-3 border-t border-border" />
-        <Row label="You pay" value="£2.63" bold />
+        <Row label="You pay" value="£2.51" bold />
         <p className="mt-3 inline-flex items-center gap-1.5 text-xs text-muted-foreground">
           <Building2 className="h-3.5 w-3.5" /> Collection at Café 1, or delivery to Jury Room 2.
         </p>
@@ -168,11 +168,11 @@ const steps: Step[] = [
           </p>
           <p className="flex justify-between text-emerald-400">
             <span>Scheme 10% food</span>
-            <span>−£0.16</span>
+            <span>−£0.28</span>
           </p>
           <p className="mt-2 flex justify-between border-t border-white/20 pt-2 text-lg font-black">
             <span>DUE</span>
-            <span>£2.63</span>
+            <span>£2.51</span>
           </p>
         </div>
       </div>
