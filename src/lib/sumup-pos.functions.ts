@@ -267,6 +267,7 @@ export const syncSumupPos = createServerFn({ method: "POST" })
           type: fulfilment.type,
           table_number: fulfilment.table_number,
           pos_terminal: posSide,
+          delivery_notes: sumupOrderNote(t),
           status: "preparing",
           payment_status: "paid",
           subtotal_cents: totalCents,
