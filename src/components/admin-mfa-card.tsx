@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { CheckCircle2, Copy, KeyRound, Loader2, ShieldAlert } from "lucide-react";
+import { CheckCircle2, Copy, KeyRound, Loader2, Plus, ShieldAlert, Trash2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
@@ -24,21 +24,25 @@ export function AdminMfaCard({
   const [busy, setBusy] = useState(false);
   const [aal2, setAal2] = useState(false);
   const [factor, setFactor] = useState<Factor | null>(null);
+  const [factors, setFactors] = useState<Factor[]>([]);
   const [enrollment, setEnrollment] = useState<Enrollment | null>(null);
   const [code, setCode] = useState("");
+  const [label, setLabel] = useState("");
   const [error, setError] = useState<string | null>(null);
 
   const refresh = useCallback(async () => {
     setLoading(true);
-    const [assurance, factors] = await Promise.all([
+    const [assurance, factorList] = await Promise.all([
       supabase.auth.mfa.getAuthenticatorAssuranceLevel(),
       supabase.auth.mfa.listFactors(),
     ]);
     const nextAal2 = assurance.data?.currentLevel === "aal2";
-    const verified = (factors.data?.totp ?? []).find((item) => item.status === "verified") ?? null;
+    const all = (factorList.data?.totp ?? []) as Factor[];
+    const verified = all.find((item) => item.status === "verified") ?? null;
     setAal2(nextAal2);
-    setFactor(verified as Factor | null);
-    setError(assurance.error?.message ?? factors.error?.message ?? null);
+    setFactor(verified);
+    setFactors(all.filter((item) => item.status === "verified"));
+    setError(assurance.error?.message ?? factorList.error?.message ?? null);
     onAssuranceChange(nextAal2);
     setLoading(false);
   }, [onAssuranceChange]);
@@ -56,7 +60,7 @@ export function AdminMfaCard({
         if (pending.status !== "verified")
           await supabase.auth.mfa.unenroll({ factorId: pending.id });
       }
-      const baseName = "cafe1stalbans.jury.voucher.scheme";
+      const baseName = label.trim() || "cafe1stalbans.jury.voucher.scheme";
       const taken = new Set(
         (factors?.totp ?? []).map((f) => (f as { friendly_name?: string }).friendly_name ?? ""),
       );
@@ -77,6 +81,26 @@ export function AdminMfaCard({
       });
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : "Could not start MFA setup");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function removeFactor(factorId: string) {
+    setBusy(true);
+    setError(null);
+    try {
+      const { error: unenrollError } = await supabase.auth.mfa.unenroll({ factorId });
+      if (unenrollError) throw unenrollError;
+      await supabase.auth.refreshSession();
+      toast.success("Authenticator removed");
+      await refresh();
+    } catch (cause) {
+      setError(
+        cause instanceof Error
+          ? cause.message
+          : "Could not remove that authenticator (verify a current code first)",
+      );
     } finally {
       setBusy(false);
     }
@@ -136,16 +160,52 @@ export function AdminMfaCard({
         {loading && <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />}
       </div>
 
-      {!loading && !aal2 && !factor && !enrollment && (
-        <button
-          type="button"
-          disabled={busy}
-          onClick={() => void beginEnrollment()}
-          className="mt-4 inline-flex h-10 items-center gap-2 rounded-xl bg-primary px-4 text-sm font-semibold text-primary-foreground disabled:opacity-60"
-        >
-          {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <KeyRound className="h-4 w-4" />}
-          Set up authenticator
-        </button>
+      {!loading && factors.length > 0 && (
+        <ul className="mt-4 divide-y divide-border rounded-xl border border-border">
+          {factors.map((item) => (
+            <li key={item.id} className="flex items-center justify-between gap-3 px-4 py-3">
+              <span className="min-w-0 truncate text-sm font-medium">
+                {item.friendly_name || "Authenticator"}
+              </span>
+              <button
+                type="button"
+                disabled={busy || !aal2}
+                onClick={() => void removeFactor(item.id)}
+                title={aal2 ? "Remove this authenticator" : "Verify a code first to remove"}
+                className="inline-flex items-center gap-1.5 rounded-lg border border-destructive/40 px-3 py-1.5 text-xs font-semibold text-destructive disabled:opacity-50"
+              >
+                <Trash2 className="h-3.5 w-3.5" /> Remove
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+
+      {!loading && !enrollment && (aal2 || !factor) && (
+        <div className="mt-4 flex max-w-xl flex-wrap items-center gap-2">
+          <input
+            value={label}
+            onChange={(event) => setLabel(event.target.value)}
+            placeholder="Label (e.g. jury officer – Sam)"
+            aria-label="Authenticator label"
+            className="h-10 min-w-0 flex-1 rounded-xl border border-input bg-background px-3 text-sm"
+          />
+          <button
+            type="button"
+            disabled={busy}
+            onClick={() => void beginEnrollment()}
+            className="inline-flex h-10 items-center gap-2 rounded-xl bg-primary px-4 text-sm font-semibold text-primary-foreground disabled:opacity-60"
+          >
+            {busy ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : factors.length ? (
+              <Plus className="h-4 w-4" />
+            ) : (
+              <KeyRound className="h-4 w-4" />
+            )}
+            {factors.length ? "Add another authenticator" : "Set up authenticator"}
+          </button>
+        </div>
       )}
 
       {enrollment && (
@@ -174,7 +234,7 @@ export function AdminMfaCard({
         </div>
       )}
 
-      {!loading && !aal2 && (factor || enrollment) && (
+      {!loading && (enrollment || (!aal2 && factor)) && (
         <div className="mt-4 flex max-w-md gap-2">
           <input
             value={code}
