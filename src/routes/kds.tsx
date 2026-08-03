@@ -651,21 +651,23 @@ function KDS() {
                 </div>
               )}
               <ul
-                className={`mt-2 flex-1 space-y-0.5 rounded-lg p-2 text-xs ${cook ? "bg-blue-50" : "bg-amber-50"}`}
+                className={`mt-2 flex-1 space-y-1.5 rounded-lg p-2.5 text-base ${cook ? "bg-blue-50" : "bg-amber-50"}`}
               >
                 {t.items.map((i) => (
-                  <li key={i.id} className="flex items-start gap-1.5 leading-snug">
+                  <li key={i.id} className="flex items-start gap-2 leading-tight">
                     <span
-                      className={`mt-1 h-2 w-2 shrink-0 rounded-full ${i.cook ? "bg-blue-600" : "bg-amber-400"}`}
+                      className={`mt-1.5 h-2.5 w-2.5 shrink-0 rounded-full ${i.cook ? "bg-blue-600" : "bg-amber-400"}`}
                     />
-                    <span>
-                      <span className="font-bold text-primary">{i.qty}×</span> {i.name}
+                    <span className="min-w-0 flex-1 font-semibold">
+                      <span className="font-black text-primary">{i.qty}×</span> {i.name}
                       {station === "ALL" && i.station_code && (
-                        <span className="ml-1 rounded bg-slate-200 px-1 py-px text-[9px] font-bold text-slate-700">
+                        <span className="ml-1 align-middle rounded bg-slate-200 px-1 py-px text-[10px] font-bold text-slate-700">
                           {i.station_code}
                         </span>
                       )}
-                      {i.notes ? <em className="text-muted-foreground"> — {i.notes}</em> : null}
+                      {i.notes ? (
+                        <em className="block text-sm font-medium text-muted-foreground">— {i.notes}</em>
+                      ) : null}
                     </span>
                   </li>
                 ))}
