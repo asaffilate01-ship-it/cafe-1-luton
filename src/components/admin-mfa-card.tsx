@@ -160,16 +160,52 @@ export function AdminMfaCard({
         {loading && <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />}
       </div>
 
-      {!loading && !aal2 && !factor && !enrollment && (
-        <button
-          type="button"
-          disabled={busy}
-          onClick={() => void beginEnrollment()}
-          className="mt-4 inline-flex h-10 items-center gap-2 rounded-xl bg-primary px-4 text-sm font-semibold text-primary-foreground disabled:opacity-60"
-        >
-          {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <KeyRound className="h-4 w-4" />}
-          Set up authenticator
-        </button>
+      {!loading && factors.length > 0 && (
+        <ul className="mt-4 divide-y divide-border rounded-xl border border-border">
+          {factors.map((item) => (
+            <li key={item.id} className="flex items-center justify-between gap-3 px-4 py-3">
+              <span className="min-w-0 truncate text-sm font-medium">
+                {item.friendly_name || "Authenticator"}
+              </span>
+              <button
+                type="button"
+                disabled={busy || !aal2}
+                onClick={() => void removeFactor(item.id)}
+                title={aal2 ? "Remove this authenticator" : "Verify a code first to remove"}
+                className="inline-flex items-center gap-1.5 rounded-lg border border-destructive/40 px-3 py-1.5 text-xs font-semibold text-destructive disabled:opacity-50"
+              >
+                <Trash2 className="h-3.5 w-3.5" /> Remove
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+
+      {!loading && !enrollment && (aal2 || !factor) && (
+        <div className="mt-4 flex max-w-xl flex-wrap items-center gap-2">
+          <input
+            value={label}
+            onChange={(event) => setLabel(event.target.value)}
+            placeholder="Label (e.g. jury officer – Sam)"
+            aria-label="Authenticator label"
+            className="h-10 min-w-0 flex-1 rounded-xl border border-input bg-background px-3 text-sm"
+          />
+          <button
+            type="button"
+            disabled={busy}
+            onClick={() => void beginEnrollment()}
+            className="inline-flex h-10 items-center gap-2 rounded-xl bg-primary px-4 text-sm font-semibold text-primary-foreground disabled:opacity-60"
+          >
+            {busy ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : factors.length ? (
+              <Plus className="h-4 w-4" />
+            ) : (
+              <KeyRound className="h-4 w-4" />
+            )}
+            {factors.length ? "Add another authenticator" : "Set up authenticator"}
+          </button>
+        </div>
       )}
 
       {enrollment && (
