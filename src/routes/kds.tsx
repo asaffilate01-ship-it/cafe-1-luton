@@ -682,6 +682,11 @@ function KDS() {
                   )}
                 </div>
               )}
+              {t.type !== "delivery" && t.delivery_notes && (
+                <p className="mt-1.5 rounded-lg border border-amber-300 bg-amber-100 px-2 py-1 text-xs font-bold text-amber-900">
+                  NOTE: {t.delivery_notes}
+                </p>
+              )}
               <ul
                 className={`mt-2 flex-1 space-y-1.5 rounded-lg p-2.5 text-base ${cook ? "bg-blue-50" : "bg-amber-50"}`}
               >
