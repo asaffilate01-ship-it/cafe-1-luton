@@ -44,7 +44,7 @@ type Statement = Awaited<ReturnType<typeof getAccountStatement>>;
 
 function AccountsAdmin() {
   const { user, loading } = useSession();
-  const { roles } = useRoles(user);
+  const { roles, loading: rolesLoading } = useRoles(user);
   const navigate = useNavigate();
   const list = useServerFn(listAccounts);
   const create = useServerFn(createAccount);
@@ -56,10 +56,16 @@ function AccountsAdmin() {
 
   useEffect(() => {
     if (loading) return;
-    if (!user || !(roles.includes("admin") || roles.includes("staff"))) {
+    if (!user) {
+      navigate({ to: "/admin/login", search: { next: "/admin/accounts" } });
+      return;
+    }
+    // Wait for roles to resolve — redirecting early ping-pongs with the login page.
+    if (rolesLoading) return;
+    if (!(roles.includes("admin") || roles.includes("staff"))) {
       navigate({ to: "/admin/login", search: { next: "/admin/accounts" } });
     }
-  }, [user, roles, loading, navigate]);
+  }, [user, roles, loading, rolesLoading, navigate]);
 
   async function refresh() {
     try {

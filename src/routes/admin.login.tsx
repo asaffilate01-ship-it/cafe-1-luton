@@ -1,5 +1,5 @@
 import { createFileRoute, Link, useNavigate, useSearch } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { z } from "zod";
 import { supabase } from "@/integrations/supabase/client";
 import { useSession, useRoles } from "@/hooks/use-auth";
@@ -47,8 +47,13 @@ function AdminLogin() {
   const signedInNotAdmin = !loading && !rolesLoading && !!user && !has("admin");
 
   // Already an admin? Don't dead-end on a banner — go straight through.
+  // Only ever auto-redirect once, so a page that bounces back can't loop.
+  const autoWent = useRef(false);
   useEffect(() => {
-    if (alreadyAdmin && !busy) navigate({ to: dest, replace: true });
+    if (alreadyAdmin && !busy && !autoWent.current) {
+      autoWent.current = true;
+      navigate({ to: dest, replace: true });
+    }
   }, [alreadyAdmin, busy, dest, navigate]);
 
   async function onSubmit(e: React.FormEvent) {
