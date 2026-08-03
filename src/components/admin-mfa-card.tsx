@@ -234,7 +234,7 @@ export function AdminMfaCard({
         </div>
       )}
 
-      {!loading && !aal2 && (factor || enrollment) && (
+      {!loading && (enrollment || (!aal2 && factor)) && (
         <div className="mt-4 flex max-w-md gap-2">
           <input
             value={code}
