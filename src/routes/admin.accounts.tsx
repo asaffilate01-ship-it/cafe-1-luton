@@ -1,6 +1,7 @@
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { askConfirm } from "@/lib/confirm";
 import { AdminNav } from "@/components/admin-nav";
+import { RequireRole } from "@/components/require-role";
 import { useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import {
@@ -13,7 +14,6 @@ import {
   recordAccountPayment,
   deleteAccountPayment,
 } from "@/lib/accounts.functions";
-import { useSession, useRoles } from "@/hooks/use-auth";
 import { money } from "@/lib/format";
 import { buildStatementPdf } from "@/lib/account-statement-pdf";
 import { toast } from "sonner";
@@ -43,9 +43,14 @@ type Account = Awaited<ReturnType<typeof listAccounts>>[number];
 type Statement = Awaited<ReturnType<typeof getAccountStatement>>;
 
 function AccountsAdmin() {
-  const { user, loading } = useSession();
-  const { roles, loading: rolesLoading } = useRoles(user);
-  const navigate = useNavigate();
+  return (
+    <RequireRole roles={["admin"]} next="/admin/accounts">
+      <AccountsManager />
+    </RequireRole>
+  );
+}
+
+function AccountsManager() {
   const list = useServerFn(listAccounts);
   const create = useServerFn(createAccount);
   const update = useServerFn(updateAccount);
@@ -53,19 +58,6 @@ function AccountsAdmin() {
   const [rows, setRows] = useState<Account[]>([]);
   const [selected, setSelected] = useState<Account | null>(null);
   const [showCreate, setShowCreate] = useState(false);
-
-  useEffect(() => {
-    if (loading) return;
-    if (!user) {
-      navigate({ to: "/admin/login", search: { next: "/admin/accounts" } });
-      return;
-    }
-    // Wait for roles to resolve — redirecting early ping-pongs with the login page.
-    if (rolesLoading) return;
-    if (!(roles.includes("admin") || roles.includes("staff"))) {
-      navigate({ to: "/admin/login", search: { next: "/admin/accounts" } });
-    }
-  }, [user, roles, loading, rolesLoading, navigate]);
 
   async function refresh() {
     try {
@@ -77,8 +69,6 @@ function AccountsAdmin() {
   useEffect(() => {
     void refresh();
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
-
-  if (!user) return null;
 
   return (
     <div className="min-h-screen bg-secondary/40">
