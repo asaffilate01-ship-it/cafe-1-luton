@@ -49,7 +49,7 @@ declare global {
         amount?: string;
         showSubmitButton?: boolean;
         showFooter?: boolean;
-        googlePay?: boolean;
+        googlePay?: { merchantId: string; merchantName: string };
         applePay?: boolean;
         onResponse?: (type: string, body: unknown) => void;
         onLoad?: () => void;
@@ -85,6 +85,24 @@ function loadSumUpSdk(): Promise<void> {
     s.onerror = () => reject(new Error("SumUp SDK failed to load"));
     document.body.appendChild(s);
   });
+}
+
+// SumUp requires the Google Pay button to be configured with the merchant ID
+// issued by Google after domain registration (NOT the SumUp merchant code).
+// Without it the wallet button is silently skipped and only the card form renders.
+const GOOGLE_PAY_MERCHANT_ID = (import.meta.env["VITE_GOOGLE_PAY_MERCHANT_ID"] as
+  | string
+  | undefined)?.trim();
+const GOOGLE_PAY_MERCHANT_NAME = "Cafe 1 St Albans";
+
+// Google's onboarding requires screenshots of the button before they issue the
+// merchant ID. Appending #sumup-widget:google-pay-demo-mode renders a
+// non-functional Google Pay button for those screenshots.
+function isGooglePayDemoMode(): boolean {
+  return (
+    typeof window !== "undefined" &&
+    window.location.hash.includes("sumup-widget:google-pay-demo-mode")
+  );
 }
 
 function PayView() {
@@ -145,7 +163,14 @@ function PayView() {
         // Show Apple Pay (Safari/iOS) and Google Pay (Chrome/Android) wallet
         // buttons above the card form when the device + merchant support them.
         applePay: true,
-        googlePay: true,
+        ...(GOOGLE_PAY_MERCHANT_ID
+          ? {
+              googlePay: {
+                merchantId: GOOGLE_PAY_MERCHANT_ID,
+                merchantName: GOOGLE_PAY_MERCHANT_NAME,
+              },
+            }
+          : {}),
         showSubmitButton: true,
         onResponse: async (type, body) => {
           if (type === "sent") setStatus("processing");
