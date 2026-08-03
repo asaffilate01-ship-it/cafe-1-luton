@@ -1,7 +1,7 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import { getPublicOrder } from "@/lib/order-tracking.functions";
-import { confirmPayment } from "@/lib/payments.functions";
+import { confirmPayment, getWalletConfig } from "@/lib/payments.functions";
 import { SiteHeader } from "@/components/site-header";
 import { money } from "@/lib/format";
 import { toast } from "sonner";
@@ -90,9 +90,6 @@ function loadSumUpSdk(): Promise<void> {
 // SumUp requires the Google Pay button to be configured with the merchant ID
 // issued by Google after domain registration (NOT the SumUp merchant code).
 // Without it the wallet button is silently skipped and only the card form renders.
-const GOOGLE_PAY_MERCHANT_ID = (import.meta.env["VITE_GOOGLE_PAY_MERCHANT_ID"] as
-  | string
-  | undefined)?.trim();
 const GOOGLE_PAY_MERCHANT_NAME = "Cafe 1 St Albans";
 
 // Google's onboarding requires screenshots of the button before they issue the
@@ -149,6 +146,12 @@ function PayView() {
         setErrorMsg("Payment widget failed to load. Check your connection and try again.");
         return;
       }
+      let googlePayMerchantId: string | null = null;
+      try {
+        googlePayMerchantId = (await getWalletConfig()).googlePayMerchantId;
+      } catch {
+        googlePayMerchantId = null;
+      }
       if (cancelled || mountedRef.current || !window.SumUpCard) return;
       mountedRef.current = true;
       setStatus("ready");
@@ -163,10 +166,10 @@ function PayView() {
         // Show Apple Pay (Safari/iOS) and Google Pay (Chrome/Android) wallet
         // buttons above the card form when the device + merchant support them.
         applePay: true,
-        ...(GOOGLE_PAY_MERCHANT_ID
+        ...(googlePayMerchantId
           ? {
               googlePay: {
-                merchantId: GOOGLE_PAY_MERCHANT_ID,
+                merchantId: googlePayMerchantId,
                 merchantName: GOOGLE_PAY_MERCHANT_NAME,
               },
             }
