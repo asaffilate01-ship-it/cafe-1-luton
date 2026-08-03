@@ -18,10 +18,11 @@ export function RequireRole({
   const { user, loading } = useSession();
   const { has, loading: rolesLoading } = useRoles(user);
   const navigate = useNavigate();
+  const signInPath = roles.length === 1 && roles[0] === "admin" ? "/admin/login" : "/staff/login";
 
   useEffect(() => {
-    if (!loading && !user) navigate({ to: "/admin/login", search: { next } });
-  }, [loading, user, next, navigate]);
+    if (!loading && !user) navigate({ to: signInPath, search: { next } });
+  }, [loading, user, next, navigate, signInPath]);
 
   if (loading || (user && rolesLoading)) {
     return <div className="grid min-h-screen place-items-center text-sm text-muted-foreground">Checking access…</div>;

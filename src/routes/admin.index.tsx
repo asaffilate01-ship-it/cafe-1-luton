@@ -48,7 +48,7 @@ export const Route = createFileRoute("/admin/")({
 
 function AdminPage() {
   return (
-    <RequireRole roles={["admin", "staff"]} next="/admin">
+    <RequireRole roles={["admin"]} next="/admin">
       <Admin />
     </RequireRole>
   );
