@@ -166,6 +166,12 @@ function JurorPage() {
               service, redeemable at Café 1 inside St Albans Crown Court. Completely anonymous — we
               only ever see your voucher code, never your name or any personal details.
             </p>
+            <Link
+              to="/juror-demo"
+              className="mt-6 inline-flex h-11 items-center gap-2 rounded-xl bg-white/15 px-5 font-bold text-primary-foreground hover:bg-white/25"
+            >
+              See how the whole scheme works <ArrowRight className="h-4 w-4" />
+            </Link>
           </div>
         </section>
 
