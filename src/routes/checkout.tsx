@@ -281,6 +281,7 @@ function Checkout() {
     allocated_cents: number;
     attendance_required: boolean;
     attendance_verified: boolean;
+    opted_in: boolean;
   }>(null);
   const [beverageIds, setBeverageIds] = useState<string[]>([]);
   const [voucherBusy, setVoucherBusy] = useState(false);
@@ -321,6 +322,7 @@ function Checkout() {
           allocated_cents: res.allocated_cents,
           attendance_required: res.attendance_required,
           attendance_verified: res.attendance_verified,
+          opted_in: res.opted_in,
         });
       }
     } catch {
