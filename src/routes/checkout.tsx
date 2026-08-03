@@ -615,6 +615,14 @@ function Checkout() {
             )}
           </div>
 
+          {onTab ? (
+            <div className="rounded-2xl border border-border bg-card p-5">
+              <p className="font-semibold">Your details</p>
+              <p className="mt-2 text-sm text-muted-foreground">
+                This order is charged to {tabSession!.name}'s tab — no contact details needed.
+              </p>
+            </div>
+          ) : (
           <div className="rounded-2xl border border-border bg-card p-5">
             <p className="font-semibold">Your details</p>
             <div className="mt-3 grid gap-3 sm:grid-cols-2">
@@ -647,6 +655,7 @@ function Checkout() {
               )}
             </div>
           </div>
+          )}
 
           {mode === "delivery" && (
             <div className="rounded-2xl border border-border bg-card p-5">
