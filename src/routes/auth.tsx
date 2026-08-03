@@ -5,6 +5,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable/index";
 import { SiteHeader } from "@/components/site-header";
 import { toast } from "sonner";
+import { PasswordField } from "@/components/password-field";
+import { ForgotPassword } from "@/components/forgot-password";
 
 const search = z.object({ next: z.string().optional() });
 
@@ -148,22 +150,12 @@ function AuthPage() {
                 className="h-11 w-full rounded-xl border border-border bg-background px-4"
               />
             </div>
-            <div>
-              <label htmlFor="customer-password" className="mb-1.5 block text-sm font-medium">
-                Password
-              </label>
-              <input
-                id="customer-password"
-                name="password"
-                type="password"
-                autoComplete={mode === "signin" ? "current-password" : "new-password"}
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-                minLength={6}
-                className="h-11 w-full rounded-xl border border-border bg-background px-4"
-              />
-            </div>
+            <PasswordField
+              id="customer-password"
+              value={password}
+              onChange={setPassword}
+              autoComplete={mode === "signin" ? "current-password" : "new-password"}
+            />
             <button
               disabled={busy}
               className="h-11 w-full rounded-full bg-primary font-semibold text-primary-foreground shadow-brand transition hover:bg-primary-hover disabled:opacity-60"
@@ -171,6 +163,11 @@ function AuthPage() {
               {busy ? "Please wait…" : mode === "signin" ? "Sign in" : "Create account"}
             </button>
           </form>
+          {mode === "signin" && (
+            <div className="mt-3">
+              <ForgotPassword email={email} />
+            </div>
+          )}
           <button
             type="button"
             onClick={() => {

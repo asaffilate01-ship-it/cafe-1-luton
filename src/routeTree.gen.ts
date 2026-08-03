@@ -15,6 +15,7 @@ import { Route as TeamLoginRouteImport } from './routes/team-login'
 import { Route as TabRouteImport } from './routes/tab'
 import { Route as StaffRouteImport } from './routes/staff'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
+import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as MenuRouteImport } from './routes/menu'
 import { Route as KdsRouteImport } from './routes/kds'
@@ -93,6 +94,11 @@ const StaffRoute = StaffRouteImport.update({
 const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
   id: '/sitemap.xml',
   path: '/sitemap.xml',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ResetPasswordRoute = ResetPasswordRouteImport.update({
+  id: '/reset-password',
+  path: '/reset-password',
   getParentRoute: () => rootRouteImport,
 } as any)
 const PrivacyRoute = PrivacyRouteImport.update({
@@ -360,6 +366,7 @@ export interface FileRoutesByFullPath {
   '/kds': typeof KdsRoute
   '/menu': typeof MenuRoute
   '/privacy': typeof PrivacyRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/staff': typeof StaffRoute
   '/tab': typeof TabRoute
@@ -417,6 +424,7 @@ export interface FileRoutesByTo {
   '/kds': typeof KdsRoute
   '/menu': typeof MenuRoute
   '/privacy': typeof PrivacyRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/staff': typeof StaffRoute
   '/tab': typeof TabRoute
@@ -475,6 +483,7 @@ export interface FileRoutesById {
   '/kds': typeof KdsRoute
   '/menu': typeof MenuRoute
   '/privacy': typeof PrivacyRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/staff': typeof StaffRoute
   '/tab': typeof TabRoute
@@ -534,6 +543,7 @@ export interface FileRouteTypes {
     | '/kds'
     | '/menu'
     | '/privacy'
+    | '/reset-password'
     | '/sitemap.xml'
     | '/staff'
     | '/tab'
@@ -591,6 +601,7 @@ export interface FileRouteTypes {
     | '/kds'
     | '/menu'
     | '/privacy'
+    | '/reset-password'
     | '/sitemap.xml'
     | '/staff'
     | '/tab'
@@ -648,6 +659,7 @@ export interface FileRouteTypes {
     | '/kds'
     | '/menu'
     | '/privacy'
+    | '/reset-password'
     | '/sitemap.xml'
     | '/staff'
     | '/tab'
@@ -706,6 +718,7 @@ export interface RootRouteChildren {
   KdsRoute: typeof KdsRoute
   MenuRoute: typeof MenuRoute
   PrivacyRoute: typeof PrivacyRoute
+  ResetPasswordRoute: typeof ResetPasswordRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   StaffRoute: typeof StaffRoute
   TabRoute: typeof TabRoute
@@ -788,6 +801,13 @@ declare module '@tanstack/react-router' {
       path: '/sitemap.xml'
       fullPath: '/sitemap.xml'
       preLoaderRoute: typeof SitemapDotxmlRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/reset-password': {
+      id: '/reset-password'
+      path: '/reset-password'
+      fullPath: '/reset-password'
+      preLoaderRoute: typeof ResetPasswordRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/privacy': {
@@ -1154,6 +1174,7 @@ const rootRouteChildren: RootRouteChildren = {
   KdsRoute: KdsRoute,
   MenuRoute: MenuRoute,
   PrivacyRoute: PrivacyRoute,
+  ResetPasswordRoute: ResetPasswordRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
   StaffRoute: StaffRoute,
   TabRoute: TabRoute,

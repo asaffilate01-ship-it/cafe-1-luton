@@ -7,6 +7,8 @@ import { signOutAndRedirect } from "@/lib/sign-out";
 import { toast } from "sonner";
 import { ShieldCheck, ChevronLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { PasswordField } from "@/components/password-field";
+import { ForgotPassword } from "@/components/forgot-password";
 
 const search = z.object({ next: z.string().optional() });
 
@@ -163,22 +165,7 @@ function AdminLogin() {
                 className="h-11 w-full rounded-xl border border-border bg-background px-4"
               />
             </div>
-            <div>
-              <label htmlFor="admin-password" className="mb-1.5 block text-sm font-medium">
-                Password
-              </label>
-              <input
-                id="admin-password"
-                name="password"
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-                minLength={6}
-                autoComplete="current-password"
-                className="h-11 w-full rounded-xl border border-border bg-background px-4"
-              />
-            </div>
+            <PasswordField id="admin-password" value={password} onChange={setPassword} />
             <Button
               disabled={busy}
               className="h-11 w-full rounded-full"
@@ -186,6 +173,9 @@ function AdminLogin() {
               {busy ? "Please wait…" : "Sign in as admin"}
             </Button>
           </form>
+          <div className="mt-3">
+            <ForgotPassword email={email} />
+          </div>
 
           <div className="mt-6 rounded-xl border border-border bg-muted/40 p-3 text-xs text-muted-foreground">
             Cafe1 team member?{" "}
