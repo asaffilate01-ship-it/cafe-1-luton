@@ -203,6 +203,20 @@ function loadDraftBasket(): DraftBasket {
   }
 }
 
+/**
+ * Turns an "HH:MM" counter entry into an absolute time. A time that has
+ * already passed today is treated as tomorrow so staff can take next-morning
+ * pre-orders without picking a date.
+ */
+function laterTimeToIso(value: string): string | null {
+  const match = /^(\d{2}):(\d{2})$/.exec(value.trim());
+  if (!match) return null;
+  const when = new Date();
+  when.setHours(Number(match[1]), Number(match[2]), 0, 0);
+  if (when.getTime() <= Date.now() + 5 * 60_000) when.setDate(when.getDate() + 1);
+  return when.toISOString();
+}
+
 function TillPage() {
   const { user, loading } = useSession();
   const { has, loading: rolesLoading } = useRoles(user);
