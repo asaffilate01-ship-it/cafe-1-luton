@@ -18,7 +18,7 @@ export function RequireRole({
   const { user, loading } = useSession();
   const { has, loading: rolesLoading } = useRoles(user);
   const navigate = useNavigate();
-  const signInPath = roles.length === 1 && roles[0] === "admin" ? "/admin/login" : "/staff/login";
+  const signInPath = roles.length === 1 && roles[0] === "admin" ? "/admin/login" : "/team-login";
 
   useEffect(() => {
     if (!loading && !user) navigate({ to: signInPath, search: { next } });

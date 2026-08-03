@@ -23,7 +23,7 @@ export const Route = createFileRoute("/team-login")({
 });
 
 function StaffLogin() {
-  const { next } = useSearch({ from: "/staff/login" });
+  const { next } = useSearch({ from: "/team-login" });
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");

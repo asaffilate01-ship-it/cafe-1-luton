@@ -169,7 +169,7 @@ function AdminLogin() {
 
           <div className="mt-6 rounded-xl border border-border bg-muted/40 p-3 text-xs text-muted-foreground">
             Cafe1 team member?{" "}
-            <Link to="/staff/login" className="font-medium text-primary hover:underline">
+            <Link to="/team-login" className="font-medium text-primary hover:underline">
               Use staff sign in
             </Link>{" "}
             instead.
