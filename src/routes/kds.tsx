@@ -683,7 +683,7 @@ function KDS() {
                 </div>
               )}
               {t.type !== "delivery" && t.delivery_notes && (
-                <p className="mt-1.5 rounded-lg border border-amber-300 bg-amber-100 px-2 py-1 text-xs font-bold text-amber-900">
+                <p className="mt-1.5 rounded-lg border-2 border-amber-400 bg-amber-100 px-2 py-1 text-base font-black uppercase leading-tight text-amber-900">
                   NOTE: {t.delivery_notes}
                 </p>
               )}
@@ -697,7 +697,7 @@ function KDS() {
                     />
                     <span className="min-w-0 flex-1 font-semibold">
                       {i.category && (
-                        <span className="block text-[10px] font-black uppercase tracking-wider text-muted-foreground">
+                        <span className="block text-sm font-black uppercase tracking-wide text-slate-700">
                           {i.category}
                         </span>
                       )}
