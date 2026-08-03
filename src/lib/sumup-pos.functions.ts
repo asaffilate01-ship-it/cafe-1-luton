@@ -314,7 +314,7 @@ export const syncSumupPos = createServerFn({ method: "POST" })
             name: p.name || "Item",
             qty: Math.max(1, Number(p.quantity ?? 1)),
             unit_price_cents: Math.round(Number(p.price ?? 0) * 100),
-            notes: (p.description ?? "").trim() || null,
+            notes: sumupLineNote(p),
           }))
         : [{
             order_id: inserted.id,
