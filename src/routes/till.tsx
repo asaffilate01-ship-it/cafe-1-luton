@@ -975,6 +975,32 @@ function Till() {
                 </button>
               ))}
             </div>
+            <div className="flex items-center gap-1.5 rounded-xl border border-white/10 bg-neutral-800 p-1.5">
+              <button
+                onClick={() => setLaterTime("")}
+                className={`h-9 flex-1 rounded-lg text-[11px] font-bold uppercase tracking-wide transition ${laterTime ? "text-white/60 hover:text-white" : "bg-primary text-primary-foreground"}`}
+              >
+                ASAP
+              </button>
+              <label className="flex flex-1 items-center gap-1.5">
+                <span className="text-[11px] font-bold uppercase tracking-wide text-white/60">
+                  Later
+                </span>
+                <input
+                  type="time"
+                  step={300}
+                  value={laterTime}
+                  onChange={(e) => setLaterTime(e.target.value)}
+                  aria-label="Time this order is wanted for"
+                  className="h-9 w-full rounded-lg border border-white/10 bg-neutral-900 px-2 text-sm tabular-nums outline-none focus:border-primary"
+                />
+              </label>
+            </div>
+            {laterTime && (
+              <p className="rounded-lg bg-violet-700/20 px-2.5 py-1.5 text-[11px] font-bold uppercase tracking-wide text-violet-200">
+                Pre-order · kitchen will hold this until {laterTime}
+              </p>
+            )}
             <div className="grid gap-2 sm:grid-cols-2">
               <input
                 value={name}
