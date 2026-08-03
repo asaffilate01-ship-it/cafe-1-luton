@@ -56,9 +56,18 @@ export function AdminMfaCard({
         if (pending.status !== "verified")
           await supabase.auth.mfa.unenroll({ factorId: pending.id });
       }
+      const baseName = "cafe1stalbans.jury.voucher.scheme";
+      const taken = new Set(
+        (factors?.totp ?? []).map((f) => (f as { friendly_name?: string }).friendly_name ?? ""),
+      );
+      // Supabase rejects duplicate friendly names (e.g. an older "Cafe 1 manager"
+      // factor that is still verified), so pick a free variant.
+      let friendlyName = baseName;
+      let n = 2;
+      while (taken.has(friendlyName)) friendlyName = `${baseName}.${n++}`;
       const { data, error: enrollError } = await supabase.auth.mfa.enroll({
         factorType: "totp",
-        friendlyName: "cafe1stalbans.jury.voucher.scheme",
+        friendlyName,
       });
       if (enrollError) throw enrollError;
       setEnrollment({
