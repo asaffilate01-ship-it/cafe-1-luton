@@ -41,7 +41,7 @@ export function CookieBanner() {
     }
   }, [hydrated, consent]);
 
-  const staffSurface = /^\/(admin|kds|driver|pos|till|display|print|dev-login)/.test(path);
+  const staffSurface = /^\/(admin|kds|driver|pos|till|display|print)/.test(path);
   if (!hydrated || !open || staffSurface || dialogOpen) return null;
 
   function decide(a: boolean, m: boolean) {
