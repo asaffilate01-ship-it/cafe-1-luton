@@ -89,7 +89,7 @@ const GROUPS: Array<{ label: string; items: Item[] }> = [
       { to: "/admin/customer-discounts", label: "Members", icon: BadgePercent },
       { to: "/admin/vouchers", label: "Juror vouchers", icon: Ticket },
       { to: "/admin/juror-attendance", label: "Attendance QR", icon: QrCode },
-      { to: "/admin/accounts", label: "Business tabs", icon: ReceiptText },
+      { to: "/admin/accounts", label: "Accounts & judge tabs", icon: ReceiptText },
     ],
   },
   {
