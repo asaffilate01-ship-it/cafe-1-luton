@@ -155,14 +155,21 @@ function KDS() {
       const { data: items } = ids.length
         ? await supabase
             .from("order_items")
-            .select("id, order_id, menu_item_id, name, qty, notes")
+            .select("id, order_id, menu_item_id, name, qty, notes, category_label")
             .in("order_id", ids)
         : { data: [] as Item[] };
-      const menu = await getMenuItems();
+      const [menu, { data: cats }] = await Promise.all([
+        getMenuItems(),
+        supabase.from("menu_categories").select("id, name"),
+      ]);
+      const catName = new Map<string, string>(
+        ((cats ?? []) as Array<{ id: string; name: string }>).map((c) => [c.id, c.name]),
+      );
       type MenuMeta = {
         needs_cooking: boolean;
         station_code: string;
         prep_seconds: number;
+        category: string | null;
       };
       const byId = new Map<string, MenuMeta>();
       const byName = new Map<string, MenuMeta>();
@@ -172,11 +179,13 @@ function KDS() {
         needs_cooking: boolean;
         station_code: string;
         prep_seconds: number;
+        category_id: string | null;
       }>) {
         const meta: MenuMeta = {
           needs_cooking: !!m.needs_cooking,
           station_code: m.station_code || "PASS",
           prep_seconds: Math.max(0, m.prep_seconds || 0),
+          category: m.category_id ? (catName.get(m.category_id) ?? null) : null,
         };
         byId.set(m.id, meta);
         byName.set(m.name.trim().toLowerCase(), meta);
@@ -187,6 +196,7 @@ function KDS() {
           needs_cooking: false,
           station_code: "PASS",
           prep_seconds: 0,
+          category: null,
         };
       const grouped: Ticket[] = live.map((o) => {
         const its = ((items ?? []) as Item[])
@@ -198,6 +208,8 @@ function KDS() {
               cook: meta.needs_cooking,
               station_code: meta.station_code,
               prep_seconds: meta.prep_seconds,
+              // SumUp POS baskets bring their own category; ours is the fallback.
+              category: item.category_label ?? meta.category,
             };
           });
         return { ...o, items: its, needsCooking: its.some((i) => i.cook) };
