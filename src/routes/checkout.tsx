@@ -390,9 +390,9 @@ function Checkout() {
       const res = await place({
         data: {
           type: mode,
-          customer_name: form.customer_name,
-          customer_phone: form.customer_phone,
-          customer_email: form.customer_email,
+          customer_name: onTab ? tabSession!.name : form.customer_name,
+          customer_phone: onTab ? "" : form.customer_phone,
+          customer_email: onTab ? "" : form.customer_email,
           company_name: mode === "delivery" ? form.company_name || undefined : undefined,
           address_line1: mode === "delivery" ? form.address_line1 : undefined,
           city: mode === "delivery" ? form.city : undefined,
