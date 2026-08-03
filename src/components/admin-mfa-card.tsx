@@ -72,6 +72,9 @@ export function AdminMfaCard({
       const { data, error: enrollError } = await supabase.auth.mfa.enroll({
         factorType: "totp",
         friendlyName,
+        // Controls the name shown inside the authenticator app (issuer),
+        // instead of the default project/site hostname.
+        issuer: "cafe1stalbans.jury.voucher.scheme",
       });
       if (enrollError) throw enrollError;
       setEnrollment({
