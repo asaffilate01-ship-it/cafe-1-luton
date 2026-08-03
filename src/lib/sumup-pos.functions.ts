@@ -241,9 +241,29 @@ export const syncSumupPos = createServerFn({ method: "POST" })
 
       if (insErr || !inserted) { skipped++; continue; }
 
+      // Our own menu is the fallback source of a category when SumUp's basket
+      // doesn't carry one, matched on the product name the till sent.
+      const { data: menuRows } = await supabaseAdmin
+        .from("menu_items")
+        .select("id, name, menu_categories(name)");
+      const menuByName = new Map<string, { id: string; category: string | null }>();
+      for (const m of (menuRows ?? []) as Array<{
+        id: string;
+        name: string;
+        menu_categories: { name: string } | null;
+      }>) {
+        menuByName.set(m.name.trim().toLowerCase(), {
+          id: m.id,
+          category: m.menu_categories?.name ?? null,
+        });
+      }
+
       const lines = (products && products.length > 0)
         ? products.map((p) => ({
             order_id: inserted.id,
+            menu_item_id: menuByName.get((p.name ?? "").trim().toLowerCase())?.id ?? null,
+            category_label: sumupCategory(p) ??
+              menuByName.get((p.name ?? "").trim().toLowerCase())?.category ?? null,
             name: p.name || "Item",
             qty: Math.max(1, Number(p.quantity ?? 1)),
             unit_price_cents: Math.round(Number(p.price ?? 0) * 100),
@@ -251,6 +271,8 @@ export const syncSumupPos = createServerFn({ method: "POST" })
           }))
         : [{
             order_id: inserted.id,
+            menu_item_id: null as string | null,
+            category_label: null as string | null,
             name: t.product_summary || "SumUp POS sale",
             qty: 1,
             unit_price_cents: totalCents,
