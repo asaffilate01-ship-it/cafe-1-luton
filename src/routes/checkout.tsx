@@ -340,7 +340,7 @@ function Checkout() {
     (s, i) => s + (beverageIds.includes(i.menu_item_id) ? 0 : i.price_cents * i.qty),
     0,
   );
-  const jurorDiscount = voucher
+  const jurorDiscount = voucher?.opted_in
     ? jurorFoodDiscount(Math.max(0, grossTotal - voucherApplied), foodSubtotal)
     : 0;
   const total = Math.max(0, grossTotal - voucherApplied - jurorDiscount);
