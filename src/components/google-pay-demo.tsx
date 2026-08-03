@@ -1,21 +1,15 @@
 import { useEffect, useRef, useState } from "react";
 
-declare global {
-  interface Window {
-    google?: {
-      payments?: {
-        api?: {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          PaymentsClient: new (opts: { environment: "TEST" | "PRODUCTION" }) => any;
-        };
-      };
-    };
-  }
+/* eslint-disable @typescript-eslint/no-explicit-any */
+type PaymentsClientCtor = new (opts: { environment: "TEST" | "PRODUCTION" }) => any;
+
+function gpayApi(): { PaymentsClient: PaymentsClientCtor } | undefined {
+  return (window as any).google?.payments?.api;
 }
 
 function loadPayJs(): Promise<void> {
   return new Promise((resolve, reject) => {
-    if (window.google?.payments?.api) return resolve();
+    if (gpayApi()) return resolve();
     const existing = document.querySelector<HTMLScriptElement>('script[data-gpay="1"]');
     if (existing) {
       existing.addEventListener("load", () => resolve());
@@ -47,7 +41,7 @@ export function GooglePayDemo({ amount, merchantName }: { amount: string; mercha
       try {
         await loadPayJs();
         if (cancelled || !ref.current || ref.current.childElementCount > 0) return;
-        const api = window.google?.payments?.api;
+        const api = gpayApi();
         if (!api) throw new Error("Google Pay unavailable");
         const client = new api.PaymentsClient({ environment: "TEST" });
 
