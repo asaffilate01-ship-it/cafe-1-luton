@@ -1,5 +1,5 @@
 import { createFileRoute, Link, useNavigate, useSearch } from "@tanstack/react-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { z } from "zod";
 import { supabase } from "@/integrations/supabase/client";
 import { useSession, useRoles } from "@/hooks/use-auth";
@@ -44,12 +44,20 @@ function AdminLogin() {
   const dest = safeNext ?? "/admin";
 
   const alreadyAdmin = !loading && !rolesLoading && !!user && has("admin");
+  const signedInNotAdmin = !loading && !rolesLoading && !!user && !has("admin");
+
+  // Already an admin? Don't dead-end on a banner — go straight through.
+  useEffect(() => {
+    if (alreadyAdmin && !busy) navigate({ to: dest, replace: true });
+  }, [alreadyAdmin, busy, dest, navigate]);
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     setBusy(true);
     setError("");
     try {
+      // A stale session from another account blocks a fresh sign in — clear it first.
+      if (user) await supabase.auth.signOut();
       const { data, error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) throw error;
       const uid = data.user?.id;
@@ -106,6 +114,13 @@ function AdminLogin() {
                 Sign out
               </Button>
             </div>
+          </div>
+        )}
+        {signedInNotAdmin && (
+          <div className="mt-6 rounded-2xl border border-border bg-card p-5 text-sm shadow-brand">
+            You're signed in as <span className="font-semibold">{user?.email}</span>
+            {roles.length ? ` (${roles.join(", ")})` : ""}, which isn't an admin account. Sign in
+            below with your admin details — we'll swap the session over automatically.
           </div>
         )}
         <div className="mt-6 rounded-3xl border border-border bg-card p-8 shadow-brand">
