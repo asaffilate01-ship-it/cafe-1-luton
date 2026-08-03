@@ -112,6 +112,7 @@ function PayView() {
     "loading",
   );
   const [errorMsg, setErrorMsg] = useState<string>("");
+  const [walletDetected, setWalletDetected] = useState(false);
   const mountedRef = useRef(false);
 
   useEffect(() => {
@@ -217,6 +218,30 @@ function PayView() {
     };
   }, [orderId, navigate, token]);
 
+  // The SumUp widget injects its own Apple/Google Pay button when the device and
+  // merchant support it. Detect it so we don't show the "wallet appears above"
+  // hint once the real button is on screen (or when it will never appear).
+  useEffect(() => {
+    if (status !== "ready") return;
+    const check = () => {
+      const el = document.getElementById("sumup-card");
+      if (!el) return false;
+      const html = el.innerHTML.toLowerCase();
+      return html.includes("apple-pay") || html.includes("google-pay") || html.includes("gpay");
+    };
+    const id = window.setInterval(() => {
+      if (check()) {
+        setWalletDetected(true);
+        window.clearInterval(id);
+      }
+    }, 500);
+    const stop = window.setTimeout(() => window.clearInterval(id), 8000);
+    return () => {
+      window.clearInterval(id);
+      window.clearTimeout(stop);
+    };
+  }, [status]);
+
   return (
     <div className="min-h-screen bg-background">
       <SiteHeader />
@@ -247,7 +272,7 @@ function PayView() {
               />
             </>
           )}
-          {status !== "error" && (
+          {status !== "error" && !walletDetected && (
             <div className="mb-4 flex items-start gap-2 rounded-xl border border-border bg-muted/40 p-3 text-xs text-muted-foreground">
               <Smartphone className="mt-0.5 h-3.5 w-3.5 shrink-0" />
               <span>
