@@ -240,3 +240,14 @@ export const refundOrder = createServerFn({ method: "POST" })
       throw refundError;
     }
   });
+
+/**
+ * Public wallet config. The Google Pay merchant ID is not a secret (it is sent
+ * to the browser by design) but is stored server-side so it can be set without
+ * a rebuild.
+ */
+export const getWalletConfig = createServerFn({ method: "GET" }).handler(async () => {
+  return {
+    googlePayMerchantId: (process.env["GOOGLE_PAY_MERCHANT_ID"] ?? "").trim() || null,
+  };
+});
