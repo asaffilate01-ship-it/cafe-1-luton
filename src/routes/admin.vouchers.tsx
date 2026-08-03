@@ -225,6 +225,7 @@ function AdminVouchers() {
   function downloadIssued(credentials: IssuedJurorCredential[], label: string) {
     const rows = [
       [
+        "Slip",
         "Voucher code",
         "Juror name (Jury Officer only)",
         "Valid from",
@@ -232,7 +233,8 @@ function AdminVouchers() {
         "Daily allowance (GBP)",
         "Batch",
       ],
-      ...credentials.map((credential) => [
+      ...credentials.map((credential, index) => [
+        index + 1,
         credential.code,
         "",
         credential.valid_from,
