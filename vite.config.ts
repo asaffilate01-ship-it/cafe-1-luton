@@ -12,6 +12,15 @@ import path from "node:path";
 // so server routes such as the email webhook can read LOVABLE_API_KEY.
 Object.assign(process.env, loadEnv(process.env.NODE_ENV ?? "development", process.cwd(), ""));
 
+// Fallback backend connection values (publishable, safe to commit). The managed
+// .env has intermittently been generated without these, which breaks the built
+// client with "Missing Supabase environment variable(s)". Keep the build green.
+process.env.VITE_SUPABASE_URL ||= "https://hviprglhhlwgsitdfvxp.supabase.co";
+process.env.VITE_SUPABASE_PUBLISHABLE_KEY ||= "sb_publishable_2ISD80iREidAoqebB9d3ag_AbzP4Njh";
+process.env.VITE_SUPABASE_PROJECT_ID ||= "hviprglhhlwgsitdfvxp";
+process.env.SUPABASE_URL ||= process.env.VITE_SUPABASE_URL;
+process.env.SUPABASE_PUBLISHABLE_KEY ||= process.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+
 export default defineConfig({
   tanstackStart: {
     // Redirect TanStack Start's bundled server entry to src/server.ts (our SSR error wrapper).
