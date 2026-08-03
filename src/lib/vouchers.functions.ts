@@ -8,13 +8,22 @@ const STATUS_MESSAGE: Record<string, string> = {
     "This voucher code has expired. The Jury Officer can arrange an extension for longer trials.",
   non_sitting_day:
     "The daily allowance only applies on court sitting days (Monday to Friday, excluding bank holidays).",
+  locked:
+    "This voucher is temporarily locked after several incorrect PIN attempts. Please wait 15 minutes or speak to the Jury Officer.",
 };
 
 export type VoucherLookup = Awaited<ReturnType<typeof lookupVoucher>>;
 
-/** Anonymous balance check for a juror voucher code. No personal data involved. */
+/** Anonymous balance check using the code and separately issued six-digit PIN. */
 export const lookupVoucher = createServerFn({ method: "POST" })
-  .validator((d: unknown) => z.object({ code: z.string().min(1).max(40) }).parse(d))
+  .validator((d: unknown) =>
+    z
+      .object({
+        code: z.string().min(1).max(40),
+        pin: z.string().regex(/^\d{6}$/, "Enter the six-digit PIN"),
+      })
+      .parse(d),
+  )
   .handler(async ({ data }) => {
     const code = (data.code ?? "").trim();
     if (!code) return { found: false as const };
@@ -24,29 +33,33 @@ export const lookupVoucher = createServerFn({ method: "POST" })
     if (!gate.allowed)
       return { found: false as const, throttled: true as const, message: gate.message };
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { data: rows, error } = await supabaseAdmin.rpc("get_voucher_balance_by_code", {
-      _code: code,
-    });
-    if (error) {
+    const { callOperationsRpc } = await import("./ops-rpc");
+    let rows: Array<{
+      holder_id: string;
+      holder_name: string | null;
+      code: string;
+      allocated_cents: number;
+      used_cents: number;
+      remaining_cents: number;
+      valid_from: string;
+      valid_until: string | null;
+      opted_in: boolean;
+      jury_room: string | null;
+      attendance_required: boolean;
+      attendance_verified: boolean;
+      status: string;
+    }>;
+    try {
+      rows = await callOperationsRpc(supabaseAdmin, "verify_juror_voucher_credentials", {
+        _code: code,
+        _pin: data.pin,
+      });
+    } catch (error) {
       console.error("[vouchers] lookup failed", error);
       await recordAttempt("voucher", ident, false);
       return { found: false as const };
     }
-    const row = (rows ?? [])[0] as
-      | {
-          holder_id: string;
-          holder_name: string | null;
-          code: string;
-          allocated_cents: number;
-          used_cents: number;
-          remaining_cents: number;
-          valid_from: string;
-          valid_until: string | null;
-          opted_in: boolean;
-          jury_room: string | null;
-          status: string;
-        }
-      | undefined;
+    const row = rows[0];
     await recordAttempt("voucher", ident, !!row);
     if (!row) return { found: false as const };
     return {
@@ -60,6 +73,8 @@ export const lookupVoucher = createServerFn({ method: "POST" })
       valid_until: row.valid_until,
       opted_in: row.opted_in,
       jury_room: row.jury_room,
+      attendance_required: row.attendance_required,
+      attendance_verified: row.attendance_verified,
       status: row.status,
       usable: row.status === "ok",
       message: STATUS_MESSAGE[row.status] ?? null,
@@ -75,6 +90,7 @@ export const optInVoucher = createServerFn({ method: "POST" })
     z
       .object({
         code: z.string().min(1).max(40),
+        pin: z.string().regex(/^\d{6}$/),
         source: z.enum(["till", "display", "online", "jury_room"]).default("online"),
       })
       .parse(d),
@@ -86,11 +102,15 @@ export const optInVoucher = createServerFn({ method: "POST" })
     const gate = await checkThrottle("voucher", ident);
     if (!gate.allowed) return { ok: false as const, message: gate.message, already: false };
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { data: rows, error } = await supabaseAdmin.rpc("opt_in_voucher", {
-      _code: code,
-      _source: data.source,
-    });
-    if (error) {
+    const { callOperationsRpc } = await import("./ops-rpc");
+    let rows: Array<{ ok: boolean; message: string; already: boolean }>;
+    try {
+      rows = await callOperationsRpc(supabaseAdmin, "opt_in_voucher_secure", {
+        _code: code,
+        _pin: data.pin,
+        _source: data.source,
+      });
+    } catch (error) {
       console.error("[vouchers] opt-in failed", error);
       await recordAttempt("voucher", ident, false);
       return {
@@ -99,7 +119,7 @@ export const optInVoucher = createServerFn({ method: "POST" })
         already: false,
       };
     }
-    const row = (rows ?? [])[0] as { ok: boolean; message: string; already: boolean } | undefined;
+    const row = rows[0];
     await recordAttempt("voucher", ident, !!row?.ok);
     return {
       ok: !!row?.ok,

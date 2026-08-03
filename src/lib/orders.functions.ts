@@ -52,6 +52,10 @@ const CreateOrderSchema = z.object({
   account_code: z.string().min(3).max(40).optional(),
   promo_code: z.string().min(1).max(40).optional(),
   voucher_code: z.string().min(1).max(40).optional(),
+  voucher_pin: z
+    .string()
+    .regex(/^\d{6}$/)
+    .optional(),
   jury_room: z.string().max(60).optional(),
 });
 
@@ -265,49 +269,56 @@ export const createOrder = createServerFn({ method: "POST" })
       ? Math.floor(Math.max(0, subtotal - discount) / 100) * POINTS_PER_POUND
       : 0;
     const reference = `WEBSITE-ORDER-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
-    const { randomBytes } = await import("node:crypto");
+    const { randomBytes, randomUUID } = await import("node:crypto");
     const { hashTrackingToken } = await import("./order-access.server");
     const tracking_token = randomBytes(32).toString("base64url");
     const tracking_token_hash = hashTrackingToken(tracking_token);
 
-    // Court vouchers: a daily allowance held against a person's email/phone.
-    // Any amount above the remaining allowance is paid by the customer.
+    // Court vouchers: code + separately issued PIN, with a tokenised reservation
+    // so one failed checkout can never release another concurrent order's hold.
     let voucher_cents = 0;
     let voucher_holder_id: string | null = null;
     let voucher_holder_name: string | null = null;
+    let voucher_reservation_token: string | null = null;
     {
       const vCode = (data.voucher_code || "").trim();
       if (vCode) {
+        if (!data.voucher_pin) throw new Error("Enter the six-digit voucher PIN.");
         const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-        const { data: vRows } = await supabaseAdmin.rpc("get_voucher_balance_by_code", {
+        const { callOperationsRpc } = await import("./ops-rpc");
+        voucher_reservation_token = randomUUID();
+        const reserved = await callOperationsRpc<
+          Array<{
+            holder_id: string;
+            holder_name: string | null;
+            voucher_code: string;
+            reserved_cents: number;
+            reservation_token: string;
+          }>
+        >(supabaseAdmin, "reserve_juror_voucher", {
           _code: vCode,
+          _pin: data.voucher_pin,
+          _amount_cents: total,
+          _reservation_token: voucher_reservation_token,
+          _channel: "online",
         });
-        const v = (vRows ?? [])[0];
-        if (v && v.remaining_cents > 0 && total > 0) {
-          const wanted = Math.min(v.remaining_cents, total);
-          // Reserve now so two devices can't spend the same allowance twice.
-          const { data: taken } = await supabaseAdmin.rpc("redeem_voucher", {
-            _holder_id: v.holder_id,
-            _order_id: null as unknown as string,
-            _amount_cents: wanted,
-          });
-          voucher_cents = (taken as number | null) ?? 0;
-          if (voucher_cents > 0) {
-            voucher_holder_id = v.holder_id;
-            voucher_holder_name = v.holder_name ?? v.code;
-          }
-        }
+        const v = reserved[0];
+        if (!v) throw new Error("That voucher could not be reserved.");
+        voucher_cents = v.reserved_cents;
+        voucher_holder_id = v.holder_id;
+        voucher_holder_name = v.holder_name ?? v.voucher_code;
       }
     }
 
     async function releaseVoucher() {
-      if (!voucher_holder_id || voucher_cents <= 0) return;
+      if (!voucher_reservation_token || voucher_cents <= 0) return;
       const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-      await supabaseAdmin
-        .from("voucher_redemptions")
-        .delete()
-        .eq("holder_id", voucher_holder_id)
-        .is("order_id", null);
+      const { callOperationsRpc } = await import("./ops-rpc");
+      await callOperationsRpc<boolean>(supabaseAdmin, "release_juror_voucher_reservation", {
+        _reservation_token: voucher_reservation_token,
+        _reason: "Online checkout did not complete",
+      });
+      voucher_reservation_token = null;
     }
 
     // Juror scheme benefit: 10% off food (drinks excluded) on anything payable
@@ -458,16 +469,19 @@ export const createOrder = createServerFn({ method: "POST" })
     }
 
     // Attach the reserved voucher redemption to this order for the court report.
-    if (voucher_holder_id && voucher_cents > 0) {
+    if (voucher_holder_id && voucher_cents > 0 && voucher_reservation_token) {
       try {
         const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-        await supabaseAdmin
-          .from("voucher_redemptions")
-          .update({ order_id: order.id })
-          .eq("holder_id", voucher_holder_id)
-          .is("order_id", null);
+        const { callOperationsRpc } = await import("./ops-rpc");
+        const attached = await callOperationsRpc<boolean>(
+          supabaseAdmin,
+          "attach_juror_voucher_reservation",
+          { _reservation_token: voucher_reservation_token, _order_id: order.id },
+        );
+        if (!attached) throw new Error("Voucher reservation was not attached");
       } catch (e) {
         console.error("[vouchers] could not attach redemption to order", e);
+        throw new Error("The voucher could not be attached to this order. Please try again.");
       }
     }
 

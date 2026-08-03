@@ -1,20 +1,27 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { askConfirm } from "@/lib/confirm";
 import { AdminNav } from "@/components/admin-nav";
 import { useEffect, useMemo, useState } from "react";
+import { useServerFn } from "@tanstack/react-start";
 import { useSession, useRoles } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { money } from "@/lib/format";
-import { Ticket, Trash2, Download, CalendarPlus, Power, ShieldCheck } from "lucide-react";
+import { Ticket, Download, CalendarPlus, Power, ShieldCheck, Clock3 } from "lucide-react";
 import { QrCode } from "@/components/qr-code";
 import {
   JUROR_DAILY_ALLOWANCE_CENTS,
+  JUROR_EXTENDED_DAY_ALLOWANCE_CENTS,
   JUROR_DEFAULT_SERVICE_DAYS,
-  addWorkingDays,
   isoDate,
 } from "@/lib/juror";
+import {
+  issueJurorBatch,
+  listJurorClaimRows,
+  manageJurorVoucher,
+  setJurorDailyAllowance,
+  type IssuedJurorCredential,
+} from "@/lib/juror-admin.functions";
 
 export const Route = createFileRoute("/admin/vouchers")({
   head: () => ({
@@ -92,10 +99,15 @@ function AdminVouchers() {
   const { has, loading: rl } = useRoles(user);
   const navigate = useNavigate();
   const qc = useQueryClient();
+  const issueSecureBatch = useServerFn(issueJurorBatch);
+  const manageSecureVoucher = useServerFn(manageJurorVoucher);
+  const setSecureAllowance = useServerFn(setJurorDailyAllowance);
+  const fetchClaimRows = useServerFn(listJurorClaimRows);
   useEffect(() => {
     if (!loading && !user) navigate({ to: "/admin/login", search: { next: "/admin/vouchers" } });
   }, [loading, user, navigate]);
   const allowed = has("admin") || has("staff");
+  const manager = has("admin");
 
   const [date, setDate] = useState(today());
   const [from, setFrom] = useState(weekAgo());
@@ -136,14 +148,17 @@ function AdminVouchers() {
     queryKey: ["voucher-report", from, to],
     enabled: !!user && allowed,
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("voucher_redemptions")
-        .select("id, holder_id, for_date, amount_cents, created_at, orders(order_number)")
-        .gte("for_date", from)
-        .lte("for_date", to)
-        .order("created_at", { ascending: false });
-      if (error) throw error;
-      return (data ?? []) as unknown as Redemption[];
+      const rows = await fetchClaimRows({ data: { from, to } });
+      return rows
+        .map((row) => ({
+          id: row.redemption_id,
+          holder_id: row.holder_id,
+          for_date: row.for_date,
+          amount_cents: row.amount_cents,
+          created_at: row.redeemed_at,
+          orders: { order_number: row.order_number },
+        }))
+        .reverse() satisfies Redemption[];
     },
   });
 
@@ -171,69 +186,58 @@ function AdminVouchers() {
   }, [holders, search]);
 
   /* ---------------- issuing ---------------- */
-  const [genCount, setGenCount] = useState("20");
+  const [genCount, setGenCount] = useState("100");
   const [batch, setBatch] = useState(`Induction ${today()}`);
   const [validFrom, setValidFrom] = useState(today());
   const [serviceDays, setServiceDays] = useState(String(JUROR_DEFAULT_SERVICE_DAYS));
-  const [allowance, setAllowance] = useState((JUROR_DAILY_ALLOWANCE_CENTS / 100).toFixed(2));
   const [busy, setBusy] = useState(false);
-  const [issued, setIssued] = useState<string[]>([]);
-  const [slips, setSlips] = useState<string[]>([]);
+  const [issued, setIssued] = useState<IssuedJurorCredential[]>([]);
+  const [slips, setSlips] = useState<IssuedJurorCredential[]>([]);
+  const [printMode, setPrintMode] = useState<"juror" | "officer">("juror");
 
   const slipUrl = (code: string) =>
     `https://cafe1stalbans.co.uk/juror?code=${encodeURIComponent(code)}&src=slip`;
 
-  // Unambiguous alphabet (no O/0, I/1) — 10 chars ≈ 50 bits of entropy, so
-  // juror codes can never be guessed or walked sequentially.
-  function generateCodes(n: number): string[] {
-    const alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
-    const out = new Set<string>();
-    while (out.size < n) {
-      const bytes = new Uint8Array(10);
-      crypto.getRandomValues(bytes);
-      const raw = Array.from(bytes, (b) => alphabet[b % alphabet.length]).join("");
-      out.add(`CV-${raw.slice(0, 5)}-${raw.slice(5)}`);
-    }
-    return Array.from(out);
-  }
-
-  const untilPreview = useMemo(() => {
-    const days = Math.min(Math.max(parseInt(serviceDays || "0", 10) || 0, 1), 60);
-    return isoDate(addWorkingDays(new Date(`${validFrom}T12:00:00`), days));
-  }, [validFrom, serviceDays]);
-
   async function issueBatch(e: React.FormEvent) {
     e.preventDefault();
     const n = Math.min(Math.max(parseInt(genCount || "0", 10) || 0, 1), 200);
-    const cents = Math.round(parseFloat(allowance || "0") * 100);
-    if (!Number.isFinite(cents) || cents <= 0) return toast.error("Enter a daily allowance.");
     setBusy(true);
-    const codes = generateCodes(n);
-    const { error } = await supabase.from("voucher_holders").insert(
-      codes.map((code) => ({
-        code,
-        batch: batch.trim() || null,
-        active: true,
-        daily_amount_cents: cents,
-        valid_from: validFrom,
-        valid_until: untilPreview,
-      })),
-    );
-    setBusy(false);
-    if (error) return toast.error(error.message);
-    setIssued(codes);
-    toast.success(`${n} juror code${n === 1 ? "" : "s"} issued and active`);
-    qc.invalidateQueries({ queryKey: ["voucher-holders"] });
+    try {
+      const credentials = await issueSecureBatch({
+        data: {
+          batch,
+          count: n,
+          valid_from: validFrom,
+          service_days: Math.min(Math.max(parseInt(serviceDays || "0", 10) || 0, 1), 60),
+        },
+      });
+      setIssued(credentials);
+      toast.success(`${credentials.length} secure juror codes issued`);
+      qc.invalidateQueries({ queryKey: ["voucher-holders"] });
+      qc.invalidateQueries({ queryKey: ["voucher-events"] });
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Could not issue this batch");
+    } finally {
+      setBusy(false);
+    }
   }
 
-  function downloadIssued(codes: string[], label: string) {
+  function downloadIssued(credentials: IssuedJurorCredential[], label: string) {
     const rows = [
-      ["Voucher code", "Valid from", "Valid until", "Daily allowance (GBP)", "Batch"],
-      ...codes.map((c) => [
-        c,
-        validFrom,
-        untilPreview,
-        (parseFloat(allowance) || 0).toFixed(2),
+      [
+        "Voucher code",
+        "Juror name (Jury Officer only)",
+        "Valid from",
+        "Valid until",
+        "Daily allowance (GBP)",
+        "Batch",
+      ],
+      ...credentials.map((credential) => [
+        credential.code,
+        "",
+        credential.valid_from,
+        credential.valid_until,
+        (JUROR_DAILY_ALLOWANCE_CENTS / 100).toFixed(2),
         batch,
       ]),
     ];
@@ -254,49 +258,67 @@ function AdminVouchers() {
 
   /* ---------------- lifecycle ---------------- */
   async function extend(h: Holder, days: number) {
-    const base =
-      h.valid_until && h.valid_until > today() ? new Date(`${h.valid_until}T12:00:00`) : new Date();
-    const next = isoDate(addWorkingDays(base, days + 1));
-    const { error } = await supabase
-      .from("voucher_holders")
-      .update({ valid_until: next })
-      .eq("id", h.id);
-    if (error) return toast.error(error.message);
-    await supabase
-      .from("voucher_events")
-      .insert({ holder_id: h.id, code: h.code, event: "extended", detail: `Valid until ${next}` });
-    toast.success(`${h.code} extended to ${next}`);
-    qc.invalidateQueries({ queryKey: ["voucher-holders"] });
-    qc.invalidateQueries({ queryKey: ["voucher-events"] });
+    const reason = window.prompt("Reason for extending this juror's service:", "Trial continuing");
+    if (!reason?.trim()) return;
+    try {
+      const result = await manageSecureVoucher({
+        data: { holder_id: h.id, action: "extend", working_days: days, reason },
+      });
+      toast.success(`${h.code} extended to ${result.valid_until}`);
+      qc.invalidateQueries({ queryKey: ["voucher-holders"] });
+      qc.invalidateQueries({ queryKey: ["voucher-events"] });
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Could not extend this voucher");
+    }
   }
 
   async function toggleActive(h: Holder) {
-    const active = !h.active;
-    const { error } = await supabase
-      .from("voucher_holders")
-      .update({ active, deactivated_at: active ? null : new Date().toISOString() })
-      .eq("id", h.id);
-    if (error) return toast.error(error.message);
-    await supabase
-      .from("voucher_events")
-      .insert({ holder_id: h.id, code: h.code, event: active ? "reactivated" : "deactivated" });
-    qc.invalidateQueries({ queryKey: ["voucher-holders"] });
-    qc.invalidateQueries({ queryKey: ["voucher-events"] });
+    const action = h.active ? "deactivate" : "reactivate";
+    const reason = window.prompt(
+      h.active ? "Reason for deactivating this code:" : "Reason for reactivating this code:",
+      h.active ? "Jury service ended" : "Juror still in attendance",
+    );
+    if (!reason?.trim()) return;
+    try {
+      await manageSecureVoucher({
+        data: {
+          holder_id: h.id,
+          action,
+          working_days: h.active ? 0 : 5,
+          reason,
+        },
+      });
+      toast.success(`${h.code} ${h.active ? "deactivated" : "reactivated for 5 working days"}`);
+      qc.invalidateQueries({ queryKey: ["voucher-holders"] });
+      qc.invalidateQueries({ queryKey: ["voucher-events"] });
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Could not change this voucher");
+    }
   }
 
-  async function removeHolder(h: Holder) {
-    if (
-      !(await askConfirm({
-        title: `Delete voucher code ${h.code}?`,
-        description:
-          "This permanently removes the code and its allocations. Deactivate instead if you only want to stop it being used.",
-        confirmLabel: "Delete code",
-      }))
-    )
-      return;
-    const { error } = await supabase.from("voucher_holders").delete().eq("id", h.id);
-    if (error) return toast.error(error.message);
-    qc.invalidateQueries({ queryKey: ["voucher-holders"] });
+  async function approveLongDay(h: Holder) {
+    const reason = window.prompt(
+      `Reason for raising ${h.code} to ${money(JUROR_EXTENDED_DAY_ALLOWANCE_CENTS)} on ${date}:`,
+      "Jury Officer confirmed attendance exceeded 10 hours",
+    );
+    if (!reason?.trim()) return;
+    try {
+      await setSecureAllowance({
+        data: {
+          holder_id: h.id,
+          for_date: date,
+          amount_cents: JUROR_EXTENDED_DAY_ALLOWANCE_CENTS,
+          reason,
+        },
+      });
+      toast.success(
+        `${h.code} approved for ${money(JUROR_EXTENDED_DAY_ALLOWANCE_CENTS)} on ${date}`,
+      );
+      qc.invalidateQueries({ queryKey: ["voucher-used", date] });
+      qc.invalidateQueries({ queryKey: ["voucher-events"] });
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Could not approve the long-day rate");
+    }
   }
 
   function exportReport() {
@@ -368,111 +390,132 @@ function AdminVouchers() {
         </div>
 
         {/* Issue a batch */}
-        <form onSubmit={issueBatch} className="mt-8 rounded-2xl border border-border bg-card p-5">
-          <p className="font-semibold">Issue codes for an induction</p>
-          <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
-            <label className="text-sm">
-              <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                How many
-              </span>
-              <input
-                type="number"
-                min="1"
-                max="200"
-                value={genCount}
-                onChange={(e) => setGenCount(e.target.value)}
-                className="mt-1 h-11 w-full rounded-xl border border-border bg-background px-3 text-sm"
-              />
-            </label>
-            <label className="text-sm">
-              <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                Batch label
-              </span>
-              <input
-                value={batch}
-                onChange={(e) => setBatch(e.target.value)}
-                className="mt-1 h-11 w-full rounded-xl border border-border bg-background px-3 text-sm"
-              />
-            </label>
-            <label className="text-sm">
-              <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                Valid from
-              </span>
-              <input
-                type="date"
-                value={validFrom}
-                onChange={(e) => setValidFrom(e.target.value)}
-                className="mt-1 h-11 w-full rounded-xl border border-border bg-background px-3 text-sm"
-              />
-            </label>
-            <label className="text-sm">
-              <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                Service days
-              </span>
-              <input
-                type="number"
-                min="1"
-                max="60"
-                value={serviceDays}
-                onChange={(e) => setServiceDays(e.target.value)}
-                className="mt-1 h-11 w-full rounded-xl border border-border bg-background px-3 text-sm"
-              />
-            </label>
-            <label className="text-sm">
-              <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                Daily allowance £
-              </span>
-              <input
-                type="number"
-                step="0.01"
-                min="0"
-                value={allowance}
-                onChange={(e) => setAllowance(e.target.value)}
-                className="mt-1 h-11 w-full rounded-xl border border-border bg-background px-3 text-sm"
-              />
-            </label>
-          </div>
-          <div className="mt-4 flex flex-wrap items-center gap-3">
-            <button
-              disabled={busy}
-              className="h-11 rounded-xl bg-primary px-5 font-semibold text-primary-foreground hover:bg-primary-hover disabled:opacity-60"
-            >
-              Issue &amp; activate codes
-            </button>
-            <p className="text-xs text-muted-foreground">
-              Valid working days {validFrom} → <span className="font-semibold">{untilPreview}</span>
-              . Allowance is granted automatically on sitting days — no daily setup.
+        {manager ? (
+          <form onSubmit={issueBatch} className="mt-8 rounded-2xl border border-border bg-card p-5">
+            <p className="font-semibold">Issue codes for an induction</p>
+            <p className="mt-1 text-xs text-muted-foreground">
+              Manager MFA is required. Each anonymous code gets a separate six-digit PIN which is
+              shown once and stored only as a one-way hash.
+            </p>
+            <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+              <label className="text-sm">
+                <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                  How many
+                </span>
+                <input
+                  type="number"
+                  min="1"
+                  max="200"
+                  value={genCount}
+                  onChange={(e) => setGenCount(e.target.value)}
+                  className="mt-1 h-11 w-full rounded-xl border border-border bg-background px-3 text-sm"
+                />
+              </label>
+              <label className="text-sm">
+                <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                  Batch label
+                </span>
+                <input
+                  value={batch}
+                  onChange={(e) => setBatch(e.target.value)}
+                  className="mt-1 h-11 w-full rounded-xl border border-border bg-background px-3 text-sm"
+                />
+              </label>
+              <label className="text-sm">
+                <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                  Valid from
+                </span>
+                <input
+                  type="date"
+                  value={validFrom}
+                  onChange={(e) => setValidFrom(e.target.value)}
+                  className="mt-1 h-11 w-full rounded-xl border border-border bg-background px-3 text-sm"
+                />
+              </label>
+              <label className="text-sm">
+                <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                  Service days
+                </span>
+                <input
+                  type="number"
+                  min="1"
+                  max="60"
+                  value={serviceDays}
+                  onChange={(e) => setServiceDays(e.target.value)}
+                  className="mt-1 h-11 w-full rounded-xl border border-border bg-background px-3 text-sm"
+                />
+              </label>
+            </div>
+            <div className="mt-4 flex flex-wrap items-center gap-3">
+              <button
+                disabled={busy}
+                className="h-11 rounded-xl bg-primary px-5 font-semibold text-primary-foreground hover:bg-primary-hover disabled:opacity-60"
+              >
+                Issue &amp; activate codes
+              </button>
+              <p className="text-xs text-muted-foreground">
+                Starts {validFrom} for {serviceDays} court working days; weekends and configured
+                bank holidays are excluded. Standard allowance {money(JUROR_DAILY_ALLOWANCE_CENTS)}.
+                Only a manager can approve the {money(JUROR_EXTENDED_DAY_ALLOWANCE_CENTS)}
+                over-10-hours rate for a specific day.
+              </p>
+            </div>
+            {issued.length > 0 && (
+              <div className="mt-4 rounded-xl border border-primary/40 bg-primary/5 p-4">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <p className="text-sm font-semibold text-primary">
+                    {issued.length} codes ready for the Jury Officer
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      downloadIssued(issued, batch.replace(/\W+/g, "-").toLowerCase() || "batch")
+                    }
+                    className="flex h-10 items-center gap-2 rounded-xl bg-primary px-4 text-sm font-semibold text-primary-foreground"
+                  >
+                    <Download className="h-4 w-4" /> Download list
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setPrintMode("juror");
+                      setSlips(issued);
+                    }}
+                    className="flex h-10 items-center gap-2 rounded-xl border border-border px-4 text-sm font-semibold hover:bg-muted"
+                  >
+                    <Ticket className="h-4 w-4" /> Print QR slips
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setPrintMode("officer");
+                      setSlips(issued);
+                    }}
+                    className="flex h-10 items-center gap-2 rounded-xl border border-border px-4 text-sm font-semibold hover:bg-muted"
+                  >
+                    <ShieldCheck className="h-4 w-4" /> Officer allocation sheet
+                  </button>
+                </div>
+                <pre className="mt-3 max-h-40 overflow-auto rounded-lg bg-background p-3 font-mono text-xs">
+                  {issued
+                    .map((credential) => `${credential.code}  PIN ${credential.pin}`)
+                    .join("\n")}
+                </pre>
+                <p className="mt-2 text-xs font-semibold text-destructive">
+                  Print the slips now. PINs cannot be recovered or reprinted after leaving this
+                  page; a lost slip must be deactivated and replaced.
+                </p>
+              </div>
+            )}
+          </form>
+        ) : (
+          <div className="mt-8 rounded-2xl border border-amber-300 bg-amber-50 p-5 text-sm text-amber-900">
+            <p className="font-semibold">Staff read-only access</p>
+            <p className="mt-1">
+              A manager using MFA must issue, extend, reactivate or increase a voucher allowance.
             </p>
           </div>
-          {issued.length > 0 && (
-            <div className="mt-4 rounded-xl border border-primary/40 bg-primary/5 p-4">
-              <div className="flex flex-wrap items-center justify-between gap-2">
-                <p className="text-sm font-semibold text-primary">
-                  {issued.length} codes ready for the Jury Officer
-                </p>
-                <button
-                  type="button"
-                  onClick={() =>
-                    downloadIssued(issued, batch.replace(/\W+/g, "-").toLowerCase() || "batch")
-                  }
-                  className="flex h-10 items-center gap-2 rounded-xl bg-primary px-4 text-sm font-semibold text-primary-foreground"
-                >
-                  <Download className="h-4 w-4" /> Download list
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setSlips(issued)}
-                  className="flex h-10 items-center gap-2 rounded-xl border border-border px-4 text-sm font-semibold hover:bg-muted"
-                >
-                  <Ticket className="h-4 w-4" /> Print QR slips
-                </button>
-              </div>
-              <pre className="mt-3 max-h-40 overflow-auto rounded-lg bg-background p-3 font-mono text-xs">
-                {issued.join("\n")}
-              </pre>
-            </div>
-          )}
-        </form>
+        )}
 
         {/* Register */}
         <div className="mt-8 rounded-2xl border border-border bg-card p-5">
@@ -523,37 +566,34 @@ function AdminVouchers() {
                     {money(h.daily_amount_cents)}/day · used {money(used)} · left{" "}
                     <span className="font-semibold text-primary">{money(left)}</span>
                   </span>
-                  <button
-                    onClick={() => extend(h, 5)}
-                    className="rounded-lg p-2 text-muted-foreground hover:text-primary"
-                    aria-label={`Extend ${h.code} by 5 working days`}
-                    title="Extend 5 working days"
-                  >
-                    <CalendarPlus className="h-4 w-4" />
-                  </button>
-                  <button
-                    onClick={() => setSlips([h.code])}
-                    className="rounded-lg p-2 text-muted-foreground hover:text-primary"
-                    aria-label={`Print QR slip for ${h.code}`}
-                    title="Print QR slip"
-                  >
-                    <Ticket className="h-4 w-4" />
-                  </button>
-                  <button
-                    onClick={() => toggleActive(h)}
-                    className={`rounded-lg p-2 ${h.active ? "text-muted-foreground hover:text-destructive" : "text-emerald-600"}`}
-                    aria-label={`${h.active ? "Deactivate" : "Reactivate"} ${h.code}`}
-                    title={h.active ? "Deactivate" : "Reactivate"}
-                  >
-                    <Power className="h-4 w-4" />
-                  </button>
-                  <button
-                    onClick={() => removeHolder(h)}
-                    className="rounded-lg p-2 text-muted-foreground hover:text-destructive"
-                    aria-label={`Delete ${h.code}`}
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </button>
+                  {manager && (
+                    <>
+                      <button
+                        onClick={() => approveLongDay(h)}
+                        className="rounded-lg p-2 text-muted-foreground hover:text-primary"
+                        aria-label={`Approve over 10 hour allowance for ${h.code} on ${date}`}
+                        title={`Approve ${money(JUROR_EXTENDED_DAY_ALLOWANCE_CENTS)} for selected date`}
+                      >
+                        <Clock3 className="h-4 w-4" />
+                      </button>
+                      <button
+                        onClick={() => extend(h, 5)}
+                        className="rounded-lg p-2 text-muted-foreground hover:text-primary"
+                        aria-label={`Extend ${h.code} by 5 working days`}
+                        title="Extend 5 working days"
+                      >
+                        <CalendarPlus className="h-4 w-4" />
+                      </button>
+                      <button
+                        onClick={() => toggleActive(h)}
+                        className={`rounded-lg p-2 ${h.active ? "text-muted-foreground hover:text-destructive" : "text-emerald-600"}`}
+                        aria-label={`${h.active ? "Deactivate" : "Reactivate"} ${h.code}`}
+                        title={h.active ? "Deactivate" : "Reactivate for 5 working days"}
+                      >
+                        <Power className="h-4 w-4" />
+                      </button>
+                    </>
+                  )}
                 </div>
               );
             })}
@@ -677,7 +717,9 @@ function AdminVouchers() {
           <style>{`@media print { .no-print { display: none !important; } }`}</style>
           <div className="no-print mx-auto mb-6 flex max-w-4xl flex-wrap items-center justify-between gap-3">
             <p className="font-semibold">
-              {slips.length} juror QR slip{slips.length === 1 ? "" : "s"}
+              {printMode === "officer"
+                ? `Jury Officer allocation register — ${slips.length} codes`
+                : `${slips.length} juror security slip${slips.length === 1 ? "" : "s"}`}
             </p>
             <div className="flex gap-2">
               <button
@@ -694,26 +736,68 @@ function AdminVouchers() {
               </button>
             </div>
           </div>
-          <div className="mx-auto grid max-w-4xl grid-cols-2 gap-4 sm:grid-cols-3">
-            {slips.map((c) => (
-              <div
-                key={c}
-                className="break-inside-avoid rounded-xl border border-border p-4 text-center"
-              >
-                <p className="text-[10px] font-black uppercase tracking-widest text-primary">
-                  Café 1 juror voucher
-                </p>
-                <div className="mt-2 flex justify-center">
-                  <QrCode value={slipUrl(c)} size={150} alt={`QR code for juror voucher ${c}`} />
+          {printMode === "officer" ? (
+            <div className="mx-auto max-w-5xl bg-white p-8 text-neutral-950">
+              <h1 className="text-2xl font-black">Café 1 Juror Voucher Allocation Register</h1>
+              <p className="mt-2 text-sm">
+                Jury Officer copy. Write the juror&apos;s name against the code issued to them and
+                keep this register securely within HMCTS. Café 1 receives the anonymous code only
+                and does not receive this name list.
+              </p>
+              <p className="mt-2 text-sm font-semibold">Batch: {batch}</p>
+              <table className="mt-6 w-full border-collapse text-sm">
+                <thead>
+                  <tr>
+                    <th className="border border-neutral-500 p-2 text-left">Voucher code</th>
+                    <th className="border border-neutral-500 p-2 text-left">Juror name</th>
+                    <th className="border border-neutral-500 p-2 text-left">
+                      Issued / replacement note
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {slips.map((credential) => (
+                    <tr key={credential.code} className="break-inside-avoid">
+                      <td className="border border-neutral-400 p-2 font-mono font-bold">
+                        {credential.code}
+                      </td>
+                      <td className="h-10 border border-neutral-400 p-2">&nbsp;</td>
+                      <td className="border border-neutral-400 p-2">&nbsp;</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <div className="mx-auto grid max-w-4xl grid-cols-2 gap-4 sm:grid-cols-3">
+              {slips.map((credential) => (
+                <div
+                  key={credential.code}
+                  className="break-inside-avoid rounded-xl border border-border p-4 text-center"
+                >
+                  <p className="text-[10px] font-black uppercase tracking-widest text-primary">
+                    Café 1 juror voucher
+                  </p>
+                  <div className="mt-2 flex justify-center">
+                    <QrCode
+                      value={slipUrl(credential.code)}
+                      size={150}
+                      alt={`QR code for juror voucher ${credential.code}`}
+                    />
+                  </div>
+                  <p className="mt-2 font-mono text-sm font-bold">{credential.code}</p>
+                  <p className="mt-1 rounded-lg bg-neutral-900 px-2 py-1.5 font-mono text-lg font-black tracking-[0.25em] text-white">
+                    PIN {credential.pin}
+                  </p>
+                  <p className="mt-1 text-[10px] leading-snug text-muted-foreground">
+                    Keep both details private. Scan to order or present the code and PIN at the
+                    till. {money(JUROR_DAILY_ALLOWANCE_CENTS)} each sitting day; unused value
+                    expires nightly and has no cash value.
+                  </p>
                 </div>
-                <p className="mt-2 font-mono text-sm font-bold">{c}</p>
-                <p className="mt-1 text-[10px] leading-snug text-muted-foreground">
-                  Scan to check your daily {money(JUROR_DAILY_ALLOWANCE_CENTS)} allowance, or give
-                  this code at the till.
-                </p>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
         </div>
       )}
     </div>

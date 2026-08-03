@@ -15,7 +15,10 @@
  */
 export const JUROR_CODE_KEY = "cafe1-juror-code";
 export const JUROR_DAILY_ALLOWANCE_CENTS = 571;
+/** Current GOV.UK food-and-drink maximum where attendance exceeds 10 hours. */
+export const JUROR_EXTENDED_DAY_ALLOWANCE_CENTS = 1217;
 export const JUROR_FOOD_DISCOUNT_PERCENT = 10;
+export const JUROR_PIN_LENGTH = 6;
 
 /**
  * Voucher orders may only be delivered inside the court estate — never to a

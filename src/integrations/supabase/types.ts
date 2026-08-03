@@ -698,6 +698,81 @@ export type Database = {
           },
         ]
       }
+      juror_attendance_consumptions: {
+        Row: {
+          challenge_id: string
+          consumed_at: string
+          holder_id: string
+        }
+        Insert: {
+          challenge_id: string
+          consumed_at?: string
+          holder_id: string
+        }
+        Update: {
+          challenge_id?: string
+          consumed_at?: string
+          holder_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "juror_attendance_consumptions_challenge_id_fkey"
+            columns: ["challenge_id"]
+            isOneToOne: false
+            referencedRelation: "juror_attendance_challenges"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "juror_attendance_consumptions_holder_id_fkey"
+            columns: ["holder_id"]
+            isOneToOne: false
+            referencedRelation: "voucher_holders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      juror_daily_presence: {
+        Row: {
+          challenge_id: string | null
+          for_date: string
+          holder_id: string
+          id: string
+          room: string
+          verified_at: string
+        }
+        Insert: {
+          challenge_id?: string | null
+          for_date?: string
+          holder_id: string
+          id?: string
+          room: string
+          verified_at?: string
+        }
+        Update: {
+          challenge_id?: string | null
+          for_date?: string
+          holder_id?: string
+          id?: string
+          room?: string
+          verified_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "juror_daily_presence_challenge_id_fkey"
+            columns: ["challenge_id"]
+            isOneToOne: false
+            referencedRelation: "juror_attendance_challenges"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "juror_daily_presence_holder_id_fkey"
+            columns: ["holder_id"]
+            isOneToOne: false
+            referencedRelation: "voucher_holders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       kds_stations: {
         Row: {
           active: boolean
@@ -2280,6 +2355,7 @@ export type Database = {
       }
       voucher_events: {
         Row: {
+          actor_id: string | null
           amount_cents: number | null
           code: string
           created_at: string
@@ -2290,6 +2366,7 @@ export type Database = {
           order_id: string | null
         }
         Insert: {
+          actor_id?: string | null
           amount_cents?: number | null
           code: string
           created_at?: string
@@ -2300,6 +2377,7 @@ export type Database = {
           order_id?: string | null
         }
         Update: {
+          actor_id?: string | null
           amount_cents?: number | null
           code?: string
           created_at?: string
@@ -2329,57 +2407,78 @@ export type Database = {
       voucher_holders: {
         Row: {
           active: boolean
+          attendance_required: boolean
           batch: string | null
           code: string
           created_at: string
           daily_amount_cents: number
           deactivated_at: string | null
           email: string | null
+          failed_pin_attempts: number
           id: string
+          issued_by: string | null
           jury_room: string | null
+          last_pin_verified_at: string | null
           name: string | null
           notes: string | null
           opt_in_source: string | null
           opted_in_at: string | null
           phone: string | null
+          pin_hash: string | null
+          pin_locked_until: string | null
+          security_version: number
           updated_at: string
           valid_from: string
           valid_until: string | null
         }
         Insert: {
           active?: boolean
+          attendance_required?: boolean
           batch?: string | null
           code: string
           created_at?: string
           daily_amount_cents?: number
           deactivated_at?: string | null
           email?: string | null
+          failed_pin_attempts?: number
           id?: string
+          issued_by?: string | null
           jury_room?: string | null
+          last_pin_verified_at?: string | null
           name?: string | null
           notes?: string | null
           opt_in_source?: string | null
           opted_in_at?: string | null
           phone?: string | null
+          pin_hash?: string | null
+          pin_locked_until?: string | null
+          security_version?: number
           updated_at?: string
           valid_from?: string
           valid_until?: string | null
         }
         Update: {
           active?: boolean
+          attendance_required?: boolean
           batch?: string | null
           code?: string
           created_at?: string
           daily_amount_cents?: number
           deactivated_at?: string | null
           email?: string | null
+          failed_pin_attempts?: number
           id?: string
+          issued_by?: string | null
           jury_room?: string | null
+          last_pin_verified_at?: string | null
           name?: string | null
           notes?: string | null
           opt_in_source?: string | null
           opted_in_at?: string | null
           phone?: string | null
+          pin_hash?: string | null
+          pin_locked_until?: string | null
+          security_version?: number
           updated_at?: string
           valid_from?: string
           valid_until?: string | null
@@ -2395,6 +2494,7 @@ export type Database = {
           holder_id: string
           id: string
           order_id: string | null
+          reservation_token: string | null
         }
         Insert: {
           allocation_id?: string | null
@@ -2404,6 +2504,7 @@ export type Database = {
           holder_id: string
           id?: string
           order_id?: string | null
+          reservation_token?: string | null
         }
         Update: {
           allocation_id?: string | null
@@ -2413,6 +2514,7 @@ export type Database = {
           holder_id?: string
           id?: string
           order_id?: string | null
+          reservation_token?: string | null
         }
         Relationships: [
           {
@@ -2443,7 +2545,15 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      attach_juror_voucher_reservation: {
+        Args: { _order_id: string; _reservation_token: string }
+        Returns: boolean
+      }
       award_loyalty_for_order: { Args: { _order_id: string }; Returns: boolean }
+      cafe1_add_court_working_days: {
+        Args: { _days: number; _from: string }
+        Returns: string
+      }
       cafe1_assert_operator: {
         Args: { _admin_only?: boolean }
         Returns: string
@@ -2469,6 +2579,14 @@ export type Database = {
         Args: { _token_hash: string; _voucher_code: string }
         Returns: Json
       }
+      cafe1_consume_juror_challenge_v2: {
+        Args: {
+          _token_hash: string
+          _voucher_code: string
+          _voucher_pin: string
+        }
+        Returns: Json
+      }
       cafe1_create_juror_challenge: {
         Args: { _room: string; _token_hash: string }
         Returns: Json
@@ -2483,7 +2601,30 @@ export type Database = {
         Returns: Json
       }
       cafe1_inventory_dashboard: { Args: { _site_id: string }; Returns: Json }
+      cafe1_issue_juror_batch: {
+        Args: {
+          _batch: string
+          _count?: number
+          _service_days?: number
+          _valid_from?: string
+        }
+        Returns: {
+          code: string
+          pin: string
+          valid_from: string
+          valid_until: string
+        }[]
+      }
       cafe1_list_sites: { Args: never; Returns: Json }
+      cafe1_manage_juror_voucher: {
+        Args: {
+          _action: string
+          _holder_id: string
+          _reason?: string
+          _working_days?: number
+        }
+        Returns: Json
+      }
       cafe1_operations_dashboard: {
         Args: { _business_date: string; _site_id: string }
         Returns: Json
@@ -2501,6 +2642,15 @@ export type Database = {
       cafe1_save_recipe_component: { Args: { _payload: Json }; Returns: Json }
       cafe1_save_site: { Args: { _payload: Json }; Returns: Json }
       cafe1_security_dashboard: { Args: { _site_id: string }; Returns: Json }
+      cafe1_set_juror_daily_allowance: {
+        Args: {
+          _amount_cents: number
+          _for_date: string
+          _holder_id: string
+          _reason: string
+        }
+        Returns: Json
+      }
       cafe1_staff_dashboard: {
         Args: { _from: string; _site_id: string; _to: string }
         Returns: Json
@@ -2756,6 +2906,20 @@ export type Database = {
           percent: number
         }[]
       }
+      get_juror_claim_rows: {
+        Args: { _from: string; _to: string }
+        Returns: {
+          amount_cents: number
+          batch: string
+          for_date: string
+          holder_id: string
+          order_id: string
+          order_number: number
+          redeemed_at: string
+          redemption_id: string
+          voucher_code: string
+        }[]
+      }
       get_voucher_balance: {
         Args: { _email: string; _phone: string }
         Returns: {
@@ -2822,6 +2986,14 @@ export type Database = {
           ok: boolean
         }[]
       }
+      opt_in_voucher_secure: {
+        Args: { _code: string; _pin: string; _source: string }
+        Returns: {
+          already: boolean
+          message: string
+          ok: boolean
+        }[]
+      }
       prepare_counter_order: {
         Args: {
           _customer_name: string
@@ -2834,6 +3006,31 @@ export type Database = {
           _table_number: string
           _terminal: string
           _voucher_code: string
+        }
+        Returns: {
+          juror_discount_cents: number
+          order_id: string
+          order_number: number
+          payment_status: Database["public"]["Enums"]["payment_status"]
+          subtotal_cents: number
+          total_cents: number
+          voucher_cents: number
+          voucher_code: string
+        }[]
+      }
+      prepare_counter_order_secure: {
+        Args: {
+          _customer_name: string
+          _idempotency_key: string
+          _items: Json
+          _manual_card_reference: string
+          _order_type: string
+          _payment_mode: string
+          _shift_id: string
+          _table_number: string
+          _terminal: string
+          _voucher_code: string
+          _voucher_pin: string
         }
         Returns: {
           juror_discount_cents: number
@@ -2873,6 +3070,26 @@ export type Database = {
       redeem_voucher: {
         Args: { _amount_cents: number; _holder_id: string; _order_id: string }
         Returns: number
+      }
+      release_juror_voucher_reservation: {
+        Args: { _reason: string; _reservation_token: string }
+        Returns: boolean
+      }
+      reserve_juror_voucher: {
+        Args: {
+          _amount_cents: number
+          _channel?: string
+          _code: string
+          _pin: string
+          _reservation_token: string
+        }
+        Returns: {
+          holder_id: string
+          holder_name: string
+          reservation_token: string
+          reserved_cents: number
+          voucher_code: string
+        }[]
       }
       reserve_order_refund: {
         Args: {
@@ -3069,6 +3286,24 @@ export type Database = {
         Returns: {
           id: string
           name: string
+        }[]
+      }
+      verify_juror_voucher_credentials: {
+        Args: { _code: string; _pin: string }
+        Returns: {
+          allocated_cents: number
+          attendance_required: boolean
+          attendance_verified: boolean
+          code: string
+          holder_id: string
+          holder_name: string
+          jury_room: string
+          opted_in: boolean
+          remaining_cents: number
+          status: string
+          used_cents: number
+          valid_from: string
+          valid_until: string
         }[]
       }
     }

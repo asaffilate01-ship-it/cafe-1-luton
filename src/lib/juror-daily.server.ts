@@ -44,47 +44,44 @@ export async function runJurorDailyJob(forDate?: string): Promise<JurorDailyResu
     );
   }
 
-  // 2. Collect the day's redemptions.
-  const { data: reds } = await supabaseAdmin
-    .from("voucher_redemptions")
-    .select("holder_id, order_id, amount_cents, created_at")
-    .eq("for_date", date)
-    .order("created_at", { ascending: true });
-
-  const rows = reds ?? [];
+  // 2. Collect only redemptions attached to paid/on-account, non-cancelled
+  // orders. A pending or failed checkout must never reach an HMCTS claim.
+  const { callOperationsRpc } = await import("./ops-rpc");
+  const rows = await callOperationsRpc<
+    Array<{
+      holder_id: string;
+      order_id: string;
+      order_number: number;
+      amount_cents: number;
+      redeemed_at: string;
+      voucher_code: string;
+    }>
+  >(supabaseAdmin, "get_juror_claim_rows", { _from: date, _to: date });
   const total = rows.reduce((s, r) => s + (r.amount_cents ?? 0), 0);
   const jurors = new Set(rows.map((r) => r.holder_id)).size;
 
-  const codeById = new Map<string, string>();
-  if (rows.length) {
-    const { data: holders } = await supabaseAdmin
-      .from("voucher_holders")
-      .select("id, code")
-      .in("id", Array.from(new Set(rows.map((r) => r.holder_id))));
-    for (const h of holders ?? []) codeById.set(h.id, h.code);
-  }
-
-  const orderNumberById = new Map<string, number>();
-  const orderIds = Array.from(new Set(rows.map((r) => r.order_id).filter(Boolean))) as string[];
-  if (orderIds.length) {
-    const { data: orders } = await supabaseAdmin.from("orders").select("id, order_number").in("id", orderIds);
-    for (const o of orders ?? []) orderNumberById.set(o.id, o.order_number);
-  }
-
   const pretty = new Date(`${date}T00:00:00Z`).toLocaleDateString("en-GB", {
-    weekday: "long", day: "numeric", month: "long", year: "numeric", timeZone: "UTC",
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+    timeZone: "UTC",
   });
 
   const lines = rows.map((r) => ({
-    time: new Date(r.created_at as string).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit", timeZone: "Europe/London" }),
-    code: codeById.get(r.holder_id) ?? "—",
-    receipt: r.order_id ? (orderNumberById.get(r.order_id) ?? "—") : "till",
+    time: new Date(r.redeemed_at).toLocaleTimeString("en-GB", {
+      hour: "2-digit",
+      minute: "2-digit",
+      timeZone: "Europe/London",
+    }),
+    code: r.voucher_code,
+    receipt: r.order_number,
     amount: money(r.amount_cents ?? 0),
   }));
 
   const csv = [
     "date,time,voucher_code,receipt,amount_gbp",
-    ...lines.map((l) => `${date},${l.time},${l.code},${l.receipt},${(l.amount.slice(1))}`),
+    ...lines.map((l) => `${date},${l.time},${l.code},${l.receipt},${l.amount.slice(1)}`),
   ].join("\n");
 
   const html = `
@@ -147,11 +144,15 @@ export async function runJurorDailyJob(forDate?: string): Promise<JurorDailyResu
           subject: `Juror voucher claim ${date} — ${money(total)} (${rows.length} redemptions)`,
           html,
           attachments: [
-            { filename: `juror-vouchers-${date}.csv`, content: btoa(unescape(encodeURIComponent(csv))) },
+            {
+              filename: `juror-vouchers-${date}.csv`,
+              content: btoa(unescape(encodeURIComponent(csv))),
+            },
           ],
         }),
       });
-      if (!res.ok) console.error(`[juror-daily] Resend failed [${res.status}]: ${await res.text()}`);
+      if (!res.ok)
+        console.error(`[juror-daily] Resend failed [${res.status}]: ${await res.text()}`);
       else emailed = true;
     } catch (e) {
       console.error("[juror-daily] send failed", e);
