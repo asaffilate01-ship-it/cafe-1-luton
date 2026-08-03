@@ -188,9 +188,6 @@ function loadDraftBasket(): DraftBasket {
   const empty: DraftBasket = { lines: [], name: "", type: "dine_in", table: "" };
   if (typeof window === "undefined") return empty;
   try {
-  const empty: DraftBasket = { lines: [], name: "", type: "dine_in", table: "" };
-  if (typeof window === "undefined") return empty;
-  try {
     const saved = JSON.parse(
       window.localStorage.getItem("cafe1-active-basket") ?? "null",
     ) as Partial<DraftBasket> | null;
