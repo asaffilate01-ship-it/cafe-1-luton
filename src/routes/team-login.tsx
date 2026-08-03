@@ -5,6 +5,8 @@ import { ChevronLeft, Users } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
+import { PasswordField } from "@/components/password-field";
+import { ForgotPassword } from "@/components/forgot-password";
 
 const search = z.object({ next: z.string().optional() });
 
@@ -68,9 +70,10 @@ function StaffLogin() {
           {error ? <p role="alert" className="mt-6 rounded-xl border border-destructive/40 bg-destructive/5 p-3 text-sm text-destructive">{error}</p> : null}
           <form onSubmit={onSubmit} className="mt-6 space-y-3" aria-busy={busy}>
             <div><label htmlFor="team-email" className="mb-1.5 block text-sm font-medium">Work email</label><input id="team-email" name="email" type="email" value={email} onChange={(event) => setEmail(event.target.value)} required autoComplete="username" className="h-11 w-full rounded-xl border border-border bg-background px-4" /></div>
-            <div><label htmlFor="team-password" className="mb-1.5 block text-sm font-medium">Password</label><input id="team-password" name="password" type="password" value={password} onChange={(event) => setPassword(event.target.value)} required minLength={6} autoComplete="current-password" className="h-11 w-full rounded-xl border border-border bg-background px-4" /></div>
+            <PasswordField id="team-password" value={password} onChange={setPassword} />
             <Button disabled={busy} className="h-11 w-full rounded-full">{busy ? "Please wait…" : "Sign in as staff"}</Button>
           </form>
+          <div className="mt-3"><ForgotPassword email={email} /></div>
           <p className="mt-6 text-center text-xs text-muted-foreground">Administrator? <Link to="/admin/login" className="font-medium text-primary hover:underline">Use admin sign in</Link></p>
         </section>
       </div>
