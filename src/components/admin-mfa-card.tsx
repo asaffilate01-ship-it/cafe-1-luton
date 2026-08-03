@@ -58,7 +58,7 @@ export function AdminMfaCard({
       }
       const { data, error: enrollError } = await supabase.auth.mfa.enroll({
         factorType: "totp",
-        friendlyName: "Cafe 1 manager",
+        friendlyName: "cafe1stalbans.jury.voucher.scheme",
       });
       if (enrollError) throw enrollError;
       setEnrollment({
