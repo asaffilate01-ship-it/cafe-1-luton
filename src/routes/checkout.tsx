@@ -1003,6 +1003,12 @@ function Checkout() {
                 <span>−{money(jurorDiscount)}</span>
               </div>
             )}
+            {voucher && !voucher.opted_in && (
+              <p className="text-xs text-muted-foreground">
+                The {JUROR_FOOD_DISCOUNT_PERCENT}% food discount is for scheme members only — opt in
+                on the juror page or by scanning the QR code in your jury room to qualify.
+              </p>
+            )}
             {voucherApplied > 0 && (
               <div className="flex justify-between text-primary">
                 <span>Court voucher</span>
