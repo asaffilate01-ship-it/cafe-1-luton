@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as TillRouteImport } from './routes/till'
 import { Route as TermsRouteImport } from './routes/terms'
+import { Route as TeamLoginRouteImport } from './routes/team-login'
 import { Route as TabRouteImport } from './routes/tab'
 import { Route as StaffRouteImport } from './routes/staff'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
@@ -33,7 +34,6 @@ import { Route as AboutRouteImport } from './routes/about'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as BlogIndexRouteImport } from './routes/blog.index'
 import { Route as AdminIndexRouteImport } from './routes/admin.index'
-import { Route as StaffLoginRouteImport } from './routes/staff.login'
 import { Route as PrintOrderIdRouteImport } from './routes/print.$orderId'
 import { Route as PayOrderIdRouteImport } from './routes/pay.$orderId'
 import { Route as OrderOrderIdRouteImport } from './routes/order.$orderId'
@@ -73,6 +73,11 @@ const TillRoute = TillRouteImport.update({
 const TermsRoute = TermsRouteImport.update({
   id: '/terms',
   path: '/terms',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TeamLoginRoute = TeamLoginRouteImport.update({
+  id: '/team-login',
+  path: '/team-login',
   getParentRoute: () => rootRouteImport,
 } as any)
 const TabRoute = TabRouteImport.update({
@@ -184,11 +189,6 @@ const AdminIndexRoute = AdminIndexRouteImport.update({
   id: '/admin/',
   path: '/admin/',
   getParentRoute: () => rootRouteImport,
-} as any)
-const StaffLoginRoute = StaffLoginRouteImport.update({
-  id: '/login',
-  path: '/login',
-  getParentRoute: () => StaffRoute,
 } as any)
 const PrintOrderIdRoute = PrintOrderIdRouteImport.update({
   id: '/print/$orderId',
@@ -361,8 +361,9 @@ export interface FileRoutesByFullPath {
   '/menu': typeof MenuRoute
   '/privacy': typeof PrivacyRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
-  '/staff': typeof StaffRouteWithChildren
+  '/staff': typeof StaffRoute
   '/tab': typeof TabRoute
+  '/team-login': typeof TeamLoginRoute
   '/terms': typeof TermsRoute
   '/till': typeof TillRoute
   '/admin/accounts': typeof AdminAccountsRoute
@@ -388,7 +389,6 @@ export interface FileRoutesByFullPath {
   '/order/$orderId': typeof OrderOrderIdRoute
   '/pay/$orderId': typeof PayOrderIdRoute
   '/print/$orderId': typeof PrintOrderIdRoute
-  '/staff/login': typeof StaffLoginRoute
   '/admin/': typeof AdminIndexRoute
   '/blog/': typeof BlogIndexRoute
   '/api/public/cleanup-unpaid': typeof ApiPublicCleanupUnpaidRoute
@@ -418,8 +418,9 @@ export interface FileRoutesByTo {
   '/menu': typeof MenuRoute
   '/privacy': typeof PrivacyRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
-  '/staff': typeof StaffRouteWithChildren
+  '/staff': typeof StaffRoute
   '/tab': typeof TabRoute
+  '/team-login': typeof TeamLoginRoute
   '/terms': typeof TermsRoute
   '/till': typeof TillRoute
   '/admin/accounts': typeof AdminAccountsRoute
@@ -445,7 +446,6 @@ export interface FileRoutesByTo {
   '/order/$orderId': typeof OrderOrderIdRoute
   '/pay/$orderId': typeof PayOrderIdRoute
   '/print/$orderId': typeof PrintOrderIdRoute
-  '/staff/login': typeof StaffLoginRoute
   '/admin': typeof AdminIndexRoute
   '/blog': typeof BlogIndexRoute
   '/api/public/cleanup-unpaid': typeof ApiPublicCleanupUnpaidRoute
@@ -476,8 +476,9 @@ export interface FileRoutesById {
   '/menu': typeof MenuRoute
   '/privacy': typeof PrivacyRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
-  '/staff': typeof StaffRouteWithChildren
+  '/staff': typeof StaffRoute
   '/tab': typeof TabRoute
+  '/team-login': typeof TeamLoginRoute
   '/terms': typeof TermsRoute
   '/till': typeof TillRoute
   '/admin/accounts': typeof AdminAccountsRoute
@@ -503,7 +504,6 @@ export interface FileRoutesById {
   '/order/$orderId': typeof OrderOrderIdRoute
   '/pay/$orderId': typeof PayOrderIdRoute
   '/print/$orderId': typeof PrintOrderIdRoute
-  '/staff/login': typeof StaffLoginRoute
   '/admin/': typeof AdminIndexRoute
   '/blog/': typeof BlogIndexRoute
   '/api/public/cleanup-unpaid': typeof ApiPublicCleanupUnpaidRoute
@@ -537,6 +537,7 @@ export interface FileRouteTypes {
     | '/sitemap.xml'
     | '/staff'
     | '/tab'
+    | '/team-login'
     | '/terms'
     | '/till'
     | '/admin/accounts'
@@ -562,7 +563,6 @@ export interface FileRouteTypes {
     | '/order/$orderId'
     | '/pay/$orderId'
     | '/print/$orderId'
-    | '/staff/login'
     | '/admin/'
     | '/blog/'
     | '/api/public/cleanup-unpaid'
@@ -594,6 +594,7 @@ export interface FileRouteTypes {
     | '/sitemap.xml'
     | '/staff'
     | '/tab'
+    | '/team-login'
     | '/terms'
     | '/till'
     | '/admin/accounts'
@@ -619,7 +620,6 @@ export interface FileRouteTypes {
     | '/order/$orderId'
     | '/pay/$orderId'
     | '/print/$orderId'
-    | '/staff/login'
     | '/admin'
     | '/blog'
     | '/api/public/cleanup-unpaid'
@@ -651,6 +651,7 @@ export interface FileRouteTypes {
     | '/sitemap.xml'
     | '/staff'
     | '/tab'
+    | '/team-login'
     | '/terms'
     | '/till'
     | '/admin/accounts'
@@ -676,7 +677,6 @@ export interface FileRouteTypes {
     | '/order/$orderId'
     | '/pay/$orderId'
     | '/print/$orderId'
-    | '/staff/login'
     | '/admin/'
     | '/blog/'
     | '/api/public/cleanup-unpaid'
@@ -707,8 +707,9 @@ export interface RootRouteChildren {
   MenuRoute: typeof MenuRoute
   PrivacyRoute: typeof PrivacyRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
-  StaffRoute: typeof StaffRouteWithChildren
+  StaffRoute: typeof StaffRoute
   TabRoute: typeof TabRoute
+  TeamLoginRoute: typeof TeamLoginRoute
   TermsRoute: typeof TermsRoute
   TillRoute: typeof TillRoute
   AdminAccountsRoute: typeof AdminAccountsRoute
@@ -759,6 +760,13 @@ declare module '@tanstack/react-router' {
       path: '/terms'
       fullPath: '/terms'
       preLoaderRoute: typeof TermsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/team-login': {
+      id: '/team-login'
+      path: '/team-login'
+      fullPath: '/team-login'
+      preLoaderRoute: typeof TeamLoginRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/tab': {
@@ -914,13 +922,6 @@ declare module '@tanstack/react-router' {
       fullPath: '/admin/'
       preLoaderRoute: typeof AdminIndexRouteImport
       parentRoute: typeof rootRouteImport
-    }
-    '/staff/login': {
-      id: '/staff/login'
-      path: '/login'
-      fullPath: '/staff/login'
-      preLoaderRoute: typeof StaffLoginRouteImport
-      parentRoute: typeof StaffRoute
     }
     '/print/$orderId': {
       id: '/print/$orderId'
@@ -1135,16 +1136,6 @@ declare module '@tanstack/react-router' {
   }
 }
 
-interface StaffRouteChildren {
-  StaffLoginRoute: typeof StaffLoginRoute
-}
-
-const StaffRouteChildren: StaffRouteChildren = {
-  StaffLoginRoute: StaffLoginRoute,
-}
-
-const StaffRouteWithChildren = StaffRoute._addFileChildren(StaffRouteChildren)
-
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AboutRoute: AboutRoute,
@@ -1164,8 +1155,9 @@ const rootRouteChildren: RootRouteChildren = {
   MenuRoute: MenuRoute,
   PrivacyRoute: PrivacyRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
-  StaffRoute: StaffRouteWithChildren,
+  StaffRoute: StaffRoute,
   TabRoute: TabRoute,
+  TeamLoginRoute: TeamLoginRoute,
   TermsRoute: TermsRoute,
   TillRoute: TillRoute,
   AdminAccountsRoute: AdminAccountsRoute,

@@ -8,7 +8,7 @@ import { supabase } from "@/integrations/supabase/client";
 
 const search = z.object({ next: z.string().optional() });
 
-export const Route = createFileRoute("/staff/login")({
+export const Route = createFileRoute("/team-login")({
   validateSearch: search,
   head: () => ({ meta: [
     { title: "Staff sign in — Cafe1" },
