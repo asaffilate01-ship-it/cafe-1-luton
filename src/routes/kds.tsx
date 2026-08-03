@@ -33,9 +33,11 @@ type Item = {
   name: string;
   qty: number;
   notes: string | null;
+  category_label: string | null;
   cook?: boolean;
   station_code?: string;
   prep_seconds?: number;
+  category?: string | null;
 };
 type Order = {
   id: string;
