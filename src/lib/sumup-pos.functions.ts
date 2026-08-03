@@ -37,6 +37,14 @@ type SumupTxn = {
   type?: string;
 };
 
+/** Reads whichever category field this SumUp basket line happens to carry. */
+function sumupCategory(p: NonNullable<SumupTxn["products"]>[number]): string | null {
+  const first = p.categories?.[0];
+  const fromList = typeof first === "string" ? first : first?.name;
+  const label = (p.category ?? p.category_name ?? fromList ?? "").trim();
+  return label || null;
+}
+
 /** A sale is void when SumUp cancelled/failed it, or the full amount was refunded. */
 function isVoidTxn(t: Pick<SumupTxn, "status" | "amount" | "refunded_amount">): "refunded" | "cancelled" | null {
   const st = String(t.status ?? "").toUpperCase();
