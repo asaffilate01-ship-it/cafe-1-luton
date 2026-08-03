@@ -618,6 +618,17 @@ function Till() {
   const completeSale = useCallback(
     async (res: CounterResult, paymentMethod: "cash" | "card" | "split") => {
       setLastOrder({ n: res.order_number, total: res.total_cents, id: res.order_id });
+      const laterIso = laterTime ? laterTimeToIso(laterTime) : null;
+      if (laterIso) {
+        try {
+          await scheduleOrder({ data: { order_id: res.order_id, scheduled_for: laterIso } });
+          toast.success(
+            `Order #${res.order_number} saved for ${new Date(laterIso).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}`,
+          );
+        } catch {
+          toast.error("Order taken, but the later time could not be saved — tell the kitchen");
+        }
+      }
       postToDisplay({
         type: "paid",
         order_number: res.order_number,
@@ -629,7 +640,11 @@ function Till() {
         (["KITCHEN", "COUNTER"] as const).map((heading) => ({
           heading,
           order_number: res.order_number,
-          fulfilment: FULFIL.find((f) => f.id === type)?.label ?? type,
+          fulfilment: `${FULFIL.find((f) => f.id === type)?.label ?? type}${
+            laterIso
+              ? ` · FOR ${new Date(laterIso).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}`
+              : ""
+          }`,
           terminal: SIDE_LABEL[side],
           lines: lines.map((line) => ({
             name: [line.name, ...line.modifier_names].join(" · "),
@@ -651,13 +666,14 @@ function Till() {
       setLines([]);
       setName("");
       setTable("");
+      setLaterTime("");
       setPay(null);
       setTendered(0);
       setShowOrder(false);
       setVoucher(null);
       setSplitCash(0);
     },
-    [lines, side, type],
+    [lines, side, type, laterTime, scheduleOrder],
   );
 
   const finish = useCallback(
