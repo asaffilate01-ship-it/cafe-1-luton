@@ -6,6 +6,7 @@ import { useSession, useRoles } from "@/hooks/use-auth";
 import { signOutAndRedirect } from "@/lib/sign-out";
 import { toast } from "sonner";
 import { ShieldCheck, ChevronLeft } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 const search = z.object({ next: z.string().optional() });
 
@@ -13,11 +14,15 @@ export const Route = createFileRoute("/admin/login")({
   validateSearch: search,
   head: () => ({
     meta: [
-      { title: "Team sign in — Cafe1" },
+      { title: "Admin sign in — Cafe1" },
       {
         name: "description",
-        content: "Restricted sign in for Cafe1 admins, staff, kitchen and drivers.",
+        content: "Restricted sign in for Cafe1 administrators.",
       },
+      { property: "og:title", content: "Admin sign in — Cafe1" },
+      { property: "og:description", content: "Restricted sign in for Cafe1 administrators." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
       { name: "robots", content: "noindex" },
     ],
   }),
@@ -35,17 +40,10 @@ function AdminLogin() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
 
-  function homeForRoles(rs: string[]) {
-    if (rs.includes("admin")) return "/admin";
-    if (rs.includes("staff")) return "/staff";
-    if (rs.includes("driver")) return "/driver";
-    return "/staff";
-  }
-  const safeNext = next && next.startsWith("/") && !next.startsWith("//") ? next : null;
-  const dest = safeNext ?? homeForRoles(roles);
+  const safeNext = next && next.startsWith("/admin") && !next.startsWith("//") ? next : null;
+  const dest = safeNext ?? "/admin";
 
-  const alreadyStaff =
-    !loading && !rolesLoading && !!user && (has("admin") || has("staff") || has("driver"));
+  const alreadyAdmin = !loading && !rolesLoading && !!user && has("admin");
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -63,13 +61,12 @@ function AdminLogin() {
         .eq("user_id", uid);
       if (rErr) throw rErr;
       const rs = (rows ?? []).map((r) => r.role);
-      const allowed = rs.includes("admin") || rs.includes("staff") || rs.includes("driver");
-      if (!allowed) {
+      if (!rs.includes("admin")) {
         await supabase.auth.signOut();
-        throw new Error("This account has no staff access.");
+        throw new Error("This account does not have administrator access.");
       }
       toast.success("Signed in");
-      navigate({ to: safeNext ?? homeForRoles(rs) });
+      navigate({ to: safeNext ?? "/admin" });
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : "Sign in failed";
       setError(message);
@@ -88,25 +85,26 @@ function AdminLogin() {
         >
           <ChevronLeft className="h-4 w-4" /> Back to site
         </Link>
-        {alreadyStaff && (
+        {alreadyAdmin && (
           <div className="mt-6 rounded-2xl border border-border bg-card p-5 shadow-brand">
             <p className="text-sm">
               Already signed in as <span className="font-semibold">{user?.email}</span>
               {roles.length ? ` (${roles.join(", ")})` : ""}.
             </p>
             <div className="mt-4 flex flex-wrap gap-2">
-              <button
+              <Button
                 onClick={() => navigate({ to: dest })}
-                className="h-10 rounded-full bg-primary px-5 text-sm font-semibold text-primary-foreground hover:bg-primary-hover"
+                className="h-10 rounded-full px-5"
               >
-                Continue
-              </button>
-              <button
+                Continue to admin
+              </Button>
+              <Button
+                variant="outline"
                 onClick={() => signOutAndRedirect("/admin/login")}
-                className="h-10 rounded-full border border-border px-5 text-sm font-semibold hover:bg-muted"
+                className="h-10 rounded-full px-5"
               >
                 Sign out
-              </button>
+              </Button>
             </div>
           </div>
         )}
@@ -114,10 +112,9 @@ function AdminLogin() {
           <div className="grid h-12 w-12 place-items-center rounded-2xl bg-primary text-primary-foreground">
             <ShieldCheck className="h-6 w-6" />
           </div>
-          <h1 className="mt-4 font-display text-3xl font-bold">Cafe1 team sign in</h1>
+          <h1 className="mt-4 font-display text-3xl font-bold">Cafe1 admin sign in</h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            One sign in for admins, staff, kitchen and drivers — you'll land on the right dashboard
-            for your role.
+            Administrator access only. Staff should use the separate staff sign-in.
           </p>
 
           {error && (
@@ -131,11 +128,11 @@ function AdminLogin() {
 
           <form onSubmit={onSubmit} className="mt-6 space-y-3" aria-busy={busy}>
             <div>
-              <label htmlFor="staff-email" className="mb-1.5 block text-sm font-medium">
-                Work email
+              <label htmlFor="admin-email" className="mb-1.5 block text-sm font-medium">
+                Admin email
               </label>
               <input
-                id="staff-email"
+                id="admin-email"
                 name="email"
                 type="email"
                 value={email}
@@ -147,11 +144,11 @@ function AdminLogin() {
               />
             </div>
             <div>
-              <label htmlFor="staff-password" className="mb-1.5 block text-sm font-medium">
+              <label htmlFor="admin-password" className="mb-1.5 block text-sm font-medium">
                 Password
               </label>
               <input
-                id="staff-password"
+                id="admin-password"
                 name="password"
                 type="password"
                 value={password}
@@ -162,20 +159,20 @@ function AdminLogin() {
                 className="h-11 w-full rounded-xl border border-border bg-background px-4"
               />
             </div>
-            <button
+            <Button
               disabled={busy}
-              className="h-11 w-full rounded-full bg-primary font-semibold text-primary-foreground shadow-brand transition hover:bg-primary-hover disabled:opacity-60"
+              className="h-11 w-full rounded-full"
             >
-              {busy ? "Please wait…" : "Sign in"}
-            </button>
+              {busy ? "Please wait…" : "Sign in as admin"}
+            </Button>
           </form>
 
           <div className="mt-6 rounded-xl border border-border bg-muted/40 p-3 text-xs text-muted-foreground">
-            Are you a customer?{" "}
-            <Link to="/auth" className="font-medium text-primary hover:underline">
-              Sign in here
+            Cafe1 team member?{" "}
+            <Link to="/team-login" className="font-medium text-primary hover:underline">
+              Use staff sign in
             </Link>{" "}
-            to place an order.
+            instead.
           </div>
         </div>
       </div>

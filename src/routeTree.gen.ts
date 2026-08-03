@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as TillRouteImport } from './routes/till'
 import { Route as TermsRouteImport } from './routes/terms'
+import { Route as TeamLoginRouteImport } from './routes/team-login'
 import { Route as TabRouteImport } from './routes/tab'
 import { Route as StaffRouteImport } from './routes/staff'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
@@ -72,6 +73,11 @@ const TillRoute = TillRouteImport.update({
 const TermsRoute = TermsRouteImport.update({
   id: '/terms',
   path: '/terms',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TeamLoginRoute = TeamLoginRouteImport.update({
+  id: '/team-login',
+  path: '/team-login',
   getParentRoute: () => rootRouteImport,
 } as any)
 const TabRoute = TabRouteImport.update({
@@ -357,6 +363,7 @@ export interface FileRoutesByFullPath {
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/staff': typeof StaffRoute
   '/tab': typeof TabRoute
+  '/team-login': typeof TeamLoginRoute
   '/terms': typeof TermsRoute
   '/till': typeof TillRoute
   '/admin/accounts': typeof AdminAccountsRoute
@@ -413,6 +420,7 @@ export interface FileRoutesByTo {
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/staff': typeof StaffRoute
   '/tab': typeof TabRoute
+  '/team-login': typeof TeamLoginRoute
   '/terms': typeof TermsRoute
   '/till': typeof TillRoute
   '/admin/accounts': typeof AdminAccountsRoute
@@ -470,6 +478,7 @@ export interface FileRoutesById {
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/staff': typeof StaffRoute
   '/tab': typeof TabRoute
+  '/team-login': typeof TeamLoginRoute
   '/terms': typeof TermsRoute
   '/till': typeof TillRoute
   '/admin/accounts': typeof AdminAccountsRoute
@@ -528,6 +537,7 @@ export interface FileRouteTypes {
     | '/sitemap.xml'
     | '/staff'
     | '/tab'
+    | '/team-login'
     | '/terms'
     | '/till'
     | '/admin/accounts'
@@ -584,6 +594,7 @@ export interface FileRouteTypes {
     | '/sitemap.xml'
     | '/staff'
     | '/tab'
+    | '/team-login'
     | '/terms'
     | '/till'
     | '/admin/accounts'
@@ -640,6 +651,7 @@ export interface FileRouteTypes {
     | '/sitemap.xml'
     | '/staff'
     | '/tab'
+    | '/team-login'
     | '/terms'
     | '/till'
     | '/admin/accounts'
@@ -697,6 +709,7 @@ export interface RootRouteChildren {
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   StaffRoute: typeof StaffRoute
   TabRoute: typeof TabRoute
+  TeamLoginRoute: typeof TeamLoginRoute
   TermsRoute: typeof TermsRoute
   TillRoute: typeof TillRoute
   AdminAccountsRoute: typeof AdminAccountsRoute
@@ -747,6 +760,13 @@ declare module '@tanstack/react-router' {
       path: '/terms'
       fullPath: '/terms'
       preLoaderRoute: typeof TermsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/team-login': {
+      id: '/team-login'
+      path: '/team-login'
+      fullPath: '/team-login'
+      preLoaderRoute: typeof TeamLoginRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/tab': {
@@ -1137,6 +1157,7 @@ const rootRouteChildren: RootRouteChildren = {
   SitemapDotxmlRoute: SitemapDotxmlRoute,
   StaffRoute: StaffRoute,
   TabRoute: TabRoute,
+  TeamLoginRoute: TeamLoginRoute,
   TermsRoute: TermsRoute,
   TillRoute: TillRoute,
   AdminAccountsRoute: AdminAccountsRoute,
