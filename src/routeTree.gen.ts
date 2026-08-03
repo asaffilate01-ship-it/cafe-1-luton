@@ -18,6 +18,7 @@ import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as MenuRouteImport } from './routes/menu'
 import { Route as KdsRouteImport } from './routes/kds'
 import { Route as JurorRouteImport } from './routes/juror'
+import { Route as JudgesRouteImport } from './routes/judges'
 import { Route as GdprRouteImport } from './routes/gdpr'
 import { Route as DriverRouteImport } from './routes/driver'
 import { Route as DisplayRouteImport } from './routes/display'
@@ -106,6 +107,11 @@ const KdsRoute = KdsRouteImport.update({
 const JurorRoute = JurorRouteImport.update({
   id: '/juror',
   path: '/juror',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const JudgesRoute = JudgesRouteImport.update({
+  id: '/judges',
+  path: '/judges',
   getParentRoute: () => rootRouteImport,
 } as any)
 const GdprRoute = GdprRouteImport.update({
@@ -343,6 +349,7 @@ export interface FileRoutesByFullPath {
   '/display': typeof DisplayRoute
   '/driver': typeof DriverRoute
   '/gdpr': typeof GdprRoute
+  '/judges': typeof JudgesRoute
   '/juror': typeof JurorRoute
   '/kds': typeof KdsRoute
   '/menu': typeof MenuRoute
@@ -398,6 +405,7 @@ export interface FileRoutesByTo {
   '/display': typeof DisplayRoute
   '/driver': typeof DriverRoute
   '/gdpr': typeof GdprRoute
+  '/judges': typeof JudgesRoute
   '/juror': typeof JurorRoute
   '/kds': typeof KdsRoute
   '/menu': typeof MenuRoute
@@ -454,6 +462,7 @@ export interface FileRoutesById {
   '/display': typeof DisplayRoute
   '/driver': typeof DriverRoute
   '/gdpr': typeof GdprRoute
+  '/judges': typeof JudgesRoute
   '/juror': typeof JurorRoute
   '/kds': typeof KdsRoute
   '/menu': typeof MenuRoute
@@ -511,6 +520,7 @@ export interface FileRouteTypes {
     | '/display'
     | '/driver'
     | '/gdpr'
+    | '/judges'
     | '/juror'
     | '/kds'
     | '/menu'
@@ -566,6 +576,7 @@ export interface FileRouteTypes {
     | '/display'
     | '/driver'
     | '/gdpr'
+    | '/judges'
     | '/juror'
     | '/kds'
     | '/menu'
@@ -621,6 +632,7 @@ export interface FileRouteTypes {
     | '/display'
     | '/driver'
     | '/gdpr'
+    | '/judges'
     | '/juror'
     | '/kds'
     | '/menu'
@@ -677,6 +689,7 @@ export interface RootRouteChildren {
   DisplayRoute: typeof DisplayRoute
   DriverRoute: typeof DriverRoute
   GdprRoute: typeof GdprRoute
+  JudgesRoute: typeof JudgesRoute
   JurorRoute: typeof JurorRoute
   KdsRoute: typeof KdsRoute
   MenuRoute: typeof MenuRoute
@@ -783,6 +796,13 @@ declare module '@tanstack/react-router' {
       path: '/juror'
       fullPath: '/juror'
       preLoaderRoute: typeof JurorRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/judges': {
+      id: '/judges'
+      path: '/judges'
+      fullPath: '/judges'
+      preLoaderRoute: typeof JudgesRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/gdpr': {
@@ -1109,6 +1129,7 @@ const rootRouteChildren: RootRouteChildren = {
   DisplayRoute: DisplayRoute,
   DriverRoute: DriverRoute,
   GdprRoute: GdprRoute,
+  JudgesRoute: JudgesRoute,
   JurorRoute: JurorRoute,
   KdsRoute: KdsRoute,
   MenuRoute: MenuRoute,
@@ -1154,13 +1175,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
