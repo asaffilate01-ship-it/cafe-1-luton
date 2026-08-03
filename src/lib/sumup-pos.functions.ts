@@ -244,19 +244,37 @@ export const syncSumupPos = createServerFn({ method: "POST" })
     const { data: isStaff } = await context.supabase.rpc("has_role", { _user_id: context.userId, _role: "staff" });
     if (!isAdmin && !isStaff) throw new Error("Forbidden");
 
-    // Pull last 24h of transactions
+    // Pull the last 24h of transactions, NEWEST FIRST and paginated. SumUp
+    // returns the oldest rows of the window by default, so a busy day pushes
+    // the newest sales off the first page and they never reach the kitchen.
     const since = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
-    const url = new URL("https://api.sumup.com/v0.1/me/transactions/history");
-    url.searchParams.set("oldest_time", since);
-    url.searchParams.set("limit", "50");
-
-    const res = await fetch(url.toString(), { headers: { Authorization: `Bearer ${key}` } });
-    if (!res.ok) {
-      const body = await res.text();
-      return { imported: 0, skipped: 0, error: `SumUp ${res.status}: ${body.slice(0, 200)}` };
+    const base = "https://api.sumup.com/v0.1/me/transactions/history";
+    const items: SumupTxn[] = [];
+    let next: string | null =
+      `?oldest_time=${encodeURIComponent(since)}&limit=100&order=descending`;
+    for (let page = 0; page < 5 && next; page++) {
+      const res: Response = await fetch(`${base}${next}`, {
+        headers: { Authorization: `Bearer ${key}` },
+      });
+      if (!res.ok) {
+        const body = await res.text();
+        if (page === 0) {
+          return { imported: 0, skipped: 0, error: `SumUp ${res.status}: ${body.slice(0, 200)}` };
+        }
+        break;
+      }
+      const payload = (await res.json()) as
+        | { items?: SumupTxn[]; links?: Array<{ href?: string; rel?: string }> }
+        | SumupTxn[];
+      if (Array.isArray(payload)) {
+        items.push(...payload);
+        next = null;
+      } else {
+        items.push(...(payload.items ?? []));
+        const href = payload.links?.find((l) => l.rel === "next")?.href;
+        next = href ? (href.startsWith("?") ? href : `?${href}`) : null;
+      }
     }
-    const payload = (await res.json()) as { items?: SumupTxn[] } | SumupTxn[];
-    const items: SumupTxn[] = Array.isArray(payload) ? payload : (payload.items ?? []);
 
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
