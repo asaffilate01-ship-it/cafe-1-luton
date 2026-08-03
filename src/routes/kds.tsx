@@ -691,6 +691,11 @@ function KDS() {
                       className={`mt-1.5 h-2.5 w-2.5 shrink-0 rounded-full ${i.cook ? "bg-blue-600" : "bg-amber-400"}`}
                     />
                     <span className="min-w-0 flex-1 font-semibold">
+                      {i.category && (
+                        <span className="block text-[10px] font-black uppercase tracking-wider text-muted-foreground">
+                          {i.category}
+                        </span>
+                      )}
                       <span className="font-black text-primary">{i.qty}×</span> {i.name}
                       {station === "ALL" && i.station_code && (
                         <span className="ml-1 align-middle rounded bg-slate-200 px-1 py-px text-[10px] font-bold text-slate-700">
