@@ -84,6 +84,19 @@ function whenLabel(o: { schedule_mode: string | null; scheduled_for: string | nu
   return "ASAP";
 }
 
+/** Note strip text — later orders lead with the requested time. */
+function noteText(o: {
+  schedule_mode: string | null;
+  scheduled_for: string | null;
+  delivery_notes: string | null;
+}) {
+  const when = whenLabel(o);
+  const parts: string[] = [];
+  if (when !== "ASAP") parts.push(`ORDER FOR ${when}`);
+  if (o.delivery_notes) parts.push(o.delivery_notes);
+  return parts.join(" · ");
+}
+
 export const Route = createFileRoute("/kds")({
   head: () => ({
     meta: [
@@ -685,16 +698,16 @@ function KDS() {
                   {t.address_line2 && <p className="font-semibold">{t.address_line2}</p>}
                   {t.city && <p className="text-muted-foreground">{t.city}</p>}
                   {t.customer_phone && <p className="mt-0.5 font-bold">☎ {t.customer_phone}</p>}
-                  {t.delivery_notes && (
+                  {(t.delivery_notes || whenLabel(t) !== "ASAP") && (
                     <p className="mt-0.5 rounded bg-amber-100 px-1.5 py-0.5 text-[10px] font-semibold text-amber-900">
-                      NOTE: {t.delivery_notes}
+                      NOTE: {noteText(t)}
                     </p>
                   )}
                 </div>
               )}
-              {t.type !== "delivery" && t.delivery_notes && (
+              {t.type !== "delivery" && (t.delivery_notes || whenLabel(t) !== "ASAP") && (
                 <p className="mt-1.5 rounded-lg border-2 border-amber-400 bg-amber-100 px-2 py-1 text-base font-black uppercase leading-tight text-amber-900">
-                  NOTE: {t.delivery_notes}
+                  NOTE: {noteText(t)}
                 </p>
               )}
               <ul
