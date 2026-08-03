@@ -292,14 +292,17 @@ function Checkout() {
       if (!res.found) {
         setVoucher(null);
         setVoucherError(
-          ("message" in res && res.message) || "That voucher code isn't recognised or is inactive.",
+          ("message" in res && res.message) ||
+            "Sorry, that voucher code isn't valid. Please double-check it and try again.",
         );
       } else if (!res.usable) {
         setVoucher(null);
-        setVoucherError(res.message ?? "That code can't be used today.");
+        setVoucherError(
+          res.message ?? "Sorry, that voucher code can't be used today. Please check with the Jury Officer.",
+        );
       } else if (res.remaining_cents <= 0) {
         setVoucher(null);
-        setVoucherError("This voucher has no allowance left for today.");
+        setVoucherError("Sorry, this voucher has no allowance left for today.");
       } else {
         setVoucher({
           code: res.code,
@@ -308,7 +311,7 @@ function Checkout() {
         });
       }
     } catch {
-      setVoucherError("Couldn't check the voucher code. Please try again.");
+      setVoucherError("Sorry, we couldn't check that voucher code just now. Please try again.");
     } finally {
       setVoucherBusy(false);
     }
@@ -350,7 +353,9 @@ function Checkout() {
         },
       });
       if (!row.valid) {
-        toast.error(row.message || "That code isn't valid.");
+        toast.error(
+          row.message || "Sorry, that promo code isn't valid. Please check it and try again.",
+        );
         setPromo(null);
         return;
       }
