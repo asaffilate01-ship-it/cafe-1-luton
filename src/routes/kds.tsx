@@ -530,7 +530,7 @@ function KDS() {
                 : "bg-slate-800 text-white";
           const cook = t.needsCooking;
           const scheduledAt =
-            t.schedule_mode === "scheduled" && t.scheduled_for ? new Date(t.scheduled_for) : null;
+            t.scheduled_for && t.schedule_mode !== "asap" ? new Date(t.scheduled_for) : null;
           const minsUntilDue = scheduledAt
             ? Math.round((scheduledAt.getTime() - now) / 60000)
             : null;
