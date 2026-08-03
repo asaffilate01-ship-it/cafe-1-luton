@@ -84,6 +84,19 @@ function whenLabel(o: { schedule_mode: string | null; scheduled_for: string | nu
   return "ASAP";
 }
 
+/** Note strip text — later orders lead with the requested time. */
+function noteText(o: {
+  schedule_mode: string | null;
+  scheduled_for: string | null;
+  delivery_notes: string | null;
+}) {
+  const when = whenLabel(o);
+  const parts: string[] = [];
+  if (when !== "ASAP") parts.push(`ORDER FOR ${when}`);
+  if (o.delivery_notes) parts.push(o.delivery_notes);
+  return parts.join(" · ");
+}
+
 export const Route = createFileRoute("/kds")({
   head: () => ({
     meta: [
