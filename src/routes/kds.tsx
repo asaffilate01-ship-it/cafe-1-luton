@@ -515,6 +515,11 @@ function KDS() {
                 ? "bg-amber-500 text-white"
                 : "bg-slate-800 text-white";
           const cook = t.needsCooking;
+          const scheduledAt =
+            t.schedule_mode === "scheduled" && t.scheduled_for ? new Date(t.scheduled_for) : null;
+          const minsUntilDue = scheduledAt
+            ? Math.round((scheduledAt.getTime() - now) / 60000)
+            : null;
           return (
             <div
               key={t.id}
@@ -527,6 +532,19 @@ function KDS() {
               >
                 {cook ? "Cook / hot food" : "No cooking needed"}
               </div>
+              {scheduledAt && (
+                <div className="-mx-3 -mt-2 mb-2 bg-violet-700 px-3 py-1.5 text-center text-white">
+                  <p className="font-display text-base font-black uppercase leading-none tracking-[0.14em]">
+                    Later order · for{" "}
+                    {scheduledAt.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                  </p>
+                  <p className="mt-0.5 text-[10px] font-bold uppercase tracking-wide">
+                    {minsUntilDue !== null && minsUntilDue > 0
+                      ? `Do not start yet · due in ${minsUntilDue} min`
+                      : "Due now · start this order"}
+                  </p>
+                </div>
+              )}
               <div className="flex items-start justify-between gap-2">
                 <p className="font-display text-lg font-bold leading-none">#{t.order_number}</p>
                 <div className="flex flex-wrap items-center justify-end gap-1">
