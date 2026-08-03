@@ -310,6 +310,7 @@ function Till() {
   const closeShift = useServerFn(closeTillShift);
   const cashEvent = useServerFn(recordTillCashEvent);
   const getMenuItems = useServerFn(getStaffMenuItems);
+  const scheduleOrder = useServerFn(setCounterOrderSchedule);
 
   const [cats, setCats] = useState<Cat[]>([]);
   const [items, setItems] = useState<Item[]>([]);
@@ -321,6 +322,8 @@ function Till() {
   const [name, setName] = useState(draft.name);
   const [type, setType] = useState<Fulfilment>(draft.type);
   const [table, setTable] = useState(draft.table);
+  // "Later" pre-orders taken at the counter — HH:MM for today, blank = ASAP.
+  const [laterTime, setLaterTime] = useState("");
   const [side, setSide] = useState<Side>(() => {
     if (typeof window === "undefined") return "public";
     return (window.localStorage.getItem("cafe1-pos-side") as Side) || "public";
