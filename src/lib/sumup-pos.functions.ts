@@ -14,7 +14,16 @@ type SumupTxn = {
   payment_type?: string;
   entry_mode?: string;
   card?: { last_4_digits?: string; type?: string };
-  products?: Array<{ name: string; description?: string; quantity?: number; price?: number }>;
+  products?: Array<{
+    name: string;
+    description?: string;
+    quantity?: number;
+    price?: number;
+    /** SumUp's product catalogue category; the field name varies by product. */
+    category?: string;
+    category_name?: string;
+    categories?: Array<string | { name?: string }>;
+  }>;
   internal_id?: string | number;
   tip_amount?: number;
   // Terminal / reader identity varies by SumUp product; we probe a few shapes.
@@ -27,6 +36,14 @@ type SumupTxn = {
   /** PAYMENT | REFUND */
   type?: string;
 };
+
+/** Reads whichever category field this SumUp basket line happens to carry. */
+function sumupCategory(p: NonNullable<SumupTxn["products"]>[number]): string | null {
+  const first = p.categories?.[0];
+  const fromList = typeof first === "string" ? first : first?.name;
+  const label = (p.category ?? p.category_name ?? fromList ?? "").trim();
+  return label || null;
+}
 
 /** A sale is void when SumUp cancelled/failed it, or the full amount was refunded. */
 function isVoidTxn(t: Pick<SumupTxn, "status" | "amount" | "refunded_amount">): "refunded" | "cancelled" | null {
@@ -232,9 +249,29 @@ export const syncSumupPos = createServerFn({ method: "POST" })
 
       if (insErr || !inserted) { skipped++; continue; }
 
+      // Our own menu is the fallback source of a category when SumUp's basket
+      // doesn't carry one, matched on the product name the till sent.
+      const { data: menuRows } = await supabaseAdmin
+        .from("menu_items")
+        .select("id, name, menu_categories(name)");
+      const menuByName = new Map<string, { id: string; category: string | null }>();
+      for (const m of (menuRows ?? []) as Array<{
+        id: string;
+        name: string;
+        menu_categories: { name: string } | null;
+      }>) {
+        menuByName.set(m.name.trim().toLowerCase(), {
+          id: m.id,
+          category: m.menu_categories?.name ?? null,
+        });
+      }
+
       const lines = (products && products.length > 0)
         ? products.map((p) => ({
             order_id: inserted.id,
+            menu_item_id: menuByName.get((p.name ?? "").trim().toLowerCase())?.id ?? null,
+            category_label: sumupCategory(p) ??
+              menuByName.get((p.name ?? "").trim().toLowerCase())?.category ?? null,
             name: p.name || "Item",
             qty: Math.max(1, Number(p.quantity ?? 1)),
             unit_price_cents: Math.round(Number(p.price ?? 0) * 100),
@@ -242,6 +279,8 @@ export const syncSumupPos = createServerFn({ method: "POST" })
           }))
         : [{
             order_id: inserted.id,
+            menu_item_id: null as string | null,
+            category_label: null as string | null,
             name: t.product_summary || "SumUp POS sale",
             qty: 1,
             unit_price_cents: totalCents,

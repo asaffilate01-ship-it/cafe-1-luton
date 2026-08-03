@@ -976,6 +976,7 @@ export type Database = {
       }
       order_items: {
         Row: {
+          category_label: string | null
           created_at: string
           id: string
           menu_item_id: string | null
@@ -986,6 +987,7 @@ export type Database = {
           unit_price_cents: number
         }
         Insert: {
+          category_label?: string | null
           created_at?: string
           id?: string
           menu_item_id?: string | null
@@ -996,6 +998,7 @@ export type Database = {
           unit_price_cents: number
         }
         Update: {
+          category_label?: string | null
           created_at?: string
           id?: string
           menu_item_id?: string | null
