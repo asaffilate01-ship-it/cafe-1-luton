@@ -25,6 +25,7 @@ import { useWakeLock } from "@/hooks/use-wake-lock";
 import { syncSumupPos } from "@/lib/sumup-pos.functions";
 import { orderCode } from "@/lib/order-code";
 import { getStaffMenuItems } from "@/lib/menu-operations.functions";
+import { fuzzyMenuKey, looksCooked } from "@/lib/cooking";
 
 type Item = {
   id: string;
@@ -190,14 +191,23 @@ function KDS() {
         byId.set(m.id, meta);
         byName.set(m.name.trim().toLowerCase(), meta);
       }
-      const metadata = (item: Item): MenuMeta =>
-        (item.menu_item_id ? byId.get(item.menu_item_id) : undefined) ??
-        byName.get(item.name.trim().toLowerCase()) ?? {
-          needs_cooking: false,
-          station_code: "PASS",
+      const nameKeys = Array.from(byName.keys());
+      const metadata = (item: Item): MenuMeta => {
+        const direct =
+          (item.menu_item_id ? byId.get(item.menu_item_id) : undefined) ??
+          byName.get(item.name.trim().toLowerCase());
+        if (direct) return direct;
+        // POS-typed names rarely match exactly — fuzzy match, then keywords.
+        const fuzzy = fuzzyMenuKey(item.name, nameKeys);
+        if (fuzzy) return byName.get(fuzzy)!;
+        const cooked = looksCooked(item.name);
+        return {
+          needs_cooking: cooked,
+          station_code: cooked ? "HOT" : "PASS",
           prep_seconds: 0,
           category: null,
         };
+      };
       const grouped: Ticket[] = live.map((o) => {
         const its = ((items ?? []) as Item[])
           .filter((i) => i.order_id === o.id)
