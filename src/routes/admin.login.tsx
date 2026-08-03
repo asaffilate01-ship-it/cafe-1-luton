@@ -33,7 +33,8 @@ function AdminLogin() {
   const [error, setError] = useState("");
 
   function homeForRoles(rs: string[]) {
-    if (rs.includes("admin") || rs.includes("staff")) return "/staff";
+    if (rs.includes("admin")) return "/admin";
+    if (rs.includes("staff")) return "/staff";
     if (rs.includes("driver")) return "/driver";
     return "/staff";
   }
