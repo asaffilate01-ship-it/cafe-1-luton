@@ -281,6 +281,7 @@ function Checkout() {
     allocated_cents: number;
     attendance_required: boolean;
     attendance_verified: boolean;
+    opted_in: boolean;
   }>(null);
   const [beverageIds, setBeverageIds] = useState<string[]>([]);
   const [voucherBusy, setVoucherBusy] = useState(false);
@@ -321,6 +322,7 @@ function Checkout() {
           allocated_cents: res.allocated_cents,
           attendance_required: res.attendance_required,
           attendance_verified: res.attendance_verified,
+          opted_in: res.opted_in,
         });
       }
     } catch {
@@ -340,7 +342,7 @@ function Checkout() {
     (s, i) => s + (beverageIds.includes(i.menu_item_id) ? 0 : i.price_cents * i.qty),
     0,
   );
-  const jurorDiscount = voucher
+  const jurorDiscount = voucher?.opted_in
     ? jurorFoodDiscount(Math.max(0, grossTotal - voucherApplied), foodSubtotal)
     : 0;
   const total = Math.max(0, grossTotal - voucherApplied - jurorDiscount);
@@ -1000,6 +1002,12 @@ function Checkout() {
                 <span>Juror {JUROR_FOOD_DISCOUNT_PERCENT}% off food</span>
                 <span>−{money(jurorDiscount)}</span>
               </div>
+            )}
+            {voucher && !voucher.opted_in && (
+              <p className="text-xs text-muted-foreground">
+                The {JUROR_FOOD_DISCOUNT_PERCENT}% food discount is for scheme members only — opt in
+                on the juror page or by scanning the QR code in your jury room to qualify.
+              </p>
             )}
             {voucherApplied > 0 && (
               <div className="flex justify-between text-primary">

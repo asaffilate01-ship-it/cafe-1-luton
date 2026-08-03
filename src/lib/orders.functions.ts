@@ -280,6 +280,7 @@ export const createOrder = createServerFn({ method: "POST" })
     let voucher_holder_id: string | null = null;
     let voucher_holder_name: string | null = null;
     let voucher_reservation_token: string | null = null;
+    let voucher_opted_in = false;
     {
       const vCode = (data.voucher_code || "").trim();
       if (vCode) {
@@ -307,6 +308,14 @@ export const createOrder = createServerFn({ method: "POST" })
         voucher_cents = v.reserved_cents;
         voucher_holder_id = v.holder_id;
         voucher_holder_name = v.holder_name ?? v.voucher_code;
+        // The 10% food discount is a scheme member benefit: only jurors who
+        // have opted into the scheme qualify. The voucher itself still works.
+        const { data: holder } = await supabaseAdmin
+          .from("voucher_holders")
+          .select("opted_in_at")
+          .eq("id", v.holder_id)
+          .maybeSingle();
+        voucher_opted_in = !!holder?.opted_in_at;
       }
     }
 
@@ -326,7 +335,7 @@ export const createOrder = createServerFn({ method: "POST" })
     const { JUROR_FOOD_DISCOUNT_PERCENT } = await import("./juror");
     let juror_discount = 0;
     let payable = Math.max(0, total - voucher_cents);
-    if (voucher_holder_id && payable > 0 && food_subtotal > 0) {
+    if (voucher_holder_id && voucher_opted_in && payable > 0 && food_subtotal > 0) {
       juror_discount = Math.round(
         (Math.min(food_subtotal, payable) * JUROR_FOOD_DISCOUNT_PERCENT) / 100,
       );

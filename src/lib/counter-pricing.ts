@@ -4,6 +4,8 @@ export function calculateCounterDue(input: {
   subtotalCents: number;
   foodSubtotalCents: number;
   voucherRemainingCents?: number;
+  /** Scheme members only: the 10% food discount needs an opted-in juror. */
+  optedIn?: boolean;
 }) {
   const subtotalCents = Math.max(0, Math.trunc(input.subtotalCents));
   const foodSubtotalCents = Math.min(
@@ -15,7 +17,7 @@ export function calculateCounterDue(input: {
     Math.max(0, Math.trunc(input.voucherRemainingCents ?? 0)),
   );
   const discountCents =
-    input.voucherRemainingCents === undefined
+    input.voucherRemainingCents === undefined || input.optedIn === false
       ? 0
       : jurorFoodDiscount(subtotalCents - voucherCents, foodSubtotalCents);
   return {
