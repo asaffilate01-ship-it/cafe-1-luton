@@ -78,16 +78,18 @@ export function useRoles(user: User | null) {
       .from("user_roles")
       .select("role")
       .eq("user_id", user.id)
-      .then(({ data }) => {
-        if (!active) return;
-        setRoles(((data ?? []).map((r) => r.role) as Role[]) ?? []);
-        setLoading(false);
-      })
-      .catch(() => {
-        if (!active) return;
-        setRoles([]);
-        setLoading(false);
-      });
+      .then(
+        ({ data }) => {
+          if (!active) return;
+          setRoles(((data ?? []).map((r) => r.role) as Role[]) ?? []);
+          setLoading(false);
+        },
+        () => {
+          if (!active) return;
+          setRoles([]);
+          setLoading(false);
+        },
+      );
     return () => {
       active = false;
     };
