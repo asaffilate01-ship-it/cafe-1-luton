@@ -33,6 +33,7 @@ export const verifyJurorAttendance = createServerFn({ method: "POST" })
       .object({
         token: z.string().regex(/^[a-f0-9]{48}$/),
         voucher_code: z.string().trim().min(4).max(40),
+        voucher_pin: z.string().regex(/^\d{6}$/),
       })
       .parse(value),
   )
@@ -47,9 +48,10 @@ export const verifyJurorAttendance = createServerFn({ method: "POST" })
       message?: string;
       room?: string;
       verified_until?: string;
-    }>(supabaseAdmin, "cafe1_consume_juror_challenge", {
+    }>(supabaseAdmin, "cafe1_consume_juror_challenge_v2", {
       _token_hash: await hashToken(data.token),
       _voucher_code: data.voucher_code,
+      _voucher_pin: data.voucher_pin,
     });
     await recordAttempt("voucher", identity, result.ok);
     return result;

@@ -273,10 +273,14 @@ function Checkout() {
   const grossTotal = Math.max(0, subtotal - discount) + delivery;
   // Court voucher: recognised from an anonymous code the court gives the customer.
   const [voucherInput, setVoucherInput] = useState("");
+  const [voucherPin, setVoucherPin] = useState("");
   const [voucher, setVoucher] = useState<null | {
     code: string;
+    pin: string;
     remaining_cents: number;
     allocated_cents: number;
+    attendance_required: boolean;
+    attendance_verified: boolean;
   }>(null);
   const [beverageIds, setBeverageIds] = useState<string[]>([]);
   const [voucherBusy, setVoucherBusy] = useState(false);
@@ -284,11 +288,11 @@ function Checkout() {
   const [voucherError, setVoucherError] = useState<string | null>(null);
   async function applyVoucher() {
     const code = voucherInput.trim().toUpperCase();
-    if (!code) return;
+    if (!code || !/^\d{6}$/.test(voucherPin)) return;
     setVoucherBusy(true);
     setVoucherError(null);
     try {
-      const res = await findVoucher({ data: { code } });
+      const res = await findVoucher({ data: { code, pin: voucherPin } });
       if (!res.found) {
         setVoucher(null);
         setVoucherError(
@@ -298,16 +302,25 @@ function Checkout() {
       } else if (!res.usable) {
         setVoucher(null);
         setVoucherError(
-          res.message ?? "Sorry, that voucher code can't be used today. Please check with the Jury Officer.",
+          res.message ??
+            "Sorry, that voucher code can't be used today. Please check with the Jury Officer.",
         );
       } else if (res.remaining_cents <= 0) {
         setVoucher(null);
         setVoucherError("Sorry, this voucher has no allowance left for today.");
+      } else if (res.attendance_required && !res.attendance_verified) {
+        setVoucher(null);
+        setVoucherError(
+          "Scan today's rotating attendance QR in your jury room before using the voucher online.",
+        );
       } else {
         setVoucher({
           code: res.code,
+          pin: voucherPin,
           remaining_cents: res.remaining_cents,
           allocated_cents: res.allocated_cents,
+          attendance_required: res.attendance_required,
+          attendance_verified: res.attendance_verified,
         });
       }
     } catch {
@@ -410,6 +423,7 @@ function Checkout() {
           account_code: tabSession?.code,
           promo_code: promo?.code,
           voucher_code: voucher?.code,
+          voucher_pin: voucher?.pin,
           jury_room: voucher && juryRoom.trim() ? juryRoom.trim() : undefined,
         },
       });
@@ -623,38 +637,38 @@ function Checkout() {
               </p>
             </div>
           ) : (
-          <div className="rounded-2xl border border-border bg-card p-5">
-            <p className="font-semibold">Your details</p>
-            <div className="mt-3 grid gap-3 sm:grid-cols-2">
-              <input
-                required
-                placeholder="Contact person's name"
-                value={form.customer_name}
-                onChange={(e) => setForm({ ...form, customer_name: e.target.value })}
-                className="h-11 rounded-xl border border-border bg-background px-4"
-              />
-              <input
-                required={!voucher}
-                placeholder={voucher ? "Phone (optional)" : "Phone"}
-                value={form.customer_phone}
-                onChange={(e) => setForm({ ...form, customer_phone: e.target.value })}
-                className="h-11 rounded-xl border border-border bg-background px-4"
-              />
-              <input
-                type="email"
-                placeholder="Email (optional)"
-                value={form.customer_email}
-                onChange={(e) => setForm({ ...form, customer_email: e.target.value })}
-                className="h-11 rounded-xl border border-border bg-background px-4 sm:col-span-2"
-              />
-              {voucher && (
-                <p className="text-xs text-muted-foreground sm:col-span-2">
-                  With a court voucher code, only your name is required so we can label your order.
-                  Phone and email are optional.
-                </p>
-              )}
+            <div className="rounded-2xl border border-border bg-card p-5">
+              <p className="font-semibold">Your details</p>
+              <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                <input
+                  required
+                  placeholder="Contact person's name"
+                  value={form.customer_name}
+                  onChange={(e) => setForm({ ...form, customer_name: e.target.value })}
+                  className="h-11 rounded-xl border border-border bg-background px-4"
+                />
+                <input
+                  required={!voucher}
+                  placeholder={voucher ? "Phone (optional)" : "Phone"}
+                  value={form.customer_phone}
+                  onChange={(e) => setForm({ ...form, customer_phone: e.target.value })}
+                  className="h-11 rounded-xl border border-border bg-background px-4"
+                />
+                <input
+                  type="email"
+                  placeholder="Email (optional)"
+                  value={form.customer_email}
+                  onChange={(e) => setForm({ ...form, customer_email: e.target.value })}
+                  className="h-11 rounded-xl border border-border bg-background px-4 sm:col-span-2"
+                />
+                {voucher && (
+                  <p className="text-xs text-muted-foreground sm:col-span-2">
+                    With a court voucher code, only your name is required so we can label your
+                    order. Phone and email are optional.
+                  </p>
+                )}
+              </div>
             </div>
-          </div>
           )}
 
           {mode === "delivery" && (
@@ -839,6 +853,7 @@ function Checkout() {
                     onClick={() => {
                       setVoucher(null);
                       setVoucherInput("");
+                      setVoucherPin("");
                       setVoucherError(null);
                     }}
                     className="text-xs font-semibold text-primary underline"
@@ -862,7 +877,7 @@ function Checkout() {
               )}
               {voucher ? null : (
                 <>
-                  <div className="mt-2 flex gap-2">
+                  <div className="mt-2 grid gap-2 sm:grid-cols-[1fr_110px_auto]">
                     <input
                       value={voucherInput}
                       onChange={(e) => {
@@ -872,10 +887,23 @@ function Checkout() {
                       placeholder="Enter court code"
                       className="h-10 flex-1 rounded-lg border border-border bg-background px-3 font-mono text-sm uppercase"
                     />
+                    <input
+                      aria-label="Six-digit voucher PIN"
+                      value={voucherPin}
+                      onChange={(e) => {
+                        setVoucherPin(e.target.value.replace(/\D/g, "").slice(0, 6));
+                        setVoucherError(null);
+                      }}
+                      inputMode="numeric"
+                      autoComplete="one-time-code"
+                      maxLength={6}
+                      placeholder="PIN"
+                      className="h-10 rounded-lg border border-border bg-background px-3 text-center font-mono text-sm tracking-widest"
+                    />
                     <button
                       type="button"
                       onClick={applyVoucher}
-                      disabled={voucherBusy || !voucherInput.trim()}
+                      disabled={voucherBusy || !voucherInput.trim() || voucherPin.length !== 6}
                       className="h-10 rounded-lg bg-primary px-4 text-sm font-semibold text-primary-foreground hover:bg-primary-hover disabled:opacity-50"
                     >
                       Apply
@@ -883,8 +911,8 @@ function Checkout() {
                   </div>
                   {voucherError && <p className="mt-1 text-xs text-destructive">{voucherError}</p>}
                   <p className="mt-1 text-xs text-muted-foreground">
-                    If the court issued you a voucher code, enter it here to deduct today's
-                    allowance.
+                    Enter the anonymous code and separate six-digit PIN from your juror slip. For
+                    online use, confirm attendance using today&apos;s jury-room QR first.
                   </p>
                 </>
               )}
@@ -959,6 +987,7 @@ function Checkout() {
                   onClick={() => {
                     setVoucher(null);
                     setVoucherInput("");
+                    setVoucherPin("");
                   }}
                   className="mt-2 text-xs font-semibold text-primary underline"
                 >

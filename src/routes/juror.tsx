@@ -7,6 +7,7 @@ import { verifyJurorAttendance } from "@/lib/juror-attendance.functions";
 import {
   JUROR_CODE_KEY,
   JUROR_DAILY_ALLOWANCE_CENTS,
+  JUROR_EXTENDED_DAY_ALLOWANCE_CENTS,
   JUROR_FOOD_DISCOUNT_PERCENT,
 } from "@/lib/juror";
 import { money } from "@/lib/format";
@@ -65,6 +66,7 @@ function JurorPage() {
   const verifyAttendance = useServerFn(verifyJurorAttendance);
 
   const [input, setInput] = useState(codeParam ?? "");
+  const [pin, setPin] = useState("");
   const [balance, setBalance] = useState<Balance | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -79,11 +81,11 @@ function JurorPage() {
 
   async function check(raw?: string) {
     const code = (raw ?? input).trim().toUpperCase();
-    if (!code) return;
+    if (!code || !/^\d{6}$/.test(pin)) return;
     setBusy(true);
     setError(null);
     try {
-      const res = await lookup({ data: { code } });
+      const res = await lookup({ data: { code, pin } });
       if (!res.found) {
         setBalance(null);
         setError(
@@ -95,12 +97,14 @@ function JurorPage() {
         if (attendance && !attendanceAttempted.current) {
           attendanceAttempted.current = true;
           const verified = await verifyAttendance({
-            data: { token: attendance, voucher_code: code },
+            data: { token: attendance, voucher_code: code, voucher_pin: pin },
           });
           setAttendanceResult(verified);
-          if (verified.ok)
+          if (verified.ok) {
             toast.success(`Attendance confirmed for ${verified.room ?? "this room"}`);
-          else toast.error(verified.message ?? "This attendance QR could not be verified");
+            const refreshed = await lookup({ data: { code, pin } });
+            if (refreshed.found) setBalance(refreshed);
+          } else toast.error(verified.message ?? "This attendance QR could not be verified");
         }
       }
     } catch {
@@ -116,7 +120,6 @@ function JurorPage() {
     if (typeof window !== "undefined") window.localStorage.removeItem(JUROR_CODE_KEY);
     if (codeParam) {
       setInput(codeParam.toUpperCase());
-      void check(codeParam);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -128,6 +131,7 @@ function JurorPage() {
       const res = await optIn({
         data: {
           code: balance.code,
+          pin,
           source: src === "till" ? "till" : src === "jury_room" ? "jury_room" : "online",
         },
       });
@@ -174,7 +178,7 @@ function JurorPage() {
             >
               Your voucher code
             </label>
-            <div className="mt-2 flex flex-col gap-2 sm:flex-row">
+            <div className="mt-2 grid gap-2 sm:grid-cols-[1fr_150px_auto]">
               <input
                 id="juror-code"
                 value={input}
@@ -188,9 +192,25 @@ function JurorPage() {
                 placeholder="CV-XXXXX-XXXXX"
                 className="h-12 flex-1 rounded-xl border border-border bg-background px-4 font-mono text-lg uppercase tracking-wider outline-none focus:border-primary"
               />
+              <input
+                aria-label="Six-digit voucher PIN"
+                value={pin}
+                onChange={(e) => {
+                  setPin(e.target.value.replace(/\D/g, "").slice(0, 6));
+                  setError(null);
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") void check();
+                }}
+                inputMode="numeric"
+                autoComplete="one-time-code"
+                maxLength={6}
+                placeholder="6-digit PIN"
+                className="h-12 rounded-xl border border-border bg-background px-4 text-center font-mono text-lg tracking-widest outline-none focus:border-primary"
+              />
               <button
                 onClick={() => void check()}
-                disabled={busy || !input.trim()}
+                disabled={busy || !input.trim() || pin.length !== 6}
                 className="inline-flex h-12 items-center justify-center gap-2 rounded-xl bg-primary px-6 font-bold text-primary-foreground disabled:opacity-50"
               >
                 {busy ? (
@@ -264,6 +284,16 @@ function JurorPage() {
                     <CheckCircle2 className="h-3.5 w-3.5" />{" "}
                     {balance.opted_in ? "Opted in" : "Not yet opted in"}
                   </span>
+                  {balance.attendance_required && (
+                    <span
+                      className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 font-semibold ${balance.attendance_verified ? "bg-emerald-100 text-emerald-800" : "bg-amber-100 text-amber-800"}`}
+                    >
+                      <Building2 className="h-3.5 w-3.5" />
+                      {balance.attendance_verified
+                        ? "Attendance confirmed today"
+                        : "Attendance scan required for online use"}
+                    </span>
+                  )}
                 </div>
 
                 {balance.message && (
@@ -350,6 +380,12 @@ function JurorPage() {
               Every redemption records the voucher reference, date, time, receipt number, amount
               redeemed and any balance you paid — so HMCTS receives a single, fully reconciled
               claim.
+            </Card>
+            <Card icon={Clock} title="Long court days">
+              If the Jury Officer confirms that attendance exceeded 10 hours, a manager can raise
+              that day&apos;s food-and-drink allowance to{" "}
+              {money(JUROR_EXTENDED_DAY_ALLOWANCE_CENTS)}. It cannot be increased by the juror or
+              ordinary till staff.
             </Card>
           </div>
         </section>

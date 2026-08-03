@@ -18,10 +18,24 @@ const CounterBasketSchema = z.object({
   table_number: z.string().max(20).optional(),
   pos_terminal: z.enum(["jury", "judge", "public"]),
   voucher_code: z.string().min(1).max(40).optional(),
+  voucher_pin: z
+    .string()
+    .regex(/^\d{6}$/)
+    .optional(),
   items: z.array(CounterLineSchema).min(1).max(60),
 });
 
 type CounterBasket = z.infer<typeof CounterBasketSchema>;
+type CounterOrderResult = {
+  order_id: string;
+  order_number: number;
+  total_cents: number;
+  subtotal_cents: number;
+  voucher_cents: number;
+  voucher_code: string | null;
+  juror_discount_cents: number;
+  payment_status: string;
+};
 
 function rpcArgs(
   data: CounterBasket,
@@ -36,6 +50,7 @@ function rpcArgs(
     _table_number: data.table_number ?? "",
     _terminal: data.pos_terminal,
     _voucher_code: data.voucher_code ?? "",
+    _voucher_pin: data.voucher_pin ?? "",
     _payment_mode: paymentMode,
     _manual_card_reference: manualCardReference,
     _items: data.items,
@@ -79,11 +94,11 @@ export const prepareCounterOrder = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .validator((input: unknown) => CounterBasketSchema.parse(input))
   .handler(async ({ data, context }) => {
-    const { data: rows, error } = await context.supabase.rpc(
-      "prepare_counter_order",
+    const rows = await callOperationsRpc<CounterOrderResult[]>(
+      context.supabase,
+      "prepare_counter_order_secure",
       rpcArgs(data, "reader"),
     );
-    if (error) throw new Error(error.message);
     return firstResult(rows, "Could not prepare that counter order");
   });
 
@@ -107,15 +122,15 @@ export const createCounterOrder = createServerFn({ method: "POST" })
       const { requireManagerMfa } = await import("./elevated-auth.server");
       requireManagerMfa(context.claims);
     }
-    const { data: rows, error } = await context.supabase.rpc(
-      "prepare_counter_order",
+    const rows = await callOperationsRpc<CounterOrderResult[]>(
+      context.supabase,
+      "prepare_counter_order_secure",
       rpcArgs(
         data,
         data.payment_method === "cash" ? "cash" : "manual",
         data.manual_card_reference ?? "",
       ),
     );
-    if (error) throw new Error(error.message);
     return firstResult(rows, "Could not settle that counter order");
   });
 

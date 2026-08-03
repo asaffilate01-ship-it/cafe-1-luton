@@ -43,7 +43,7 @@ function AttendancePage() {
     setBusy(true);
     try {
       setChallenge(await create({ data: { room } }));
-      toast.success("One-time attendance QR created");
+      toast.success("90-second room QR created");
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Could not create QR");
     } finally {
@@ -60,7 +60,8 @@ function AttendancePage() {
           </p>
           <h1 className="mt-1 font-display text-3xl font-bold">Jury-room attendance QR</h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            A short-life, one-time challenge. No juror name, case or trial information is stored.
+            A rotating 90-second room challenge. Each voucher can consume it once; no juror name,
+            case or trial information is stored.
           </p>
         </div>
         <div className="mt-7 grid gap-6 md:grid-cols-[320px_minmax(0,1fr)]">
@@ -79,7 +80,7 @@ function AttendancePage() {
               className="mt-4 inline-flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-primary font-bold text-primary-foreground disabled:opacity-50"
             >
               {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <QrIcon className="h-4 w-4" />}
-              Generate one-time QR
+              Generate rotating QR
             </button>
             <div className="mt-5 space-y-3 text-sm text-muted-foreground">
               <p className="flex gap-2">
@@ -88,7 +89,7 @@ function AttendancePage() {
               </p>
               <p className="flex gap-2">
                 <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0" />
-                Can be consumed only once.
+                Each code + PIN can consume this rotation once.
               </p>
               <p className="flex gap-2">
                 <MapPin className="mt-0.5 h-4 w-4 shrink-0" />
@@ -120,7 +121,7 @@ function AttendancePage() {
                 </p>
                 <p className="mt-1 text-sm text-muted-foreground">
                   The juror scans it with their live camera and confirms their anonymous voucher
-                  code.
+                  code and separate PIN.
                 </p>
               </div>
             )}

@@ -132,6 +132,13 @@ type TillShift = {
   opened_at: string;
   closed_at: string | null;
 };
+type AppliedVoucher = {
+  code: string;
+  pin: string;
+  remaining_cents: number;
+  allocated_cents: number;
+  opted_in: boolean;
+};
 type HeldOrder = {
   id: string;
   label: string;
@@ -165,6 +172,7 @@ type CounterBasketInput = {
   table_number?: string;
   pos_terminal: Side;
   voucher_code?: string;
+  voucher_pin?: string;
   items: Array<{
     menu_item_id: string;
     qty: number;
@@ -354,12 +362,7 @@ function Till() {
   const [lastOrder, setLastOrder] = useState<{ n: number; total: number; id: string } | null>(null);
   const [tendered, setTendered] = useState(0);
   const [showOrder, setShowOrder] = useState(false);
-  const [voucher, setVoucher] = useState<null | {
-    code: string;
-    remaining_cents: number;
-    allocated_cents: number;
-    opted_in: boolean;
-  }>(null);
+  const [voucher, setVoucher] = useState<AppliedVoucher | null>(null);
   const [voucherOpen, setVoucherOpen] = useState(false);
   const [customize, setCustomize] = useState<Item | null>(null);
   const [shift, setShift] = useState<TillShift | null>(null);
@@ -591,7 +594,16 @@ function Till() {
       name,
       type,
       table,
-      voucher,
+      // Never persist a PIN in localStorage. Keep only a marker so retrieval
+      // can require the juror to present the code and PIN again.
+      voucher: voucher
+        ? {
+            code: voucher.code,
+            remaining_cents: voucher.remaining_cents,
+            allocated_cents: voucher.allocated_cents,
+            opted_in: voucher.opted_in,
+          }
+        : null,
     };
     setHeld((current) => [order, ...current].slice(0, 20));
     setLines([]);
@@ -610,7 +622,8 @@ function Till() {
     setName(order.name);
     setType(order.type);
     setTable(order.table);
-    setVoucher(order.voucher);
+    setVoucher(null);
+    if (order.voucher) toast.info("Re-enter the juror code and PIN before completing this order");
     setHeld((current) => current.filter((item) => item.id !== order.id));
     setHeldOpen(false);
   }
@@ -693,6 +706,7 @@ function Till() {
             manual_card_reference: manualCardReference,
             pos_terminal: side,
             voucher_code: voucher?.code,
+            voucher_pin: voucher?.pin,
             items: lines.map((line) => ({
               menu_item_id: line.id,
               qty: line.qty,
@@ -1328,6 +1342,7 @@ function Till() {
             table_number: table.trim() || undefined,
             pos_terminal: side,
             voucher_code: voucher?.code,
+            voucher_pin: voucher?.pin,
             items: lines.map((line) => ({
               menu_item_id: line.id,
               qty: line.qty,
@@ -2225,15 +2240,11 @@ function VoucherModal({
   onApply,
 }: {
   onClose: () => void;
-  onApply: (v: {
-    code: string;
-    remaining_cents: number;
-    allocated_cents: number;
-    opted_in: boolean;
-  }) => void;
+  onApply: (v: AppliedVoucher) => void;
 }) {
   const lookup = useServerFn(lookupVoucher);
   const [code, setCode] = useState("");
+  const [pin, setPin] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const url = typeof window === "undefined" ? "" : `${window.location.origin}/juror?src=till`;
@@ -2244,11 +2255,11 @@ function VoucherModal({
 
   async function apply() {
     const c = code.trim().toUpperCase();
-    if (!c) return;
+    if (!c || !/^\d{6}$/.test(pin)) return;
     setBusy(true);
     setError(null);
     try {
-      const res = await lookup({ data: { code: c } });
+      const res = await lookup({ data: { code: c, pin } });
       if (!res.found) {
         setError(("message" in res && res.message) || "That voucher code isn't recognised.");
       } else if (!res.usable) {
@@ -2258,6 +2269,7 @@ function VoucherModal({
       } else {
         onApply({
           code: res.code,
+          pin,
           remaining_cents: res.remaining_cents,
           allocated_cents: res.allocated_cents,
           opted_in: res.opted_in,
@@ -2281,7 +2293,8 @@ function VoucherModal({
           <p className="font-semibold text-white">Ask the customer to scan</p>
           <p className="mt-1">
             The same QR is on the customer screen. Scanning opts them into the scheme and shows
-            their remaining allowance — {money(JUROR_DAILY_ALLOWANCE_CENTS)} each sitting day, plus{" "}
+            their remaining allowance after they enter the code and separate PIN —{" "}
+            {money(JUROR_DAILY_ALLOWANCE_CENTS)} each sitting day, plus{" "}
             {JUROR_FOOD_DISCOUNT_PERCENT}% off food above it.
           </p>
           <p className="mt-2 inline-flex items-center gap-1.5 text-xs text-white/40">
@@ -2291,9 +2304,9 @@ function VoucherModal({
       </div>
 
       <label className="mt-6 block text-xs font-bold uppercase tracking-widest text-white/50">
-        Or key the code in
+        Or key in the anonymous code and separate PIN
       </label>
-      <div className="mt-2 flex gap-2">
+      <div className="mt-2 grid gap-2 sm:grid-cols-[1fr_120px_auto]">
         <input
           value={code}
           onChange={(e) => {
@@ -2306,9 +2319,25 @@ function VoucherModal({
           placeholder="CV-XXXXX-XXXXX"
           className="h-12 flex-1 rounded-xl border border-white/10 bg-neutral-800 px-4 font-mono text-base uppercase outline-none focus:border-primary"
         />
+        <input
+          aria-label="Six-digit voucher PIN"
+          value={pin}
+          onChange={(e) => {
+            setPin(e.target.value.replace(/\D/g, "").slice(0, 6));
+            setError(null);
+          }}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") void apply();
+          }}
+          inputMode="numeric"
+          autoComplete="off"
+          maxLength={6}
+          placeholder="PIN"
+          className="h-12 rounded-xl border border-white/10 bg-neutral-800 px-4 text-center font-mono text-base tracking-widest outline-none focus:border-primary"
+        />
         <button
           onClick={() => void apply()}
-          disabled={busy || !code.trim()}
+          disabled={busy || !code.trim() || pin.length !== 6}
           className="inline-flex h-12 items-center gap-2 rounded-xl bg-primary px-5 font-bold text-primary-foreground disabled:opacity-50"
         >
           {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Ticket className="h-4 w-4" />}{" "}
