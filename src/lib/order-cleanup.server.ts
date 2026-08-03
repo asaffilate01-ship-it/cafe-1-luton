@@ -3,7 +3,10 @@
  * SumUp checkout is recovered first; only authoritatively unpaid/expired rows
  * are marked abandoned and have their reserved benefits released.
  */
-const UNPAID_TTL_MS = 30 * 60 * 1000;
+// Website/online checkouts are abandoned quickly; counter (reader) payments
+// get longer to reconcile because a terminal can take minutes to respond.
+const WEB_UNPAID_TTL_MS = 5 * 60 * 1000;
+const COUNTER_UNPAID_TTL_MS = 30 * 60 * 1000;
 
 async function reconcileReaderPayments(): Promise<number> {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
@@ -58,12 +61,12 @@ async function reconcileReaderPayments(): Promise<number> {
 export async function purgeStaleUnpaidOrders(): Promise<number> {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
   await reconcileReaderPayments();
-  const cutoff = new Date(Date.now() - UNPAID_TTL_MS).toISOString();
+  const cutoff = new Date(Date.now() - WEB_UNPAID_TTL_MS).toISOString();
 
   const { data: stale } = await supabaseAdmin
     .from("orders")
     .select(
-      "id, source, total_cents, sumup_reference, promo_code, sumup_checkout_id, voucher_holder_id, voucher_cents, customer_id, loyalty_free_drinks_used",
+      "id, source, created_at, total_cents, sumup_reference, promo_code, sumup_checkout_id, voucher_holder_id, voucher_cents, customer_id, loyalty_free_drinks_used",
     )
     .eq("status", "pending_payment")
     .eq("payment_status", "pending")
@@ -72,6 +75,13 @@ export async function purgeStaleUnpaidOrders(): Promise<number> {
 
   let abandoned = 0;
   for (const order of stale ?? []) {
+    // Counter orders keep the longer grace period.
+    if (
+      order.source !== "web" &&
+      Date.now() - new Date(order.created_at).getTime() < COUNTER_UNPAID_TTL_MS
+    ) {
+      continue;
+    }
     if (order.sumup_checkout_id) {
       try {
         const { getSumUpCheckout } = await import("./sumup.server");
