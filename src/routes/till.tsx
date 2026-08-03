@@ -515,6 +515,7 @@ function Till() {
     subtotalCents: total,
     foodSubtotalCents: foodTotal,
     voucherRemainingCents: voucher?.remaining_cents,
+    optedIn: voucher?.opted_in ?? false,
   });
   const voucherApplied = pricing.voucherCents;
   const jurorDiscount = pricing.discountCents;
