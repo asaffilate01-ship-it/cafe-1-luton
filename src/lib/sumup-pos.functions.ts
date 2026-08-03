@@ -315,6 +315,7 @@ export const syncSumupPos = createServerFn({ method: "POST" })
       const cardTail = t.card?.last_4_digits ? ` ••${t.card.last_4_digits}` : "";
       const fulfilment = deriveFulfilment(t, products);
       const posSide = derivePosSide(t, products, mapping);
+      const schedule = deriveSchedule(t, products);
 
       const { data: inserted, error: insErr } = await supabaseAdmin
         .from("orders")
@@ -334,7 +335,8 @@ export const syncSumupPos = createServerFn({ method: "POST" })
           voucher_cents: 0,
           points_earned: 0,
           total_cents: totalCents,
-          schedule_mode: "asap",
+          schedule_mode: schedule.schedule_mode,
+          scheduled_for: schedule.scheduled_for,
           source: "sumup_pos",
           sumup_order_ref: ref,
           sumup_transaction_id: t.id,
