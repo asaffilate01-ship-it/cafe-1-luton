@@ -1,0 +1,380 @@
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { useState } from "react";
+import { SiteHeader, SiteFooter } from "@/components/site-header";
+import { money } from "@/lib/format";
+import {
+  JUROR_DAILY_ALLOWANCE_CENTS,
+  JUROR_FOOD_DISCOUNT_PERCENT,
+  JUROR_EXTENDED_DAY_ALLOWANCE_CENTS,
+} from "@/lib/juror";
+import {
+  ShieldCheck,
+  Ticket,
+  UtensilsCrossed,
+  Printer,
+  FileSpreadsheet,
+  ArrowRight,
+  ArrowLeft,
+  CheckCircle2,
+  Lock,
+  Building2,
+} from "lucide-react";
+
+export const Route = createFileRoute("/juror-demo")({
+  head: () => ({
+    meta: [
+      { title: "Juror Voucher Scheme — Live Walkthrough for the Jury Officer" },
+      {
+        name: "description",
+        content:
+          "A step-by-step demonstration of the Café 1 Juror Voucher Scheme: issuing anonymous codes, opting in, ordering, redeeming the £5.71 daily allowance and the nightly HMCTS claim report.",
+      },
+      { property: "og:title", content: "Juror Voucher Scheme — Live Walkthrough" },
+      {
+        property: "og:description",
+        content:
+          "Seven simulated screens showing the whole juror voucher journey end to end, using demo data only.",
+      },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
+    ],
+  }),
+  component: DemoPage,
+});
+
+const DEMO_CODE = "CV-DEMO-4821-7K9P";
+const DEMO_PIN = "418 302";
+
+type Step = {
+  title: string;
+  who: string;
+  icon: typeof Ticket;
+  say: string;
+  screen: () => React.ReactNode;
+};
+
+const steps: Step[] = [
+  {
+    title: "1. The court issues a code",
+    who: "Jury Officer",
+    icon: Printer,
+    say: "We print a book of numbered slips. You hand them out at induction, exactly like a raffle book, and write the slip number next to the juror's name on your own register. Café 1 never sees that register — no names, no emails, no phone numbers ever reach us.",
+    screen: () => (
+      <div className="mx-auto max-w-sm rounded-2xl border-2 border-dashed border-border bg-white p-6 text-center shadow-sm">
+        <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">
+          St Albans Crown Court · Slip 004
+        </p>
+        <p className="mt-4 font-mono text-xl font-black tracking-wider">{DEMO_CODE}</p>
+        <p className="mt-3 text-xs font-bold uppercase tracking-widest text-muted-foreground">
+          6-digit PIN
+        </p>
+        <p className="font-mono text-2xl font-black tracking-[0.3em]">{DEMO_PIN}</p>
+        <p className="mt-4 text-xs text-muted-foreground">
+          Valid Mon–Fri sitting days · {money(JUROR_DAILY_ALLOWANCE_CENTS)} each day
+        </p>
+      </div>
+    ),
+  },
+  {
+    title: "2. The juror checks the code",
+    who: "Juror, on their phone",
+    icon: Ticket,
+    say: "The juror scans the QR code in the jury room or at the till. They type in the code and the PIN — both are needed, every single time, so a lost slip on its own is useless.",
+    screen: () => (
+      <div className="mx-auto max-w-md rounded-2xl border border-border bg-card p-5 shadow-sm">
+        <p className="text-xs font-black uppercase tracking-widest text-muted-foreground">
+          Your voucher code
+        </p>
+        <div className="mt-2 grid gap-2 sm:grid-cols-[1fr_110px]">
+          <div className="flex h-11 items-center rounded-xl border border-border px-3 font-mono text-sm">
+            {DEMO_CODE}
+          </div>
+          <div className="flex h-11 items-center justify-center rounded-xl border border-border font-mono tracking-widest">
+            ••••••
+          </div>
+        </div>
+        <div className="mt-4 grid grid-cols-3 gap-2 text-center">
+          <Mini label="Allowance" value={money(JUROR_DAILY_ALLOWANCE_CENTS)} />
+          <Mini label="Used today" value={money(0)} />
+          <Mini label="Left today" value={money(JUROR_DAILY_ALLOWANCE_CENTS)} highlight />
+        </div>
+        <p className="mt-3 inline-flex items-center gap-1.5 text-xs text-muted-foreground">
+          <Lock className="h-3.5 w-3.5" /> The code is never saved on the phone.
+        </p>
+      </div>
+    ),
+  },
+  {
+    title: "3. Opting in — one scheme or the other",
+    who: "Juror",
+    icon: ShieldCheck,
+    say: "Opting in is a choice the juror makes once. It means they take their food and drink through Café 1 for the rest of their service and will not claim HMCTS subsistence expenses. It is one or the other — never both, never a mix. Opting in also unlocks the extra 10% off food above the allowance.",
+    screen: () => (
+      <div className="mx-auto max-w-md space-y-3">
+        <div className="rounded-xl border border-amber-300 bg-amber-50 p-4 text-sm text-amber-900">
+          <strong>Please read before opting in.</strong> Joining the voucher scheme means you take
+          your food and drink through Café 1 for the rest of your jury service and{" "}
+          <strong>will not claim HMCTS subsistence expenses</strong> during that time.
+        </div>
+        <div className="flex h-12 items-center justify-center gap-2 rounded-xl bg-primary font-bold text-primary-foreground">
+          <ShieldCheck className="h-4 w-4" /> Opt in — voucher scheme instead of expenses
+        </div>
+        <p className="text-center text-xs text-muted-foreground">
+          The {JUROR_FOOD_DISCOUNT_PERCENT}% food discount is only ever given to opted-in members —
+          the till, the website and the payment engine each re-check it.
+        </p>
+      </div>
+    ),
+  },
+  {
+    title: "4. Ordering from the Juror Menu",
+    who: "Juror",
+    icon: UtensilsCrossed,
+    say: "Every juror can use the Juror Menu, whether or not they opt in. They can collect at the counter, or — if they're sitting in the Magistrates' Court — have it delivered to the jury room at a chosen time. Deliveries only ever go inside the court estate.",
+    screen: () => (
+      <div className="mx-auto max-w-md rounded-2xl border border-border bg-card p-5 text-sm shadow-sm">
+        <p className="font-display text-lg font-black">Your order</p>
+        <Row label="Chicken & rice" value="£5.50" />
+        <Row label="Side salad" value="£1.80" />
+        <Row label="Bottled water" value="£1.20" />
+        <div className="my-3 border-t border-border" />
+        <Row label="Subtotal" value="£8.50" />
+        <Row label={`Voucher (${money(JUROR_DAILY_ALLOWANCE_CENTS)})`} value="−£5.71" green />
+        <Row label="Scheme member 10% off food" value="−£0.16" green />
+        <div className="my-3 border-t border-border" />
+        <Row label="You pay" value="£2.63" bold />
+        <p className="mt-3 inline-flex items-center gap-1.5 text-xs text-muted-foreground">
+          <Building2 className="h-3.5 w-3.5" /> Collection at Café 1, or delivery to Jury Room 2.
+        </p>
+      </div>
+    ),
+  },
+  {
+    title: "5. At the till",
+    who: "Café 1 counter",
+    icon: Ticket,
+    say: "Exactly the same at the counter. Staff key in the code and the juror types the PIN on the customer screen — staff never see it. The allowance comes off automatically and the juror pays only the difference.",
+    screen: () => (
+      <div className="mx-auto max-w-md rounded-2xl border border-border bg-neutral-900 p-5 font-mono text-sm text-white shadow-sm">
+        <p className="text-xs uppercase tracking-widest text-white/60">Café 1 · Till 1 (Jury)</p>
+        <div className="mt-3 space-y-1">
+          <p className="flex justify-between">
+            <span>Subtotal</span>
+            <span>£8.50</span>
+          </p>
+          <p className="flex justify-between text-emerald-400">
+            <span>Juror voucher</span>
+            <span>−£5.71</span>
+          </p>
+          <p className="flex justify-between text-emerald-400">
+            <span>Scheme 10% food</span>
+            <span>−£0.16</span>
+          </p>
+          <p className="mt-2 flex justify-between border-t border-white/20 pt-2 text-lg font-black">
+            <span>DUE</span>
+            <span>£2.63</span>
+          </p>
+        </div>
+      </div>
+    ),
+  },
+  {
+    title: "6. Use it or lose it",
+    who: "The rules, automatically enforced",
+    icon: CheckCircle2,
+    say: "The allowance is per sitting day. Anything unused at close of business disappears — it can never be carried over, saved up or exchanged for cash. Weekends and bank holidays give no allowance at all. If the Jury Officer confirms attendance over 10 hours, a manager can raise that one day to " +
+      "£12.17.",
+    screen: () => (
+      <div className="mx-auto grid max-w-md gap-2 text-sm">
+        <Day label="Monday" used="£5.71 used" ok />
+        <Day label="Tuesday" used="£3.10 used · £2.61 expired at 5pm" ok />
+        <Day label="Saturday" used="No allowance — court not sitting" />
+        <Day label="Wednesday" used={`Long day approved · ${money(JUROR_EXTENDED_DAY_ALLOWANCE_CENTS)}`} ok />
+      </div>
+    ),
+  },
+  {
+    title: "7. The nightly HMCTS claim",
+    who: "Café 1 → HMCTS",
+    icon: FileSpreadsheet,
+    say: "Every night the system produces one reconciled claim line per redemption: voucher code, date, time, receipt number, amount redeemed and anything the juror paid themselves. We only ever claim what was actually spent. If HMCTS ever needs to trace a line back to a person, they match the code against your own register — which is why that register is the only record the court needs to keep.",
+    screen: () => (
+      <div className="mx-auto max-w-lg overflow-hidden rounded-2xl border border-border bg-card text-xs shadow-sm">
+        <div className="grid grid-cols-4 bg-muted px-3 py-2 font-black uppercase tracking-widest">
+          <span>Code</span>
+          <span>Date</span>
+          <span>Receipt</span>
+          <span className="text-right">Claimed</span>
+        </div>
+        {[
+          ["CV-DEMO-4821", "Mon 03", "#10241", "£5.71"],
+          ["CV-DEMO-9134", "Mon 03", "#10247", "£4.20"],
+          ["CV-DEMO-5502", "Mon 03", "#10250", "£5.71"],
+        ].map((r) => (
+          <div key={r[2]} className="grid grid-cols-4 border-t border-border px-3 py-2 font-mono">
+            <span>{r[0]}</span>
+            <span>{r[1]}</span>
+            <span>{r[2]}</span>
+            <span className="text-right font-bold">{r[3]}</span>
+          </div>
+        ))}
+        <div className="grid grid-cols-4 border-t-2 border-primary bg-primary/5 px-3 py-2 font-black">
+          <span className="col-span-3">Total claimed for the day</span>
+          <span className="text-right">£15.62</span>
+        </div>
+      </div>
+    ),
+  },
+];
+
+function DemoPage() {
+  const [i, setI] = useState(0);
+  const step = steps[i];
+  const Icon = step.icon;
+
+  return (
+    <div className="min-h-screen bg-background">
+      <SiteHeader />
+      <main>
+        <section className="border-b border-border bg-primary text-primary-foreground">
+          <div className="mx-auto max-w-4xl px-4 py-10">
+            <span className="inline-flex items-center gap-2 rounded-full bg-white/15 px-4 py-1.5 text-xs font-black uppercase tracking-widest">
+              <ShieldCheck className="h-4 w-4" /> Demonstration · no real data
+            </span>
+            <h1 className="mt-4 font-display text-3xl font-black sm:text-4xl">
+              The whole process, start to finish
+            </h1>
+            <p className="mt-3 max-w-2xl text-primary-foreground/85">
+              Seven screens showing exactly what the Jury Officer, the juror and Café 1 each see.
+              Everything below is simulated — no live voucher, order or claim is created.
+            </p>
+          </div>
+        </section>
+
+        <section className="mx-auto max-w-4xl px-4 py-10">
+          {/* progress */}
+          <div className="flex flex-wrap gap-1.5">
+            {steps.map((s, n) => (
+              <button
+                key={s.title}
+                onClick={() => setI(n)}
+                className={`h-2 flex-1 min-w-8 rounded-full transition-colors ${n <= i ? "bg-primary" : "bg-muted"}`}
+                aria-label={s.title}
+              />
+            ))}
+          </div>
+
+          <div className="mt-6 rounded-3xl border border-border bg-card p-6 shadow-lg sm:p-8">
+            <p className="text-xs font-black uppercase tracking-widest text-muted-foreground">
+              {step.who}
+            </p>
+            <h2 className="mt-1 inline-flex items-center gap-2 font-display text-2xl font-black">
+              <Icon className="h-6 w-6 text-primary" /> {step.title}
+            </h2>
+            <p className="mt-3 max-w-2xl leading-relaxed text-muted-foreground">{step.say}</p>
+
+            <div className="mt-6 rounded-2xl bg-muted/40 p-5 sm:p-8">{step.screen()}</div>
+
+            <div className="mt-6 flex items-center justify-between gap-3">
+              <button
+                onClick={() => setI((n) => Math.max(0, n - 1))}
+                disabled={i === 0}
+                className="inline-flex h-11 items-center gap-2 rounded-xl border border-border px-4 font-bold disabled:opacity-40"
+              >
+                <ArrowLeft className="h-4 w-4" /> Back
+              </button>
+              <span className="text-sm text-muted-foreground">
+                Step {i + 1} of {steps.length}
+              </span>
+              {i < steps.length - 1 ? (
+                <button
+                  onClick={() => setI((n) => Math.min(steps.length - 1, n + 1))}
+                  className="inline-flex h-11 items-center gap-2 rounded-xl bg-primary px-5 font-bold text-primary-foreground"
+                >
+                  Next <ArrowRight className="h-4 w-4" />
+                </button>
+              ) : (
+                <Link
+                  to="/juror"
+                  className="inline-flex h-11 items-center gap-2 rounded-xl bg-primary px-5 font-bold text-primary-foreground"
+                >
+                  Try it for real <ArrowRight className="h-4 w-4" />
+                </Link>
+              )}
+            </div>
+          </div>
+
+          <div className="mt-8 rounded-2xl border border-border bg-card p-5 text-sm text-muted-foreground">
+            <p className="font-display text-base font-bold text-foreground">
+              Want to try it hands-on?
+            </p>
+            <p className="mt-1">
+              Ask Café 1 for a demonstration slip. Demo codes behave exactly like real ones but are
+              marked <strong>DEMO</strong> in every report, so nothing is ever claimed from HMCTS.
+            </p>
+            <div className="mt-3 flex flex-wrap gap-2">
+              <Link
+                to="/juror"
+                className="inline-flex h-10 items-center gap-2 rounded-xl border border-primary px-4 font-bold text-primary"
+              >
+                Juror portal
+              </Link>
+              <Link
+                to="/menu"
+                className="inline-flex h-10 items-center gap-2 rounded-xl border border-border px-4 font-bold"
+              >
+                Juror Menu
+              </Link>
+            </div>
+          </div>
+        </section>
+      </main>
+      <SiteFooter />
+    </div>
+  );
+}
+
+function Mini({ label, value, highlight }: { label: string; value: string; highlight?: boolean }) {
+  return (
+    <div className={`rounded-xl border p-2 ${highlight ? "border-primary bg-primary/5" : "border-border"}`}>
+      <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+        {label}
+      </p>
+      <p className={`font-display text-base font-black ${highlight ? "text-primary" : ""}`}>
+        {value}
+      </p>
+    </div>
+  );
+}
+
+function Row({
+  label,
+  value,
+  green,
+  bold,
+}: {
+  label: string;
+  value: string;
+  green?: boolean;
+  bold?: boolean;
+}) {
+  return (
+    <p
+      className={`flex justify-between py-0.5 ${green ? "text-emerald-700" : ""} ${bold ? "text-lg font-black" : ""}`}
+    >
+      <span>{label}</span>
+      <span className="tabular-nums">{value}</span>
+    </p>
+  );
+}
+
+function Day({ label, used, ok }: { label: string; used: string; ok?: boolean }) {
+  return (
+    <div
+      className={`flex items-center justify-between rounded-xl border p-3 ${ok ? "border-border bg-card" : "border-dashed border-border bg-muted/40 text-muted-foreground"}`}
+    >
+      <span className="font-bold">{label}</span>
+      <span className="text-sm">{used}</span>
+    </div>
+  );
+}
