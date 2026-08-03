@@ -303,6 +303,13 @@ function JurorPage() {
                 )}
 
                 {!balance.opted_in && balance.usable && (
+                  <>
+                  <p className="rounded-xl border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900">
+                    <strong>Please read before opting in.</strong> Joining the voucher scheme means
+                    you take your food and drink through Café 1 for the rest of your jury service
+                    and <strong>will not claim HMCTS subsistence expenses</strong> during that time.
+                    It is one or the other — you cannot use both schemes or mix them.
+                  </p>
                   <button
                     onClick={() => void join()}
                     disabled={optingIn}
@@ -313,8 +320,9 @@ function JurorPage() {
                     ) : (
                       <ShieldCheck className="h-4 w-4" />
                     )}
-                    Opt into the voucher scheme
+                    Opt in — voucher scheme instead of expenses
                   </button>
+                  </>
                 )}
 
                 <div className="grid gap-2 sm:grid-cols-2">
@@ -352,7 +360,8 @@ function JurorPage() {
             </Card>
             <Card icon={ShieldCheck} title="2. Opt in once">
               Scan the QR code at the Café 1 till, or on the customer screen, and enter your code.
-              That&apos;s your decision to join the scheme for the rest of your service.
+              Opting in means you take the voucher scheme instead of claiming HMCTS subsistence
+              expenses for the rest of your service — one or the other, never both.
             </Card>
             <Card icon={UtensilsCrossed} title="3. Use it daily">
               {money(JUROR_DAILY_ALLOWANCE_CENTS)} each sitting day, usable across as many purchases
