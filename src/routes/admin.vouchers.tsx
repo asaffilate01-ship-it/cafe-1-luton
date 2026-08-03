@@ -225,6 +225,7 @@ function AdminVouchers() {
   function downloadIssued(credentials: IssuedJurorCredential[], label: string) {
     const rows = [
       [
+        "Slip",
         "Voucher code",
         "Juror name (Jury Officer only)",
         "Valid from",
@@ -232,7 +233,8 @@ function AdminVouchers() {
         "Daily allowance (GBP)",
         "Batch",
       ],
-      ...credentials.map((credential) => [
+      ...credentials.map((credential, index) => [
+        index + 1,
         credential.code,
         "",
         credential.valid_from,
@@ -744,10 +746,40 @@ function AdminVouchers() {
                 keep this register securely within HMCTS. Café 1 receives the anonymous code only
                 and does not receive this name list.
               </p>
-              <p className="mt-2 text-sm font-semibold">Batch: {batch}</p>
+              <p className="mt-2 text-sm font-semibold">
+                Batch: {batch} · Slips 1–{slips.length} · {slips.length} code
+                {slips.length === 1 ? "" : "s"} issued · Printed {new Date().toLocaleString()}
+              </p>
+              <p className="mt-2 text-sm">
+                Hand the slips out in order, top to bottom. Jurors do not choose their code and Café
+                1 does not choose who receives it — the next unused slip simply goes to the next
+                juror. Tick each one off here as it is handed over so the number issued always
+                reconciles with the number printed.
+              </p>
+              <table className="mt-4 w-full border-collapse text-sm">
+                <tbody>
+                  <tr>
+                    <td className="border border-neutral-500 p-2 font-semibold">
+                      Received by (Jury Officer)
+                    </td>
+                    <td className="h-10 w-1/4 border border-neutral-400 p-2">&nbsp;</td>
+                    <td className="border border-neutral-500 p-2 font-semibold">Signature</td>
+                    <td className="h-10 w-1/4 border border-neutral-400 p-2">&nbsp;</td>
+                  </tr>
+                  <tr>
+                    <td className="border border-neutral-500 p-2 font-semibold">Date received</td>
+                    <td className="h-10 border border-neutral-400 p-2">&nbsp;</td>
+                    <td className="border border-neutral-500 p-2 font-semibold">
+                      Slips returned unused
+                    </td>
+                    <td className="h-10 border border-neutral-400 p-2">&nbsp;</td>
+                  </tr>
+                </tbody>
+              </table>
               <table className="mt-6 w-full border-collapse text-sm">
                 <thead>
                   <tr>
+                    <th className="border border-neutral-500 p-2 text-left">Slip</th>
                     <th className="border border-neutral-500 p-2 text-left">Voucher code</th>
                     <th className="border border-neutral-500 p-2 text-left">Juror name</th>
                     <th className="border border-neutral-500 p-2 text-left">
@@ -756,8 +788,9 @@ function AdminVouchers() {
                   </tr>
                 </thead>
                 <tbody>
-                  {slips.map((credential) => (
+                  {slips.map((credential, index) => (
                     <tr key={credential.code} className="break-inside-avoid">
+                      <td className="border border-neutral-400 p-2 font-mono">{index + 1}</td>
                       <td className="border border-neutral-400 p-2 font-mono font-bold">
                         {credential.code}
                       </td>
@@ -767,6 +800,10 @@ function AdminVouchers() {
                   ))}
                 </tbody>
               </table>
+              <p className="mt-4 text-xs">
+                Retention: keep this register only as long as HMCTS requires for audit, then destroy
+                it securely. It is the only document anywhere that links a name to a code.
+              </p>
             </div>
           ) : (
             <div className="mx-auto grid max-w-4xl grid-cols-2 gap-4 sm:grid-cols-3">
