@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from "react";
 import { getPublicOrder } from "@/lib/order-tracking.functions";
 import { confirmPayment, getWalletConfig } from "@/lib/payments.functions";
 import { SiteHeader } from "@/components/site-header";
+import { GooglePayDemo } from "@/components/google-pay-demo";
 import { money } from "@/lib/format";
 import { toast } from "sonner";
 import { Lock, ShieldCheck, Smartphone } from "lucide-react";
@@ -236,9 +237,15 @@ function PayView() {
             <Lock className="h-3.5 w-3.5" /> Secure card payment powered by SumUp
           </div>
           {status !== "error" && isGooglePayDemoMode() && (
-            <div className="mb-4 rounded-xl border border-amber-500/40 bg-amber-500/10 p-3 text-xs font-semibold text-amber-700">
-              Google Pay demo mode — button shown for onboarding screenshots only.
-            </div>
+            <>
+              <div className="mb-4 rounded-xl border border-amber-500/40 bg-amber-500/10 p-3 text-xs font-semibold text-amber-700">
+                Google Pay demo mode — test button for onboarding screenshots only.
+              </div>
+              <GooglePayDemo
+                amount={order ? (order.total_cents / 100).toFixed(2) : "1.00"}
+                merchantName={GOOGLE_PAY_MERCHANT_NAME}
+              />
+            </>
           )}
           {status !== "error" && (
             <div className="mb-4 flex items-start gap-2 rounded-xl border border-border bg-muted/40 p-3 text-xs text-muted-foreground">
