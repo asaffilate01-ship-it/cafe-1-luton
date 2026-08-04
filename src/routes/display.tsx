@@ -332,3 +332,164 @@ function DisplayPage() {
     </div>
   );
 }
+
+/* -------------------------------------------------- juror keypad (customer) */
+
+function JurorKeypad() {
+  const lookup = useServerFn(lookupVoucher);
+  const optIn = useServerFn(optInVoucher);
+  const [field, setField] = useState<"code" | "pin">("code");
+  const [code, setCode] = useState("");
+  const [pin, setPin] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [applied, setApplied] = useState<null | { remaining: number; opted_in: boolean }>(null);
+
+  function press(key: string) {
+    setError(null);
+    if (field === "code") setCode((c) => (c + key).slice(0, 24).toUpperCase());
+    else setPin((p) => (p + key.replace(/\D/g, "")).slice(0, 6));
+  }
+  function back() {
+    setError(null);
+    if (field === "code") setCode((c) => c.slice(0, -1));
+    else setPin((p) => p.slice(0, -1));
+  }
+
+  async function submit() {
+    const c = code.trim().toUpperCase();
+    if (!c || pin.length !== 6) return;
+    setBusy(true);
+    setError(null);
+    try {
+      const res = await lookup({ data: { code: c, pin } });
+      if (!res.found) {
+        setError(("message" in res && res.message) || "Sorry, that code and PIN aren't recognised.");
+      } else if (!res.usable) {
+        setError(res.message ?? "Sorry, that code can't be used today.");
+      } else if (res.remaining_cents <= 0) {
+        setError("Today's allowance has already been used on this code.");
+      } else {
+        postToDisplay({
+          type: "juror_applied",
+          code: res.code,
+          pin,
+          remaining_cents: res.remaining_cents,
+          allocated_cents: res.allocated_cents,
+          opted_in: res.opted_in,
+        });
+        setApplied({ remaining: res.remaining_cents, opted_in: res.opted_in });
+      }
+    } catch {
+      setError("Sorry, we couldn't check that just now. Please try again.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  if (applied) {
+    return (
+      <div className="rounded-3xl border-4 border-emerald-500 bg-emerald-50 p-8 text-center">
+        <CheckCircle2 className="mx-auto h-16 w-16 text-emerald-600" />
+        <p className="mt-4 font-display text-3xl font-black text-emerald-900">Voucher applied</p>
+        <p className="mt-2 text-xl text-emerald-800">
+          {money(applied.remaining)} allowance left today
+        </p>
+        {!applied.opted_in && (
+          <>
+            <p className="mt-5 text-base text-emerald-900">
+              Opt in to the scheme for {money(JUROR_DAILY_ALLOWANCE_CENTS)} each sitting day plus
+              10% off food. Opting in means you will not claim HMCTS subsistence expenses during
+              your service.
+            </p>
+            <button
+              onClick={async () => {
+                await optIn({ data: { code, pin, source: "display" } });
+                setApplied((a) => (a ? { ...a, opted_in: true } : a));
+              }}
+              className="mt-4 h-14 w-full rounded-2xl bg-emerald-600 text-lg font-black text-white"
+            >
+              Opt in to the voucher scheme
+            </button>
+          </>
+        )}
+      </div>
+    );
+  }
+
+  return (
+    <div className="rounded-3xl border-2 border-neutral-200 bg-neutral-50 p-6 shadow-sm">
+      <button
+        onClick={() => setField("code")}
+        className={`flex h-14 w-full items-center rounded-2xl border-2 px-4 font-mono text-xl ${field === "code" ? "border-primary bg-white" : "border-neutral-200 bg-white/60"}`}
+      >
+        {code || <span className="text-neutral-400">Voucher code</span>}
+      </button>
+      <button
+        onClick={() => setField("pin")}
+        className={`mt-3 flex h-14 w-full items-center justify-center rounded-2xl border-2 font-mono text-2xl tracking-[0.5em] ${field === "pin" ? "border-primary bg-white" : "border-neutral-200 bg-white/60"}`}
+      >
+        {pin ? "•".repeat(pin.length) : <span className="tracking-normal text-neutral-400">6-digit PIN</span>}
+      </button>
+
+      <div className="mt-4 grid grid-cols-3 gap-2">
+        {["1", "2", "3", "4", "5", "6", "7", "8", "9"].map((k) => (
+          <KeyBtn key={k} onClick={() => press(k)}>
+            {k}
+          </KeyBtn>
+        ))}
+        <KeyBtn onClick={back}>
+          <Delete className="mx-auto h-6 w-6" />
+        </KeyBtn>
+        <KeyBtn onClick={() => press("0")}>0</KeyBtn>
+        <KeyBtn onClick={() => press("-")} disabled={field === "pin"}>
+          −
+        </KeyBtn>
+      </div>
+
+      {field === "code" && (
+        <div className="mt-2 grid grid-cols-7 gap-1">
+          {"ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("").map((k) => (
+            <button
+              key={k}
+              onClick={() => press(k)}
+              className="h-10 rounded-lg bg-white font-bold text-neutral-700 shadow-sm active:bg-neutral-200"
+            >
+              {k}
+            </button>
+          ))}
+        </div>
+      )}
+
+      {error && <p className="mt-3 text-center text-base font-semibold text-red-600">{error}</p>}
+
+      <button
+        onClick={() => void submit()}
+        disabled={busy || !code.trim() || pin.length !== 6}
+        className="mt-4 inline-flex h-16 w-full items-center justify-center gap-2 rounded-2xl bg-primary text-xl font-black text-primary-foreground disabled:opacity-40"
+      >
+        {busy && <Loader2 className="h-5 w-5 animate-spin" />} Use my voucher
+      </button>
+    </div>
+  );
+}
+
+function KeyBtn({
+  children,
+  onClick,
+  disabled,
+}: {
+  children: React.ReactNode;
+  onClick: () => void;
+  disabled?: boolean;
+}) {
+  return (
+    <button
+      onClick={onClick}
+      disabled={disabled}
+      className="h-16 rounded-2xl bg-white text-2xl font-black text-neutral-900 shadow-sm active:bg-neutral-200 disabled:opacity-30"
+    >
+      {children}
+    </button>
+  );
+}
