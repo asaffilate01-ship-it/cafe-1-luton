@@ -6,7 +6,16 @@ import { supabase } from "@/integrations/supabase/client";
 import { useSession, useRoles } from "@/hooks/use-auth";
 import { money } from "@/lib/format";
 import { toast } from "sonner";
-import { Plus, Trash2, Image as ImageIcon, ChevronLeft, Save } from "lucide-react";
+import {
+  Plus,
+  Trash2,
+  Image as ImageIcon,
+  ChevronLeft,
+  Save,
+  GripVertical,
+  ChevronUp,
+  ChevronDown,
+} from "lucide-react";
 import { getStaffMenuItems } from "@/lib/menu-operations.functions";
 
 export const Route = createFileRoute("/admin/menu")({
@@ -78,6 +87,48 @@ function MenuManager() {
   const [items, setItems] = useState<Item[]>([]);
   const [mods, setMods] = useState<Mod[]>([]);
   const [selectedCat, setSelectedCat] = useState<string | null>(null);
+  const [dragId, setDragId] = useState<string | null>(null);
+  const [dragOverId, setDragOverId] = useState<string | null>(null);
+
+  /** Writes sort_order 10, 20, 30… so the public menu and till follow the sidebar. */
+  const persistOrder = useCallback(async (ordered: Cat[]) => {
+    setCats(ordered.map((c, i) => ({ ...c, sort_order: (i + 1) * 10 })));
+    const results = await Promise.all(
+      ordered.map((c, i) =>
+        supabase
+          .from("menu_categories")
+          .update({ sort_order: (i + 1) * 10 })
+          .eq("id", c.id),
+      ),
+    );
+    const failed = results.find((r) => r.error);
+    if (failed?.error) toast.error(failed.error.message);
+    else toast.success("Category order saved");
+  }, []);
+
+  const reorderCategories = useCallback(
+    async (from: number, to: number) => {
+      if (to < 0 || to >= cats.length || from === to) return;
+      const next = [...cats];
+      const [moved] = next.splice(from, 1);
+      next.splice(to, 0, moved);
+      await persistOrder(next);
+    },
+    [cats, persistOrder],
+  );
+
+  const moveCategory = useCallback(
+    async (sourceId: string | null, targetId: string) => {
+      setDragId(null);
+      setDragOverId(null);
+      if (!sourceId || sourceId === targetId) return;
+      const from = cats.findIndex((c) => c.id === sourceId);
+      const to = cats.findIndex((c) => c.id === targetId);
+      if (from < 0 || to < 0) return;
+      await reorderCategories(from, to);
+    },
+    [cats, reorderCategories],
+  );
 
   useEffect(() => {
     if (!loading && !user) navigate({ to: "/admin/login", search: { next: "/admin/menu" } });
@@ -169,16 +220,63 @@ function MenuManager() {
               <Plus className="h-4 w-4" />
             </button>
           </div>
-          <ul className="mt-3 space-y-1">
-            {cats.map((c) => (
-              <li key={c.id}>
+          <p className="mt-2 text-xs text-muted-foreground">
+            Drag to reorder — the menu follows this order.
+          </p>
+          <ul className="mt-2 space-y-1">
+            {cats.map((c, index) => (
+              <li
+                key={c.id}
+                draggable
+                onDragStart={(e) => {
+                  setDragId(c.id);
+                  e.dataTransfer.effectAllowed = "move";
+                }}
+                onDragEnd={() => {
+                  setDragId(null);
+                  setDragOverId(null);
+                }}
+                onDragOver={(e) => {
+                  e.preventDefault();
+                  if (dragId && dragId !== c.id) setDragOverId(c.id);
+                }}
+                onDrop={(e) => {
+                  e.preventDefault();
+                  void moveCategory(dragId, c.id);
+                }}
+                className={`flex items-center gap-1 rounded-lg ${dragOverId === c.id ? "ring-2 ring-primary" : ""} ${dragId === c.id ? "opacity-50" : ""}`}
+              >
+                <span
+                  className="cursor-grab px-1 text-muted-foreground active:cursor-grabbing"
+                  aria-hidden
+                >
+                  <GripVertical className="h-4 w-4" />
+                </span>
                 <button
                   onClick={() => setSelectedCat(c.id)}
-                  className={`w-full rounded-lg px-3 py-2 text-left text-sm transition ${selectedCat === c.id ? "bg-primary text-primary-foreground" : "hover:bg-accent"}`}
+                  className={`min-w-0 flex-1 rounded-lg px-2 py-2 text-left text-sm transition ${selectedCat === c.id ? "bg-primary text-primary-foreground" : "hover:bg-accent"}`}
                 >
                   <span className="font-medium">{c.name}</span>
                   {!c.active && <span className="ml-2 text-xs opacity-70">(hidden)</span>}
                 </button>
+                <span className="flex shrink-0 flex-col">
+                  <button
+                    aria-label={`Move ${c.name} up`}
+                    disabled={index === 0}
+                    onClick={() => void reorderCategories(index, index - 1)}
+                    className="text-muted-foreground disabled:opacity-25"
+                  >
+                    <ChevronUp className="h-4 w-4" />
+                  </button>
+                  <button
+                    aria-label={`Move ${c.name} down`}
+                    disabled={index === cats.length - 1}
+                    onClick={() => void reorderCategories(index, index + 1)}
+                    className="text-muted-foreground disabled:opacity-25"
+                  >
+                    <ChevronDown className="h-4 w-4" />
+                  </button>
+                </span>
               </li>
             ))}
           </ul>

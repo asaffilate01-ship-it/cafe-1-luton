@@ -24,7 +24,7 @@ import {
 } from "@/lib/till.functions";
 import { openCashDrawer, getDrawerBridge, setDrawerBridge } from "@/lib/drawer";
 import { iminPrintTickets, isIminDevice, openCustomerScreen } from "@/lib/imin";
-import { postToDisplay } from "@/lib/customer-display";
+import { postToDisplay, DISPLAY_CHANNEL, type DisplayMessage } from "@/lib/customer-display";
 import { lookupVoucher } from "@/lib/vouchers.functions";
 import { QrCode } from "@/components/qr-code";
 import { JUROR_DAILY_ALLOWANCE_CENTS, JUROR_FOOD_DISCOUNT_PERCENT } from "@/lib/juror";
@@ -2253,6 +2253,25 @@ function VoucherModal({
   useEffect(() => {
     if (url) postToDisplay({ type: "juror", url });
   }, [url]);
+
+  /* The juror can key their own code + PIN on the customer screen — staff never see it. */
+  useEffect(() => {
+    if (typeof window === "undefined" || !("BroadcastChannel" in window)) return;
+    const ch = new BroadcastChannel(DISPLAY_CHANNEL);
+    ch.onmessage = (e: MessageEvent<DisplayMessage>) => {
+      const msg = e.data;
+      if (msg.type !== "juror_applied") return;
+      onApply({
+        code: msg.code,
+        pin: msg.pin,
+        remaining_cents: msg.remaining_cents,
+        allocated_cents: msg.allocated_cents,
+        opted_in: msg.opted_in,
+      });
+      toast.success(`${money(msg.remaining_cents)} allowance left today`);
+    };
+    return () => ch.close();
+  }, [onApply]);
 
   async function apply() {
     const c = code.trim().toUpperCase();
