@@ -309,7 +309,32 @@ function KDS() {
       liveIds.current = new Set(grouped.map((g) => g.id));
       setTickets(grouped);
     }
-    load();
+    // Realtime can fire several events per order change; coalesce them so the
+    // board does at most one refetch per burst instead of one per row.
+    let inFlight = false;
+    let queued = false;
+    let timer: number | undefined;
+    async function run() {
+      if (inFlight) {
+        queued = true;
+        return;
+      }
+      inFlight = true;
+      try {
+        await load();
+      } finally {
+        inFlight = false;
+        if (queued) {
+          queued = false;
+          void run();
+        }
+      }
+    }
+    function scheduleLoad() {
+      if (timer) window.clearTimeout(timer);
+      timer = window.setTimeout(() => void run(), 250);
+    }
+    void run();
     const ch = supabase
       .channel("kds")
       .on("postgres_changes", { event: "*", schema: "public", table: "orders" }, (payload) => {
@@ -335,11 +360,14 @@ function KDS() {
             playChime();
           }
         }
-        load();
+        scheduleLoad();
       })
-      .on("postgres_changes", { event: "*", schema: "public", table: "order_items" }, () => load())
+      .on("postgres_changes", { event: "*", schema: "public", table: "order_items" }, () =>
+        scheduleLoad(),
+      )
       .subscribe();
     return () => {
+      if (timer) window.clearTimeout(timer);
       supabase.removeChannel(ch);
     };
   }, [getMenuItems]);
