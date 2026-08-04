@@ -78,26 +78,55 @@ export function fuzzyMenuKey(name: string, keys: string[]): string | null {
 
 /**
  * Last-resort category for a POS line we couldn't match to the menu.
- * Keeps the kitchen board grouped by something meaningful ("Snacks",
- * "Hot Drinks") instead of dumping everything into "Other items".
+ * Every category here is a real Cafe1 menu category, so the kitchen board
+ * groups POS-typed lines the same way the menu does instead of dumping them
+ * into "Other items". Rules are checked in order: phrases first (they are the
+ * most specific), then whole-word matches.
  */
-const CATEGORY_KEYWORDS: Array<{ category: string; words: string[]; phrases?: string[] }> = [
-  { category: "Hot Drinks", words: ["tea", "coffee", "latte", "cappuccino", "capuccino", "americano", "mocha", "espresso", "macchiato", "chai"], phrases: ["hot chocolate", "flat white"] },
-  { category: "Milkshakes", words: ["milkshake", "shake"] },
-  { category: "Drinks", words: ["coke", "pepsi", "water", "juice", "can", "cans", "bottle", "lemonade", "fanta", "sprite", "smoothie"], phrases: ["bottled drink"] },
-  { category: "Snacks", words: ["crisps", "bar", "flapjack", "biscuit", "cookie", "brownie", "chocolate"], phrases: ["chocolate bar"] },
-  { category: "Desserts", words: ["cake", "muffin", "pie", "doughnut", "donut", "pastry", "croissant"] },
+const CATEGORY_RULES: Array<{ category: string; phrases?: string[]; words?: string[] }> = [
+  // Drinks first — a "chicken shawarma" never mentions coffee, but a
+  // "chicken soup latte" style clash would otherwise land in food.
+  { category: "Hot Drinks", phrases: ["hot chocolate", "flat white", "white americano"], words: ["tea", "coffee", "latte", "cappuccino", "capuccino", "cappucino", "americano", "mocha", "mochacciano", "espresso", "macchiato", "chai", "matcha", "hotchocolate"] },
+  { category: "Milkshakes", words: ["milkshake", "shake", "oreo", "caramel"] },
+  { category: "Mocktails", phrases: ["redbull mojito"], words: ["mojito", "mocktail"] },
+  { category: "Iced Coffee", phrases: ["iced coffee", "iced latte"] },
+  { category: "Drinks", phrases: ["bottled drink", "energy drink", "soft drink"], words: ["coke", "pepsi", "water", "juice", "can", "cans", "bottle", "lemonade", "fanta", "sprite", "smoothie", "redbull", "monster", "tango", "irnbru"] },
+  // Food
+  { category: "Chips", phrases: ["with chips", "w chips", "and chips"], words: ["chips", "fries", "wedges"] },
+  { category: "Samosas", words: ["samosa", "samosas"] },
+  { category: "Burgers", words: ["burger", "cheeseburger"] },
+  { category: "Hot Dogs", phrases: ["hot dog", "hotdog"] },
+  { category: "Wraps", words: ["wrap", "shawarma", "shwarma", "kebab"] },
+  { category: "Naan Roll", phrases: ["naan roll", "in naan"] },
+  { category: "Paratha", words: ["paratha"] },
+  { category: "Jackets", phrases: ["jacket potato"], words: ["jacket"] },
+  { category: "Panini", words: ["panini", "paninis"] },
+  { category: "Toasties", words: ["toastie", "toasties"] },
+  { category: "Baguettes", words: ["baguette"] },
+  { category: "Rolls", words: ["roll", "rolls"] },
+  { category: "Sandwiches", words: ["sandwich", "sandwiches", "sarnie"] },
+  { category: "Omelettes", words: ["omelette", "omlette"] },
+  { category: "Toast", words: ["toast"] },
+  { category: "Croissant", words: ["croissant"] },
+  { category: "Salads", words: ["salad"] },
+  { category: "Fruit Pot", phrases: ["fruit pot"] },
+  { category: "Cold Past Pot", phrases: ["pasta pot"] },
+  { category: "Biscuits", words: ["biscuit", "biscuits", "cookie", "cookies", "flapjack"] },
+  { category: "Desserts", words: ["cake", "muffin", "pie", "brownie", "doughnut", "donut", "pastry", "dessert"] },
+  { category: "Extras", phrases: ["add milk", "oat milk", "butter only", "chewing gum"], words: ["crisps", "bar", "chocolate", "extra", "sauce", "dip", "cheese", "egg", "eggs", "beans", "sausage", "bacon", "hash"] },
+  { category: "Chef's Specials", words: ["curry", "rice", "biryani", "karahi", "masala", "keema", "chana", "tikka", "shepherds"] },
+  { category: "Breakfast", words: ["breakfast"] },
 ];
 
 export function guessCategory(name: string): string | null {
   const n = normaliseItemName(name);
   if (!n) return null;
-  for (const group of CATEGORY_KEYWORDS) {
-    if (group.phrases?.some((p) => n.includes(p))) return group.category;
+  for (const rule of CATEGORY_RULES) {
+    if (rule.phrases?.some((p) => n.includes(normaliseItemName(p)))) return rule.category;
   }
   const tokens = new Set(n.split(" ").flatMap((t) => [t, singular(t)]));
-  for (const group of CATEGORY_KEYWORDS) {
-    if (group.words.some((w) => tokens.has(w) || tokens.has(singular(w)))) return group.category;
+  for (const rule of CATEGORY_RULES) {
+    if (rule.words?.some((w) => tokens.has(w) || tokens.has(singular(w)))) return rule.category;
   }
   return null;
 }
