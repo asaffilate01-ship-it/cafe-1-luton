@@ -806,7 +806,9 @@ function KDS() {
               </p>
               {SIDE_TONE[t.pos_terminal ?? ""] && (
                 <p
-                  className={`mt-1.5 rounded-lg px-2.5 py-1.5 text-center font-display text-base font-black uppercase tracking-widest text-white ${SIDE_TONE[t.pos_terminal!]}`}
+                  className={`mt-1.5 rounded-lg px-2 py-1 text-center font-display font-black uppercase tracking-wide text-white ${
+                    t.pos_terminal === "public" ? "text-xs" : "text-sm"
+                  } ${SIDE_TONE[t.pos_terminal!]}`}
                 >
                   {t.pos_terminal === "public" ? "Public side" : t.pos_terminal}
                 </p>
