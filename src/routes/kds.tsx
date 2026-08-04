@@ -149,6 +149,8 @@ function KDS() {
   const sync = useServerFn(syncSumupPos);
   const getMenuItems = useServerFn(getStaffMenuItems);
   const [syncing, setSyncing] = useState(false);
+  const [lastSync, setLastSync] = useState<number | null>(null);
+  const [syncOk, setSyncOk] = useState(true);
   const [now, setNow] = useState(() => Date.now());
   const [station, setStation] = useState<Station>(() => {
     if (typeof window === "undefined") return "ALL";
@@ -381,6 +383,10 @@ function KDS() {
       if (typeof document !== "undefined" && document.visibilityState === "hidden") return;
       try {
         const r = await sync({ data: undefined as never });
+        if (!cancelled) {
+          setLastSync(Date.now());
+          setSyncOk(!r?.error);
+        }
         if (!cancelled && r?.imported && r.imported > 0) {
           toast.success(
             `${r.imported} SumUp POS ${r.imported === 1 ? "order" : "orders"} imported`,
@@ -392,7 +398,7 @@ function KDS() {
           );
         }
       } catch {
-        /* silent */
+        if (!cancelled) setSyncOk(false);
       }
     }
     tick();
@@ -407,9 +413,12 @@ function KDS() {
     setSyncing(true);
     try {
       const r = await sync({ data: undefined as never });
+      setLastSync(Date.now());
+      setSyncOk(!r?.error);
       if (r?.error) toast.error(`SumUp: ${r.error}`);
       else toast.success(`SumUp sync: ${r?.imported ?? 0} imported, ${r?.skipped ?? 0} skipped`);
     } catch (e) {
+      setSyncOk(false);
       toast.error(e instanceof Error ? e.message : "Sync failed");
     } finally {
       setSyncing(false);
