@@ -140,6 +140,9 @@ function KDS() {
   const [tickets, setTickets] = useState<Ticket[]>([]);
   // Ids currently shown on the board — used to announce cancellations/refunds.
   const liveIds = useRef<Set<string>>(new Set());
+  // Menu + categories change rarely; refetching them on every realtime event
+  // was what made "mark ready" feel sluggish. Cache for a few minutes.
+  const menuCache = useRef<{ at: number; menu: unknown; cats: unknown } | null>(null);
   const [kdsPaper, setKdsPaper] = useState<58 | 80>(80);
   const update = useServerFn(updateOrderStatus);
   const setFulfil = useServerFn(setOrderFulfilment);
@@ -195,10 +198,24 @@ function KDS() {
             .select("id, order_id, menu_item_id, name, qty, notes, category_label")
             .in("order_id", ids)
         : { data: [] as Item[] };
-      const [menu, { data: cats }] = await Promise.all([
-        getMenuItems(),
-        supabase.from("menu_categories").select("id, name"),
-      ]);
+      const fresh =
+        menuCache.current && Date.now() - menuCache.current.at < 300_000
+          ? menuCache.current
+          : null;
+      let menu: unknown;
+      let cats: unknown;
+      if (fresh) {
+        menu = fresh.menu;
+        cats = fresh.cats;
+      } else {
+        const [m, c] = await Promise.all([
+          getMenuItems(),
+          supabase.from("menu_categories").select("id, name"),
+        ]);
+        menu = m;
+        cats = (c as { data: unknown }).data;
+        menuCache.current = { at: Date.now(), menu, cats };
+      }
       const catName = new Map<string, string>(
         ((cats ?? []) as Array<{ id: string; name: string }>).map((c) => [c.id, c.name]),
       );
@@ -292,7 +309,32 @@ function KDS() {
       liveIds.current = new Set(grouped.map((g) => g.id));
       setTickets(grouped);
     }
-    load();
+    // Realtime can fire several events per order change; coalesce them so the
+    // board does at most one refetch per burst instead of one per row.
+    let inFlight = false;
+    let queued = false;
+    let timer: number | undefined;
+    async function run() {
+      if (inFlight) {
+        queued = true;
+        return;
+      }
+      inFlight = true;
+      try {
+        await load();
+      } finally {
+        inFlight = false;
+        if (queued) {
+          queued = false;
+          void run();
+        }
+      }
+    }
+    function scheduleLoad() {
+      if (timer) window.clearTimeout(timer);
+      timer = window.setTimeout(() => void run(), 250);
+    }
+    void run();
     const ch = supabase
       .channel("kds")
       .on("postgres_changes", { event: "*", schema: "public", table: "orders" }, (payload) => {
@@ -318,11 +360,14 @@ function KDS() {
             playChime();
           }
         }
-        load();
+        scheduleLoad();
       })
-      .on("postgres_changes", { event: "*", schema: "public", table: "order_items" }, () => load())
+      .on("postgres_changes", { event: "*", schema: "public", table: "order_items" }, () =>
+        scheduleLoad(),
+      )
       .subscribe();
     return () => {
+      if (timer) window.clearTimeout(timer);
       supabase.removeChannel(ch);
     };
   }, [getMenuItems]);
@@ -332,6 +377,8 @@ function KDS() {
     if (!user || (!has("admin") && !has("staff"))) return;
     let cancelled = false;
     async function tick() {
+      // Don't hammer SumUp while the screen is in the background.
+      if (typeof document !== "undefined" && document.visibilityState === "hidden") return;
       try {
         const r = await sync({ data: undefined as never });
         if (!cancelled && r?.imported && r.imported > 0) {
@@ -370,9 +417,17 @@ function KDS() {
   }
 
   async function set(id: string, status: "preparing" | "ready" | "completed") {
+    // Paint the change straight away; the realtime refetch reconciles after.
+    const previous = tickets;
+    setTickets((prev) =>
+      status === "completed"
+        ? prev.filter((t) => t.id !== id)
+        : prev.map((t) => (t.id === id ? { ...t, status } : t)),
+    );
     try {
       await update({ data: { order_id: id, status } });
     } catch (e) {
+      setTickets(previous);
       toast.error(e instanceof Error ? e.message : "Failed");
     }
   }
@@ -402,10 +457,17 @@ function KDS() {
     if (!window.confirm(`Mark ${ids.length} ticket${ids.length === 1 ? "" : "s"} as ${status}?`))
       return;
     setBulking(true);
+    const previous = tickets;
+    setTickets((prev) =>
+      status === "completed"
+        ? prev.filter((t) => !ids.includes(t.id))
+        : prev.map((t) => (ids.includes(t.id) ? { ...t, status } : t)),
+    );
     try {
       await Promise.all(ids.map((id) => update({ data: { order_id: id, status } })));
       toast.success(`${ids.length} marked ${status}`);
     } catch (e) {
+      setTickets(previous);
       toast.error(e instanceof Error ? e.message : "Failed");
     } finally {
       setBulking(false);
