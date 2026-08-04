@@ -6,7 +6,16 @@ import { supabase } from "@/integrations/supabase/client";
 import { useSession, useRoles } from "@/hooks/use-auth";
 import { money } from "@/lib/format";
 import { toast } from "sonner";
-import { Plus, Trash2, Image as ImageIcon, ChevronLeft, Save } from "lucide-react";
+import {
+  Plus,
+  Trash2,
+  Image as ImageIcon,
+  ChevronLeft,
+  Save,
+  GripVertical,
+  ChevronUp,
+  ChevronDown,
+} from "lucide-react";
 import { getStaffMenuItems } from "@/lib/menu-operations.functions";
 
 export const Route = createFileRoute("/admin/menu")({
@@ -78,6 +87,48 @@ function MenuManager() {
   const [items, setItems] = useState<Item[]>([]);
   const [mods, setMods] = useState<Mod[]>([]);
   const [selectedCat, setSelectedCat] = useState<string | null>(null);
+  const [dragId, setDragId] = useState<string | null>(null);
+  const [dragOverId, setDragOverId] = useState<string | null>(null);
+
+  /** Writes sort_order 10, 20, 30… so the public menu and till follow the sidebar. */
+  const persistOrder = useCallback(async (ordered: Cat[]) => {
+    setCats(ordered.map((c, i) => ({ ...c, sort_order: (i + 1) * 10 })));
+    const results = await Promise.all(
+      ordered.map((c, i) =>
+        supabase
+          .from("menu_categories")
+          .update({ sort_order: (i + 1) * 10 })
+          .eq("id", c.id),
+      ),
+    );
+    const failed = results.find((r) => r.error);
+    if (failed?.error) toast.error(failed.error.message);
+    else toast.success("Category order saved");
+  }, []);
+
+  const reorderCategories = useCallback(
+    async (from: number, to: number) => {
+      if (to < 0 || to >= cats.length || from === to) return;
+      const next = [...cats];
+      const [moved] = next.splice(from, 1);
+      next.splice(to, 0, moved);
+      await persistOrder(next);
+    },
+    [cats, persistOrder],
+  );
+
+  const moveCategory = useCallback(
+    async (sourceId: string | null, targetId: string) => {
+      setDragId(null);
+      setDragOverId(null);
+      if (!sourceId || sourceId === targetId) return;
+      const from = cats.findIndex((c) => c.id === sourceId);
+      const to = cats.findIndex((c) => c.id === targetId);
+      if (from < 0 || to < 0) return;
+      await reorderCategories(from, to);
+    },
+    [cats, reorderCategories],
+  );
 
   useEffect(() => {
     if (!loading && !user) navigate({ to: "/admin/login", search: { next: "/admin/menu" } });
