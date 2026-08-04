@@ -6,6 +6,6 @@ const cases: [string,string|null][] = [
  ["Chicken Wrap","Wraps"],["Cheeseburger and Chips","Burgers"],["Hot Dog with Chips","Hot Dogs"],
  ["Chicken Paratha Roll","Paratha"],["Chana n rice","Chef's Specials"],["Side salad","Salads"],
  ["Plain Croissant","Croissant"],["Fruit Pot","Fruit Pot"],["Oat Milk","Extras"],["Matcha","Hot Drinks"],
- ["Chicken Samosa","Samosas"],["Shepherd's Pie","Desserts"],["W chips","Chips"],["Monster Energy","Drinks"],
+ ["Chicken Samosa","Samosas"],["Shepherd's Pie","Chef's Specials"],["W chips","Chips"],["Monster Energy","Drinks"],
 ];
 describe("guessCategory",()=>{for(const [n,e] of cases) it(n,()=>expect(guessCategory(n)).toBe(e));});

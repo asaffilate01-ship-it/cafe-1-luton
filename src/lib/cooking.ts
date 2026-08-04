@@ -92,11 +92,11 @@ const CATEGORY_RULES: Array<{ category: string; phrases?: string[]; words?: stri
   { category: "Iced Coffee", phrases: ["iced coffee", "iced latte"] },
   { category: "Drinks", phrases: ["bottled drink", "energy drink", "soft drink"], words: ["coke", "pepsi", "water", "juice", "can", "cans", "bottle", "lemonade", "fanta", "sprite", "smoothie", "redbull", "monster", "tango", "irnbru"] },
   // Food
-  { category: "Chips", phrases: ["with chips", "w chips", "and chips"], words: ["chips", "fries", "wedges"] },
   { category: "Samosas", words: ["samosa", "samosas"] },
   { category: "Burgers", words: ["burger", "cheeseburger"] },
   { category: "Hot Dogs", phrases: ["hot dog", "hotdog"] },
   { category: "Wraps", words: ["wrap", "shawarma", "shwarma", "kebab"] },
+  { category: "Chips", phrases: ["w chips"], words: ["chips", "fries", "wedges"] },
   { category: "Naan Roll", phrases: ["naan roll", "in naan"] },
   { category: "Paratha", words: ["paratha"] },
   { category: "Jackets", phrases: ["jacket potato"], words: ["jacket"] },
