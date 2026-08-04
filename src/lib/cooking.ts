@@ -75,3 +75,29 @@ export function fuzzyMenuKey(name: string, keys: string[]): string | null {
   }
   return best && best.score >= 0.6 ? best.key : null;
 }
+
+/**
+ * Last-resort category for a POS line we couldn't match to the menu.
+ * Keeps the kitchen board grouped by something meaningful ("Snacks",
+ * "Hot Drinks") instead of dumping everything into "Other items".
+ */
+const CATEGORY_KEYWORDS: Array<{ category: string; words: string[]; phrases?: string[] }> = [
+  { category: "Hot Drinks", words: ["tea", "coffee", "latte", "cappuccino", "capuccino", "americano", "mocha", "espresso", "macchiato", "chai"], phrases: ["hot chocolate", "flat white"] },
+  { category: "Milkshakes", words: ["milkshake", "shake"] },
+  { category: "Drinks", words: ["coke", "pepsi", "water", "juice", "can", "cans", "bottle", "lemonade", "fanta", "sprite", "smoothie"], phrases: ["bottled drink"] },
+  { category: "Snacks", words: ["crisps", "bar", "flapjack", "biscuit", "cookie", "brownie", "chocolate"], phrases: ["chocolate bar"] },
+  { category: "Desserts", words: ["cake", "muffin", "pie", "doughnut", "donut", "pastry", "croissant"] },
+];
+
+export function guessCategory(name: string): string | null {
+  const n = normaliseItemName(name);
+  if (!n) return null;
+  for (const group of CATEGORY_KEYWORDS) {
+    if (group.phrases?.some((p) => n.includes(p))) return group.category;
+  }
+  const tokens = new Set(n.split(" ").flatMap((t) => [t, singular(t)]));
+  for (const group of CATEGORY_KEYWORDS) {
+    if (group.words.some((w) => tokens.has(w) || tokens.has(singular(w)))) return group.category;
+  }
+  return null;
+}
