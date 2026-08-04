@@ -78,6 +78,26 @@ const SIDE_TONE: Record<string, string> = {
 const STATIONS = ["ALL", "HOT", "SANDWICH", "DRINKS", "PASS"] as const;
 type Station = (typeof STATIONS)[number];
 
+/**
+ * Menu items rarely carry an explicit station code, so work one out from the
+ * dish itself. Without this every station filter empties the whole board.
+ */
+function inferStation(
+  explicit: string | null | undefined,
+  name: string,
+  category: string | null | undefined,
+  cooked: boolean,
+): Station {
+  const code = (explicit ?? "").trim().toUpperCase();
+  if ((STATIONS as readonly string[]).includes(code)) return code as Station;
+  const hay = `${category ?? ""} ${name}`.toLowerCase();
+  if (/(drink|coffee|tea|juice|smoothie|latte|americano|cappuccino|mocha|water|can\b|bottle)/.test(hay))
+    return "DRINKS";
+  if (/(panini|sandwich|baguette|wrap|toastie|bagel|roll|sub)/.test(hay)) return "SANDWICH";
+  if (cooked) return "HOT";
+  return "PASS";
+}
+
 function whenLabel(o: { schedule_mode: string | null; scheduled_for: string | null }) {
   if (o.scheduled_for && o.schedule_mode !== "asap")
     return new Date(o.scheduled_for).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
@@ -252,13 +272,19 @@ function KDS() {
           .filter((i) => i.order_id === o.id)
           .map((item) => {
             const meta = metadata(item);
+            const category = item.category_label ?? meta.category;
             return {
               ...item,
               cook: meta.needs_cooking,
-              station_code: meta.station_code,
+              station_code: inferStation(
+                meta.station_code === "PASS" ? null : meta.station_code,
+                item.name,
+                category,
+                meta.needs_cooking,
+              ),
               prep_seconds: meta.prep_seconds,
               // SumUp POS baskets bring their own category; ours is the fallback.
-              category: item.category_label ?? meta.category,
+              category,
             };
           });
         return { ...o, items: its, needsCooking: its.some((i) => i.cook) };
@@ -814,7 +840,20 @@ function KDS() {
         })}
         {!visibleTickets.length && (
           <div className="col-span-full p-16 text-center text-muted-foreground">
-            No active tickets for {station === "ALL" ? "the kitchen" : station}.
+            <p>No active tickets for {station === "ALL" ? "the kitchen" : station}.</p>
+            {station !== "ALL" && tickets.length > 0 && (
+              <button
+                type="button"
+                onClick={() => {
+                  setStation("ALL");
+                  window.localStorage.setItem("cafe1-kds-station", "ALL");
+                }}
+                className="mt-4 rounded-full bg-primary px-5 py-2 text-sm font-bold text-primary-foreground"
+              >
+                {tickets.length} ticket{tickets.length === 1 ? "" : "s"} hidden by this station —
+                show all
+              </button>
+            )}
           </div>
         )}
       </div>
