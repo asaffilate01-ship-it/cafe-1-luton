@@ -323,7 +323,7 @@ function KDS() {
       }
     }
     tick();
-    const iv = window.setInterval(tick, 30000);
+    const iv = window.setInterval(tick, 15000);
     return () => {
       cancelled = true;
       window.clearInterval(iv);
