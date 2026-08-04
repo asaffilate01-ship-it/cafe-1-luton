@@ -1,5 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { guessCategory } from "@/lib/cooking";
 
 export type PosSide = "jury" | "judge" | "public";
 
@@ -408,7 +409,8 @@ export const syncSumupPos = createServerFn({ method: "POST" })
             return {
               order_id: inserted.id,
               menu_item_id: matched?.id ?? null,
-              category_label: sumupCategory(p) ?? matched?.category ?? null,
+              category_label:
+                sumupCategory(p) ?? matched?.category ?? guessCategory(p.name ?? "") ?? null,
               name: p.name || "Item",
               qty: Math.max(1, Number(p.quantity ?? 1)),
               unit_price_cents: Math.round(Number(p.price ?? 0) * 100),
