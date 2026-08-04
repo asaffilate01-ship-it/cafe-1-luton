@@ -415,9 +415,17 @@ function KDS() {
   }
 
   async function set(id: string, status: "preparing" | "ready" | "completed") {
+    // Paint the change straight away; the realtime refetch reconciles after.
+    const previous = tickets;
+    setTickets((prev) =>
+      status === "completed"
+        ? prev.filter((t) => t.id !== id)
+        : prev.map((t) => (t.id === id ? { ...t, status } : t)),
+    );
     try {
       await update({ data: { order_id: id, status } });
     } catch (e) {
+      setTickets(previous);
       toast.error(e instanceof Error ? e.message : "Failed");
     }
   }
@@ -447,10 +455,17 @@ function KDS() {
     if (!window.confirm(`Mark ${ids.length} ticket${ids.length === 1 ? "" : "s"} as ${status}?`))
       return;
     setBulking(true);
+    const previous = tickets;
+    setTickets((prev) =>
+      status === "completed"
+        ? prev.filter((t) => !ids.includes(t.id))
+        : prev.map((t) => (ids.includes(t.id) ? { ...t, status } : t)),
+    );
     try {
       await Promise.all(ids.map((id) => update({ data: { order_id: id, status } })));
       toast.success(`${ids.length} marked ${status}`);
     } catch (e) {
+      setTickets(previous);
       toast.error(e instanceof Error ? e.message : "Failed");
     } finally {
       setBulking(false);
