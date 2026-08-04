@@ -1969,7 +1969,7 @@ function ReaderPay({
         )}
       </div>
 
-      {readers.length > 0 ? (
+      {readers.length > 0 && (
         <div className="mt-4 space-y-1.5">
           {readers.map((r) => (
             <button
@@ -1979,19 +1979,21 @@ function ReaderPay({
               className={`flex w-full items-center gap-2 rounded-xl px-3 py-2.5 text-sm font-semibold ${readerId === r.id ? "bg-primary text-primary-foreground" : "border border-white/10 text-white/80 hover:border-white/40"}`}
             >
               <Smartphone className="h-4 w-4" /> {r.name}
-              <span className="ml-auto text-[11px] uppercase opacity-70">{r.status}</span>
+              <span className="ml-auto">
+                <ReaderStatusPill status={r.status} />
+              </span>
             </button>
           ))}
         </div>
-      ) : (
-        <p className="mt-4 rounded-xl border border-white/10 p-3 text-sm text-white/60">
-          No SumUp reader paired yet.{" "}
-          <button onClick={onSettings} className="underline">
-            Pair your Solo
-          </button>{" "}
-          in till settings.
-        </p>
       )}
+
+      <ReaderConnectionAlert
+        readers={readers}
+        readerId={readerId}
+        error={readerError}
+        onRetry={reloadReaders}
+        onSettings={onSettings}
+      />
 
       {state === "waiting" ? (
         <div className="mt-5 rounded-2xl border border-primary/40 bg-primary/10 p-4 text-center">
@@ -2007,7 +2009,7 @@ function ReaderPay({
             <p className="mt-4 rounded-xl bg-red-500/15 p-3 text-sm text-red-300">{note}</p>
           )}
           <button
-            disabled={!readers.length}
+            disabled={!readers.length || !isReaderOnline(readers.find((r) => r.id === readerId)?.status)}
             onClick={begin}
             className="mt-5 inline-flex h-14 w-full items-center justify-center gap-2 rounded-xl bg-primary text-base font-bold text-primary-foreground disabled:opacity-40"
           >
