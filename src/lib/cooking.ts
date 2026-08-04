@@ -40,6 +40,8 @@ export function looksCooked(name: string): boolean {
 /**
  * Best-effort lookup of a POS line against our menu names: exact normalised
  * match first, then the menu name whose words overlap the line the most.
+ * The overlap has to be strong: "chicken panini" and "chicken samosa" share a
+ * word but are different dishes, so a single shared word is never enough.
  */
 export function fuzzyMenuKey(name: string, keys: string[]): string | null {
   const n = normaliseItemName(name);
@@ -48,13 +50,17 @@ export function fuzzyMenuKey(name: string, keys: string[]): string | null {
   if (exact) return exact;
   const tokens = n.split(" ").filter((t) => t.length > 2);
   if (!tokens.length) return null;
+  // The last meaningful word is the dish itself ("panini", "samosa"); the rest
+  // are usually fillings or sizes. It must match or we treat it as no match.
+  const head = tokens[tokens.length - 1];
   let best: { key: string; score: number } | null = null;
   for (const key of keys) {
     const keyTokens = normaliseItemName(key).split(" ").filter((t) => t.length > 2);
     if (!keyTokens.length) continue;
+    if (keyTokens[keyTokens.length - 1] !== head && !keyTokens.includes(head)) continue;
     const hits = keyTokens.filter((t) => tokens.includes(t)).length;
     const score = hits / Math.max(keyTokens.length, tokens.length);
     if (hits && (!best || score > best.score)) best = { key, score };
   }
-  return best && best.score >= 0.5 ? best.key : null;
+  return best && best.score >= 0.6 ? best.key : null;
 }
