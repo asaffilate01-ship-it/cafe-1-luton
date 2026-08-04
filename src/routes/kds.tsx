@@ -935,6 +935,40 @@ function KDS() {
 }
 
 function AlertsToggle() {
+  return <AlertsToggleInner />;
+}
+
+function SyncPill({
+  lastSync,
+  ok,
+  now,
+  compact,
+}: {
+  lastSync: number | null;
+  ok: boolean;
+  now: number;
+  compact?: boolean;
+}) {
+  const secs = lastSync ? Math.max(0, Math.round((now - lastSync) / 1000)) : null;
+  const stale = secs === null || secs > 60 || !ok;
+  const label =
+    secs === null ? "waiting…" : secs < 60 ? `${secs}s ago` : `${Math.floor(secs / 60)}m ago`;
+  return (
+    <span
+      title={ok ? "Last successful SumUp POS sync" : "Last SumUp POS sync failed"}
+      className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 font-semibold ${
+        compact ? "text-[10px]" : "text-xs"
+      } ${stale ? "bg-amber-500/90 text-white" : "bg-primary-foreground/10"}`}
+    >
+      <span
+        className={`h-2 w-2 rounded-full ${stale ? "bg-white" : "bg-emerald-400 animate-pulse"}`}
+      />
+      POS {label}
+    </span>
+  );
+}
+
+function AlertsToggleInner() {
   const { perm, request } = useNotificationPermission();
   return (
     <div className="flex items-center gap-1">
