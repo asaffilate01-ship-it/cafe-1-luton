@@ -19,6 +19,14 @@ export type DisplayMessage =
       method: "cash" | "card" | "split" | "voucher";
     }
   | { type: "juror"; url: string }
+  | {
+      type: "juror_applied";
+      code: string;
+      pin: string;
+      remaining_cents: number;
+      allocated_cents: number;
+      opted_in: boolean;
+    }
   | { type: "idle" };
 
 export function postToDisplay(msg: DisplayMessage) {
