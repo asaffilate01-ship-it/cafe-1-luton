@@ -27,6 +27,12 @@ import { iminPrintTickets, isIminDevice, openCustomerScreen } from "@/lib/imin";
 import { postToDisplay, DISPLAY_CHANNEL, type DisplayMessage } from "@/lib/customer-display";
 import { lookupVoucher } from "@/lib/vouchers.functions";
 import { QrCode } from "@/components/qr-code";
+import {
+  ReaderConnectionAlert,
+  ReaderStatusPill,
+  WifiSetupSteps,
+  isReaderOnline,
+} from "@/components/reader-connection";
 import { JUROR_DAILY_ALLOWANCE_CENTS, JUROR_FOOD_DISCOUNT_PERCENT } from "@/lib/juror";
 import { money } from "@/lib/format";
 import { calculateCounterDue } from "@/lib/counter-pricing";
@@ -1354,6 +1360,8 @@ function Till() {
           readers={readers}
           readerId={readerId}
           setReaderId={setReaderId}
+          readerError={readerError}
+          reloadReaders={loadReaders}
           onClose={() => setPay(null)}
           onPaid={(result) => void completeSale(result, pay === "split" ? "split" : "card")}
           onSettings={() => {
@@ -1813,6 +1821,8 @@ function ReaderPay({
   readers,
   readerId,
   setReaderId,
+  readerError,
+  reloadReaders,
   onClose,
   onPaid,
   onSettings,
@@ -1823,6 +1833,8 @@ function ReaderPay({
   readers: { id: string; name: string; status: string }[];
   readerId: string;
   setReaderId: (v: string) => void;
+  readerError?: string | null;
+  reloadReaders: () => Promise<void>;
   onClose: () => void;
   onPaid: (result: CounterResult) => void;
   onSettings: () => void;
@@ -1957,7 +1969,7 @@ function ReaderPay({
         )}
       </div>
 
-      {readers.length > 0 ? (
+      {readers.length > 0 && (
         <div className="mt-4 space-y-1.5">
           {readers.map((r) => (
             <button
@@ -1967,19 +1979,21 @@ function ReaderPay({
               className={`flex w-full items-center gap-2 rounded-xl px-3 py-2.5 text-sm font-semibold ${readerId === r.id ? "bg-primary text-primary-foreground" : "border border-white/10 text-white/80 hover:border-white/40"}`}
             >
               <Smartphone className="h-4 w-4" /> {r.name}
-              <span className="ml-auto text-[11px] uppercase opacity-70">{r.status}</span>
+              <span className="ml-auto">
+                <ReaderStatusPill status={r.status} />
+              </span>
             </button>
           ))}
         </div>
-      ) : (
-        <p className="mt-4 rounded-xl border border-white/10 p-3 text-sm text-white/60">
-          No SumUp reader paired yet.{" "}
-          <button onClick={onSettings} className="underline">
-            Pair your Solo
-          </button>{" "}
-          in till settings.
-        </p>
       )}
+
+      <ReaderConnectionAlert
+        readers={readers}
+        readerId={readerId}
+        error={readerError}
+        onRetry={reloadReaders}
+        onSettings={onSettings}
+      />
 
       {state === "waiting" ? (
         <div className="mt-5 rounded-2xl border border-primary/40 bg-primary/10 p-4 text-center">
@@ -1995,7 +2009,9 @@ function ReaderPay({
             <p className="mt-4 rounded-xl bg-red-500/15 p-3 text-sm text-red-300">{note}</p>
           )}
           <button
-            disabled={!readers.length}
+            disabled={
+              !readers.length || !isReaderOnline(readers.find((r) => r.id === readerId)?.status)
+            }
             onClick={begin}
             className="mt-5 inline-flex h-14 w-full items-center justify-center gap-2 rounded-xl bg-primary text-base font-bold text-primary-foreground disabled:opacity-40"
           >
@@ -2076,7 +2092,7 @@ function TillSettings({
           >
             <Smartphone className="h-4 w-4 text-white/50" />
             <span className="flex-1 truncate font-semibold">{r.name}</span>
-            <span className="text-[11px] uppercase text-white/40">{r.status}</span>
+            <ReaderStatusPill status={r.status} />
             <button
               onClick={() => unpair(r.id)}
               aria-label={`Remove ${r.name}`}
@@ -2088,9 +2104,12 @@ function TillSettings({
         ))}
         {!readers.length && <p className="text-sm text-white/50">None paired yet.</p>}
       </div>
-      <p className="mt-3 text-xs text-white/40">
-        On the Solo: Settings → Connections → Pair device, then type the code below.
-      </p>
+      <div className="mt-3 rounded-xl border border-white/10 p-3">
+        <p className="text-xs font-bold uppercase tracking-widest text-white/40">
+          Connect the Solo over Wi-Fi
+        </p>
+        <WifiSetupSteps />
+      </div>
       <div className="mt-2 grid grid-cols-[1fr_1fr_auto] gap-2">
         <input
           value={name}
