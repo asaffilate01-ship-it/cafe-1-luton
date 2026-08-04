@@ -24,7 +24,7 @@ import {
 } from "@/lib/till.functions";
 import { openCashDrawer, getDrawerBridge, setDrawerBridge } from "@/lib/drawer";
 import { iminPrintTickets, isIminDevice, openCustomerScreen } from "@/lib/imin";
-import { postToDisplay } from "@/lib/customer-display";
+import { postToDisplay, DISPLAY_CHANNEL, type DisplayMessage } from "@/lib/customer-display";
 import { lookupVoucher } from "@/lib/vouchers.functions";
 import { QrCode } from "@/components/qr-code";
 import { JUROR_DAILY_ALLOWANCE_CENTS, JUROR_FOOD_DISCOUNT_PERCENT } from "@/lib/juror";
