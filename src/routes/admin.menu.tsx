@@ -169,16 +169,63 @@ function MenuManager() {
               <Plus className="h-4 w-4" />
             </button>
           </div>
-          <ul className="mt-3 space-y-1">
-            {cats.map((c) => (
-              <li key={c.id}>
+          <p className="mt-2 text-xs text-muted-foreground">
+            Drag to reorder — the menu follows this order.
+          </p>
+          <ul className="mt-2 space-y-1">
+            {cats.map((c, index) => (
+              <li
+                key={c.id}
+                draggable
+                onDragStart={(e) => {
+                  setDragId(c.id);
+                  e.dataTransfer.effectAllowed = "move";
+                }}
+                onDragEnd={() => {
+                  setDragId(null);
+                  setDragOverId(null);
+                }}
+                onDragOver={(e) => {
+                  e.preventDefault();
+                  if (dragId && dragId !== c.id) setDragOverId(c.id);
+                }}
+                onDrop={(e) => {
+                  e.preventDefault();
+                  void moveCategory(dragId, c.id);
+                }}
+                className={`flex items-center gap-1 rounded-lg ${dragOverId === c.id ? "ring-2 ring-primary" : ""} ${dragId === c.id ? "opacity-50" : ""}`}
+              >
+                <span
+                  className="cursor-grab px-1 text-muted-foreground active:cursor-grabbing"
+                  aria-hidden
+                >
+                  <GripVertical className="h-4 w-4" />
+                </span>
                 <button
                   onClick={() => setSelectedCat(c.id)}
-                  className={`w-full rounded-lg px-3 py-2 text-left text-sm transition ${selectedCat === c.id ? "bg-primary text-primary-foreground" : "hover:bg-accent"}`}
+                  className={`min-w-0 flex-1 rounded-lg px-2 py-2 text-left text-sm transition ${selectedCat === c.id ? "bg-primary text-primary-foreground" : "hover:bg-accent"}`}
                 >
                   <span className="font-medium">{c.name}</span>
                   {!c.active && <span className="ml-2 text-xs opacity-70">(hidden)</span>}
                 </button>
+                <span className="flex shrink-0 flex-col">
+                  <button
+                    aria-label={`Move ${c.name} up`}
+                    disabled={index === 0}
+                    onClick={() => void reorderCategories(index, index - 1)}
+                    className="text-muted-foreground disabled:opacity-25"
+                  >
+                    <ChevronUp className="h-4 w-4" />
+                  </button>
+                  <button
+                    aria-label={`Move ${c.name} down`}
+                    disabled={index === cats.length - 1}
+                    onClick={() => void reorderCategories(index, index + 1)}
+                    className="text-muted-foreground disabled:opacity-25"
+                  >
+                    <ChevronDown className="h-4 w-4" />
+                  </button>
+                </span>
               </li>
             ))}
           </ul>
