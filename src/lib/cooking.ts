@@ -36,13 +36,17 @@ const COLD_WORDS = [
 /** Multi-word phrases that are cold, checked as a whole phrase. */
 const COLD_PHRASES = ["hot chocolate", "iced coffee", "cold drink"];
 
+/** Crude singularise so "pancakes"/"paninis" match the singular keyword. */
+const singular = (t: string) =>
+  t.length > 3 && t.endsWith("s") && !t.endsWith("ss") ? t.slice(0, -1) : t;
+
 export function looksCooked(name: string): boolean {
   const n = normaliseItemName(name);
   if (!n) return false;
   if (COLD_PHRASES.some((p) => n.includes(p))) return false;
-  const tokens = new Set(n.split(" "));
-  if (COLD_WORDS.some((w) => tokens.has(w))) return false;
-  return COOKED_WORDS.some((w) => tokens.has(w));
+  const tokens = new Set(n.split(" ").flatMap((t) => [t, singular(t)]));
+  if (COLD_WORDS.some((w) => tokens.has(w) || tokens.has(singular(w)))) return false;
+  return COOKED_WORDS.some((w) => tokens.has(w) || tokens.has(singular(w)));
 }
 
 /**
