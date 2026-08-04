@@ -370,29 +370,42 @@ export const syncSumupPos = createServerFn({ method: "POST" })
       const { data: menuRows } = await supabaseAdmin
         .from("menu_items")
         .select("id, name, menu_categories(name)");
-      const menuByName = new Map<string, { id: string; category: string | null }>();
+      const menuByName = new Map<string, Array<{ id: string; category: string | null }>>();
       for (const m of (menuRows ?? []) as Array<{
         id: string;
         name: string;
         menu_categories: { name: string } | null;
       }>) {
-        menuByName.set(m.name.trim().toLowerCase(), {
+        const key = m.name.trim().toLowerCase();
+        const matches = menuByName.get(key) ?? [];
+        matches.push({
           id: m.id,
           category: m.menu_categories?.name ?? null,
         });
+        menuByName.set(key, matches);
       }
 
+      const matchMenuItem = (product: NonNullable<SumupTxn["products"]>[number]) => {
+        const matches = menuByName.get((product.name ?? "").trim().toLowerCase()) ?? [];
+        if (matches.length === 1) return matches[0];
+        const category = sumupCategory(product)?.toLowerCase();
+        if (!category) return undefined;
+        return matches.find((match) => match.category?.trim().toLowerCase() === category);
+      };
+
       const lines = (products && products.length > 0)
-        ? products.map((p) => ({
-            order_id: inserted.id,
-            menu_item_id: menuByName.get((p.name ?? "").trim().toLowerCase())?.id ?? null,
-            category_label: sumupCategory(p) ??
-              menuByName.get((p.name ?? "").trim().toLowerCase())?.category ?? null,
-            name: p.name || "Item",
-            qty: Math.max(1, Number(p.quantity ?? 1)),
-            unit_price_cents: Math.round(Number(p.price ?? 0) * 100),
-            notes: sumupLineNote(p),
-          }))
+        ? products.map((p) => {
+            const matched = matchMenuItem(p);
+            return {
+              order_id: inserted.id,
+              menu_item_id: matched?.id ?? null,
+              category_label: sumupCategory(p) ?? matched?.category ?? null,
+              name: p.name || "Item",
+              qty: Math.max(1, Number(p.quantity ?? 1)),
+              unit_price_cents: Math.round(Number(p.price ?? 0) * 100),
+              notes: sumupLineNote(p),
+            };
+          })
         : [{
             order_id: inserted.id,
             menu_item_id: null as string | null,
