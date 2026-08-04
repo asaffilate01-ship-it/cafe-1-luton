@@ -1,11 +1,27 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { money } from "@/lib/format";
-import { CheckCircle2, ShoppingBag, HandPlatter, Bike, UtensilsCrossed } from "lucide-react";
-import { DISPLAY_CHANNEL, type DisplayLine, type DisplayMessage } from "@/lib/customer-display";
+import {
+  CheckCircle2,
+  ShoppingBag,
+  HandPlatter,
+  Bike,
+  UtensilsCrossed,
+  Delete,
+  Loader2,
+  ShieldCheck,
+} from "lucide-react";
+import {
+  DISPLAY_CHANNEL,
+  postToDisplay,
+  type DisplayLine,
+  type DisplayMessage,
+} from "@/lib/customer-display";
 import { QrCode } from "@/components/qr-code";
 import { JUROR_DAILY_ALLOWANCE_CENTS } from "@/lib/juror";
+import { lookupVoucher, optInVoucher } from "@/lib/vouchers.functions";
 
 export const Route = createFileRoute("/display")({
   head: () => ({
@@ -91,6 +107,7 @@ function DisplayPage() {
         setJurorUrl(msg.url);
         return;
       }
+      if (msg.type === "juror_applied") return;
       setJurorUrl(null);
       if (msg.type === "order") {
         setPaid(null);
@@ -130,23 +147,26 @@ function DisplayPage() {
   /* ---- juror voucher QR ---- */
   if (jurorUrl) {
     return (
-      <div className="grid h-screen place-items-center bg-white px-8 text-center text-neutral-900">
-        <div>
+      <div className="grid h-screen grid-cols-1 items-center gap-8 bg-white px-10 py-8 text-neutral-900 lg:grid-cols-[minmax(0,1fr)_460px]">
+        <div className="text-center">
           <span className="inline-flex items-center gap-2 rounded-full bg-primary px-5 py-1.5 text-sm font-black uppercase tracking-[0.25em] text-primary-foreground">
             Juror voucher scheme
           </span>
-          <h1 className="mt-5 font-display text-5xl font-black">Scan to use your voucher</h1>
-          <p className="mt-3 text-2xl text-neutral-500">
-            Scan with your phone, enter the code and separate PIN from your juror slip —{" "}
-            {money(JUROR_DAILY_ALLOWANCE_CENTS)} each sitting day.
+          <h1 className="mt-5 font-display text-4xl font-black">
+            Enter your code and PIN, or scan
+          </h1>
+          <p className="mt-3 text-xl text-neutral-500">
+            {money(JUROR_DAILY_ALLOWANCE_CENTS)} each sitting day. Only you type the PIN — our staff
+            never see it.
           </p>
-          <div className="mx-auto mt-8 w-fit rounded-3xl border-4 border-neutral-900 p-5">
-            <QrCode value={jurorUrl} size={320} alt="Scan to open the Cafe 1 juror voucher page" />
+          <div className="mx-auto mt-6 w-fit rounded-3xl border-4 border-neutral-900 p-4">
+            <QrCode value={jurorUrl} size={220} alt="Scan to open the Cafe 1 juror voucher page" />
           </div>
-          <p className="mt-6 text-lg text-neutral-400">
-            Completely anonymous — Cafe 1 never sees your name or personal details.
+          <p className="mt-5 inline-flex items-center gap-2 text-base text-neutral-400">
+            <ShieldCheck className="h-4 w-4" /> Anonymous — Cafe 1 never sees your name.
           </p>
         </div>
+        <JurorKeypad />
       </div>
     );
   }
