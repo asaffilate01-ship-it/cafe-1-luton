@@ -30,7 +30,7 @@ import { QrCode } from "@/components/qr-code";
 import {
   ReaderConnectionAlert,
   ReaderStatusPill,
-  WifiSetupSteps,
+  ReaderLinkGuide,
   isReaderOnline,
 } from "@/components/reader-connection";
 import { JUROR_DAILY_ALLOWANCE_CENTS, JUROR_FOOD_DISCOUNT_PERCENT } from "@/lib/juror";
@@ -2106,9 +2106,9 @@ function TillSettings({
       </div>
       <div className="mt-3 rounded-xl border border-white/10 p-3">
         <p className="text-xs font-bold uppercase tracking-widest text-white/40">
-          Connect the Solo over Wi-Fi
+          Connect the Solo (Wi-Fi or Bluetooth)
         </p>
-        <WifiSetupSteps />
+        <ReaderLinkGuide />
       </div>
       <div className="mt-2 grid grid-cols-[1fr_1fr_auto] gap-2">
         <input
