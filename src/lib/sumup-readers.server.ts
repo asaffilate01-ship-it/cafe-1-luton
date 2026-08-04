@@ -62,6 +62,9 @@ export async function readerCheckout(input: {
   reference?: string;
 }): Promise<{ client_transaction_id: string }> {
   const affiliateKey = process.env["SUMUP_AFFILIATE_KEY"];
+  // Cloud API pushes the final transaction result here in real time.
+  const siteUrl = process.env["PUBLIC_SITE_URL"] ?? "https://cafe1stalbans.co.uk";
+  const returnUrl = `${siteUrl.replace(/\/$/, "")}/api/public/sumup-reader-webhook`;
   const out = await call<{ data?: { client_transaction_id?: string } }>(
     merchantPath(`/${input.readerId}/checkout`),
     {
@@ -69,6 +72,7 @@ export async function readerCheckout(input: {
       body: JSON.stringify({
         total_amount: { value: input.amount_cents, currency: "GBP", minor_unit: 2 },
         description: input.description,
+        return_url: returnUrl,
         ...(affiliateKey
           ? {
               affiliate: {
