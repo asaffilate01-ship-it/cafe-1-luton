@@ -325,6 +325,12 @@ function DemoPage() {
               >
                 Juror Menu
               </Link>
+              <Link
+                to="/juror-qr"
+                className="inline-flex h-10 items-center gap-2 rounded-xl border border-border px-4 font-bold"
+              >
+                Printable QR posters
+              </Link>
             </div>
           </div>
         </section>

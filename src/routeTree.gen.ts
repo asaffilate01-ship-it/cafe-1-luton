@@ -19,6 +19,7 @@ import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as MenuRouteImport } from './routes/menu'
 import { Route as KdsRouteImport } from './routes/kds'
+import { Route as JurorQrRouteImport } from './routes/juror-qr'
 import { Route as JurorDemoRouteImport } from './routes/juror-demo'
 import { Route as JurorRouteImport } from './routes/juror'
 import { Route as JudgesRouteImport } from './routes/judges'
@@ -115,6 +116,11 @@ const MenuRoute = MenuRouteImport.update({
 const KdsRoute = KdsRouteImport.update({
   id: '/kds',
   path: '/kds',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const JurorQrRoute = JurorQrRouteImport.update({
+  id: '/juror-qr',
+  path: '/juror-qr',
   getParentRoute: () => rootRouteImport,
 } as any)
 const JurorDemoRoute = JurorDemoRouteImport.update({
@@ -370,6 +376,7 @@ export interface FileRoutesByFullPath {
   '/judges': typeof JudgesRoute
   '/juror': typeof JurorRoute
   '/juror-demo': typeof JurorDemoRoute
+  '/juror-qr': typeof JurorQrRoute
   '/kds': typeof KdsRoute
   '/menu': typeof MenuRoute
   '/privacy': typeof PrivacyRoute
@@ -429,6 +436,7 @@ export interface FileRoutesByTo {
   '/judges': typeof JudgesRoute
   '/juror': typeof JurorRoute
   '/juror-demo': typeof JurorDemoRoute
+  '/juror-qr': typeof JurorQrRoute
   '/kds': typeof KdsRoute
   '/menu': typeof MenuRoute
   '/privacy': typeof PrivacyRoute
@@ -489,6 +497,7 @@ export interface FileRoutesById {
   '/judges': typeof JudgesRoute
   '/juror': typeof JurorRoute
   '/juror-demo': typeof JurorDemoRoute
+  '/juror-qr': typeof JurorQrRoute
   '/kds': typeof KdsRoute
   '/menu': typeof MenuRoute
   '/privacy': typeof PrivacyRoute
@@ -550,6 +559,7 @@ export interface FileRouteTypes {
     | '/judges'
     | '/juror'
     | '/juror-demo'
+    | '/juror-qr'
     | '/kds'
     | '/menu'
     | '/privacy'
@@ -609,6 +619,7 @@ export interface FileRouteTypes {
     | '/judges'
     | '/juror'
     | '/juror-demo'
+    | '/juror-qr'
     | '/kds'
     | '/menu'
     | '/privacy'
@@ -668,6 +679,7 @@ export interface FileRouteTypes {
     | '/judges'
     | '/juror'
     | '/juror-demo'
+    | '/juror-qr'
     | '/kds'
     | '/menu'
     | '/privacy'
@@ -728,6 +740,7 @@ export interface RootRouteChildren {
   JudgesRoute: typeof JudgesRoute
   JurorRoute: typeof JurorRoute
   JurorDemoRoute: typeof JurorDemoRoute
+  JurorQrRoute: typeof JurorQrRoute
   KdsRoute: typeof KdsRoute
   MenuRoute: typeof MenuRoute
   PrivacyRoute: typeof PrivacyRoute
@@ -842,6 +855,13 @@ declare module '@tanstack/react-router' {
       path: '/kds'
       fullPath: '/kds'
       preLoaderRoute: typeof KdsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/juror-qr': {
+      id: '/juror-qr'
+      path: '/juror-qr'
+      fullPath: '/juror-qr'
+      preLoaderRoute: typeof JurorQrRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/juror-demo': {
@@ -1192,6 +1212,7 @@ const rootRouteChildren: RootRouteChildren = {
   JudgesRoute: JudgesRoute,
   JurorRoute: JurorRoute,
   JurorDemoRoute: JurorDemoRoute,
+  JurorQrRoute: JurorQrRoute,
   KdsRoute: KdsRoute,
   MenuRoute: MenuRoute,
   PrivacyRoute: PrivacyRoute,
@@ -1238,3 +1259,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
