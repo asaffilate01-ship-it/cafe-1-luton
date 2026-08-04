@@ -61,6 +61,7 @@ import { Route as AdminBlogRouteImport } from './routes/admin.blog'
 import { Route as AdminBannersRouteImport } from './routes/admin.banners'
 import { Route as AdminAccountsRouteImport } from './routes/admin.accounts'
 import { Route as ApiPublicSumupWebhookRouteImport } from './routes/api/public/sumup-webhook'
+import { Route as ApiPublicSumupReaderWebhookRouteImport } from './routes/api/public/sumup-reader-webhook'
 import { Route as ApiPublicJurorDailyRouteImport } from './routes/api/public/juror-daily'
 import { Route as ApiPublicHealthRouteImport } from './routes/api/public/health'
 import { Route as ApiPublicCleanupUnpaidRouteImport } from './routes/api/public/cleanup-unpaid'
@@ -328,6 +329,12 @@ const ApiPublicSumupWebhookRoute = ApiPublicSumupWebhookRouteImport.update({
   path: '/api/public/sumup-webhook',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicSumupReaderWebhookRoute =
+  ApiPublicSumupReaderWebhookRouteImport.update({
+    id: '/api/public/sumup-reader-webhook',
+    path: '/api/public/sumup-reader-webhook',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicJurorDailyRoute = ApiPublicJurorDailyRouteImport.update({
   id: '/api/public/juror-daily',
   path: '/api/public/juror-daily',
@@ -415,6 +422,7 @@ export interface FileRoutesByFullPath {
   '/api/public/cleanup-unpaid': typeof ApiPublicCleanupUnpaidRoute
   '/api/public/health': typeof ApiPublicHealthRoute
   '/api/public/juror-daily': typeof ApiPublicJurorDailyRoute
+  '/api/public/sumup-reader-webhook': typeof ApiPublicSumupReaderWebhookRoute
   '/api/public/sumup-webhook': typeof ApiPublicSumupWebhookRoute
   '/api/public/deliveroo/webhook': typeof ApiPublicDeliverooWebhookRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
@@ -475,6 +483,7 @@ export interface FileRoutesByTo {
   '/api/public/cleanup-unpaid': typeof ApiPublicCleanupUnpaidRoute
   '/api/public/health': typeof ApiPublicHealthRoute
   '/api/public/juror-daily': typeof ApiPublicJurorDailyRoute
+  '/api/public/sumup-reader-webhook': typeof ApiPublicSumupReaderWebhookRoute
   '/api/public/sumup-webhook': typeof ApiPublicSumupWebhookRoute
   '/api/public/deliveroo/webhook': typeof ApiPublicDeliverooWebhookRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
@@ -536,6 +545,7 @@ export interface FileRoutesById {
   '/api/public/cleanup-unpaid': typeof ApiPublicCleanupUnpaidRoute
   '/api/public/health': typeof ApiPublicHealthRoute
   '/api/public/juror-daily': typeof ApiPublicJurorDailyRoute
+  '/api/public/sumup-reader-webhook': typeof ApiPublicSumupReaderWebhookRoute
   '/api/public/sumup-webhook': typeof ApiPublicSumupWebhookRoute
   '/api/public/deliveroo/webhook': typeof ApiPublicDeliverooWebhookRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
@@ -598,6 +608,7 @@ export interface FileRouteTypes {
     | '/api/public/cleanup-unpaid'
     | '/api/public/health'
     | '/api/public/juror-daily'
+    | '/api/public/sumup-reader-webhook'
     | '/api/public/sumup-webhook'
     | '/api/public/deliveroo/webhook'
     | '/lovable/email/auth/preview'
@@ -658,6 +669,7 @@ export interface FileRouteTypes {
     | '/api/public/cleanup-unpaid'
     | '/api/public/health'
     | '/api/public/juror-daily'
+    | '/api/public/sumup-reader-webhook'
     | '/api/public/sumup-webhook'
     | '/api/public/deliveroo/webhook'
     | '/lovable/email/auth/preview'
@@ -718,6 +730,7 @@ export interface FileRouteTypes {
     | '/api/public/cleanup-unpaid'
     | '/api/public/health'
     | '/api/public/juror-daily'
+    | '/api/public/sumup-reader-webhook'
     | '/api/public/sumup-webhook'
     | '/api/public/deliveroo/webhook'
     | '/lovable/email/auth/preview'
@@ -779,6 +792,7 @@ export interface RootRouteChildren {
   ApiPublicCleanupUnpaidRoute: typeof ApiPublicCleanupUnpaidRoute
   ApiPublicHealthRoute: typeof ApiPublicHealthRoute
   ApiPublicJurorDailyRoute: typeof ApiPublicJurorDailyRoute
+  ApiPublicSumupReaderWebhookRoute: typeof ApiPublicSumupReaderWebhookRoute
   ApiPublicSumupWebhookRoute: typeof ApiPublicSumupWebhookRoute
   ApiPublicDeliverooWebhookRoute: typeof ApiPublicDeliverooWebhookRoute
   LovableEmailAuthPreviewRoute: typeof LovableEmailAuthPreviewRoute
@@ -1151,6 +1165,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicSumupWebhookRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/sumup-reader-webhook': {
+      id: '/api/public/sumup-reader-webhook'
+      path: '/api/public/sumup-reader-webhook'
+      fullPath: '/api/public/sumup-reader-webhook'
+      preLoaderRoute: typeof ApiPublicSumupReaderWebhookRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/juror-daily': {
       id: '/api/public/juror-daily'
       path: '/api/public/juror-daily'
@@ -1251,6 +1272,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicCleanupUnpaidRoute: ApiPublicCleanupUnpaidRoute,
   ApiPublicHealthRoute: ApiPublicHealthRoute,
   ApiPublicJurorDailyRoute: ApiPublicJurorDailyRoute,
+  ApiPublicSumupReaderWebhookRoute: ApiPublicSumupReaderWebhookRoute,
   ApiPublicSumupWebhookRoute: ApiPublicSumupWebhookRoute,
   ApiPublicDeliverooWebhookRoute: ApiPublicDeliverooWebhookRoute,
   LovableEmailAuthPreviewRoute: LovableEmailAuthPreviewRoute,
