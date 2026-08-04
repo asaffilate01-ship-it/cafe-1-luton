@@ -2090,7 +2090,7 @@ function TillSettings({
           >
             <Smartphone className="h-4 w-4 text-white/50" />
             <span className="flex-1 truncate font-semibold">{r.name}</span>
-            <span className="text-[11px] uppercase text-white/40">{r.status}</span>
+            <ReaderStatusPill status={r.status} />
             <button
               onClick={() => unpair(r.id)}
               aria-label={`Remove ${r.name}`}
@@ -2102,9 +2102,12 @@ function TillSettings({
         ))}
         {!readers.length && <p className="text-sm text-white/50">None paired yet.</p>}
       </div>
-      <p className="mt-3 text-xs text-white/40">
-        On the Solo: Settings → Connections → Pair device, then type the code below.
-      </p>
+      <div className="mt-3 rounded-xl border border-white/10 p-3">
+        <p className="text-xs font-bold uppercase tracking-widest text-white/40">
+          Connect the Solo over Wi-Fi
+        </p>
+        <WifiSetupSteps />
+      </div>
       <div className="mt-2 grid grid-cols-[1fr_1fr_auto] gap-2">
         <input
           value={name}
