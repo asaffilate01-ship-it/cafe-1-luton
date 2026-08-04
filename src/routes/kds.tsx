@@ -78,6 +78,26 @@ const SIDE_TONE: Record<string, string> = {
 const STATIONS = ["ALL", "HOT", "SANDWICH", "DRINKS", "PASS"] as const;
 type Station = (typeof STATIONS)[number];
 
+/**
+ * Menu items rarely carry an explicit station code, so work one out from the
+ * dish itself. Without this every station filter empties the whole board.
+ */
+function inferStation(
+  explicit: string | null | undefined,
+  name: string,
+  category: string | null | undefined,
+  cooked: boolean,
+): Station {
+  const code = (explicit ?? "").trim().toUpperCase();
+  if ((STATIONS as readonly string[]).includes(code)) return code as Station;
+  const hay = `${category ?? ""} ${name}`.toLowerCase();
+  if (/(drink|coffee|tea|juice|smoothie|latte|americano|cappuccino|mocha|water|can\b|bottle)/.test(hay))
+    return "DRINKS";
+  if (/(panini|sandwich|baguette|wrap|toastie|bagel|roll|sub)/.test(hay)) return "SANDWICH";
+  if (cooked) return "HOT";
+  return "PASS";
+}
+
 function whenLabel(o: { schedule_mode: string | null; scheduled_for: string | null }) {
   if (o.scheduled_for && o.schedule_mode !== "asap")
     return new Date(o.scheduled_for).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
