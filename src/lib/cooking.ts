@@ -21,20 +21,32 @@ const COOKED_WORDS = [
   "masala", "tikka", "kofta", "hash", "mushroom", "waffle", "pancake",
 ];
 
-/** Words that override the above — these are cold even if they share a token. */
+/**
+ * Words that override the above — these are cold even if they share a token.
+ * Matched on whole words only: substring matching used to turn "steak" cold
+ * (it contains "tea"), and "americano"/"pecan" tripped the old "can" entry.
+ */
 const COLD_WORDS = [
   "coke", "pepsi", "water", "juice", "smoothie", "coffee", "latte", "tea",
-  "cappuccino", "americano", "mocha", "hot chocolate", "cake", "muffin",
-  "cookie", "crisps", "chocolate", "bottle", "can ", "salad", "yoghurt",
+  "cappuccino", "americano", "mocha", "cake", "muffin",
+  "cookie", "crisps", "chocolate", "bottle", "can", "cans", "salad", "yoghurt",
   "yogurt", "fruit", "biscuit", "brownie", "flapjack", "croissant",
 ];
+
+/** Multi-word phrases that are cold, checked as a whole phrase. */
+const COLD_PHRASES = ["hot chocolate", "iced coffee", "cold drink"];
+
+/** Crude singularise so "pancakes"/"paninis" match the singular keyword. */
+const singular = (t: string) =>
+  t.length > 3 && t.endsWith("s") && !t.endsWith("ss") ? t.slice(0, -1) : t;
 
 export function looksCooked(name: string): boolean {
   const n = normaliseItemName(name);
   if (!n) return false;
-  if (COLD_WORDS.some((w) => n.includes(w.trim()))) return false;
-  const tokens = new Set(n.split(" "));
-  return COOKED_WORDS.some((w) => tokens.has(w));
+  if (COLD_PHRASES.some((p) => n.includes(p))) return false;
+  const tokens = new Set(n.split(" ").flatMap((t) => [t, singular(t)]));
+  if (COLD_WORDS.some((w) => tokens.has(w) || tokens.has(singular(w)))) return false;
+  return COOKED_WORDS.some((w) => tokens.has(w) || tokens.has(singular(w)));
 }
 
 /**
@@ -61,5 +73,5 @@ export function fuzzyMenuKey(name: string, keys: string[]): string | null {
     const score = hits / Math.max(keyTokens.length, tokens.length);
     if (hits && (!best || score > best.score)) best = { key, score };
   }
-  return best && best.score >= 0.5 ? best.key : null;
+  return best && best.score >= 0.6 ? best.key : null;
 }
