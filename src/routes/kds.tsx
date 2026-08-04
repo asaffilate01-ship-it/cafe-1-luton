@@ -377,6 +377,8 @@ function KDS() {
     if (!user || (!has("admin") && !has("staff"))) return;
     let cancelled = false;
     async function tick() {
+      // Don't hammer SumUp while the screen is in the background.
+      if (typeof document !== "undefined" && document.visibilityState === "hidden") return;
       try {
         const r = await sync({ data: undefined as never });
         if (!cancelled && r?.imported && r.imported > 0) {
