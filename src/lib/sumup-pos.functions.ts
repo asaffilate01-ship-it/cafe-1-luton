@@ -99,17 +99,14 @@ function isVoidTxn(t: Pick<SumupTxn, "status" | "amount" | "refunded_amount">): 
 
 /** Anything that could identify which physical terminal took the sale. */
 function deviceRefs(t: SumupTxn): string[] {
-  // urn:sumup:pos:sale:<merchant>:<pos-device-uuid>:<ts> — the 5th segment is
-  // the till device, stable per physical POS.
-  const posDeviceId = (t.client_transaction_id ?? "").split(":")[5];
   return [
     t.reader_id,
     t.device?.identifier,
     t.device?.id,
     t.terminal?.id,
     t.terminal?.name,
+    // The SumUp account signed in on that till — the reliable per-counter signal.
     t.username,
-    posDeviceId,
   ].filter((v): v is string => typeof v === "string" && v.trim() !== "");
 }
 
@@ -326,22 +323,25 @@ export const syncSumupPos = createServerFn({ method: "POST" })
         .maybeSingle();
       if (existing) { skipped++; continue; }
 
-      // Try to fetch details (may include product basket if terminal is SumUp POS/Kiosk).
+      // Try to fetch details: the basket, and the SumUp login that took the sale
+      // (neither is present on the history listing).
       let products: SumupTxn["products"] = t.products;
+      let detailed: SumupTxn = t;
       try {
         const d = await fetch(`https://api.sumup.com/v0.1/me/transactions?id=${encodeURIComponent(t.id)}`, {
           headers: { Authorization: `Bearer ${key}` },
         });
         if (d.ok) {
           const dj = (await d.json()) as SumupTxn;
+          detailed = { ...t, ...dj };
           if (dj.products?.length) products = dj.products;
         }
       } catch { /* ignore detail fetch errors */ }
 
       const totalCents = Math.round(Number(t.amount) * 100);
       const cardTail = t.card?.last_4_digits ? ` ••${t.card.last_4_digits}` : "";
-      const fulfilment = deriveFulfilment(t, products);
-      const posSide = derivePosSide(t, products, mapping);
+      const fulfilment = deriveFulfilment(detailed, products);
+      const posSide = derivePosSide(detailed, products, mapping);
       const schedule = deriveSchedule(t, products);
 
       const { data: inserted, error: insErr } = await supabaseAdmin
