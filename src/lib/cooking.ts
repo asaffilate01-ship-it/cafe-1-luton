@@ -115,7 +115,7 @@ const CATEGORY_RULES: Array<{ category: string; phrases?: string[]; words?: stri
   { category: "Desserts", words: ["cake", "muffin", "pie", "brownie", "doughnut", "donut", "pastry", "dessert"] },
   { category: "Snacks", phrases: ["chocolate bar", "chewing gum"], words: ["crisps", "chocolate", "gum"] },
   { category: "Extras", phrases: ["add milk", "oat milk", "butter only"], words: ["extra", "sauce", "dip", "cheese", "egg", "eggs", "beans", "sausage", "bacon", "hash", "milk", "butter"] },
-  { category: "Chef's Specials", words: ["curry", "rice", "biryani", "karahi", "masala", "keema", "chana", "tikka", "shepherds"] },
+  { category: "Chef's Specials", phrases: ["shepherds pie", "cottage pie", "chicken pie"], words: ["curry", "rice", "biryani", "karahi", "masala", "keema", "chana", "tikka", "shepherds"] },
   { category: "Breakfast", words: ["breakfast"] },
 ];
 
