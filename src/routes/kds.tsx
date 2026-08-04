@@ -198,10 +198,24 @@ function KDS() {
             .select("id, order_id, menu_item_id, name, qty, notes, category_label")
             .in("order_id", ids)
         : { data: [] as Item[] };
-      const [menu, { data: cats }] = await Promise.all([
-        getMenuItems(),
-        supabase.from("menu_categories").select("id, name"),
-      ]);
+      const fresh =
+        menuCache.current && Date.now() - menuCache.current.at < 300_000
+          ? menuCache.current
+          : null;
+      let menu: unknown;
+      let cats: unknown;
+      if (fresh) {
+        menu = fresh.menu;
+        cats = fresh.cats;
+      } else {
+        const [m, c] = await Promise.all([
+          getMenuItems(),
+          supabase.from("menu_categories").select("id, name"),
+        ]);
+        menu = m;
+        cats = (c as { data: unknown }).data;
+        menuCache.current = { at: Date.now(), menu, cats };
+      }
       const catName = new Map<string, string>(
         ((cats ?? []) as Array<{ id: string; name: string }>).map((c) => [c.id, c.name]),
       );
