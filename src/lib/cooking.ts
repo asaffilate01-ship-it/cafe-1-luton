@@ -91,7 +91,7 @@ const CATEGORY_RULES: Array<{ category: string; phrases?: string[]; words?: stri
   { category: "Milkshakes", words: ["milkshake", "shake", "oreo", "caramel"] },
   { category: "Mocktails", phrases: ["redbull mojito"], words: ["mojito", "mocktail"] },
   { category: "Iced Coffee", phrases: ["iced coffee", "iced latte"] },
-  { category: "Drinks", phrases: ["bottled drink", "energy drink", "soft drink"], words: ["coke", "pepsi", "water", "juice", "can", "cans", "bottle", "lemonade", "fanta", "sprite", "smoothie", "redbull", "monster", "tango", "irnbru"] },
+  { category: "Drinks", phrases: ["bottled drink", "energy drink", "soft drink", "red bull"], words: ["coke", "pepsi", "water", "juice", "can", "cans", "bottle", "lemonade", "fanta", "sprite", "smoothie", "redbull", "monster", "tango", "irnbru"] },
   // Food
   { category: "Samosas", words: ["samosa", "samosas"] },
   { category: "Burgers", words: ["burger", "cheeseburger"] },
