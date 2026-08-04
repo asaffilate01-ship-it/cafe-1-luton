@@ -25,7 +25,7 @@ import { useWakeLock } from "@/hooks/use-wake-lock";
 import { syncSumupPos } from "@/lib/sumup-pos.functions";
 import { orderCode } from "@/lib/order-code";
 import { getStaffMenuItems } from "@/lib/menu-operations.functions";
-import { fuzzyMenuKey, looksCooked } from "@/lib/cooking";
+import { fuzzyMenuKey, guessCategory, looksCooked } from "@/lib/cooking";
 
 type Item = {
   id: string;
@@ -294,6 +294,7 @@ function KDS() {
             const category =
               item.category_label?.trim() ||
               meta.category ||
+              guessCategory(item.name) ||
               (meta.needs_cooking ? "Hot food" : "Other items");
             return {
               ...item,
