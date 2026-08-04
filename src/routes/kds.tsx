@@ -529,6 +529,7 @@ function KDS() {
           <span className="text-xs font-bold uppercase tracking-wide opacity-90">
             {visibleTickets.length} active · {station}
           </span>
+          <SyncPill lastSync={lastSync} ok={syncOk} now={now} compact />
           <div className="flex items-center gap-2">
             <button
               onClick={() => setAll("preparing", "ready")}
@@ -609,6 +610,7 @@ function KDS() {
                 ))}
               </div>
               <span className="text-sm opacity-80">{visibleTickets.length} active</span>
+              <SyncPill lastSync={lastSync} ok={syncOk} now={now} />
             </div>
           </div>
           <div className="mx-auto flex max-w-7xl items-center gap-3 px-4 pb-3 text-xs font-semibold">
