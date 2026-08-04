@@ -82,8 +82,24 @@ type Station = (typeof STATIONS)[number];
  * Menu items rarely carry an explicit station code, so work one out from the
  * dish itself. Without this every station filter empties the whole board.
  */
+function groupByCategory(items: Item[]): { category: string | null; items: Item[] }[] {
+  const groups: { category: string | null; items: Item[] }[] = [];
+  const index = new Map<string, number>();
+  for (const item of items) {
+    const category = item.category?.trim() || null;
+    const key = (category ?? "").toLowerCase();
+    const at = index.get(key);
+    if (at === undefined) {
+      index.set(key, groups.length);
+      groups.push({ category, items: [item] });
+    } else {
+      groups[at]!.items.push(item);
+    }
+  }
+  return groups;
+}
+
 function inferStation(
-  explicit: string | null | undefined,
   explicit: string | null | undefined,
   name: string,
   category: string | null | undefined,
