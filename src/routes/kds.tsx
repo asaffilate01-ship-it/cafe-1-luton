@@ -83,6 +83,7 @@ type Station = (typeof STATIONS)[number];
  * dish itself. Without this every station filter empties the whole board.
  */
 function inferStation(
+
   explicit: string | null | undefined,
   name: string,
   category: string | null | undefined,
