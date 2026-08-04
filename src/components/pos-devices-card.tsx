@@ -70,8 +70,9 @@ export function PosDevicesCard() {
     <section className="rounded-2xl border border-border bg-card p-5">
       <p className="font-semibold">Card terminals — jury, judge or public side</p>
       <p className="mt-1 text-sm text-muted-foreground">
-        Give each card machine its terminal reference (serial or reader ID shown on the device) so
-        imported POS sales land on the kitchen display marked JURY, JUDGE or PUBLIC SIDE.
+        Give each till its reference — the SumUp account email signed in on that POS, or the reader
+        serial / device ID — so imported POS sales land on the kitchen display marked JURY, JUDGE or
+        PUBLIC SIDE.
       </p>
 
       <div className="mt-3 space-y-2">
@@ -119,7 +120,7 @@ export function PosDevicesCard() {
         <input
           value={ref}
           onChange={(e) => setRef(e.target.value)}
-          placeholder="Terminal reference / serial"
+          placeholder="SumUp login email or reader serial"
           className="h-10 rounded-lg border border-border bg-background px-3 font-mono text-sm"
         />
         <select
