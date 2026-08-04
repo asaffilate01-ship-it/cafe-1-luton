@@ -272,13 +272,19 @@ function KDS() {
           .filter((i) => i.order_id === o.id)
           .map((item) => {
             const meta = metadata(item);
+            const category = item.category_label ?? meta.category;
             return {
               ...item,
               cook: meta.needs_cooking,
-              station_code: meta.station_code,
+              station_code: inferStation(
+                meta.station_code === "PASS" ? null : meta.station_code,
+                item.name,
+                category,
+                meta.needs_cooking,
+              ),
               prep_seconds: meta.prep_seconds,
               // SumUp POS baskets bring their own category; ours is the fallback.
-              category: item.category_label ?? meta.category,
+              category,
             };
           });
         return { ...o, items: its, needsCooking: its.some((i) => i.cook) };
