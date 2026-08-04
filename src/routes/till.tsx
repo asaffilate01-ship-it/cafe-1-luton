@@ -2042,10 +2042,16 @@ function TillSettings({
   const [busy, setBusy] = useState(false);
 
   async function pair() {
-    if (!code.trim()) return toast.error("Enter the pairing code shown on the Solo");
+    const clean = code.trim().replace(/[\s-]/g, "").toUpperCase();
+    if (!clean) return toast.error("Enter the pairing code shown on the Solo");
+    if (clean.length !== 8) {
+      return toast.error(
+        "SumUp pairing codes are 8 characters (e.g. A7KD9PQ2). On the Solo open Settings → Connections → Connect to POS to see the full code.",
+      );
+    }
     setBusy(true);
     try {
-      await pairFn({ data: { pairing_code: code.trim(), name: name.trim() || "Solo" } });
+      await pairFn({ data: { pairing_code: clean, name: name.trim() || "Solo" } });
       toast.success("Reader paired");
       setCode("");
       await reload();
@@ -2120,7 +2126,8 @@ function TillSettings({
         <input
           value={code}
           onChange={(e) => setCode(e.target.value.toUpperCase())}
-          placeholder="Pairing code"
+          placeholder="8-char code e.g. A7KD9PQ2"
+          maxLength={8}
           className="h-10 rounded-xl border border-white/10 bg-neutral-800 px-3 font-mono text-sm outline-none focus:border-primary"
         />
         <button
