@@ -1,5 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { guessCategory } from "@/lib/cooking";
 
 export type PosSide = "jury" | "judge" | "public";
 
