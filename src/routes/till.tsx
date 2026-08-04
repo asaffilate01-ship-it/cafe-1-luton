@@ -1821,6 +1821,8 @@ function ReaderPay({
   readers,
   readerId,
   setReaderId,
+  readerError,
+  reloadReaders,
   onClose,
   onPaid,
   onSettings,
@@ -1831,6 +1833,8 @@ function ReaderPay({
   readers: { id: string; name: string; status: string }[];
   readerId: string;
   setReaderId: (v: string) => void;
+  readerError?: string | null;
+  reloadReaders: () => Promise<void>;
   onClose: () => void;
   onPaid: (result: CounterResult) => void;
   onSettings: () => void;
