@@ -291,7 +291,10 @@ function KDS() {
           .filter((i) => i.order_id === o.id)
           .map((item) => {
             const meta = metadata(item);
-            const category = item.category_label ?? meta.category;
+            const category =
+              item.category_label?.trim() ||
+              meta.category ||
+              (meta.needs_cooking ? "Hot food" : "Other items");
             return {
               ...item,
               cook: meta.needs_cooking,
