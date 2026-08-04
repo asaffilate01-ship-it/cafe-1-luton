@@ -1,5 +1,14 @@
-import { Loader2, RefreshCw, Settings2, Wifi, WifiOff } from "lucide-react";
+import { Bluetooth, Loader2, RefreshCw, Settings2, Wifi, WifiOff } from "lucide-react";
 import { useState } from "react";
+
+type NavigatorWithBluetooth = Navigator & {
+  bluetooth?: {
+    requestDevice: (options: {
+      acceptAllDevices?: boolean;
+      optionalServices?: string[];
+    }) => Promise<{ name?: string | null }>;
+  };
+};
 
 export type ReaderInfo = { id: string; name: string; status: string };
 
@@ -38,6 +47,110 @@ export function WifiSetupSteps() {
         show Online.
       </li>
     </ol>
+  );
+}
+
+/** The Bluetooth steps staff follow when the café Wi-Fi is down or the Solo is used away from the counter. */
+export function BluetoothSetupSteps() {
+  return (
+    <ol className="mt-2 space-y-1.5 text-xs text-white/60">
+      <li>
+        <span className="font-bold text-white/80">1.</span> On the Solo: swipe down → Settings →
+        Connections → Bluetooth, and turn Bluetooth on so it is discoverable.
+      </li>
+      <li>
+        <span className="font-bold text-white/80">2.</span> On this till device, turn Bluetooth on
+        and press “Pair over Bluetooth” below, then choose the Solo in the list.
+      </li>
+      <li>
+        <span className="font-bold text-white/80">3.</span> Confirm the matching code on both
+        screens.
+      </li>
+      <li>
+        <span className="font-bold text-white/80">4.</span> Back on the Solo: Settings →
+        Connections → Pair device, then enter that code below to finish linking it to Cafe 1.
+      </li>
+    </ol>
+  );
+}
+
+/** Bluetooth pairing button — uses the device chooser when the browser supports it. */
+export function BluetoothPairButton() {
+  const [busy, setBusy] = useState(false);
+  const [result, setResult] = useState<string | null>(null);
+
+  async function pair() {
+    const bt = (navigator as NavigatorWithBluetooth).bluetooth;
+    if (!bt) {
+      setResult(
+        "This browser can't open the Bluetooth chooser — pair the Solo from the till device's own Bluetooth settings, then enter the pairing code below.",
+      );
+      return;
+    }
+    setBusy(true);
+    setResult(null);
+    try {
+      const device = await bt.requestDevice({ acceptAllDevices: true, optionalServices: [] });
+      setResult(
+        `Bluetooth link started with ${device.name || "the selected device"}. Now enter the Solo's pairing code below.`,
+      );
+    } catch (error) {
+      setResult(error instanceof Error ? error.message : "Bluetooth pairing was cancelled.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <div className="mt-3">
+      <button
+        onClick={() => void pair()}
+        disabled={busy}
+        className="inline-flex h-10 w-full items-center justify-center gap-2 rounded-xl border border-sky-300/50 text-sm font-bold text-sky-100 disabled:opacity-60"
+      >
+        {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Bluetooth className="h-4 w-4" />}
+        Pair over Bluetooth
+      </button>
+      {result && <p className="mt-2 text-[11px] text-white/60">{result}</p>}
+    </div>
+  );
+}
+
+/** Tabbed guide so staff can link the Solo over Wi-Fi or Bluetooth. */
+export function ReaderLinkGuide({ defaultMode = "wifi" }: { defaultMode?: "wifi" | "bluetooth" }) {
+  const [mode, setMode] = useState<"wifi" | "bluetooth">(defaultMode);
+  return (
+    <div>
+      <div className="flex gap-1.5">
+        {(
+          [
+            ["wifi", "Wi-Fi", Wifi],
+            ["bluetooth", "Bluetooth", Bluetooth],
+          ] as const
+        ).map(([value, label, Icon]) => (
+          <button
+            key={value}
+            type="button"
+            onClick={() => setMode(value)}
+            className={`inline-flex h-8 flex-1 items-center justify-center gap-1.5 rounded-lg text-[11px] font-black uppercase tracking-wide ${
+              mode === value
+                ? "bg-white/90 text-neutral-900"
+                : "border border-white/15 text-white/70 hover:border-white/40"
+            }`}
+          >
+            <Icon className="h-3.5 w-3.5" /> {label}
+          </button>
+        ))}
+      </div>
+      {mode === "wifi" ? (
+        <WifiSetupSteps />
+      ) : (
+        <>
+          <BluetoothSetupSteps />
+          <BluetoothPairButton />
+        </>
+      )}
+    </div>
   );
 }
 
@@ -85,7 +198,7 @@ export function ReaderConnectionAlert({
       </p>
       <p className="mt-1 text-xs text-amber-100/80">{problem}</p>
       {error && <p className="mt-1 text-[11px] text-amber-100/60">{error}</p>}
-      <WifiSetupSteps />
+      <ReaderLinkGuide />
       <div className="mt-3 flex gap-2">
         <button
           onClick={() => void retry()}
