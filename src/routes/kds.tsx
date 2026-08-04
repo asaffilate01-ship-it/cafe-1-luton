@@ -140,6 +140,9 @@ function KDS() {
   const [tickets, setTickets] = useState<Ticket[]>([]);
   // Ids currently shown on the board — used to announce cancellations/refunds.
   const liveIds = useRef<Set<string>>(new Set());
+  // Menu + categories change rarely; refetching them on every realtime event
+  // was what made "mark ready" feel sluggish. Cache for a few minutes.
+  const menuCache = useRef<{ at: number; menu: unknown; cats: unknown } | null>(null);
   const [kdsPaper, setKdsPaper] = useState<58 | 80>(80);
   const update = useServerFn(updateOrderStatus);
   const setFulfil = useServerFn(setOrderFulfilment);
