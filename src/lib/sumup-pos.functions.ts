@@ -41,6 +41,10 @@ type SumupTxn = {
   reader_id?: string;
   device?: { identifier?: string; id?: string; model?: string };
   terminal?: { id?: string; name?: string };
+  /** SumUp account signed in on the till that rang the sale up. */
+  username?: string;
+  /** e.g. urn:sumup:pos:sale:<merchant>:<pos-device-uuid>:<ts> */
+  client_transaction_id?: string;
   local_time?: string;
   /** Amount already refunded against this payment (SumUp keeps status SUCCESSFUL). */
   refunded_amount?: number;
