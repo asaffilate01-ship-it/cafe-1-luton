@@ -420,12 +420,12 @@ export const syncSumupPos = createServerFn({ method: "POST" })
       imported++;
     }
 
-    // Reconcile: any live POS ticket whose SumUp transaction is no longer
-    // successful (refunded / cancelled / failed) must come off the kitchen display.
+    // Reconcile: any live ticket (POS or website) whose SumUp transaction is no
+    // longer successful (refunded / cancelled / failed) must come off the kitchen display.
     const { data: live } = await supabaseAdmin
       .from("orders")
       .select("id, sumup_transaction_id, sumup_order_ref")
-      .eq("source", "sumup_pos")
+      .or("sumup_transaction_id.not.is.null,sumup_order_ref.not.is.null")
       .in("status", ["paid", "preparing", "ready", "out_for_delivery", "delivered", "completed"]);
 
     for (const o of live ?? []) {
