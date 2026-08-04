@@ -187,6 +187,10 @@ function KDS() {
       };
       const byId = new Map<string, MenuMeta>();
       const byName = new Map<string, MenuMeta>();
+      // Several categories reuse the same item name ("Cheese & Onion" is both a
+      // panini and a samosa), so a bare name lookup can land on the wrong dish.
+      const ambiguous = new Set<string>();
+      const byCatName = new Map<string, MenuMeta>();
       for (const m of (menu ?? []) as Array<{
         id: string;
         name: string;
@@ -202,14 +206,33 @@ function KDS() {
           category: m.category_id ? (catName.get(m.category_id) ?? null) : null,
         };
         byId.set(m.id, meta);
-        byName.set(m.name.trim().toLowerCase(), meta);
+        const key = m.name.trim().toLowerCase();
+        if (byName.has(key)) ambiguous.add(key);
+        byName.set(key, meta);
+        if (meta.category) byCatName.set(`${meta.category.trim().toLowerCase()}|${key}`, meta);
       }
-      const nameKeys = Array.from(byName.keys());
+      const nameKeys = Array.from(byName.keys()).filter((k) => !ambiguous.has(k));
       const metadata = (item: Item): MenuMeta => {
+        const key = item.name.trim().toLowerCase();
+        const withCategory = item.category_label
+          ? byCatName.get(`${item.category_label.trim().toLowerCase()}|${key}`)
+          : undefined;
         const direct =
           (item.menu_item_id ? byId.get(item.menu_item_id) : undefined) ??
-          byName.get(item.name.trim().toLowerCase());
+          withCategory ??
+          (ambiguous.has(key) ? undefined : byName.get(key));
         if (direct) return direct;
+        // Name shared by several categories and the POS gave us no category —
+        // keep the line's own name and fall back to keyword cooking rules.
+        if (ambiguous.has(key)) {
+          const cooked = looksCooked(item.name);
+          return {
+            needs_cooking: cooked,
+            station_code: cooked ? "HOT" : "PASS",
+            prep_seconds: 0,
+            category: null,
+          };
+        }
         // POS-typed names rarely match exactly — fuzzy match, then keywords.
         const fuzzy = fuzzyMenuKey(item.name, nameKeys);
         if (fuzzy) return byName.get(fuzzy)!;
