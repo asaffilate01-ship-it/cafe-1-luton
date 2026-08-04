@@ -113,7 +113,8 @@ const CATEGORY_RULES: Array<{ category: string; phrases?: string[]; words?: stri
   { category: "Cold Past Pot", phrases: ["pasta pot"] },
   { category: "Biscuits", words: ["biscuit", "biscuits", "cookie", "cookies", "flapjack"] },
   { category: "Desserts", words: ["cake", "muffin", "pie", "brownie", "doughnut", "donut", "pastry", "dessert"] },
-  { category: "Extras", phrases: ["add milk", "oat milk", "butter only", "chewing gum"], words: ["crisps", "bar", "chocolate", "extra", "sauce", "dip", "cheese", "egg", "eggs", "beans", "sausage", "bacon", "hash"] },
+  { category: "Snacks", phrases: ["chocolate bar", "chewing gum"], words: ["crisps", "chocolate", "gum"] },
+  { category: "Extras", phrases: ["add milk", "oat milk", "butter only"], words: ["extra", "sauce", "dip", "cheese", "egg", "eggs", "beans", "sausage", "bacon", "hash", "milk", "butter"] },
   { category: "Chef's Specials", words: ["curry", "rice", "biryani", "karahi", "masala", "keema", "chana", "tikka", "shepherds"] },
   { category: "Breakfast", words: ["breakfast"] },
 ];
