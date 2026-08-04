@@ -163,7 +163,10 @@ function KDS() {
       // Cancelled / refunded orders must never sit on the kitchen display.
       const live = ((orders ?? []) as Order[]).filter(
         (o) =>
-          o.payment_status !== "refunded" && o.status !== "cancelled" && o.status !== "refunded",
+          o.payment_status !== "refunded" &&
+          o.payment_status !== "failed" &&
+          o.status !== "cancelled" &&
+          o.status !== "refunded",
       );
       const ids = live.map((o) => o.id);
       const { data: items } = ids.length
@@ -267,15 +270,23 @@ function KDS() {
     const ch = supabase
       .channel("kds")
       .on("postgres_changes", { event: "*", schema: "public", table: "orders" }, (payload) => {
-        const o = payload.new as Partial<Order> | null;
-        if (
-          o &&
-          (o.status === "cancelled" || o.status === "refunded" || o.payment_status === "refunded")
-        ) {
-          if (liveIds.current.has(o.id as string)) {
-            liveIds.current.delete(o.id as string);
+        const o = (payload.new ?? null) as Partial<Order> | null;
+        const removedRow = (payload.old ?? null) as Partial<Order> | null;
+        const voided =
+          !!o &&
+          (o.status === "cancelled" ||
+            o.status === "refunded" ||
+            o.payment_status === "refunded" ||
+            o.payment_status === "failed");
+        const goneId = payload.eventType === "DELETE" ? (removedRow?.id as string | undefined) : undefined;
+        const dropId = voided ? (o?.id as string) : goneId;
+        if (dropId && liveIds.current.has(dropId)) {
+          liveIds.current.delete(dropId);
+          // Pull it off the screen immediately — don't wait for the refetch.
+          setTickets((prev) => prev.filter((t) => t.id !== dropId));
+          if (voided) {
             toast.error(
-              `Order #${o.order_number ?? ""} ${o.status === "refunded" || o.payment_status === "refunded" ? "refunded" : "cancelled"} — removed from the kitchen display`,
+              `Order #${o?.order_number ?? ""} ${o?.status === "refunded" || o?.payment_status === "refunded" ? "refunded" : "cancelled"} — removed from the kitchen display`,
               { duration: 10000 },
             );
             playChime();
