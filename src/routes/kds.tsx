@@ -858,27 +858,31 @@ function KDS() {
               <ul
                 className={`mt-2 flex-1 space-y-1.5 rounded-lg p-2.5 text-base ${cook ? "bg-blue-50" : "bg-amber-50"}`}
               >
-                {t.items.map((i) => (
-                  <li key={i.id} className="flex items-start gap-2 leading-tight">
-                    <span
-                      className={`mt-1.5 h-2.5 w-2.5 shrink-0 rounded-full ${i.cook ? "bg-blue-600" : "bg-amber-400"}`}
-                    />
-                    <span className="min-w-0 flex-1 font-semibold">
-                      {i.category && (
-                        <span className="block text-sm font-black uppercase tracking-wide text-slate-700">
-                          {i.category}
-                        </span>
-                      )}
-                      <span className="font-black text-primary">{i.qty}×</span> {i.name}
-                      {station === "ALL" && i.station_code && (
-                        <span className="ml-1 align-middle rounded bg-slate-200 px-1 py-px text-[10px] font-bold text-slate-700">
-                          {i.station_code}
-                        </span>
-                      )}
-                      {i.notes ? (
-                        <em className="block text-sm font-medium text-muted-foreground">— {i.notes}</em>
-                      ) : null}
+                {groupByCategory(t.items).map((group) => (
+                  <li key={group.category ?? "uncategorised"}>
+                    <span className="block rounded bg-slate-200/70 px-1.5 py-0.5 text-xs font-black uppercase tracking-wide text-slate-700">
+                      {group.category ?? "Other items"}
                     </span>
+                    <ul className="mt-1 space-y-1.5">
+                      {group.items.map((i) => (
+                        <li key={i.id} className="flex items-start gap-2 leading-tight">
+                          <span
+                            className={`mt-1.5 h-2.5 w-2.5 shrink-0 rounded-full ${i.cook ? "bg-blue-600" : "bg-amber-400"}`}
+                          />
+                          <span className="min-w-0 flex-1 font-semibold">
+                            <span className="font-black text-primary">{i.qty}×</span> {i.name}
+                            {station === "ALL" && i.station_code && (
+                              <span className="ml-1 align-middle rounded bg-slate-200 px-1 py-px text-[10px] font-bold text-slate-700">
+                                {i.station_code}
+                              </span>
+                            )}
+                            {i.notes ? (
+                              <em className="block text-sm font-medium text-muted-foreground">— {i.notes}</em>
+                            ) : null}
+                          </span>
+                        </li>
+                      ))}
+                    </ul>
                   </li>
                 ))}
               </ul>
