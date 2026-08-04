@@ -6,6 +6,7 @@
 export function normaliseItemName(name: string): string {
   return name
     .toLowerCase()
+    .replace(/['\u2019]/g, "")
     .replace(/&/g, " and ")
     .replace(/[^a-z0-9]+/g, " ")
     .trim();
