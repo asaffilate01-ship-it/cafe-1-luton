@@ -2009,7 +2009,9 @@ function ReaderPay({
             <p className="mt-4 rounded-xl bg-red-500/15 p-3 text-sm text-red-300">{note}</p>
           )}
           <button
-            disabled={!readers.length || !isReaderOnline(readers.find((r) => r.id === readerId)?.status)}
+            disabled={
+              !readers.length || !isReaderOnline(readers.find((r) => r.id === readerId)?.status)
+            }
             onClick={begin}
             className="mt-5 inline-flex h-14 w-full items-center justify-center gap-2 rounded-xl bg-primary text-base font-bold text-primary-foreground disabled:opacity-40"
           >
