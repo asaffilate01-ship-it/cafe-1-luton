@@ -291,7 +291,10 @@ function KDS() {
           .filter((i) => i.order_id === o.id)
           .map((item) => {
             const meta = metadata(item);
-            const category = item.category_label ?? meta.category;
+            const category =
+              item.category_label?.trim() ||
+              meta.category ||
+              (meta.needs_cooking ? "Hot food" : "Other items");
             return {
               ...item,
               cook: meta.needs_cooking,
@@ -803,7 +806,9 @@ function KDS() {
               </p>
               {SIDE_TONE[t.pos_terminal ?? ""] && (
                 <p
-                  className={`mt-1.5 rounded-lg px-2.5 py-1.5 text-center font-display text-base font-black uppercase tracking-widest text-white ${SIDE_TONE[t.pos_terminal!]}`}
+                  className={`mt-1.5 rounded-lg px-2 py-1 text-center font-display font-black uppercase tracking-wide text-white ${
+                    t.pos_terminal === "public" ? "text-xs" : "text-sm"
+                  } ${SIDE_TONE[t.pos_terminal!]}`}
                 >
                   {t.pos_terminal === "public" ? "Public side" : t.pos_terminal}
                 </p>
