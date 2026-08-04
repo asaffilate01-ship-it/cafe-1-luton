@@ -50,17 +50,16 @@ export function fuzzyMenuKey(name: string, keys: string[]): string | null {
   if (exact) return exact;
   const tokens = n.split(" ").filter((t) => t.length > 2);
   if (!tokens.length) return null;
-  // The last meaningful word is the dish itself ("panini", "samosa"); the rest
-  // are usually fillings or sizes. It must match or we treat it as no match.
-  const head = tokens[tokens.length - 1];
   let best: { key: string; score: number } | null = null;
   for (const key of keys) {
     const keyTokens = normaliseItemName(key).split(" ").filter((t) => t.length > 2);
     if (!keyTokens.length) continue;
-    if (keyTokens[keyTokens.length - 1] !== head && !keyTokens.includes(head)) continue;
     const hits = keyTokens.filter((t) => tokens.includes(t)).length;
+    // One shared word is only ever enough for single-word menu names ("Chips").
+    // Otherwise "chicken panini" would happily match "chicken samosa".
+    if (hits < 2 && keyTokens.length > 1) continue;
     const score = hits / Math.max(keyTokens.length, tokens.length);
     if (hits && (!best || score > best.score)) best = { key, score };
   }
-  return best && best.score >= 0.6 ? best.key : null;
+  return best && best.score >= 0.5 ? best.key : null;
 }
