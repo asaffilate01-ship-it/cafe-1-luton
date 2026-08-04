@@ -840,7 +840,20 @@ function KDS() {
         })}
         {!visibleTickets.length && (
           <div className="col-span-full p-16 text-center text-muted-foreground">
-            No active tickets for {station === "ALL" ? "the kitchen" : station}.
+            <p>No active tickets for {station === "ALL" ? "the kitchen" : station}.</p>
+            {station !== "ALL" && tickets.length > 0 && (
+              <button
+                type="button"
+                onClick={() => {
+                  setStation("ALL");
+                  window.localStorage.setItem("cafe1-kds-station", "ALL");
+                }}
+                className="mt-4 rounded-full bg-primary px-5 py-2 text-sm font-bold text-primary-foreground"
+              >
+                {tickets.length} ticket{tickets.length === 1 ? "" : "s"} hidden by this station —
+                show all
+              </button>
+            )}
           </div>
         )}
       </div>
