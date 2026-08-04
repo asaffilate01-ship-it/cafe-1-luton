@@ -26,25 +26,25 @@ export function readerStatusLabel(status: string | undefined | null): string {
   return "Offline";
 }
 
-/** The Wi-Fi steps staff follow on the Solo itself. */
+/** The official SumUp Cloud API pairing steps staff follow on the Solo itself. */
 export function WifiSetupSteps() {
   return (
     <ol className="mt-2 space-y-1.5 text-xs text-white/60">
       <li>
-        <span className="font-bold text-white/80">1.</span> On the Solo: swipe down → Settings →
-        Wi-Fi and join the café network (or leave mobile data on as backup).
+        <span className="font-bold text-white/80">1.</span> On the Solo: Settings → About → Log out
+        (the reader must be signed out before it can pair to the Cloud API).
       </li>
       <li>
-        <span className="font-bold text-white/80">2.</span> Wait for the Wi-Fi icon on the Solo's
-        status bar to show connected.
+        <span className="font-bold text-white/80">2.</span> Connect the Solo to Wi-Fi and wait for
+        the status bar icon to show connected.
       </li>
       <li>
-        <span className="font-bold text-white/80">3.</span> Settings → Connections → Pair device to
-        get a pairing code, then enter it below.
+        <span className="font-bold text-white/80">3.</span> Open Connections → API → Connect. An
+        8–9 character pairing code appears on the Solo.
       </li>
       <li>
-        <span className="font-bold text-white/80">4.</span> Press Retry here — the reader should
-        show Online.
+        <span className="font-bold text-white/80">4.</span> Enter that code below within 5 minutes,
+        then press Retry — the reader should show Online and is ready to take payments.
       </li>
     </ol>
   );
