@@ -783,7 +783,7 @@ function ItemCard({
           {item.description && (
             <p className="mt-1 line-clamp-2 text-sm text-muted-foreground">{item.description}</p>
           )}
-          {(item.dietary_tags?.length || item.allergens?.length) && (
+          {Boolean(item.dietary_tags?.length || item.allergens?.length) && (
             <div className="mt-2 flex flex-wrap gap-1">
               {item.dietary_tags?.map((value) => (
                 <span
