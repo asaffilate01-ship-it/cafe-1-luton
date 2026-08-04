@@ -95,12 +95,17 @@ function isVoidTxn(t: Pick<SumupTxn, "status" | "amount" | "refunded_amount">): 
 
 /** Anything that could identify which physical terminal took the sale. */
 function deviceRefs(t: SumupTxn): string[] {
+  // urn:sumup:pos:sale:<merchant>:<pos-device-uuid>:<ts> — the 5th segment is
+  // the till device, stable per physical POS.
+  const posDeviceId = (t.client_transaction_id ?? "").split(":")[5];
   return [
     t.reader_id,
     t.device?.identifier,
     t.device?.id,
     t.terminal?.id,
     t.terminal?.name,
+    t.username,
+    posDeviceId,
   ].filter((v): v is string => typeof v === "string" && v.trim() !== "");
 }
 
