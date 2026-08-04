@@ -27,6 +27,12 @@ import { iminPrintTickets, isIminDevice, openCustomerScreen } from "@/lib/imin";
 import { postToDisplay, DISPLAY_CHANNEL, type DisplayMessage } from "@/lib/customer-display";
 import { lookupVoucher } from "@/lib/vouchers.functions";
 import { QrCode } from "@/components/qr-code";
+import {
+  ReaderConnectionAlert,
+  ReaderStatusPill,
+  WifiSetupSteps,
+  isReaderOnline,
+} from "@/components/reader-connection";
 import { JUROR_DAILY_ALLOWANCE_CENTS, JUROR_FOOD_DISCOUNT_PERCENT } from "@/lib/juror";
 import { money } from "@/lib/format";
 import { calculateCounterDue } from "@/lib/counter-pricing";
@@ -1354,6 +1360,8 @@ function Till() {
           readers={readers}
           readerId={readerId}
           setReaderId={setReaderId}
+          readerError={readerError}
+          reloadReaders={loadReaders}
           onClose={() => setPay(null)}
           onPaid={(result) => void completeSale(result, pay === "split" ? "split" : "card")}
           onSettings={() => {
