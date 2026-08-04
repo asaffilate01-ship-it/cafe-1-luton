@@ -821,7 +821,10 @@ function KDS() {
               <p className="mt-1 inline-block self-start rounded bg-slate-900 px-1.5 py-0.5 font-mono text-[11px] font-black tracking-widest text-white">
                 {orderCode(t)}
               </p>
-              {t.type === "delivery" && (
+              {(t.type === "delivery" ||
+                t.postcode ||
+                t.address_line1 ||
+                t.company_name) && (
                 <div className="mt-1.5 rounded-lg border border-slate-900 bg-white p-1.5 text-xs">
                   <p className="text-[9px] font-black uppercase tracking-widest text-slate-500">
                     Deliver to
@@ -835,6 +838,9 @@ function KDS() {
                   {t.address_line1 && <p className="font-semibold">{t.address_line1}</p>}
                   {t.address_line2 && <p className="font-semibold">{t.address_line2}</p>}
                   {t.city && <p className="text-muted-foreground">{t.city}</p>}
+                  {!t.postcode && !t.address_line1 && !t.company_name && (
+                    <p className="font-bold text-red-600">No address on this order — check the till</p>
+                  )}
                   {t.customer_phone && <p className="mt-0.5 font-bold">☎ {t.customer_phone}</p>}
                   {(t.delivery_notes || whenLabel(t) !== "ASAP") && (
                     <p className="mt-0.5 rounded bg-amber-100 px-1.5 py-0.5 text-[10px] font-semibold text-amber-900">
