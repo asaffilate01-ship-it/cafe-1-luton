@@ -149,6 +149,8 @@ function KDS() {
   const sync = useServerFn(syncSumupPos);
   const getMenuItems = useServerFn(getStaffMenuItems);
   const [syncing, setSyncing] = useState(false);
+  const [lastSync, setLastSync] = useState<number | null>(null);
+  const [syncOk, setSyncOk] = useState(true);
   const [now, setNow] = useState(() => Date.now());
   const [station, setStation] = useState<Station>(() => {
     if (typeof window === "undefined") return "ALL";
@@ -381,6 +383,10 @@ function KDS() {
       if (typeof document !== "undefined" && document.visibilityState === "hidden") return;
       try {
         const r = await sync({ data: undefined as never });
+        if (!cancelled) {
+          setLastSync(Date.now());
+          setSyncOk(!r?.error);
+        }
         if (!cancelled && r?.imported && r.imported > 0) {
           toast.success(
             `${r.imported} SumUp POS ${r.imported === 1 ? "order" : "orders"} imported`,
@@ -392,7 +398,7 @@ function KDS() {
           );
         }
       } catch {
-        /* silent */
+        if (!cancelled) setSyncOk(false);
       }
     }
     tick();
@@ -407,9 +413,12 @@ function KDS() {
     setSyncing(true);
     try {
       const r = await sync({ data: undefined as never });
+      setLastSync(Date.now());
+      setSyncOk(!r?.error);
       if (r?.error) toast.error(`SumUp: ${r.error}`);
       else toast.success(`SumUp sync: ${r?.imported ?? 0} imported, ${r?.skipped ?? 0} skipped`);
     } catch (e) {
+      setSyncOk(false);
       toast.error(e instanceof Error ? e.message : "Sync failed");
     } finally {
       setSyncing(false);
@@ -520,6 +529,7 @@ function KDS() {
           <span className="text-xs font-bold uppercase tracking-wide opacity-90">
             {visibleTickets.length} active · {station}
           </span>
+          <SyncPill lastSync={lastSync} ok={syncOk} now={now} compact />
           <div className="flex items-center gap-2">
             <button
               onClick={() => setAll("preparing", "ready")}
@@ -600,6 +610,7 @@ function KDS() {
                 ))}
               </div>
               <span className="text-sm opacity-80">{visibleTickets.length} active</span>
+              <SyncPill lastSync={lastSync} ok={syncOk} now={now} />
             </div>
           </div>
           <div className="mx-auto flex max-w-7xl items-center gap-3 px-4 pb-3 text-xs font-semibold">
@@ -924,6 +935,40 @@ function KDS() {
 }
 
 function AlertsToggle() {
+  return <AlertsToggleInner />;
+}
+
+function SyncPill({
+  lastSync,
+  ok,
+  now,
+  compact,
+}: {
+  lastSync: number | null;
+  ok: boolean;
+  now: number;
+  compact?: boolean;
+}) {
+  const secs = lastSync ? Math.max(0, Math.round((now - lastSync) / 1000)) : null;
+  const stale = secs === null || secs > 60 || !ok;
+  const label =
+    secs === null ? "waiting…" : secs < 60 ? `${secs}s ago` : `${Math.floor(secs / 60)}m ago`;
+  return (
+    <span
+      title={ok ? "Last successful SumUp POS sync" : "Last SumUp POS sync failed"}
+      className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 font-semibold ${
+        compact ? "text-[10px]" : "text-xs"
+      } ${stale ? "bg-amber-500/90 text-white" : "bg-primary-foreground/10"}`}
+    >
+      <span
+        className={`h-2 w-2 rounded-full ${stale ? "bg-white" : "bg-emerald-400 animate-pulse"}`}
+      />
+      POS {label}
+    </span>
+  );
+}
+
+function AlertsToggleInner() {
   const { perm, request } = useNotificationPermission();
   return (
     <div className="flex items-center gap-1">
