@@ -75,10 +75,24 @@ const HUB_URL = process.env.HUB_URL || "https://restaurant-hub.deliveroo.net/ord
 const SECRET = process.env.DELIVEROO_BRIDGE_SECRET;
 const SESSION_FILE = path.resolve(process.env.SESSION_FILE || "./.deliveroo-hub-session.json");
 const REFRESH_MS = Number(process.env.REFRESH_MS || 45000);
-// The device login is a username rather than an email address, so accept
-// either spelling of the setting and treat them the same.
-const HUB_EMAIL = process.env.HUB_USERNAME || process.env.HUB_EMAIL;
-const HUB_PASSWORD = process.env.HUB_PASSWORD;
+/**
+ * Two logins can be supplied. The device account is tried first because it
+ * never expires, and the ordinary Hub login is kept as a backup for when the
+ * device account is busy, rate-limited or asking for 2FA. Either can be left
+ * blank; whatever is filled in gets used, in this order.
+ */
+const CREDENTIALS = [
+  {
+    label: "device account",
+    username: process.env.DEVICE_USERNAME || process.env.HUB_DEVICE_USERNAME,
+    password: process.env.DEVICE_PASSWORD || process.env.HUB_DEVICE_PASSWORD,
+  },
+  {
+    label: "Hub login",
+    username: process.env.HUB_USERNAME || process.env.HUB_EMAIL,
+    password: process.env.HUB_PASSWORD,
+  },
+].filter((c) => c.username && c.password);
 const ENDPOINT = `${BASE}/api/public/deliveroo/hub-ingest`;
 
 /**
