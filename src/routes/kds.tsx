@@ -1607,16 +1607,7 @@ function KDS() {
         aria-label="Kitchen display navigation"
         className="fixed inset-x-0 bottom-0 z-40 grid grid-cols-7 gap-0.5 border-t border-border bg-primary px-1 pb-[env(safe-area-inset-bottom)] pt-1.5 text-primary-foreground lg:hidden"
       >
-        {(
-          [
-            { key: "all", label: "Live orders", Icon: LayoutGrid },
-            { key: "jury", label: "Jury", Icon: Scale },
-            { key: "judge", label: "Judges", Icon: Gavel },
-            { key: "public", label: "Public", Icon: Users },
-            { key: "delivery", label: "Delivery", Icon: Bike },
-            { key: "web", label: "Web", Icon: Globe },
-          ] as const
-        ).map(({ key, label, Icon }) => {
+        {FEEDS.map(({ key, label, Icon }) => {
           const count = tickets.filter((t) => matchesFeed(key, t)).length;
           const on = feed === key;
           return (
