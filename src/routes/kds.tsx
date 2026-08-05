@@ -537,16 +537,29 @@ function KDS() {
     }
   }
 
-  async function set(id: string, status: "preparing" | "ready" | "completed") {
+  type KdsStatus = "paid" | "preparing" | "ready" | "completed";
+
+  async function set(id: string, status: KdsStatus, opts?: { undoTo?: KdsStatus }) {
     // Paint the change straight away; the realtime refetch reconciles after.
     const previous = tickets;
     setTickets((prev) =>
-      status === "completed"
+      status === "completed" && !recall
         ? prev.filter((t) => t.id !== id)
         : prev.map((t) => (t.id === id ? { ...t, status } : t)),
     );
     try {
       await update({ data: { order_id: id, status } });
+      if (opts?.undoTo) {
+        const back = opts.undoTo;
+        const ticket = previous.find((t) => t.id === id);
+        toast.success(`#${ticket?.order_number ?? ""} marked ${status.replace("_", " ")}`, {
+          duration: 12000,
+          action: {
+            label: "Undo",
+            onClick: () => void set(id, back),
+          },
+        });
+      }
     } catch (e) {
       setTickets(previous);
       toast.error(e instanceof Error ? e.message : "Failed");
