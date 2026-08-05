@@ -902,6 +902,20 @@ function KDS() {
                 <RefreshCw className="h-4 w-4" />
                 <span className="hidden sm:inline">Refresh</span>
               </button>
+              <button
+                type="button"
+                onClick={toggleUrdu}
+                aria-pressed={urdu}
+                className={`flex items-center gap-1 rounded-full px-3 py-1.5 text-xs font-semibold ${
+                  urdu
+                    ? "bg-primary-foreground text-primary"
+                    : "bg-primary-foreground/10 hover:bg-primary-foreground/20"
+                }`}
+                title="Show every ticket line in Urdu letters as well as English — the words are only re-spelt, never translated"
+              >
+                <Languages className="h-4 w-4" />
+                <span>اردو</span>
+              </button>
               <details className="relative">
                 <summary className="flex cursor-pointer list-none items-center gap-1 rounded-full bg-primary-foreground/10 px-3 py-1.5 text-xs font-semibold hover:bg-primary-foreground/20 [&::-webkit-details-marker]:hidden">
                   <Settings2 className="h-4 w-4" />
