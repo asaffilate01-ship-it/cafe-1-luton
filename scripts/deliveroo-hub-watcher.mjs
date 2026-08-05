@@ -180,9 +180,34 @@ async function isSignedOut() {
     .catch(() => false);
 }
 
-/** Sign in with the device account. Returns false if it did not take. */
+/** Try one set of credentials. Returns true when Hub accepted them. */
+async function attemptSignIn({ label, username, password }) {
+  console.log(`\n[hub] signing in with the ${label}…`);
+  try {
+    const email = page.locator('input[name*="user" i], input[id*="user" i], input[type="email"], input[name*="email" i], input[type="text"]').first();
+    await email.waitFor({ state: "visible", timeout: 20000 });
+    await email.fill(username);
+    const pw = page.locator('input[type="password"]').first();
+    await pw.fill(password);
+    await pw.press("Enter");
+    await page.waitForLoadState("networkidle", { timeout: 30000 }).catch(() => {});
+    if (await isSignedOut()) {
+      console.error(`[hub] the ${label} did not get in (wrong details, or it needs 2FA).`);
+      return false;
+    }
+    await page.goto(HUB_URL, { waitUntil: "domcontentloaded" }).catch(() => {});
+    await context.storageState({ path: SESSION_FILE }).catch(() => {});
+    console.log(`[hub] signed in with the ${label}; session saved.`);
+    return true;
+  } catch (err) {
+    console.error(`[hub] ${label} sign-in failed:`, err.message);
+    return false;
+  }
+}
+
+/** Sign in, device account first and the Hub login as backup. */
 async function signIn() {
-  if (!HUB_EMAIL || !HUB_PASSWORD) return false;
+  if (CREDENTIALS.length === 0) return false;
   // Back off between attempts: the tablet shares this login, and a sign-in
   // loop here would keep knocking the tablet offline.
   const gap = SIGN_IN_MIN_GAP_MS * Math.min(2 ** signInFailures, 10);
@@ -191,30 +216,21 @@ async function signIn() {
     await new Promise((resolve) => setTimeout(resolve, wait));
   }
   lastSignInAt = Date.now();
-  console.log("\n[hub] signing in with the device account…");
-  try {
-    const email = page.locator('input[name*="user" i], input[id*="user" i], input[type="email"], input[name*="email" i], input[type="text"]').first();
-    await email.waitFor({ state: "visible", timeout: 20000 });
-    await email.fill(HUB_EMAIL);
-    const pw = page.locator('input[type="password"]').first();
-    await pw.fill(HUB_PASSWORD);
-    await pw.press("Enter");
-    await page.waitForLoadState("networkidle", { timeout: 30000 }).catch(() => {});
-    if (await isSignedOut()) {
-      signInFailures += 1;
-      console.error("[hub] sign-in did not complete — the account may need 2FA. Use --login once instead.");
-      return false;
+  for (const credential of CREDENTIALS) {
+    if (await attemptSignIn(credential)) {
+      signInFailures = 0;
+      return true;
     }
+    // Hub may have left us on a half-filled form; reload before the next try.
     await page.goto(HUB_URL, { waitUntil: "domcontentloaded" }).catch(() => {});
-    await context.storageState({ path: SESSION_FILE }).catch(() => {});
-    signInFailures = 0;
-    console.log("[hub] signed in; session saved.");
-    return true;
-  } catch (err) {
-    signInFailures += 1;
-    console.error("[hub] sign-in failed:", err.message);
-    return false;
+    if (!(await isSignedOut())) {
+      signInFailures = 0;
+      return true;
+    }
   }
+  signInFailures += 1;
+  console.error("[hub] none of the saved logins worked — run once with --login to sign in by hand.");
+  return false;
 }
 
 if (await isSignedOut()) {
