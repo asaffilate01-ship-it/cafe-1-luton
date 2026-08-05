@@ -335,11 +335,11 @@ function JurorPage() {
 
                 <div className="grid gap-2 sm:grid-cols-2">
                   <Link
-                    to="/menu"
-                    search={{ juror: true } as never}
+                    to="/jury-menu"
+                    search={{ code: balance.code } as never}
                     className="inline-flex h-12 items-center justify-center gap-2 rounded-xl border border-primary font-bold text-primary hover:bg-primary/5"
                   >
-                    <UtensilsCrossed className="h-4 w-4" /> Juror Menu
+                    <UtensilsCrossed className="h-4 w-4" /> Jury Only Menu
                   </Link>
                   <Link
                     to="/menu"
