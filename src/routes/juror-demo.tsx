@@ -135,10 +135,43 @@ const steps: Step[] = [
     ),
   },
   {
-    title: "4. Ordering from the Juror Menu",
+    title: "4. The private JURY ONLY menu",
+    who: "Juror",
+    icon: Lock,
+    say: "In the jury lounge and the jury rooms there's a poster with a QR code. Scanning it opens a menu nobody else can see: the juror keys in their voucher code and PIN, and only then does the JURY ONLY menu unlock. It's a separate, dedicated menu — and orders from it can only be collected at Café 1 or delivered to the Jury Lounge at the Crown Court or the Jury Rooms at the Magistrates' Court. Never to a home or office address.",
+    screen: () => (
+      <div className="mx-auto max-w-md rounded-2xl border border-border bg-card p-5 text-sm shadow-sm">
+        <div className="rounded-xl bg-primary px-4 py-3 text-center text-primary-foreground">
+          <p className="font-display text-lg font-black tracking-wide">JURY ONLY MENU</p>
+          <p className="text-xs opacity-90">Unlocked with your voucher code and PIN</p>
+        </div>
+        <div className="mt-4 space-y-2">
+          <div className="flex items-center gap-2 rounded-xl border border-border px-3 py-2">
+            <Lock className="h-4 w-4 text-primary" />
+            <span className="font-mono tracking-[0.3em]">JR-4K7Q</span>
+          </div>
+          <div className="flex items-center gap-2 rounded-xl border border-border px-3 py-2">
+            <Lock className="h-4 w-4 text-primary" />
+            <span className="font-mono tracking-[0.3em]">••• •••</span>
+          </div>
+        </div>
+        <div className="mt-4 rounded-xl bg-muted/60 p-3 text-xs text-muted-foreground">
+          <p className="inline-flex items-center gap-1.5">
+            <Building2 className="h-3.5 w-3.5" /> Collection at Café 1 · Jury Lounge (Crown Court) ·
+            Jury Rooms (Magistrates')
+          </p>
+        </div>
+        <p className="mt-3 text-xs text-muted-foreground">
+          Judges have their own separate gated menu, charged to the weekly court tab.
+        </p>
+      </div>
+    ),
+  },
+  {
+    title: "5. Ordering from the Jury menu",
     who: "Juror",
     icon: UtensilsCrossed,
-    say: "Every juror can use the Juror Menu, whether or not they opt in. They can collect at the counter, or — if they're sitting in the Magistrates' Court — have it delivered to the jury room at a chosen time. Deliveries only ever go inside the court estate.",
+    say: "Every juror can use the menu, whether or not they opt in. They can collect at the counter, or — if they're sitting in the Magistrates' Court — have it delivered to the jury room at a chosen time. Deliveries only ever go inside the court estate.",
     screen: () => (
       <div className="mx-auto max-w-md rounded-2xl border border-border bg-card p-5 text-sm shadow-sm">
         <p className="font-display text-lg font-black">Your order</p>
