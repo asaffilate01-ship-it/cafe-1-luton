@@ -283,6 +283,13 @@ function JuryMenuPage() {
         filter={jurorFilter}
         emptyMessage="The Jury Only menu is being updated. Please order at the Café 1 counter today."
       />
+
+      <OrderSetupGate
+        open={gateOpen}
+        onClose={() => setGateOpen(false)}
+        dismissible={!!ctx}
+        juryOnly
+      />
     </div>
   );
 }
