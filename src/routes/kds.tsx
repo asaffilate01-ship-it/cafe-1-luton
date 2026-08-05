@@ -672,11 +672,30 @@ function KDS() {
                 <RefreshCw className={`h-4 w-4 ${syncing ? "animate-spin" : ""}`} />
                 <span>{syncing ? "Syncing…" : "Sync SumUp POS"}</span>
               </button>
+              <span
+                className={`flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-bold ${
+                  deliverooLive
+                    ? "bg-[#00CCBC] text-black"
+                    : "bg-primary-foreground/15 text-primary-foreground"
+                }`}
+                title={
+                  deliverooLive
+                    ? "Deliveroo orders are arriving here automatically"
+                    : "The shop's Deliveroo link is not reporting in — key tickets in manually until it is back"
+                }
+              >
+                <Bike className="h-3.5 w-3.5" />
+                {deliverooLive === null
+                  ? "Deliveroo…"
+                  : deliverooLive
+                    ? "Deliveroo auto"
+                    : "Deliveroo offline"}
+              </span>
               <button
                 onClick={() => setDeliverooOpen(true)}
                 disabled={!canCompleteOrders}
                 className="flex items-center gap-1 rounded-full bg-[#00CCBC] px-3 py-1.5 text-xs font-bold text-black hover:opacity-90 disabled:opacity-40"
-                title="Key in an order from the Deliveroo tablet so it shows on this display"
+                title="Fallback only — key in a Deliveroo ticket by hand if the auto-link is offline"
               >
                 <Bike className="h-4 w-4" />
                 <span>Add Deliveroo</span>
