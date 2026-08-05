@@ -16,6 +16,7 @@ import { useStoreStatus } from "@/hooks/use-store-status";
 import { buildScheduleSlots } from "@/lib/business";
 import { useOrderContext, describeContext } from "@/lib/order-context";
 import { OrderSetupGate } from "@/components/order-setup-gate";
+import { useJurySession } from "@/lib/jury-session";
 import { Settings2 } from "lucide-react";
 import {
   JUROR_CODE_KEY,
@@ -56,6 +57,7 @@ function Checkout() {
   const fetchEmailDiscount = useServerFn(getEmailDiscount);
   const checkPromo = useServerFn(validatePromo);
   const ctx = useOrderContext();
+  const jurySessionActive = useJurySession();
   const [gateOpen, setGateOpen] = useState(false);
   const [mode, setMode] = useState<Mode>(ctx?.mode ?? "collection");
   const [scheduleMode, setScheduleMode] = useState<ScheduleMode>(ctx?.schedule_mode ?? "asap");
@@ -499,7 +501,11 @@ function Checkout() {
               <Settings2 className="h-3.5 w-3.5" /> Change
             </button>
           </div>
-          <OrderSetupGate open={gateOpen} onClose={() => setGateOpen(false)} />
+          <OrderSetupGate
+            open={gateOpen}
+            onClose={() => setGateOpen(false)}
+            juryOnly={!!jurySessionActive}
+          />
           {!status.open && (
             <div
               className={`rounded-2xl border p-4 text-sm ${settings?.allow_preorder_when_closed ? "border-amber-500/40 bg-amber-500/10 text-amber-900" : "border-destructive/40 bg-destructive/10 text-destructive"}`}
