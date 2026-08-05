@@ -174,6 +174,33 @@ const steps: Step[] = [
     say: "Every juror can use the menu, whether or not they opt in — jurors who stay on expenses just tap 'I haven't opted in' and pay by card, Apple or Google Pay or cash, with no allowance and no 10% discount. They can collect at the counter, or — if they're sitting in the Magistrates' Court — have it delivered to the jury room at a chosen time. Deliveries only ever go inside the court estate. Once the juror has their food it's theirs to enjoy wherever they like — they're welcome to take it off the premises and eat outside, provided the court has told them they're free to leave the building.",
     screen: () => (
       <div className="mx-auto max-w-md rounded-2xl border border-border bg-card p-5 text-sm shadow-sm">
+        <div className="mb-4 rounded-2xl border border-primary/40 bg-primary/5 p-4">
+          <p className="font-display text-base font-black">How would you like your order?</p>
+          <p className="mt-0.5 text-xs text-muted-foreground">
+            On the JURY ONLY menu this pop-up only ever offers the court options.
+          </p>
+          <div className="mt-3 grid gap-2">
+            <div className="rounded-xl border border-border bg-background px-3 py-2 font-semibold">
+              Collect at Café 1
+            </div>
+            <div className="rounded-xl border border-border bg-background px-3 py-2 font-semibold">
+              Dine in at Café 1
+            </div>
+            <div className="rounded-xl border border-primary bg-background px-3 py-2 font-semibold">
+              Deliver — Main Jury Lounge, Crown Court
+            </div>
+            <div className="rounded-xl border border-border bg-background px-3 py-2 font-semibold">
+              Deliver — Jury Rooms, Crown Court
+            </div>
+            <div className="rounded-xl border border-border bg-background px-3 py-2 font-semibold">
+              Deliver — Jury Rooms, Magistrates' Court
+            </div>
+          </div>
+          <p className="mt-3 text-xs text-muted-foreground">
+            No postcode box, no home or office addresses — and a time slot of ASAP or a chosen
+            time.
+          </p>
+        </div>
         <p className="font-display text-lg font-black">Your order</p>
         <Row label="Chicken & rice" value="£5.50" />
         <Row label="Side salad" value="£1.80" />
