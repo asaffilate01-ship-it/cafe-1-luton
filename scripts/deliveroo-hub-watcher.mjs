@@ -38,7 +38,7 @@
  * Optional env:
  *   CAFE1_URL      target site (default https://cafe1stalbans.co.uk)
  *   HUB_URL        Hub orders page (default https://restaurant-hub.deliveroo.net/orders)
- *   HUB_EMAIL      device account username/email for unattended sign-in
+ *   HUB_USERNAME   device account username (HUB_EMAIL also accepted)
  *   HUB_PASSWORD   device account password (keep it in the machine's env, not here)
  *   SESSION_FILE   where the signed-in session is stored
  *   REFRESH_MS     how often to re-check when Hub is quiet (default 45000)
@@ -53,7 +53,9 @@ const HUB_URL = process.env.HUB_URL || "https://restaurant-hub.deliveroo.net/ord
 const SECRET = process.env.DELIVEROO_BRIDGE_SECRET;
 const SESSION_FILE = path.resolve(process.env.SESSION_FILE || "./.deliveroo-hub-session.json");
 const REFRESH_MS = Number(process.env.REFRESH_MS || 45000);
-const HUB_EMAIL = process.env.HUB_EMAIL;
+// The device login is a username rather than an email address, so accept
+// either spelling of the setting and treat them the same.
+const HUB_EMAIL = process.env.HUB_USERNAME || process.env.HUB_EMAIL;
 const HUB_PASSWORD = process.env.HUB_PASSWORD;
 const ENDPOINT = `${BASE}/api/public/deliveroo/hub-ingest`;
 
