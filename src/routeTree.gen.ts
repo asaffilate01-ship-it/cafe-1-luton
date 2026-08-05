@@ -71,6 +71,7 @@ import { Route as LovableEmailAuthWebhookRouteImport } from './routes/lovable/em
 import { Route as LovableEmailAuthPreviewRouteImport } from './routes/lovable/email/auth/preview'
 import { Route as ApiPublicDeliverooWebhookRouteImport } from './routes/api/public/deliveroo/webhook'
 import { Route as ApiPublicDeliverooPrintBridgeRouteImport } from './routes/api/public/deliveroo/print-bridge'
+import { Route as ApiPublicDeliverooHubIngestRouteImport } from './routes/api/public/deliveroo/hub-ingest'
 
 const TillRoute = TillRouteImport.update({
   id: '/till',
@@ -385,6 +386,12 @@ const ApiPublicDeliverooPrintBridgeRoute =
     path: '/api/public/deliveroo/print-bridge',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicDeliverooHubIngestRoute =
+  ApiPublicDeliverooHubIngestRouteImport.update({
+    id: '/api/public/deliveroo/hub-ingest',
+    path: '/api/public/deliveroo/hub-ingest',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -445,6 +452,7 @@ export interface FileRoutesByFullPath {
   '/api/public/juror-daily': typeof ApiPublicJurorDailyRoute
   '/api/public/sumup-reader-webhook': typeof ApiPublicSumupReaderWebhookRoute
   '/api/public/sumup-webhook': typeof ApiPublicSumupWebhookRoute
+  '/api/public/deliveroo/hub-ingest': typeof ApiPublicDeliverooHubIngestRoute
   '/api/public/deliveroo/print-bridge': typeof ApiPublicDeliverooPrintBridgeRoute
   '/api/public/deliveroo/webhook': typeof ApiPublicDeliverooWebhookRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
@@ -509,6 +517,7 @@ export interface FileRoutesByTo {
   '/api/public/juror-daily': typeof ApiPublicJurorDailyRoute
   '/api/public/sumup-reader-webhook': typeof ApiPublicSumupReaderWebhookRoute
   '/api/public/sumup-webhook': typeof ApiPublicSumupWebhookRoute
+  '/api/public/deliveroo/hub-ingest': typeof ApiPublicDeliverooHubIngestRoute
   '/api/public/deliveroo/print-bridge': typeof ApiPublicDeliverooPrintBridgeRoute
   '/api/public/deliveroo/webhook': typeof ApiPublicDeliverooWebhookRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
@@ -574,6 +583,7 @@ export interface FileRoutesById {
   '/api/public/juror-daily': typeof ApiPublicJurorDailyRoute
   '/api/public/sumup-reader-webhook': typeof ApiPublicSumupReaderWebhookRoute
   '/api/public/sumup-webhook': typeof ApiPublicSumupWebhookRoute
+  '/api/public/deliveroo/hub-ingest': typeof ApiPublicDeliverooHubIngestRoute
   '/api/public/deliveroo/print-bridge': typeof ApiPublicDeliverooPrintBridgeRoute
   '/api/public/deliveroo/webhook': typeof ApiPublicDeliverooWebhookRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
@@ -640,6 +650,7 @@ export interface FileRouteTypes {
     | '/api/public/juror-daily'
     | '/api/public/sumup-reader-webhook'
     | '/api/public/sumup-webhook'
+    | '/api/public/deliveroo/hub-ingest'
     | '/api/public/deliveroo/print-bridge'
     | '/api/public/deliveroo/webhook'
     | '/lovable/email/auth/preview'
@@ -704,6 +715,7 @@ export interface FileRouteTypes {
     | '/api/public/juror-daily'
     | '/api/public/sumup-reader-webhook'
     | '/api/public/sumup-webhook'
+    | '/api/public/deliveroo/hub-ingest'
     | '/api/public/deliveroo/print-bridge'
     | '/api/public/deliveroo/webhook'
     | '/lovable/email/auth/preview'
@@ -768,6 +780,7 @@ export interface FileRouteTypes {
     | '/api/public/juror-daily'
     | '/api/public/sumup-reader-webhook'
     | '/api/public/sumup-webhook'
+    | '/api/public/deliveroo/hub-ingest'
     | '/api/public/deliveroo/print-bridge'
     | '/api/public/deliveroo/webhook'
     | '/lovable/email/auth/preview'
@@ -833,6 +846,7 @@ export interface RootRouteChildren {
   ApiPublicJurorDailyRoute: typeof ApiPublicJurorDailyRoute
   ApiPublicSumupReaderWebhookRoute: typeof ApiPublicSumupReaderWebhookRoute
   ApiPublicSumupWebhookRoute: typeof ApiPublicSumupWebhookRoute
+  ApiPublicDeliverooHubIngestRoute: typeof ApiPublicDeliverooHubIngestRoute
   ApiPublicDeliverooPrintBridgeRoute: typeof ApiPublicDeliverooPrintBridgeRoute
   ApiPublicDeliverooWebhookRoute: typeof ApiPublicDeliverooWebhookRoute
   LovableEmailAuthPreviewRoute: typeof LovableEmailAuthPreviewRoute
@@ -1275,6 +1289,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicDeliverooPrintBridgeRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/deliveroo/hub-ingest': {
+      id: '/api/public/deliveroo/hub-ingest'
+      path: '/api/public/deliveroo/hub-ingest'
+      fullPath: '/api/public/deliveroo/hub-ingest'
+      preLoaderRoute: typeof ApiPublicDeliverooHubIngestRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -1337,6 +1358,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicJurorDailyRoute: ApiPublicJurorDailyRoute,
   ApiPublicSumupReaderWebhookRoute: ApiPublicSumupReaderWebhookRoute,
   ApiPublicSumupWebhookRoute: ApiPublicSumupWebhookRoute,
+  ApiPublicDeliverooHubIngestRoute: ApiPublicDeliverooHubIngestRoute,
   ApiPublicDeliverooPrintBridgeRoute: ApiPublicDeliverooPrintBridgeRoute,
   ApiPublicDeliverooWebhookRoute: ApiPublicDeliverooWebhookRoute,
   LovableEmailAuthPreviewRoute: LovableEmailAuthPreviewRoute,
@@ -1345,13 +1367,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
