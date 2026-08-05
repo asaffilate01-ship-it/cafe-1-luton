@@ -949,7 +949,8 @@ function KDS() {
               className="rounded-full bg-primary-foreground px-3 py-1.5 text-xs font-bold text-primary hover:opacity-90 disabled:opacity-40"
               title="Mark every preparing ticket as ready"
             >
-              Mark all ready
+              <span className="sm:hidden">All ready</span>
+              <span className="hidden sm:inline">Mark all ready</span>
             </button>
             <button
               onClick={() => setAll("ready", "completed")}
@@ -957,7 +958,8 @@ function KDS() {
               className="rounded-full bg-emerald-600 px-3 py-1.5 text-xs font-bold text-white hover:bg-emerald-700 disabled:opacity-40"
               title="Mark every ready ticket as complete"
             >
-              Mark all complete
+              <span className="sm:hidden">All complete</span>
+              <span className="hidden sm:inline">Mark all complete</span>
             </button>
             <button
               onClick={() => setRecall(true)}
@@ -969,7 +971,8 @@ function KDS() {
               }`}
               title="Pull the last 15 orders of today back onto the board so you can reopen a mistake"
             >
-              Recall last 15
+              <span className="sm:hidden">Recall 15</span>
+              <span className="hidden sm:inline">Recall last 15</span>
             </button>
             {recall && (
               <button
@@ -977,11 +980,12 @@ function KDS() {
                 className="rounded-full bg-primary-foreground/15 px-3 py-1.5 text-xs font-bold text-primary-foreground hover:bg-primary-foreground/25"
                 title="Clear the recalled orders and show only live tickets"
               >
-                Unrecall last 15
+                <span className="sm:hidden">Unrecall</span>
+                <span className="hidden sm:inline">Unrecall last 15</span>
               </button>
             )}
-            <span className="mx-1 h-4 w-px bg-primary-foreground/30" />
-            <div className="flex items-center gap-1" aria-label="Kitchen station filter">
+            <span className="mx-1 hidden h-4 w-px bg-primary-foreground/30 sm:block" />
+            <div className="flex flex-wrap items-center gap-1" aria-label="Kitchen station filter">
               {STATIONS.map((value) => (
                 <button
                   key={value}
@@ -1000,16 +1004,16 @@ function KDS() {
                 </button>
               ))}
             </div>
-            <span className="mx-1 h-4 w-px bg-primary-foreground/30" />
-            <span className="inline-flex items-center gap-1.5">
+            <span className="mx-1 hidden h-4 w-px bg-primary-foreground/30 xl:block" />
+            <span className="hidden items-center gap-1.5 xl:inline-flex">
               <span className="h-3 w-3 rounded-full bg-blue-600 ring-2 ring-white/60" /> Cooked /
               hot food
             </span>
-            <span className="inline-flex items-center gap-1.5">
+            <span className="hidden items-center gap-1.5 xl:inline-flex">
               <span className="h-3 w-3 rounded-full bg-amber-400 ring-2 ring-white/60" /> No cooking
               (drinks &amp; cold)
             </span>
-            <span className="inline-flex items-center gap-1.5">
+            <span className="hidden items-center gap-1.5 xl:inline-flex">
               <span className="h-3 w-3 rounded-full bg-emerald-500 ring-2 ring-white/60" /> Ready →
               complete
             </span>
