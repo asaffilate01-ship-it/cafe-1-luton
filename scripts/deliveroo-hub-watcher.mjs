@@ -171,6 +171,16 @@ if (await isSignedOut()) {
 console.log(`[hub] watching ${HUB_URL} -> ${ENDPOINT}`);
 console.log("[hub] the tablet keeps working as normal; this only mirrors orders to the KDS.");
 
+/**
+ * Tell Cafe1 the link is alive even when Hub is quiet, so the kitchen display
+ * can show "Deliveroo auto-link live" instead of leaving staff guessing.
+ */
+async function heartbeat() {
+  await forward(JSON.stringify({ heartbeat: true, at: new Date().toISOString() }), "heartbeat");
+}
+await heartbeat();
+setInterval(() => void heartbeat(), 60_000);
+
 // Hub pushes new orders over its own live connection, but reload periodically
 // so a dropped connection or an expired session can never silently stall.
 let recovering = false;
