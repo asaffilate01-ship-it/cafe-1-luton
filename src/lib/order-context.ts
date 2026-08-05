@@ -9,6 +9,8 @@ export type OrderContext = {
   scheduled_for?: string;
   postcode?: string;
   distance_m?: number;
+  /** Jury Only menu: the court room the order must be delivered to. */
+  jury_room?: string;
 };
 
 const KEY = "cafe1_order_ctx_v1";

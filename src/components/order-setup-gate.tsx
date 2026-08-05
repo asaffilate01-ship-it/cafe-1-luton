@@ -12,14 +12,30 @@ import { useStoreStatus } from "@/hooks/use-store-status";
 import { buildScheduleSlots } from "@/lib/business";
 import { X, MapPin, Clock, Store, Bike, Utensils } from "lucide-react";
 
+/**
+ * Jury Only menu: delivery is restricted to the court jury areas — nowhere else.
+ */
+export const JURY_DELIVERY_ROOMS = [
+  { id: "crown-lounge", label: "Main Jury Lounge — St Albans Crown Court", postcode: "AL1 3JU" },
+  { id: "crown-rooms", label: "Jury Rooms — St Albans Crown Court", postcode: "AL1 3JU" },
+  {
+    id: "magistrates-rooms",
+    label: "Jury Rooms — St Albans Magistrates' Court",
+    postcode: "AL1 3JU",
+  },
+] as const;
+
 export function OrderSetupGate({
   open,
   onClose,
   dismissible = true,
+  juryOnly = false,
 }: {
   open: boolean;
   onClose: () => void;
   dismissible?: boolean;
+  /** Restrict delivery to the court jury areas (Jury Only menu). */
+  juryOnly?: boolean;
 }) {
   const existing = useOrderContext();
   const { status, settings, hours, holidays } = useStoreStatus();
@@ -32,6 +48,7 @@ export function OrderSetupGate({
   const [areaBusy, setAreaBusy] = useState(false);
   const [scheduleMode, setScheduleMode] = useState<ScheduleMode>(existing?.schedule_mode ?? "asap");
   const [scheduledFor, setScheduledFor] = useState<string>(existing?.scheduled_for ?? "");
+  const [juryRoom, setJuryRoom] = useState<string>(existing?.jury_room ?? "");
   const timeSlots = useMemo(
     () => buildScheduleSlots({ hours, holidays, settings, mode }),
     [hours, holidays, settings, mode],
@@ -70,6 +87,7 @@ export function OrderSetupGate({
 
   function canContinueStep1() {
     if (mode !== "delivery") return true;
+    if (juryOnly) return !!juryRoom;
     return !!area?.ok;
   }
 
@@ -78,8 +96,14 @@ export function OrderSetupGate({
       mode,
       schedule_mode: scheduleMode,
       scheduled_for: scheduleMode === "scheduled" ? scheduledFor : undefined,
-      postcode: mode === "delivery" ? postcode.trim().toUpperCase() : undefined,
-      distance_m: mode === "delivery" ? area?.distance_m : undefined,
+      postcode:
+        mode === "delivery"
+          ? juryOnly
+            ? (JURY_DELIVERY_ROOMS.find((r) => r.label === juryRoom)?.postcode ?? "AL1 3JU")
+            : postcode.trim().toUpperCase()
+          : undefined,
+      distance_m: mode === "delivery" && !juryOnly ? area?.distance_m : undefined,
+      jury_room: juryOnly && mode === "delivery" ? juryRoom : undefined,
     };
     orderContext.set(next);
     onClose();
