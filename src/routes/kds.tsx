@@ -22,8 +22,9 @@ import {
   Bike,
   WifiOff,
   Wifi,
+  Plus,
 } from "lucide-react";
-import { DeliverooTicketDialog } from "@/components/deliveroo-ticket-dialog";
+import { ManualOrderDialog } from "@/components/manual-order-dialog";
 import { useWakeLock } from "@/hooks/use-wake-lock";
 import { syncSumupPos } from "@/lib/sumup-pos.functions";
 import { orderCode } from "@/lib/order-code";
@@ -86,7 +87,15 @@ const TYPE_TONE: Record<string, string> = {
  * Where the order came from decides the card outline colour. The blue/yellow
  * banner on top stays reserved for cooked vs not cooked.
  */
-type ChannelKey = "deliveroo" | "just_eat" | "jury" | "public" | "judge" | "web";
+type ChannelKey =
+  | "deliveroo"
+  | "just_eat"
+  | "uber_eats"
+  | "tgtg"
+  | "jury"
+  | "public"
+  | "judge"
+  | "web";
 const CHANNEL: Record<
   ChannelKey,
   { label: string; border: string; chip: string; ring: string }
@@ -102,6 +111,18 @@ const CHANNEL: Record<
     border: "border-orange-500",
     chip: "bg-orange-500 text-white",
     ring: "ring-orange-500/20",
+  },
+  uber_eats: {
+    label: "Uber Eats",
+    border: "border-emerald-800",
+    chip: "bg-emerald-800 text-white",
+    ring: "ring-emerald-800/20",
+  },
+  tgtg: {
+    label: "Too Good To Go",
+    border: "border-cyan-600",
+    chip: "bg-cyan-600 text-white",
+    ring: "ring-cyan-600/20",
   },
   jury: {
     label: "Jury side",
@@ -133,6 +154,8 @@ function channelOf(t: { source: string | null; pos_terminal: string | null }): C
   const src = (t.source ?? "").toLowerCase();
   if (src === "deliveroo") return "deliveroo";
   if (src === "just_eat" || src === "justeat") return "just_eat";
+  if (src === "uber_eats" || src === "ubereats" || src === "uber") return "uber_eats";
+  if (src === "tgtg" || src === "too_good_to_go") return "tgtg";
   const side = (t.pos_terminal ?? "").toLowerCase();
   if (side === "jury") return "jury";
   if (side === "judge") return "judge";
@@ -568,7 +591,7 @@ function KDS() {
 
   const [bulking, setBulking] = useState(false);
   const [chromeHidden, setChromeHidden] = useState(false);
-  const [deliverooOpen, setDeliverooOpen] = useState(false);
+  const [manualOpen, setManualOpen] = useState(false);
   // "Live" means the shop's Hub watcher checked in recently, so Deliveroo
   // orders land here on their own and nobody needs to key anything in.
   const [deliverooLive, setDeliverooLive] = useState<boolean | null>(null);
@@ -723,7 +746,7 @@ function KDS() {
           </span>
         </div>
       )}
-      <DeliverooTicketDialog open={deliverooOpen} onClose={() => setDeliverooOpen(false)} />
+      <ManualOrderDialog open={manualOpen} onClose={() => setManualOpen(false)} />
       {chromeHidden ? (
         <div className="sticky top-0 z-30 flex items-center justify-between gap-2 border-b border-border bg-primary px-3 py-1 text-primary-foreground">
           <span className="text-xs font-bold uppercase tracking-wide opacity-90">
@@ -828,13 +851,13 @@ function KDS() {
                     : "Deliveroo offline"}
               </span>
               <button
-                onClick={() => setDeliverooOpen(true)}
+                onClick={() => setManualOpen(true)}
                 disabled={!canCompleteOrders}
                 className="flex items-center gap-1 rounded-full bg-[#00CCBC] px-3 py-1.5 text-xs font-bold text-black hover:opacity-90 disabled:opacity-40"
-                title="Fallback only — key in a Deliveroo ticket by hand if the auto-link is offline"
+                title="Key in any order by hand — Deliveroo, Just Eat, Uber Eats, TGTG, jury, judge, counter or phone"
               >
-                <Bike className="h-4 w-4" />
-                <span>Add Deliveroo</span>
+                <Plus className="h-4 w-4" />
+                <span>Add order</span>
               </button>
               <a
                 href={`/print/test?paper=${kdsPaper}&preview=1`}
