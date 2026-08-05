@@ -16,12 +16,16 @@
  * Setup (once, on any always-on shop PC):
  *   npm install playwright && npx playwright install chromium
  *
- * Preferred — give it the device/tablet Hub account so it signs itself in and
- * recovers on its own if Hub ever logs it out. Use an account that is NOT the
- * one staff use day to day: Hub ends the older session when the same account
- * signs in somewhere else, so a shared account would keep kicking people out.
+ * Give it the device Hub account so it signs itself in and recovers on its own
+ * if Hub ever logs it out — a browser session expires, the device account does
+ * not, so this is the reliable choice when there is only one login.
  *   HUB_EMAIL=... HUB_PASSWORD=... DELIVEROO_BRIDGE_SECRET=xxx \
  *     node scripts/deliveroo-hub-watcher.mjs
+ *
+ * Because the tablet uses that same account, this deliberately re-uses its
+ * saved session and only signs in again when it really has to, with a growing
+ * pause between attempts. That stops the PC and the tablet from repeatedly
+ * signing each other out. It never touches orders in Hub — it only reads.
  *
  * Fallback — sign in by hand once, if the account uses 2FA or an email link:
  *   DELIVEROO_BRIDGE_SECRET=xxx node scripts/deliveroo-hub-watcher.mjs --login
@@ -52,6 +56,15 @@ const REFRESH_MS = Number(process.env.REFRESH_MS || 45000);
 const HUB_EMAIL = process.env.HUB_EMAIL;
 const HUB_PASSWORD = process.env.HUB_PASSWORD;
 const ENDPOINT = `${BASE}/api/public/deliveroo/hub-ingest`;
+
+/**
+ * The tablet shares this account, so signing in is not free: each sign-in can
+ * end the tablet's session. Wait longer after each attempt rather than
+ * hammering it, and never sign in more than once a minute.
+ */
+const SIGN_IN_MIN_GAP_MS = 60_000;
+let lastSignInAt = 0;
+let signInFailures = 0;
 
 if (!SECRET) {
   console.error("DELIVEROO_BRIDGE_SECRET is not set — refusing to start.");
