@@ -1549,30 +1549,51 @@ function KDS() {
       )}
       <nav
         aria-label="Kitchen display navigation"
-        className="fixed inset-x-0 bottom-0 z-40 grid grid-cols-3 gap-1 border-t border-border bg-primary px-2 pb-[env(safe-area-inset-bottom)] pt-1.5 text-primary-foreground lg:hidden"
+        className="fixed inset-x-0 bottom-0 z-40 grid grid-cols-6 gap-0.5 border-t border-border bg-primary px-1 pb-[env(safe-area-inset-bottom)] pt-1.5 text-primary-foreground lg:hidden"
       >
-        <button
-          onClick={() => {
-            setSheet(null);
-            window.scrollTo({ top: 0, behavior: "smooth" });
-          }}
-          className="flex flex-col items-center gap-0.5 rounded-xl px-1 py-1.5 text-[10px] font-bold"
-        >
-          <LayoutGrid className="h-5 w-5" />
-          Live orders
-        </button>
-        <button
-          onClick={() => setSheet(sheet === "stations" ? null : "stations")}
-          className={`flex flex-col items-center gap-0.5 rounded-xl px-1 py-1.5 text-[10px] font-bold ${
-            sheet === "stations" ? "bg-primary-foreground text-primary" : ""
-          }`}
-        >
-          <Settings2 className="h-5 w-5" />
-          {station}
-        </button>
+        {(
+          [
+            { key: "all", label: "Live orders", Icon: LayoutGrid },
+            { key: "jury", label: "Jury", Icon: Scale },
+            { key: "public", label: "Public", Icon: Users },
+            { key: "delivery", label: "Delivery", Icon: Bike },
+            { key: "web", label: "Web", Icon: Globe },
+          ] as const
+        ).map(({ key, label, Icon }) => {
+          const count = tickets.filter((t) => matchesFeed(key, t)).length;
+          const on = feed === key;
+          return (
+            <button
+              key={key}
+              onClick={() => {
+                setFeed(key);
+                setSheet(null);
+                window.scrollTo({ top: 0, behavior: "smooth" });
+              }}
+              aria-pressed={on}
+              className={`flex flex-col items-center gap-0.5 rounded-xl px-0.5 py-1.5 text-[9px] font-bold leading-tight ${
+                on ? "bg-primary-foreground text-primary" : ""
+              }`}
+            >
+              <span className="relative">
+                <Icon className="h-5 w-5" />
+                {count > 0 && (
+                  <span
+                    className={`absolute -right-2 -top-1.5 min-w-[15px] rounded-full px-1 text-[9px] font-black leading-[15px] ${
+                      on ? "bg-primary text-primary-foreground" : "bg-primary-foreground text-primary"
+                    }`}
+                  >
+                    {count}
+                  </span>
+                )}
+              </span>
+              {label}
+            </button>
+          );
+        })}
         <button
           onClick={() => setSheet(sheet === "more" ? null : "more")}
-          className={`flex flex-col items-center gap-0.5 rounded-xl px-1 py-1.5 text-[10px] font-bold ${
+          className={`flex flex-col items-center gap-0.5 rounded-xl px-0.5 py-1.5 text-[9px] font-bold leading-tight ${
             sheet === "more" ? "bg-primary-foreground text-primary" : ""
           }`}
         >
