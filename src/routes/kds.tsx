@@ -23,6 +23,8 @@ import {
   WifiOff,
   Wifi,
   Plus,
+  Printer,
+  Settings2,
 } from "lucide-react";
 import { ManualOrderDialog } from "@/components/manual-order-dialog";
 import { InstallAppButton } from "@/components/install-app-button";
@@ -770,7 +772,7 @@ function KDS() {
       )}
       <ManualOrderDialog open={manualOpen} onClose={() => setManualOpen(false)} />
       {chromeHidden ? (
-        <div className="sticky top-0 z-30 flex items-center justify-between gap-2 border-b border-border bg-primary px-3 py-1 text-primary-foreground">
+        <div className="sticky top-0 z-30 flex flex-wrap items-center justify-between gap-x-3 gap-y-1 border-b border-border bg-primary px-3 py-1.5 text-primary-foreground">
           <span className="text-xs font-bold uppercase tracking-wide opacity-90">
             {visibleTickets.length} active · {station}
           </span>
@@ -780,7 +782,7 @@ function KDS() {
               <WifiOff className="h-3.5 w-3.5" /> Offline
             </span>
           )}
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <button
               onClick={() => setAll("preparing", "ready")}
               disabled={
@@ -809,9 +811,15 @@ function KDS() {
         </div>
       ) : (
         <header className="border-b border-border bg-primary text-primary-foreground">
-          <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-4">
-            <h1 className="font-display text-2xl font-bold">Kitchen Display · Cafe1</h1>
-            <div className="flex items-center gap-3">
+          <div className="mx-auto grid max-w-[110rem] grid-cols-[minmax(0,1fr)_auto] items-center gap-x-3 gap-y-2 px-3 py-3 sm:px-4">
+            <h1 className="min-w-0 truncate font-display text-lg font-bold sm:text-xl lg:text-2xl">
+              <span className="lg:hidden">KDS · Cafe1</span>
+              <span className="hidden lg:inline">Kitchen Display · Cafe1</span>
+            </h1>
+            <div className="flex min-w-0 flex-wrap items-center justify-end gap-2">
+              <span className="hidden text-sm font-semibold opacity-80 sm:inline">
+                {visibleTickets.length} active
+              </span>
               <span
                 className={`flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-bold ${
                   linkDown ? "bg-red-600 text-white" : "bg-emerald-500 text-black"
@@ -825,32 +833,6 @@ function KDS() {
                 {linkDown ? <WifiOff className="h-3.5 w-3.5" /> : <Wifi className="h-3.5 w-3.5" />}
                 {linkDown ? "Offline" : "Online"}
               </span>
-              <AlertsToggle />
-              <WakeToggle />
-              <button
-                onClick={toggleChrome}
-                className="flex items-center gap-1 rounded-full bg-primary-foreground/10 px-3 py-1.5 text-xs font-semibold hover:bg-primary-foreground/20"
-                title="Hide toolbar for more screen space"
-                aria-label="Hide toolbar"
-              >
-                <ChevronsUp className="h-4 w-4" /> Hide bar
-              </button>
-              <button
-                onClick={() => void signOutAndRedirect()}
-                className="flex items-center gap-1 rounded-full bg-primary-foreground px-3 py-1.5 text-xs font-bold text-primary hover:opacity-90"
-                title="Sign out of this device"
-              >
-                Sign out
-              </button>
-              <button
-                onClick={manualSync}
-                disabled={syncing}
-                className="flex items-center gap-1 rounded-full bg-primary-foreground/10 px-3 py-1.5 text-xs font-semibold hover:bg-primary-foreground/20 disabled:opacity-50"
-                title="Pull latest transactions from your SumUp terminal"
-              >
-                <RefreshCw className={`h-4 w-4 ${syncing ? "animate-spin" : ""}`} />
-                <span>{syncing ? "Syncing…" : "Sync SumUp POS"}</span>
-              </button>
               <span
                 className={`flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-bold ${
                   deliverooLive
@@ -872,6 +854,9 @@ function KDS() {
                     ? "Deliveroo auto"
                     : "Deliveroo offline"}
               </span>
+              <SyncPill lastSync={lastSync} ok={syncOk} now={now} />
+              <AlertsToggle />
+              <WakeToggle />
               <button
                 onClick={() => setManualOpen(true)}
                 disabled={!canCompleteOrders}
@@ -879,18 +864,9 @@ function KDS() {
                 title="Key in any order by hand — Deliveroo, Just Eat, Uber Eats, TGTG, jury, judge, counter or phone"
               >
                 <Plus className="h-4 w-4" />
-                <span>Add order</span>
+                <span className="hidden sm:inline">Add order</span>
+                <span className="sm:hidden">Add</span>
               </button>
-              <a
-                href={`/print/test?paper=${kdsPaper}&preview=1`}
-                target="_blank"
-                rel="noreferrer"
-                className="rounded-full bg-primary-foreground/10 px-3 py-1.5 text-xs font-semibold hover:bg-primary-foreground/20"
-                title="Print a sample ticket on this device — no order is created"
-              >
-                Test print
-              </a>
-              <InstallAppButton manifest="/kds.webmanifest" label="Install KDS" />
               <button
                 type="button"
                 onClick={() => window.location.reload()}
@@ -898,25 +874,73 @@ function KDS() {
                 title="Reload the kitchen display — use this if the internet dropped or the screen looks stuck"
               >
                 <RefreshCw className="h-4 w-4" />
-                <span>Refresh</span>
+                <span className="hidden sm:inline">Refresh</span>
               </button>
-              <div className="flex items-center gap-1 rounded-full bg-primary-foreground/10 p-1">
-                {([58, 80] as const).map((w) => (
+              <details className="relative">
+                <summary className="flex cursor-pointer list-none items-center gap-1 rounded-full bg-primary-foreground/10 px-3 py-1.5 text-xs font-semibold hover:bg-primary-foreground/20 [&::-webkit-details-marker]:hidden">
+                  <Settings2 className="h-4 w-4" />
+                  <span className="hidden sm:inline">Tools</span>
+                </summary>
+                <div className="absolute right-0 z-50 mt-2 w-64 rounded-2xl border border-border bg-card p-2 text-card-foreground shadow-xl">
                   <button
-                    key={w}
-                    onClick={() => pickPaper(w)}
-                    className={`rounded-full px-2.5 py-1 text-xs font-semibold ${kdsPaper === w ? "bg-primary-foreground text-primary" : "opacity-80"}`}
-                    title="Kitchen printer paper width"
+                    onClick={manualSync}
+                    disabled={syncing}
+                    className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left text-sm font-semibold hover:bg-muted disabled:opacity-50"
+                    title="Pull latest transactions from your SumUp terminal"
                   >
-                    {w}mm
+                    <RefreshCw className={`h-4 w-4 ${syncing ? "animate-spin" : ""}`} />
+                    {syncing ? "Syncing…" : "Sync SumUp POS"}
                   </button>
-                ))}
-              </div>
-              <span className="text-sm opacity-80">{visibleTickets.length} active</span>
-              <SyncPill lastSync={lastSync} ok={syncOk} now={now} />
+                  <a
+                    href={`/print/test?paper=${kdsPaper}&preview=1`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-sm font-semibold hover:bg-muted"
+                    title="Print a sample ticket on this device — no order is created"
+                  >
+                    <Printer className="h-4 w-4" /> Test print
+                  </a>
+                  <div className="flex items-center justify-between gap-2 rounded-xl px-3 py-2 text-sm font-semibold">
+                    <span>Paper width</span>
+                    <span className="flex items-center gap-1 rounded-full bg-muted p-1">
+                      {([58, 80] as const).map((w) => (
+                        <button
+                          key={w}
+                          onClick={() => pickPaper(w)}
+                          className={`rounded-full px-2.5 py-1 text-xs font-bold ${kdsPaper === w ? "bg-primary text-primary-foreground" : "opacity-70"}`}
+                          title="Kitchen printer paper width"
+                        >
+                          {w}mm
+                        </button>
+                      ))}
+                    </span>
+                  </div>
+                  <div className="px-1 py-1">
+                    <InstallAppButton
+                      manifest="/kds.webmanifest"
+                      label="Install KDS app"
+                      className="flex w-full items-center gap-2 rounded-xl px-2 py-2 text-sm font-semibold hover:bg-muted"
+                    />
+                  </div>
+                  <button
+                    onClick={toggleChrome}
+                    className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left text-sm font-semibold hover:bg-muted"
+                    title="Hide toolbar for more screen space"
+                  >
+                    <ChevronsUp className="h-4 w-4" /> Hide toolbar
+                  </button>
+                  <button
+                    onClick={() => void signOutAndRedirect()}
+                    className="mt-1 flex w-full items-center gap-2 rounded-xl bg-primary px-3 py-2 text-left text-sm font-bold text-primary-foreground hover:opacity-90"
+                    title="Sign out of this device"
+                  >
+                    Sign out
+                  </button>
+                </div>
+              </details>
             </div>
           </div>
-          <div className="mx-auto flex max-w-7xl items-center gap-3 px-4 pb-3 text-xs font-semibold">
+          <div className="mx-auto flex max-w-[110rem] flex-wrap items-center gap-2 px-3 pb-3 text-xs font-semibold sm:px-4 sm:gap-3">
             <button
               onClick={() => setAll("preparing", "ready")}
               disabled={
@@ -925,7 +949,8 @@ function KDS() {
               className="rounded-full bg-primary-foreground px-3 py-1.5 text-xs font-bold text-primary hover:opacity-90 disabled:opacity-40"
               title="Mark every preparing ticket as ready"
             >
-              Mark all ready
+              <span className="sm:hidden">All ready</span>
+              <span className="hidden sm:inline">Mark all ready</span>
             </button>
             <button
               onClick={() => setAll("ready", "completed")}
@@ -933,7 +958,8 @@ function KDS() {
               className="rounded-full bg-emerald-600 px-3 py-1.5 text-xs font-bold text-white hover:bg-emerald-700 disabled:opacity-40"
               title="Mark every ready ticket as complete"
             >
-              Mark all complete
+              <span className="sm:hidden">All complete</span>
+              <span className="hidden sm:inline">Mark all complete</span>
             </button>
             <button
               onClick={() => setRecall(true)}
@@ -945,7 +971,8 @@ function KDS() {
               }`}
               title="Pull the last 15 orders of today back onto the board so you can reopen a mistake"
             >
-              Recall last 15
+              <span className="sm:hidden">Recall 15</span>
+              <span className="hidden sm:inline">Recall last 15</span>
             </button>
             {recall && (
               <button
@@ -953,11 +980,12 @@ function KDS() {
                 className="rounded-full bg-primary-foreground/15 px-3 py-1.5 text-xs font-bold text-primary-foreground hover:bg-primary-foreground/25"
                 title="Clear the recalled orders and show only live tickets"
               >
-                Unrecall last 15
+                <span className="sm:hidden">Unrecall</span>
+                <span className="hidden sm:inline">Unrecall last 15</span>
               </button>
             )}
-            <span className="mx-1 h-4 w-px bg-primary-foreground/30" />
-            <div className="flex items-center gap-1" aria-label="Kitchen station filter">
+            <span className="mx-1 hidden h-4 w-px bg-primary-foreground/30 sm:block" />
+            <div className="flex flex-wrap items-center gap-1" aria-label="Kitchen station filter">
               {STATIONS.map((value) => (
                 <button
                   key={value}
@@ -976,16 +1004,16 @@ function KDS() {
                 </button>
               ))}
             </div>
-            <span className="mx-1 h-4 w-px bg-primary-foreground/30" />
-            <span className="inline-flex items-center gap-1.5">
+            <span className="mx-1 hidden h-4 w-px bg-primary-foreground/30 xl:block" />
+            <span className="hidden items-center gap-1.5 xl:inline-flex">
               <span className="h-3 w-3 rounded-full bg-blue-600 ring-2 ring-white/60" /> Cooked /
               hot food
             </span>
-            <span className="inline-flex items-center gap-1.5">
+            <span className="hidden items-center gap-1.5 xl:inline-flex">
               <span className="h-3 w-3 rounded-full bg-amber-400 ring-2 ring-white/60" /> No cooking
               (drinks &amp; cold)
             </span>
-            <span className="inline-flex items-center gap-1.5">
+            <span className="hidden items-center gap-1.5 xl:inline-flex">
               <span className="h-3 w-3 rounded-full bg-emerald-500 ring-2 ring-white/60" /> Ready →
               complete
             </span>
