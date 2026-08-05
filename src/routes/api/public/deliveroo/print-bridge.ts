@@ -1,36 +1,26 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { parseDeliverooReceipt } from "@/lib/deliveroo-print";
+import { bridgeSecretMatches, ingestDeliverooOrder, readBridgeSecret } from "@/lib/deliveroo-ingest.server";
 
 /**
- * Ingest an order receipt captured straight off the Deliveroo tablet.
+ * Ingest an order receipt captured off a Deliveroo tablet's print stream.
  *
- * The tablet prints every accepted order to its paired ESC/POS order printer.
- * A tiny bridge running on the shop LAN (scripts/deliveroo-print-bridge.mjs)
- * listens on port 9100, so the tablet "prints" to us, and forwards the raw
- * bytes here. We parse the receipt and drop the order on the KDS instantly —
- * no Orders API credentials and no staff typing.
+ * Only usable where the tablet can be pointed at an external network printer.
+ * Tablets with a sealed built-in printer use the Hub watcher instead
+ * (see api/public/deliveroo/hub-ingest).
  *
- * Public prefix, so the handler authenticates the caller itself with a shared
- * secret and never returns customer data.
+ * Public prefix, so the handler authenticates the caller itself.
  */
 export const Route = createFileRoute("/api/public/deliveroo/print-bridge")({
   server: {
     handlers: {
       POST: async ({ request }) => {
-        const secret = process.env["DELIVEROO_BRIDGE_SECRET"];
-        if (!secret) {
+        if (!process.env["DELIVEROO_BRIDGE_SECRET"]) {
           return Response.json({ error: "Bridge not configured" }, { status: 503 });
         }
-
-        const provided =
-          request.headers.get("x-bridge-secret") ??
-          request.headers.get("authorization")?.replace(/^Bearer\s+/i, "") ??
-          "";
-        // Constant-time-ish compare: equal length check first, then XOR fold.
-        const ok =
-          provided.length === secret.length &&
-          provided.split("").reduce((acc, ch, i) => acc | (ch.charCodeAt(0) ^ secret.charCodeAt(i)), 0) === 0;
-        if (!ok) return new Response("Unauthorized", { status: 401 });
+        if (!bridgeSecretMatches(readBridgeSecret(request))) {
+          return new Response("Unauthorized", { status: 401 });
+        }
 
         const raw = await request.text();
         if (!raw.trim()) return Response.json({ error: "Empty receipt" }, { status: 400 });
@@ -38,72 +28,31 @@ export const Route = createFileRoute("/api/public/deliveroo/print-bridge")({
 
         const parsed = parseDeliverooReceipt(raw);
         const reference = parsed.reference ?? `P${Date.now().toString(36).toUpperCase()}`;
-        const ref = `print:${reference}`;
 
-        const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-
-        // The tablet reprints receipts (staff reprint, printer retry), so the
-        // reference is the idempotency key.
-        const { data: existing } = await supabaseAdmin
-          .from("orders")
-          .select("id")
-          .eq("deliveroo_order_id", ref)
-          .maybeSingle();
-        if (existing) {
-          return Response.json({ ok: true, order_id: existing.id, duplicate: true });
-        }
-
-        const total = parsed.totalCents;
-        const { data: inserted, error } = await supabaseAdmin
-          .from("orders")
-          .insert({
-            customer_name: parsed.customerName || "Deliveroo customer",
-            customer_phone: "",
-            type: parsed.type,
-            status: "preparing",
-            payment_status: "paid",
-            payment_method: "card",
-            subtotal_cents: total,
-            delivery_fee_cents: 0,
-            discount_cents: 0,
-            promo_discount_cents: 0,
-            voucher_cents: 0,
-            points_earned: 0,
-            total_cents: total,
-            schedule_mode: "asap",
-            scheduled_for: null,
-            source: "deliveroo",
-            deliveroo_order_id: ref,
-            delivery_notes: parsed.notes,
-          })
-          .select("id")
-          .single();
-
-        if (error || !inserted) {
-          console.error("Deliveroo print bridge insert failed:", error?.message);
+        try {
+          const result = await ingestDeliverooOrder(
+            {
+              reference,
+              customerName: parsed.customerName,
+              type: parsed.type,
+              totalCents: parsed.totalCents,
+              notes: parsed.notes,
+              items: parsed.items,
+            },
+            "print",
+          );
+          return Response.json({
+            ok: true,
+            order_id: result.order_id,
+            reference: result.reference,
+            duplicate: result.duplicate,
+            items: parsed.items.length,
+            degraded: parsed.degraded,
+          });
+        } catch (err) {
+          console.error("Deliveroo print bridge failed:", (err as Error).message);
           return Response.json({ error: "Could not create the ticket" }, { status: 500 });
         }
-
-        const units = parsed.items.reduce((sum, line) => sum + line.qty, 0);
-        const unit = units > 0 ? Math.round(total / units) : 0;
-        const { error: lineError } = await supabaseAdmin.from("order_items").insert(
-          parsed.items.map((line) => ({
-            order_id: inserted.id,
-            name: line.name,
-            qty: line.qty,
-            unit_price_cents: unit,
-            notes: line.notes,
-          })),
-        );
-        if (lineError) console.error("Deliveroo print bridge lines failed:", lineError.message);
-
-        return Response.json({
-          ok: true,
-          order_id: inserted.id,
-          reference,
-          items: parsed.items.length,
-          degraded: parsed.degraded,
-        });
       },
     },
   },
