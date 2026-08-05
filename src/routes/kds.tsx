@@ -465,6 +465,7 @@ function KDS() {
 
   const [bulking, setBulking] = useState(false);
   const [chromeHidden, setChromeHidden] = useState(false);
+  const [deliverooOpen, setDeliverooOpen] = useState(false);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
