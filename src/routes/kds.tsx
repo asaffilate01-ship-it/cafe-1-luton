@@ -835,10 +835,13 @@ function KDS() {
           </div>
         </div>
       ) : (
-        <header className="border-b border-border bg-primary text-primary-foreground">
-          <div className="mx-auto grid max-w-[110rem] grid-cols-[minmax(0,1fr)_auto] items-center gap-x-3 gap-y-2 px-3 py-3 sm:px-4">
-            <h1 className="min-w-0 truncate font-display text-lg font-bold sm:text-xl lg:text-2xl">
-              <span className="lg:hidden">KDS · Cafe1</span>
+        <header className="sticky top-0 z-30 border-b border-border bg-primary text-primary-foreground lg:static">
+          <div className="mx-auto grid max-w-[110rem] grid-cols-[minmax(0,1fr)_auto] items-center gap-x-3 gap-y-2 px-3 py-2.5 sm:px-4 lg:py-3">
+            <h1 className="min-w-0 truncate font-display text-base font-bold sm:text-lg lg:text-2xl">
+              <span className="lg:hidden">
+                KDS · {visibleTickets.length} active
+                <span className="ml-1 text-xs font-semibold opacity-70">{station}</span>
+              </span>
               <span className="hidden lg:inline">Kitchen Display · Cafe1</span>
             </h1>
             <div className="flex min-w-0 flex-wrap items-center justify-end gap-2">
