@@ -146,10 +146,28 @@ function JuryMenuPage() {
                 {busy ? "Checking…" : "Open the Jury Only menu"}
               </button>
             </form>
-            <p className="mt-5 text-xs text-muted-foreground">
-              Not a juror?{" "}
+            <div className="mt-5">
+              <button
+                type="button"
+                onClick={() => {
+                  jurySession.set({
+                    code: null,
+                    remaining_cents: 0,
+                    jury_room: roomParam ?? null,
+                    verified_at: Date.now(),
+                  });
+                  toast.success("Jury Only menu open — pay by card, wallet or cash");
+                }}
+                className="h-12 w-full rounded-full border border-primary text-sm font-bold text-primary hover:bg-primary/5"
+              >
+                I haven't opted in — open the menu and I'll just pay
+              </button>
+            </div>
+            <p className="mt-4 text-center text-xs text-muted-foreground">
+              Every juror can order from this menu. Without the voucher scheme there's no daily
+              allowance and no 10% food discount — you simply pay by card, Apple/Google Pay or cash.{" "}
               <Link to="/menu" className="font-semibold text-primary">
-                Browse the main Café 1 menu
+                Not a juror? Main menu
               </Link>
               .
             </p>
@@ -176,10 +194,18 @@ function JuryMenuPage() {
             the Jury Rooms at St Albans Magistrates' Court — or collect at the Café 1 counter.
           </p>
           <div className="mt-4 flex flex-wrap items-center gap-3 text-sm">
-            <span className="rounded-full bg-white/15 px-3 py-1 font-mono">{session.code}</span>
-            <span className="rounded-full bg-white/15 px-3 py-1 font-semibold">
-              {money(session.remaining_cents)} allowance left today
-            </span>
+            {session.code ? (
+              <>
+                <span className="rounded-full bg-white/15 px-3 py-1 font-mono">{session.code}</span>
+                <span className="rounded-full bg-white/15 px-3 py-1 font-semibold">
+                  {money(session.remaining_cents)} allowance left today
+                </span>
+              </>
+            ) : (
+              <span className="rounded-full bg-white/15 px-3 py-1 font-semibold">
+                Paying as normal — no voucher
+              </span>
+            )}
             <button
               type="button"
               onClick={() => {
@@ -192,8 +218,9 @@ function JuryMenuPage() {
             </button>
           </div>
           <p className="mt-3 text-xs text-primary-foreground/70">
-            Daily allowance {money(JUROR_DAILY_ALLOWANCE_CENTS)} on sitting days. Re-enter your code
-            and PIN at checkout to apply it.
+            {session.code
+              ? `Daily allowance ${money(JUROR_DAILY_ALLOWANCE_CENTS)} on sitting days. Re-enter your code and PIN at checkout to apply it.`
+              : "You're not on the voucher scheme, so there's no allowance or 10% food discount — pay by card, Apple/Google Pay or cash. You can opt in any time on the juror page."}
           </p>
         </div>
       </section>

@@ -6,7 +6,8 @@ import { useSyncExternalStore } from "react";
  * Held in sessionStorage so it dies with the tab (shared jury-room devices).
  */
 export type JurySession = {
-  code: string;
+  /** null when the juror has not opted into the voucher scheme — pay as normal. */
+  code: string | null;
   remaining_cents: number;
   jury_room: string | null;
   verified_at: number;
