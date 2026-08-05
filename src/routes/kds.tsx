@@ -22,6 +22,7 @@ import {
   Bike,
   Scale,
   Users,
+  Gavel,
   Globe,
   WifiOff,
   Wifi,
@@ -185,7 +186,7 @@ const STATIONS = ["ALL", "HOT", "SANDWICH", "DRINKS", "PASS"] as const;
  * Phone/tablet feed filter. "delivery" covers anything going out the door —
  * our own delivery orders plus the delivery-partner channels.
  */
-type FeedKey = "all" | "jury" | "public" | "delivery" | "web";
+type FeedKey = "all" | "jury" | "judge" | "public" | "delivery" | "web";
 function matchesFeed(
   feed: FeedKey,
   t: { source: string | null; pos_terminal: string | null; type: string },
@@ -201,7 +202,8 @@ function matchesFeed(
       channel === "tgtg"
     );
   }
-  if (feed === "jury") return channel === "jury" || channel === "judge";
+  if (feed === "jury") return channel === "jury";
+  if (feed === "judge") return channel === "judge";
   if (feed === "public") return channel === "public";
   return channel === "web";
 }
@@ -1572,12 +1574,13 @@ function KDS() {
       )}
       <nav
         aria-label="Kitchen display navigation"
-        className="fixed inset-x-0 bottom-0 z-40 grid grid-cols-6 gap-0.5 border-t border-border bg-primary px-1 pb-[env(safe-area-inset-bottom)] pt-1.5 text-primary-foreground lg:hidden"
+        className="fixed inset-x-0 bottom-0 z-40 grid grid-cols-7 gap-0.5 border-t border-border bg-primary px-1 pb-[env(safe-area-inset-bottom)] pt-1.5 text-primary-foreground lg:hidden"
       >
         {(
           [
             { key: "all", label: "Live orders", Icon: LayoutGrid },
             { key: "jury", label: "Jury", Icon: Scale },
+            { key: "judge", label: "Judges", Icon: Gavel },
             { key: "public", label: "Public", Icon: Users },
             { key: "delivery", label: "Delivery", Icon: Bike },
             { key: "web", label: "Web", Icon: Globe },
