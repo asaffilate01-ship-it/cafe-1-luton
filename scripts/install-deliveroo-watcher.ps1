@@ -38,12 +38,19 @@ if (-not (Get-Command node -ErrorAction SilentlyContinue)) {
   exit 1
 }
 
-# Playwright drives a hidden Chromium; make sure it is present before we
-# schedule anything, so problems surface now rather than at 7am.
-Write-Host "Checking the browser the watcher uses..."
-Push-Location (Split-Path -Parent $scriptDir)
-cmd /c "npx --yes playwright install chromium" | Out-Null
-Pop-Location
+# Install the watcher's private browser package and Chromium automatically.
+# Using npm.cmd directly avoids npx's interactive "install this package?" prompt.
+Write-Host "Installing the private browser used by the watcher (first time only)..."
+Push-Location $scriptDir
+try {
+  & npm.cmd install --no-save --no-audit --no-fund --silent playwright
+  if ($LASTEXITCODE -ne 0) { throw "The Playwright package could not be installed." }
+
+  & npx.cmd --no-install playwright install chromium
+  if ($LASTEXITCODE -ne 0) { throw "The Chromium browser could not be installed." }
+} finally {
+  Pop-Location
+}
 
 $action = New-ScheduledTaskAction -Execute "cmd.exe" -Argument "/c `"$runner`"" -WorkingDirectory $scriptDir
 
