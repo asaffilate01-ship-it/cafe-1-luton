@@ -13,6 +13,8 @@ import {
   settleAccount,
   recordAccountPayment,
   deleteAccountPayment,
+  listTabOrders,
+  markTabOrdersPaid,
 } from "@/lib/accounts.functions";
 import { money } from "@/lib/format";
 import { buildStatementPdf } from "@/lib/account-statement-pdf";
@@ -177,6 +179,7 @@ function AccountsManager() {
             </tbody>
           </table>
         </div>
+        <TabOrdersPanel onChanged={() => void refresh()} />
       </div>
 
       {showCreate && (
@@ -201,6 +204,276 @@ function AccountsManager() {
         />
       )}
     </div>
+  );
+}
+
+type TabOrder = Awaited<ReturnType<typeof listTabOrders>>["rows"][number];
+
+function TabOrdersPanel({ onChanged }: { onChanged: () => void }) {
+  const load = useServerFn(listTabOrders);
+  const markPaid = useServerFn(markTabOrdersPaid);
+  const pay = useServerFn(recordAccountPayment);
+  const [status, setStatus] = useState<"unpaid" | "paid" | "all">("unpaid");
+  const [q, setQ] = useState("");
+  const [rows, setRows] = useState<TabOrder[]>([]);
+  const [totalDue, setTotalDue] = useState(0);
+  const [picked, setPicked] = useState<Set<string>>(new Set());
+  const [partFor, setPartFor] = useState<TabOrder | null>(null);
+  const [partAmount, setPartAmount] = useState("");
+  const [busy, setBusy] = useState(false);
+
+  async function refresh() {
+    try {
+      const res = await load({ data: { status, q: q.trim() || undefined } });
+      setRows(res.rows);
+      setTotalDue(res.total_due_cents);
+      setPicked(new Set());
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Load failed");
+    }
+  }
+  useEffect(() => {
+    void refresh();
+  }, [status]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const selectedDue = rows
+    .filter((r) => picked.has(r.id))
+    .reduce((s, r) => s + (r.payment_status === "on_account" ? r.due_cents : 0), 0);
+
+  async function payAll() {
+    const ids = [...picked];
+    if (!ids.length) return;
+    if (!(await askConfirm(`Mark ${ids.length} order(s) as fully paid?`))) return;
+    setBusy(true);
+    try {
+      const res = await markPaid({ data: { order_ids: ids } });
+      toast.success(`${res.count} order(s) paid at ${new Date(res.paid_at).toLocaleString()}`);
+      await refresh();
+      onChanged();
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Could not mark paid");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function submitPart(e: React.FormEvent) {
+    e.preventDefault();
+    if (!partFor?.account_id) return;
+    const cents = Math.round(parseFloat(partAmount || "0") * 100);
+    if (!cents || cents <= 0) return toast.error("Enter an amount");
+    setBusy(true);
+    try {
+      await pay({
+        data: {
+          account_id: partFor.account_id,
+          amount_cents: cents,
+          method: "bank_transfer",
+          reference: `Part payment · order #${partFor.order_number}`,
+        },
+      });
+      toast.success(`Part payment of ${money(cents)} recorded ${new Date().toLocaleString()}`);
+      setPartFor(null);
+      setPartAmount("");
+      await refresh();
+      onChanged();
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Could not record payment");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <section className="mt-10">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <h2 className="font-display text-lg font-bold">Tab orders</h2>
+        <div className="flex flex-wrap items-center gap-2">
+          <div className="flex rounded-full border border-border bg-card p-1">
+            {(["unpaid", "paid", "all"] as const).map((s) => (
+              <button
+                key={s}
+                onClick={() => setStatus(s)}
+                className={`rounded-full px-3 py-1 text-xs font-semibold capitalize ${status === s ? "bg-primary text-primary-foreground" : "text-muted-foreground"}`}
+              >
+                {s}
+              </button>
+            ))}
+          </div>
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              void refresh();
+            }}
+            className="flex items-center gap-2"
+          >
+            <input
+              value={q}
+              onChange={(e) => setQ(e.target.value)}
+              placeholder="Search name or order #"
+              className="h-9 w-56 rounded-full border border-border bg-background px-4 text-sm"
+            />
+            <button className="h-9 rounded-full border border-border px-3 text-sm font-semibold">
+              Search
+            </button>
+          </form>
+        </div>
+      </div>
+
+      <div className="mt-3 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-primary/30 bg-primary/5 px-4 py-3 text-sm">
+        <span>
+          <strong>{rows.length}</strong> orders · Total due{" "}
+          <span className="font-display text-lg font-bold text-primary">{money(totalDue)}</span>
+        </span>
+        <span className="flex items-center gap-2">
+          {picked.size > 0 && <span>Selected {money(selectedDue)}</span>}
+          <button
+            disabled={busy || picked.size === 0}
+            onClick={payAll}
+            className="inline-flex h-9 items-center gap-2 rounded-full bg-primary px-4 text-sm font-semibold text-primary-foreground disabled:opacity-50"
+          >
+            <CheckCircle2 className="h-4 w-4" /> Mark selected paid
+          </button>
+        </span>
+      </div>
+
+      <div className="mt-3 overflow-hidden rounded-2xl border border-border bg-card">
+        <table className="w-full text-sm">
+          <thead className="bg-secondary/60 text-left text-xs uppercase tracking-wide text-muted-foreground">
+            <tr>
+              <th className="p-3"></th>
+              <th className="p-3">Name</th>
+              <th className="p-3">Date &amp; time</th>
+              <th className="p-3">Order details</th>
+              <th className="p-3 text-right">Amount</th>
+              <th className="p-3">Status</th>
+              <th className="p-3"></th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-border">
+            {rows.length === 0 && (
+              <tr>
+                <td colSpan={7} className="p-8 text-center text-muted-foreground">
+                  No tab orders match this filter.
+                </td>
+              </tr>
+            )}
+            {rows.map((o) => (
+              <tr key={o.id} className="align-top hover:bg-secondary/30">
+                <td className="p-3">
+                  <input
+                    type="checkbox"
+                    className="h-4 w-4"
+                    disabled={o.payment_status !== "on_account"}
+                    checked={picked.has(o.id)}
+                    onChange={(e) =>
+                      setPicked((cur) => {
+                        const next = new Set(cur);
+                        if (e.target.checked) next.add(o.id);
+                        else next.delete(o.id);
+                        return next;
+                      })
+                    }
+                  />
+                </td>
+                <td className="p-3 font-semibold">
+                  {o.account_name ?? o.customer_name}
+                  <div className="text-xs font-normal text-muted-foreground">
+                    #{o.order_number} · {o.customer_name}
+                    {o.company_name ? ` · ${o.company_name}` : ""}
+                  </div>
+                </td>
+                <td className="p-3 text-muted-foreground">
+                  {new Date(o.created_at).toLocaleString()}
+                </td>
+                <td className="p-3">
+                  <ul className="space-y-0.5 text-xs">
+                    {o.items.map((it, i) => (
+                      <li key={i} className="flex justify-between gap-4">
+                        <span>
+                          {it.qty} × {it.name}
+                          {it.notes ? (
+                            <span className="text-muted-foreground"> · {it.notes}</span>
+                          ) : null}
+                        </span>
+                        <span className="text-muted-foreground">
+                          {money(it.qty * it.unit_price_cents)}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                </td>
+                <td className="p-3 text-right font-semibold">{money(o.due_cents)}</td>
+                <td className="p-3">
+                  <span
+                    className={`rounded-full px-2 py-1 text-xs font-semibold ${o.payment_status === "on_account" ? "bg-destructive/10 text-destructive" : "bg-primary/10 text-primary"}`}
+                  >
+                    {o.payment_status === "on_account" ? "Unpaid" : "Paid"}
+                  </span>
+                </td>
+                <td className="p-3 text-right">
+                  {o.payment_status === "on_account" && o.account_id && (
+                    <button
+                      onClick={() => {
+                        setPartFor(o);
+                        setPartAmount((o.due_cents / 100).toFixed(2));
+                      }}
+                      className="text-xs font-semibold text-primary hover:underline"
+                    >
+                      Part paid
+                    </button>
+                  )}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      {partFor && (
+        <div
+          className="fixed inset-0 z-50 grid place-items-center bg-black/40 p-4"
+          onClick={() => setPartFor(null)}
+        >
+          <form
+            onSubmit={submitPart}
+            onClick={(e) => e.stopPropagation()}
+            className="w-full max-w-sm space-y-3 rounded-2xl border border-border bg-card p-6 shadow-2xl"
+          >
+            <h3 className="font-display text-lg font-bold">
+              Part payment · {partFor.account_name ?? partFor.customer_name}
+            </h3>
+            <p className="text-sm text-muted-foreground">
+              Order #{partFor.order_number} · due {money(partFor.due_cents)}
+            </p>
+            <input
+              type="number"
+              min="0.01"
+              step="0.01"
+              autoFocus
+              value={partAmount}
+              onChange={(e) => setPartAmount(e.target.value)}
+              className="h-11 w-full rounded-xl border border-border bg-background px-4"
+            />
+            <div className="flex justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => setPartFor(null)}
+                className="h-10 rounded-full border border-border px-4 text-sm font-semibold"
+              >
+                Cancel
+              </button>
+              <button
+                disabled={busy}
+                className="h-10 rounded-full bg-primary px-5 text-sm font-semibold text-primary-foreground disabled:opacity-60"
+              >
+                Record payment
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
+    </section>
   );
 }
 
