@@ -171,7 +171,7 @@ const steps: Step[] = [
     title: "5. Ordering from the Jury menu",
     who: "Juror",
     icon: UtensilsCrossed,
-    say: "Every juror can use the menu, whether or not they opt in — jurors who stay on expenses just tap 'I haven't opted in' and pay by card, Apple or Google Pay or cash, with no allowance and no 10% discount. They can collect at the counter, or — if they're sitting in the Magistrates' Court — have it delivered to the jury room at a chosen time. Deliveries only ever go inside the court estate.",
+    say: "Every juror can use the menu, whether or not they opt in — jurors who stay on expenses just tap 'I haven't opted in' and pay by card, Apple or Google Pay or cash, with no allowance and no 10% discount. They can collect at the counter, or — if they're sitting in the Magistrates' Court — have it delivered to the jury room at a chosen time. Deliveries only ever go inside the court estate. Once the juror has their food it's theirs to enjoy wherever they like — they're welcome to take it off the premises and eat outside, provided the court has told them they're free to leave the building.",
     screen: () => (
       <div className="mx-auto max-w-md rounded-2xl border border-border bg-card p-5 text-sm shadow-sm">
         <p className="font-display text-lg font-black">Your order</p>
@@ -186,6 +186,10 @@ const steps: Step[] = [
         <Row label="You pay" value="£2.51" bold />
         <p className="mt-3 inline-flex items-center gap-1.5 text-xs text-muted-foreground">
           <Building2 className="h-3.5 w-3.5" /> Collection at Café 1, or delivery to Jury Room 2.
+        </p>
+        <p className="mt-2 text-xs text-muted-foreground">
+          Once collected, food can be taken away and eaten outside the court if the juror is
+          permitted to leave the premises under the court's instructions.
         </p>
       </div>
     ),
