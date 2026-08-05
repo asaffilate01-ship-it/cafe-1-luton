@@ -1459,6 +1459,29 @@ function KDS() {
             </div>
           ) : (
             <div className="space-y-2">
+              <div>
+                <p className="mb-1.5 text-xs font-bold uppercase tracking-wide text-muted-foreground">
+                  Station
+                </p>
+                <div className="grid grid-cols-3 gap-2">
+                  {STATIONS.map((value) => (
+                    <button
+                      key={value}
+                      onClick={() => {
+                        setStation(value);
+                        window.localStorage.setItem("cafe1-kds-station", value);
+                      }}
+                      className={`rounded-2xl px-3 py-3 text-sm font-black tracking-wide ${
+                        station === value
+                          ? "bg-primary text-primary-foreground"
+                          : "bg-muted text-foreground"
+                      }`}
+                    >
+                      {value}
+                    </button>
+                  ))}
+                </div>
+              </div>
               <div className="grid grid-cols-2 gap-2">
                 <button
                   onClick={() => {
