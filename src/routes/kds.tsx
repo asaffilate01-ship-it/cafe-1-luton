@@ -73,6 +73,71 @@ const TYPE_LABEL: Record<string, string> = {
   collection: "PICKUP",
   delivery: "DELIVERY",
 };
+/** Fulfilment strip colours — sky blue / lime / grey, all with readable text. */
+const TYPE_TONE: Record<string, string> = {
+  dine_in: "bg-sky-400 text-slate-900",
+  collection: "bg-lime-400 text-slate-900",
+  delivery: "bg-slate-500 text-white",
+};
+
+/**
+ * Where the order came from decides the card outline colour. The blue/yellow
+ * banner on top stays reserved for cooked vs not cooked.
+ */
+type ChannelKey = "deliveroo" | "just_eat" | "jury" | "public" | "judge" | "web";
+const CHANNEL: Record<
+  ChannelKey,
+  { label: string; border: string; chip: string; ring: string }
+> = {
+  deliveroo: {
+    label: "Deliveroo",
+    border: "border-green-600",
+    chip: "bg-green-600 text-white",
+    ring: "ring-green-600/20",
+  },
+  just_eat: {
+    label: "Just Eat",
+    border: "border-orange-500",
+    chip: "bg-orange-500 text-white",
+    ring: "ring-orange-500/20",
+  },
+  jury: {
+    label: "Jury side",
+    border: "border-red-600",
+    chip: "bg-red-600 text-white",
+    ring: "ring-red-600/20",
+  },
+  public: {
+    label: "Public side",
+    border: "border-pink-500",
+    chip: "bg-pink-500 text-white",
+    ring: "ring-pink-500/20",
+  },
+  judge: {
+    label: "Judges",
+    border: "border-slate-950",
+    chip: "bg-slate-950 text-white",
+    ring: "ring-slate-950/20",
+  },
+  web: {
+    label: "Website",
+    border: "border-[#7f1d1d]",
+    chip: "bg-[#7f1d1d] text-white",
+    ring: "ring-[#7f1d1d]/20",
+  },
+};
+
+function channelOf(t: { source: string | null; pos_terminal: string | null }): ChannelKey {
+  const src = (t.source ?? "").toLowerCase();
+  if (src === "deliveroo") return "deliveroo";
+  if (src === "just_eat" || src === "justeat") return "just_eat";
+  const side = (t.pos_terminal ?? "").toLowerCase();
+  if (side === "jury") return "jury";
+  if (side === "judge") return "judge";
+  if (side === "public") return "public";
+  if (src === "sumup_pos" || src === "counter" || src === "till") return "public";
+  return "web";
+}
 /** Which counter rang the sale up — jury, judge or public side. */
 const SIDE_TONE: Record<string, string> = {
   jury: "bg-indigo-600",
