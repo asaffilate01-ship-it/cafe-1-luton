@@ -411,10 +411,11 @@ function DemoPage() {
                 Juror portal
               </Link>
               <Link
-                to="/menu"
+                to="/jury-menu"
+                search={{} as never}
                 className="inline-flex h-10 items-center gap-2 rounded-xl border border-border px-4 font-bold"
               >
-                Juror Menu
+                JURY ONLY menu
               </Link>
               <Link
                 to="/juror-qr"
