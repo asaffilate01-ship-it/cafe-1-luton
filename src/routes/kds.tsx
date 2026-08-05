@@ -21,6 +21,7 @@ import {
   HandPlatter,
   Bike,
 } from "lucide-react";
+import { DeliverooTicketDialog } from "@/components/deliveroo-ticket-dialog";
 import { useWakeLock } from "@/hooks/use-wake-lock";
 import { syncSumupPos } from "@/lib/sumup-pos.functions";
 import { orderCode } from "@/lib/order-code";
