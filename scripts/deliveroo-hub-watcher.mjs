@@ -38,8 +38,8 @@
  * Optional env:
  *   CAFE1_URL      target site (default https://cafe1stalbans.co.uk)
  *   HUB_URL        Hub orders page (default https://restaurant-hub.deliveroo.net/orders)
- *   HUB_USERNAME   device account username (HUB_EMAIL also accepted)
- *   HUB_PASSWORD   device account password (keep it in the machine's env, not here)
+ *   DEVICE_USERNAME/DEVICE_PASSWORD  device account — tried first
+ *   HUB_USERNAME/HUB_PASSWORD        ordinary Hub login — used as backup
  *   SESSION_FILE   where the signed-in session is stored
  *   REFRESH_MS     how often to re-check when Hub is quiet (default 45000)
  */
@@ -75,10 +75,24 @@ const HUB_URL = process.env.HUB_URL || "https://restaurant-hub.deliveroo.net/ord
 const SECRET = process.env.DELIVEROO_BRIDGE_SECRET;
 const SESSION_FILE = path.resolve(process.env.SESSION_FILE || "./.deliveroo-hub-session.json");
 const REFRESH_MS = Number(process.env.REFRESH_MS || 45000);
-// The device login is a username rather than an email address, so accept
-// either spelling of the setting and treat them the same.
-const HUB_EMAIL = process.env.HUB_USERNAME || process.env.HUB_EMAIL;
-const HUB_PASSWORD = process.env.HUB_PASSWORD;
+/**
+ * Two logins can be supplied. The device account is tried first because it
+ * never expires, and the ordinary Hub login is kept as a backup for when the
+ * device account is busy, rate-limited or asking for 2FA. Either can be left
+ * blank; whatever is filled in gets used, in this order.
+ */
+const CREDENTIALS = [
+  {
+    label: "device account",
+    username: process.env.DEVICE_USERNAME || process.env.HUB_DEVICE_USERNAME,
+    password: process.env.DEVICE_PASSWORD || process.env.HUB_DEVICE_PASSWORD,
+  },
+  {
+    label: "Hub login",
+    username: process.env.HUB_USERNAME || process.env.HUB_EMAIL,
+    password: process.env.HUB_PASSWORD,
+  },
+].filter((c) => c.username && c.password);
 const ENDPOINT = `${BASE}/api/public/deliveroo/hub-ingest`;
 
 /**
@@ -166,9 +180,34 @@ async function isSignedOut() {
     .catch(() => false);
 }
 
-/** Sign in with the device account. Returns false if it did not take. */
+/** Try one set of credentials. Returns true when Hub accepted them. */
+async function attemptSignIn({ label, username, password }) {
+  console.log(`\n[hub] signing in with the ${label}…`);
+  try {
+    const email = page.locator('input[name*="user" i], input[id*="user" i], input[type="email"], input[name*="email" i], input[type="text"]').first();
+    await email.waitFor({ state: "visible", timeout: 20000 });
+    await email.fill(username);
+    const pw = page.locator('input[type="password"]').first();
+    await pw.fill(password);
+    await pw.press("Enter");
+    await page.waitForLoadState("networkidle", { timeout: 30000 }).catch(() => {});
+    if (await isSignedOut()) {
+      console.error(`[hub] the ${label} did not get in (wrong details, or it needs 2FA).`);
+      return false;
+    }
+    await page.goto(HUB_URL, { waitUntil: "domcontentloaded" }).catch(() => {});
+    await context.storageState({ path: SESSION_FILE }).catch(() => {});
+    console.log(`[hub] signed in with the ${label}; session saved.`);
+    return true;
+  } catch (err) {
+    console.error(`[hub] ${label} sign-in failed:`, err.message);
+    return false;
+  }
+}
+
+/** Sign in, device account first and the Hub login as backup. */
 async function signIn() {
-  if (!HUB_EMAIL || !HUB_PASSWORD) return false;
+  if (CREDENTIALS.length === 0) return false;
   // Back off between attempts: the tablet shares this login, and a sign-in
   // loop here would keep knocking the tablet offline.
   const gap = SIGN_IN_MIN_GAP_MS * Math.min(2 ** signInFailures, 10);
@@ -177,30 +216,21 @@ async function signIn() {
     await new Promise((resolve) => setTimeout(resolve, wait));
   }
   lastSignInAt = Date.now();
-  console.log("\n[hub] signing in with the device account…");
-  try {
-    const email = page.locator('input[name*="user" i], input[id*="user" i], input[type="email"], input[name*="email" i], input[type="text"]').first();
-    await email.waitFor({ state: "visible", timeout: 20000 });
-    await email.fill(HUB_EMAIL);
-    const pw = page.locator('input[type="password"]').first();
-    await pw.fill(HUB_PASSWORD);
-    await pw.press("Enter");
-    await page.waitForLoadState("networkidle", { timeout: 30000 }).catch(() => {});
-    if (await isSignedOut()) {
-      signInFailures += 1;
-      console.error("[hub] sign-in did not complete — the account may need 2FA. Use --login once instead.");
-      return false;
+  for (const credential of CREDENTIALS) {
+    if (await attemptSignIn(credential)) {
+      signInFailures = 0;
+      return true;
     }
+    // Hub may have left us on a half-filled form; reload before the next try.
     await page.goto(HUB_URL, { waitUntil: "domcontentloaded" }).catch(() => {});
-    await context.storageState({ path: SESSION_FILE }).catch(() => {});
-    signInFailures = 0;
-    console.log("[hub] signed in; session saved.");
-    return true;
-  } catch (err) {
-    signInFailures += 1;
-    console.error("[hub] sign-in failed:", err.message);
-    return false;
+    if (!(await isSignedOut())) {
+      signInFailures = 0;
+      return true;
+    }
   }
+  signInFailures += 1;
+  console.error("[hub] none of the saved logins worked — run once with --login to sign in by hand.");
+  return false;
 }
 
 if (await isSignedOut()) {
@@ -208,8 +238,8 @@ if (await isSignedOut()) {
   if (!ok) {
     console.error(
       fs.existsSync(SESSION_FILE)
-        ? "Saved session has expired. Set HUB_USERNAME/HUB_PASSWORD, or re-run with --login."
-        : "No saved session. Set HUB_USERNAME/HUB_PASSWORD, or run once with --login."
+        ? "Saved session has expired. Set DEVICE_USERNAME/DEVICE_PASSWORD and/or HUB_USERNAME/HUB_PASSWORD, or re-run with --login."
+        : "No saved session. Set DEVICE_USERNAME/DEVICE_PASSWORD and/or HUB_USERNAME/HUB_PASSWORD, or run once with --login."
     );
     await browser.close();
     process.exit(1);
