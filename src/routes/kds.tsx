@@ -1343,7 +1343,7 @@ function KDS() {
                   href={`/print/${t.id}?paper=${kdsPaper}`}
                   target="_blank"
                   rel="noreferrer"
-                  className="grid h-8 w-8 place-items-center rounded-full border border-border text-xs hover:border-primary hover:text-primary"
+                  className="grid h-12 w-12 place-items-center rounded-full border border-border text-base hover:border-primary hover:text-primary sm:h-8 sm:w-8 sm:text-xs"
                   aria-label="Print"
                   title="Print now"
                 >
