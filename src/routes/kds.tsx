@@ -1362,6 +1362,24 @@ function AlertsToggle() {
   return <AlertsToggleInner />;
 }
 
+/**
+ * Shows the same English words written in Urdu letters underneath the English
+ * line. This is transliteration only — nothing is translated, so an item can
+ * never be misread as something else.
+ */
+function UrduLine({ on, text, className = "" }: { on: boolean; text: string; className?: string }) {
+  if (!on || !text) return null;
+  return (
+    <span
+      dir="rtl"
+      lang="ur"
+      className={`mt-0.5 block font-urdu text-sm font-normal normal-case tracking-normal opacity-90 ${className}`}
+    >
+      {toUrduScript(text)}
+    </span>
+  );
+}
+
 function SyncPill({
   lastSync,
   ok,
