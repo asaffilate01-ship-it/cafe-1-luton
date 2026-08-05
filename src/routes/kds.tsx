@@ -477,6 +477,7 @@ function KDS() {
   // "Live" means the shop's Hub watcher checked in recently, so Deliveroo
   // orders land here on their own and nobody needs to key anything in.
   const [deliverooLive, setDeliverooLive] = useState<boolean | null>(null);
+  const [deliverooSeenAt, setDeliverooSeenAt] = useState<number | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -496,6 +497,7 @@ function KDS() {
         .maybeSingle();
       if (cancelled) return;
       const seen = data?.last_seen_at ? new Date(data.last_seen_at).getTime() : 0;
+      setDeliverooSeenAt(seen || null);
       // The watcher checks in every minute; allow three misses before alarming.
       setDeliverooLive(seen > Date.now() - 180_000);
     }
@@ -681,7 +683,9 @@ function KDS() {
                 title={
                   deliverooLive
                     ? "Deliveroo orders are arriving here automatically"
-                    : "The shop's Deliveroo link is not reporting in — key tickets in manually until it is back"
+                    : deliverooSeenAt
+                      ? `The shop's Deliveroo watcher last checked in ${Math.round((Date.now() - deliverooSeenAt) / 60000)} min ago. Being signed into Restaurant Hub is not enough — the watcher program must be running on this PC. Key tickets in manually until it is back.`
+                      : "The shop's Deliveroo watcher has never checked in. Being signed into Restaurant Hub is not enough — the watcher program must be running on this PC."
                 }
               >
                 <Bike className="h-3.5 w-3.5" />
