@@ -19,7 +19,7 @@
  * Give it the device Hub account so it signs itself in and recovers on its own
  * if Hub ever logs it out — a browser session expires, the device account does
  * not, so this is the reliable choice when there is only one login.
- *   HUB_EMAIL=... HUB_PASSWORD=... DELIVEROO_BRIDGE_SECRET=xxx \
+ *   HUB_USERNAME=... HUB_PASSWORD=... DELIVEROO_BRIDGE_SECRET=xxx \
  *     node scripts/deliveroo-hub-watcher.mjs
  *
  * Because the tablet uses that same account, this deliberately re-uses its
@@ -38,7 +38,7 @@
  * Optional env:
  *   CAFE1_URL      target site (default https://cafe1stalbans.co.uk)
  *   HUB_URL        Hub orders page (default https://restaurant-hub.deliveroo.net/orders)
- *   HUB_EMAIL      device account username/email for unattended sign-in
+ *   HUB_USERNAME   device account username (HUB_EMAIL also accepted)
  *   HUB_PASSWORD   device account password (keep it in the machine's env, not here)
  *   SESSION_FILE   where the signed-in session is stored
  *   REFRESH_MS     how often to re-check when Hub is quiet (default 45000)
@@ -53,7 +53,9 @@ const HUB_URL = process.env.HUB_URL || "https://restaurant-hub.deliveroo.net/ord
 const SECRET = process.env.DELIVEROO_BRIDGE_SECRET;
 const SESSION_FILE = path.resolve(process.env.SESSION_FILE || "./.deliveroo-hub-session.json");
 const REFRESH_MS = Number(process.env.REFRESH_MS || 45000);
-const HUB_EMAIL = process.env.HUB_EMAIL;
+// The device login is a username rather than an email address, so accept
+// either spelling of the setting and treat them the same.
+const HUB_EMAIL = process.env.HUB_USERNAME || process.env.HUB_EMAIL;
 const HUB_PASSWORD = process.env.HUB_PASSWORD;
 const ENDPOINT = `${BASE}/api/public/deliveroo/hub-ingest`;
 
@@ -155,7 +157,7 @@ async function signIn() {
   lastSignInAt = Date.now();
   console.log("\n[hub] signing in with the device account…");
   try {
-    const email = page.locator('input[type="email"], input[name*="email" i], input[name*="user" i]').first();
+    const email = page.locator('input[name*="user" i], input[id*="user" i], input[type="email"], input[name*="email" i], input[type="text"]').first();
     await email.waitFor({ state: "visible", timeout: 20000 });
     await email.fill(HUB_EMAIL);
     const pw = page.locator('input[type="password"]').first();
@@ -184,8 +186,8 @@ if (await isSignedOut()) {
   if (!ok) {
     console.error(
       fs.existsSync(SESSION_FILE)
-        ? "Saved session has expired. Set HUB_EMAIL/HUB_PASSWORD, or re-run with --login."
-        : "No saved session. Set HUB_EMAIL/HUB_PASSWORD, or run once with --login."
+        ? "Saved session has expired. Set HUB_USERNAME/HUB_PASSWORD, or re-run with --login."
+        : "No saved session. Set HUB_USERNAME/HUB_PASSWORD, or run once with --login."
     );
     await browser.close();
     process.exit(1);

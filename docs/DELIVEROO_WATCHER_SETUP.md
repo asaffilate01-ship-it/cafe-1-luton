@@ -15,8 +15,10 @@ on, and restarts itself if it ever stops.
 2. In the `scripts` folder, copy `deliveroo-hub-watcher.env.example` and name
    the copy `deliveroo-hub-watcher.env`.
 3. Open that copy in Notepad and fill in:
-   - `HUB_EMAIL` / `HUB_PASSWORD` — the Deliveroo **device** account (the same
-     login the tablet uses). This is the right one to use: a browser Hub
+   - `HUB_USERNAME` / `HUB_PASSWORD` — the Deliveroo **device** account (the
+     same login the tablet uses). It is a username, not an email address, so
+     type it exactly as it appears on the tablet. This is the right one to
+     use: a browser Hub
      session expires after a while, the device account does not. The watcher
      re-uses its saved session and only signs in again when it genuinely has
      to, with a growing pause between attempts, so it does not sit there
