@@ -258,7 +258,13 @@ export const Route = createFileRoute("/kds")({
       { name: "description", content: "Live kitchen tickets for Cafe1." },
       { name: "robots", content: "noindex" },
     ],
-    links: [{ rel: "manifest", href: "/kds.webmanifest" }],
+    links: [
+      { rel: "manifest", href: "/kds.webmanifest" },
+      {
+        rel: "stylesheet",
+        href: "https://fonts.googleapis.com/css2?family=Noto+Nastaliq+Urdu:wght@400;700&display=swap",
+      },
+    ],
   }),
   component: KdsPage,
 });
