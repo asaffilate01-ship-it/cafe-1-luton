@@ -337,7 +337,12 @@ function MenuPage() {
           </button>
         </div>
       </div>
-      <OrderSetupGate open={gateOpen} onClose={() => setGateOpen(false)} dismissible={!!ctx} />
+      <OrderSetupGate
+        open={gateOpen}
+        onClose={() => setGateOpen(false)}
+        dismissible={!!ctx}
+        juryOnly={!!jurySessionActive}
+      />
 
       {/* Sticky search + category pills */}
       <div
