@@ -38,8 +38,8 @@
  * Optional env:
  *   CAFE1_URL      target site (default https://cafe1stalbans.co.uk)
  *   HUB_URL        Hub orders page (default https://restaurant-hub.deliveroo.net/orders)
- *   HUB_USERNAME   device account username (HUB_EMAIL also accepted)
- *   HUB_PASSWORD   device account password (keep it in the machine's env, not here)
+ *   DEVICE_USERNAME/DEVICE_PASSWORD  device account — tried first
+ *   HUB_USERNAME/HUB_PASSWORD        ordinary Hub login — used as backup
  *   SESSION_FILE   where the signed-in session is stored
  *   REFRESH_MS     how often to re-check when Hub is quiet (default 45000)
  */
@@ -238,8 +238,8 @@ if (await isSignedOut()) {
   if (!ok) {
     console.error(
       fs.existsSync(SESSION_FILE)
-        ? "Saved session has expired. Set HUB_USERNAME/HUB_PASSWORD, or re-run with --login."
-        : "No saved session. Set HUB_USERNAME/HUB_PASSWORD, or run once with --login."
+        ? "Saved session has expired. Set DEVICE_USERNAME/DEVICE_PASSWORD and/or HUB_USERNAME/HUB_PASSWORD, or re-run with --login."
+        : "No saved session. Set DEVICE_USERNAME/DEVICE_PASSWORD and/or HUB_USERNAME/HUB_PASSWORD, or run once with --login."
     );
     await browser.close();
     process.exit(1);
