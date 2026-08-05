@@ -484,9 +484,29 @@ function KDS() {
     });
   }
   async function setAll(from: string, status: "ready" | "completed") {
-    const ids = tickets.filter((t) => t.status === from).map((t) => t.id);
-    if (!ids.length) return;
-    if (!window.confirm(`Mark ${ids.length} ticket${ids.length === 1 ? "" : "s"} as ${status}?`))
+    // Only sweep what the operator can actually see, and never a ticket that
+    // landed in the last minute — that is what made fresh orders vanish
+    // moments after arriving on a busy board.
+    const FRESH_MS = 60_000;
+    const candidates = tickets.filter(
+      (t) =>
+        t.status === from &&
+        (station === "ALL" ||
+          station === "PASS" ||
+          t.items.some((i) => i.station_code === station)),
+    );
+    const ids = candidates.filter((t) => Date.now() - new Date(t.created_at).getTime() >= FRESH_MS).map((t) => t.id);
+    const skipped = candidates.length - ids.length;
+    if (!ids.length) {
+      if (skipped) toast.info("Only just-arrived tickets are left — clear those individually.");
+      return;
+    }
+    if (
+      !window.confirm(
+        `Mark ${ids.length} ticket${ids.length === 1 ? "" : "s"} as ${status}?` +
+          (skipped ? `\n\n${skipped} just arrived and will be left on the board.` : ""),
+      )
+    )
       return;
     setBulking(true);
     const previous = tickets;
