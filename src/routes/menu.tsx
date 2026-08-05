@@ -29,6 +29,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { OrderSetupGate } from "@/components/order-setup-gate";
+import { useJurySession } from "@/lib/jury-session";
 import { describeContext, useOrderContext, orderContext } from "@/lib/order-context";
 
 export const Route = createFileRoute("/menu")({
