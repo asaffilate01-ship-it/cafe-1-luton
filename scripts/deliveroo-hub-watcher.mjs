@@ -145,6 +145,14 @@ async function isSignedOut() {
 /** Sign in with the device account. Returns false if it did not take. */
 async function signIn() {
   if (!HUB_EMAIL || !HUB_PASSWORD) return false;
+  // Back off between attempts: the tablet shares this login, and a sign-in
+  // loop here would keep knocking the tablet offline.
+  const gap = SIGN_IN_MIN_GAP_MS * Math.min(2 ** signInFailures, 10);
+  const wait = lastSignInAt + gap - Date.now();
+  if (wait > 0) {
+    await new Promise((resolve) => setTimeout(resolve, wait));
+  }
+  lastSignInAt = Date.now();
   console.log("\n[hub] signing in with the device account…");
   try {
     const email = page.locator('input[type="email"], input[name*="email" i], input[name*="user" i]').first();
@@ -155,14 +163,17 @@ async function signIn() {
     await pw.press("Enter");
     await page.waitForLoadState("networkidle", { timeout: 30000 }).catch(() => {});
     if (await isSignedOut()) {
+      signInFailures += 1;
       console.error("[hub] sign-in did not complete — the account may need 2FA. Use --login once instead.");
       return false;
     }
     await page.goto(HUB_URL, { waitUntil: "domcontentloaded" }).catch(() => {});
     await context.storageState({ path: SESSION_FILE }).catch(() => {});
+    signInFailures = 0;
     console.log("[hub] signed in; session saved.");
     return true;
   } catch (err) {
+    signInFailures += 1;
     console.error("[hub] sign-in failed:", err.message);
     return false;
   }
