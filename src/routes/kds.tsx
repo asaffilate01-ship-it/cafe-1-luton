@@ -187,6 +187,16 @@ const STATIONS = ["ALL", "HOT", "SANDWICH", "DRINKS", "PASS"] as const;
  * our own delivery orders plus the delivery-partner channels.
  */
 type FeedKey = "all" | "jury" | "judge" | "public" | "delivery" | "web";
+
+/** Shared order-source filters used by the desktop toolbar and mobile nav. */
+const FEEDS = [
+  { key: "all", label: "Live orders", Icon: LayoutGrid },
+  { key: "jury", label: "Jury", Icon: Scale },
+  { key: "judge", label: "Judges", Icon: Gavel },
+  { key: "public", label: "Public", Icon: Users },
+  { key: "delivery", label: "Delivery", Icon: Bike },
+  { key: "web", label: "Web", Icon: Globe },
+] as const satisfies ReadonlyArray<{ key: FeedKey; label: string; Icon: typeof LayoutGrid }>;
 function matchesFeed(
   feed: FeedKey,
   t: { source: string | null; pos_terminal: string | null; type: string },
