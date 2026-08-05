@@ -233,7 +233,49 @@ const steps: Step[] = [
       </div>
     ),
   },
+  {
+    title: "8. Security, hosting and payments",
+    who: "Café 1 systems",
+    icon: Server,
+    say: "The whole system runs on AWS cloud infrastructure in the UK/EEA, with managed patching, encryption in transit and at rest, automated backups and row-level database access control. Card payments are taken through SumUp, an FCA-authorised, PCI DSS compliant payment gateway with 3-D Secure and tokenised Apple Pay and Google Pay — Café 1 never holds card details. Voucher PINs are stored only as cryptographic hashes, admin accounts require two-factor authentication, and every voucher action is written to an immutable audit log.",
+    screen: () => (
+      <div className="mx-auto grid max-w-lg gap-2 text-sm sm:grid-cols-2">
+        <Fact icon={Server} title="AWS cloud hosting (UK/EEA)">
+          Managed patching, TLS in transit, encryption at rest, automated backups.
+        </Fact>
+        <Fact icon={Lock} title="PCI DSS compliant payments">
+          SumUp gateway, 3-D Secure/SCA, tokenised Apple &amp; Google Pay. No card data held by
+          Café 1.
+        </Fact>
+        <Fact icon={ShieldCheck} title="Access control">
+          Two-factor authentication on admin accounts, named staff logins, PINs stored hashed with
+          lock-out and rate limiting.
+        </Fact>
+        <Fact icon={FileSpreadsheet} title="Immutable audit log">
+          Every issue, opt-in, redemption and adjustment recorded against the anonymous code only.
+        </Fact>
+      </div>
+    ),
+  },
 ];
+
+function Fact({
+  icon: Icon,
+  title,
+  children,
+}: {
+  icon: typeof Ticket;
+  title: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="rounded-xl border border-border bg-card p-4">
+      <Icon className="h-5 w-5 text-primary" />
+      <p className="mt-2 font-bold">{title}</p>
+      <p className="mt-1 text-xs leading-relaxed text-muted-foreground">{children}</p>
+    </div>
+  );
+}
 
 function DemoPage() {
   const [i, setI] = useState(0);
@@ -253,8 +295,9 @@ function DemoPage() {
               The whole process, start to finish
             </h1>
             <p className="mt-3 max-w-2xl text-primary-foreground/85">
-              Seven screens showing exactly what the Jury Officer, the juror and Café 1 each see.
-              Everything below is simulated — no live voucher, order or claim is created.
+              Eight screens showing exactly what the Jury Officer, the juror and Café 1 each see,
+              from the printed juror sheet through to security and hosting. Everything below is
+              simulated — no live voucher, order or claim is created.
             </p>
           </div>
         </section>
@@ -317,8 +360,9 @@ function DemoPage() {
               Want to try it hands-on?
             </p>
             <p className="mt-1">
-              Ask Café 1 for a demonstration slip. Demo codes behave exactly like real ones but are
-              marked <strong>DEMO</strong> in every report, so nothing is ever claimed from HMCTS.
+              Ask Café 1 for a sample juror information sheet. Demo codes behave exactly like real
+              ones but are marked <strong>DEMO</strong> in every report, so nothing is ever claimed
+              from HMCTS.
             </p>
             <div className="mt-3 flex flex-wrap gap-2">
               <Link
