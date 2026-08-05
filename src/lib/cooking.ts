@@ -88,7 +88,9 @@ const CATEGORY_RULES: Array<{ category: string; phrases?: string[]; words?: stri
   // Drinks first — a "chicken shawarma" never mentions coffee, but a
   // "chicken soup latte" style clash would otherwise land in food.
   { category: "Hot Drinks", phrases: ["hot chocolate", "flat white", "white americano"], words: ["tea", "coffee", "latte", "cappuccino", "capuccino", "cappucino", "americano", "mocha", "mochacciano", "espresso", "macchiato", "chai", "matcha", "hotchocolate"] },
-  { category: "Milkshakes", words: ["milkshake", "shake", "oreo", "caramel"] },
+  { category: "Milkshakes", phrases: ["caramel milkshake", "caramel shake"], words: ["milkshake", "shake", "oreo"] },
+  // Sandwich/jacket fillings come off the till as bare ingredient lists.
+  { category: "Fillings", phrases: ["mayo sweetcorn", "mayo and sweetcorn", "cheese and tomato", "tuna mayo", "tuna and mayo", "cheese and onion", "cheese and beans", "chicken mayo", "chicken and mayo"] },
   { category: "Mocktails", phrases: ["redbull mojito"], words: ["mojito", "mocktail"] },
   { category: "Iced Coffee", phrases: ["iced coffee", "iced latte"] },
   { category: "Drinks", phrases: ["bottled drink", "energy drink", "soft drink", "red bull"], words: ["coke", "pepsi", "water", "juice", "can", "cans", "bottle", "lemonade", "fanta", "sprite", "smoothie", "redbull", "monster", "tango", "irnbru"] },
@@ -115,10 +117,46 @@ const CATEGORY_RULES: Array<{ category: string; phrases?: string[]; words?: stri
   { category: "Biscuits", words: ["biscuit", "biscuits", "cookie", "cookies", "flapjack"] },
   { category: "Desserts", words: ["cake", "muffin", "pie", "brownie", "doughnut", "donut", "pastry", "dessert"] },
   { category: "Snacks", phrases: ["chocolate bar", "chewing gum"], words: ["crisps", "chocolate", "gum"] },
-  { category: "Extras", phrases: ["add milk", "oat milk", "butter only"], words: ["extra", "sauce", "dip", "cheese", "egg", "eggs", "beans", "sausage", "bacon", "hash", "milk", "butter"] },
-  { category: "Chef's Specials", phrases: ["shepherds pie", "cottage pie", "chicken pie"], words: ["curry", "rice", "biryani", "karahi", "masala", "keema", "chana", "tikka", "shepherds"] },
+  { category: "Extras", phrases: ["add milk", "oat milk", "butter only"], words: ["extra", "sauce", "dip", "egg", "eggs", "beans", "sausage", "bacon", "hash", "milk", "butter"] },
+  { category: "Chef's Specials", phrases: ["shepherds pie", "cottage pie", "chicken pie"], words: ["curry", "rice", "biryani", "karahi", "masala", "keema", "chana", "tikka", "shepherds", "lasagne", "lasagna", "flan", "quiche"] },
   { category: "Breakfast", words: ["breakfast"] },
 ];
+
+/**
+ * POS terminals stamp lines with catch-all labels ("Hot Food", "Misc",
+ * "General"). Those tell the kitchen nothing, so we treat them as absent and
+ * let the real menu category or keyword rules take over.
+ */
+const VAGUE_LABELS = new Set([
+  "hot food",
+  "cold food",
+  "food",
+  "misc",
+  "miscellaneous",
+  "other",
+  "other items",
+  "others",
+  "general",
+  "generic",
+  "items",
+  "item",
+  "uncategorised",
+  "uncategorized",
+  "default",
+  "sumup",
+  "pos",
+  "custom",
+  "custom amount",
+  "n/a",
+  "none",
+  "unknown",
+]);
+
+export function usefulLabel(label: string | null | undefined): string | null {
+  const trimmed = (label ?? "").trim();
+  if (!trimmed) return null;
+  return VAGUE_LABELS.has(trimmed.toLowerCase()) ? null : trimmed;
+}
 
 export function guessCategory(name: string): string | null {
   const n = normaliseItemName(name);

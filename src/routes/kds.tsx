@@ -26,7 +26,7 @@ import { useWakeLock } from "@/hooks/use-wake-lock";
 import { syncSumupPos } from "@/lib/sumup-pos.functions";
 import { orderCode } from "@/lib/order-code";
 import { getStaffMenuItems } from "@/lib/menu-operations.functions";
-import { fuzzyMenuKey, guessCategory, looksCooked } from "@/lib/cooking";
+import { fuzzyMenuKey, guessCategory, looksCooked, usefulLabel } from "@/lib/cooking";
 
 type Item = {
   id: string;
@@ -244,6 +244,8 @@ function KDS() {
         station_code: string;
         prep_seconds: number;
         category: string | null;
+        /** True when the line was matched to a real menu item. */
+        matched?: boolean;
       };
       const byId = new Map<string, MenuMeta>();
       const byName = new Map<string, MenuMeta>();
@@ -264,6 +266,7 @@ function KDS() {
           station_code: m.station_code || "PASS",
           prep_seconds: Math.max(0, m.prep_seconds || 0),
           category: m.category_id ? (catName.get(m.category_id) ?? null) : null,
+          matched: true,
         };
         byId.set(m.id, meta);
         const key = m.name.trim().toLowerCase();
@@ -309,11 +312,16 @@ function KDS() {
           .filter((i) => i.order_id === o.id)
           .map((item) => {
             const meta = metadata(item);
+            // The menu's own category is the truth when we matched the line to a
+            // real menu item; POS labels are often vague ("Hot Food", "Misc") or
+            // just wrong, so they only fill the gaps.
+            const posLabel = usefulLabel(item.category_label);
             const category =
-              item.category_label?.trim() ||
+              (meta.matched ? meta.category : null) ||
+              posLabel ||
               meta.category ||
               guessCategory(item.name) ||
-              (meta.needs_cooking ? "Hot food" : "Other items");
+              "Other items";
             return {
               ...item,
               cook: meta.needs_cooking,
