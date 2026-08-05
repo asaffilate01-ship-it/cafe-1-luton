@@ -301,6 +301,8 @@ function KDS() {
   });
   // Bottom-bar sheet on phones and tablets.
   const [sheet, setSheet] = useState<null | "stations" | "more">(null);
+  // Phone/tablet feed filter — which side of the business the board shows.
+  const [feed, setFeed] = useState<FeedKey>("all");
   const { user } = useSession();
   const { has } = useRoles(user);
 
