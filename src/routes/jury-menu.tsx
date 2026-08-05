@@ -1,11 +1,12 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { SiteHeader } from "@/components/site-header";
 import { GatedMenuList } from "@/components/gated-menu-list";
+import { OrderSetupGate } from "@/components/order-setup-gate";
 import { lookupVoucher } from "@/lib/vouchers.functions";
 import { jurySession, useJurySession } from "@/lib/jury-session";
-import { orderContext } from "@/lib/order-context";
+import { orderContext, useOrderContext } from "@/lib/order-context";
 import { JUROR_DELIVERY_VENUES, JUROR_DAILY_ALLOWANCE_CENTS } from "@/lib/juror";
 import { money } from "@/lib/format";
 import { ShieldCheck, Lock, LogOut, Building2 } from "lucide-react";
@@ -65,6 +66,13 @@ function JuryMenuPage() {
   const [pin, setPin] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const ctx = useOrderContext();
+  const [gateOpen, setGateOpen] = useState(false);
+
+  // As soon as the Jury Only menu unlocks, ask how they'd like their order.
+  useEffect(() => {
+    if (session && !ctx) setGateOpen(true);
+  }, [session, ctx]);
 
   const jurorFilter = useCallback((item: { juror_menu: boolean }) => item.juror_menu, []);
 
@@ -239,6 +247,13 @@ function JuryMenuPage() {
         <p className="text-xs font-black uppercase tracking-widest text-muted-foreground">
           Where are you eating?
         </p>
+        <button
+          type="button"
+          onClick={() => setGateOpen(true)}
+          className="mt-2 inline-flex h-9 items-center rounded-full border border-primary px-4 text-xs font-bold text-primary hover:bg-primary/5"
+        >
+          {ctx ? "Change how you'd like your order" : "How would you like your order?"}
+        </button>
         <div className="mt-3 grid gap-2 sm:grid-cols-3">
           <button
             type="button"
@@ -267,6 +282,13 @@ function JuryMenuPage() {
       <GatedMenuList
         filter={jurorFilter}
         emptyMessage="The Jury Only menu is being updated. Please order at the Café 1 counter today."
+      />
+
+      <OrderSetupGate
+        open={gateOpen}
+        onClose={() => setGateOpen(false)}
+        dismissible={!!ctx}
+        juryOnly
       />
     </div>
   );
