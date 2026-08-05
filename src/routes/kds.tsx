@@ -1042,6 +1042,11 @@ function KDS() {
               <p className="mt-1.5 text-xs font-black uppercase tracking-wide text-foreground">
                 {t.customer_name}
               </p>
+              {t.status !== "preparing" && t.status !== "ready" && (
+                <p className="mt-1.5 rounded-lg bg-slate-200 px-2 py-1 text-center text-[10px] font-black uppercase tracking-widest text-slate-700">
+                  Recalled · {t.status.replace(/_/g, " ")}
+                </p>
+              )}
               {t.pos_terminal && (
                 <p
                   className={`mt-1.5 rounded-lg px-2 py-1 text-center font-display text-sm font-black uppercase tracking-wide ${channel.chip}`}
