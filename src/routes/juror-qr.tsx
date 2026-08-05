@@ -37,13 +37,13 @@ const POSTERS = [
     foot: "No name, email or phone number is ever collected.",
   },
   {
-    path: "/menu",
+    path: "/jury-menu",
     eyebrow: "Jury room poster",
-    title: "Order from the Juror Menu",
+    title: "JURY ONLY MENU",
     lines: [
-      "Scan to order food and drink.",
-      "Collect at Café 1, or delivery to the jury room.",
-      "Your allowance comes off at checkout.",
+      "Scan, then enter your voucher code and PIN.",
+      "Collect at Café 1, or delivery to the Jury Lounge",
+      "at Crown Court or the Jury Rooms at the Magistrates'.",
     ],
     foot: "Café 1 · St Albans Crown Court · AL1 3JW",
   },

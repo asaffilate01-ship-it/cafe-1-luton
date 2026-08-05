@@ -19,9 +19,11 @@ import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as MenuRouteImport } from './routes/menu'
 import { Route as KdsRouteImport } from './routes/kds'
+import { Route as JuryMenuRouteImport } from './routes/jury-menu'
 import { Route as JurorQrRouteImport } from './routes/juror-qr'
 import { Route as JurorDemoRouteImport } from './routes/juror-demo'
 import { Route as JurorRouteImport } from './routes/juror'
+import { Route as JudgesMenuRouteImport } from './routes/judges-menu'
 import { Route as JudgesRouteImport } from './routes/judges'
 import { Route as GdprRouteImport } from './routes/gdpr'
 import { Route as DriverRouteImport } from './routes/driver'
@@ -119,6 +121,11 @@ const KdsRoute = KdsRouteImport.update({
   path: '/kds',
   getParentRoute: () => rootRouteImport,
 } as any)
+const JuryMenuRoute = JuryMenuRouteImport.update({
+  id: '/jury-menu',
+  path: '/jury-menu',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const JurorQrRoute = JurorQrRouteImport.update({
   id: '/juror-qr',
   path: '/juror-qr',
@@ -132,6 +139,11 @@ const JurorDemoRoute = JurorDemoRouteImport.update({
 const JurorRoute = JurorRouteImport.update({
   id: '/juror',
   path: '/juror',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const JudgesMenuRoute = JudgesMenuRouteImport.update({
+  id: '/judges-menu',
+  path: '/judges-menu',
   getParentRoute: () => rootRouteImport,
 } as any)
 const JudgesRoute = JudgesRouteImport.update({
@@ -381,9 +393,11 @@ export interface FileRoutesByFullPath {
   '/driver': typeof DriverRoute
   '/gdpr': typeof GdprRoute
   '/judges': typeof JudgesRoute
+  '/judges-menu': typeof JudgesMenuRoute
   '/juror': typeof JurorRoute
   '/juror-demo': typeof JurorDemoRoute
   '/juror-qr': typeof JurorQrRoute
+  '/jury-menu': typeof JuryMenuRoute
   '/kds': typeof KdsRoute
   '/menu': typeof MenuRoute
   '/privacy': typeof PrivacyRoute
@@ -442,9 +456,11 @@ export interface FileRoutesByTo {
   '/driver': typeof DriverRoute
   '/gdpr': typeof GdprRoute
   '/judges': typeof JudgesRoute
+  '/judges-menu': typeof JudgesMenuRoute
   '/juror': typeof JurorRoute
   '/juror-demo': typeof JurorDemoRoute
   '/juror-qr': typeof JurorQrRoute
+  '/jury-menu': typeof JuryMenuRoute
   '/kds': typeof KdsRoute
   '/menu': typeof MenuRoute
   '/privacy': typeof PrivacyRoute
@@ -504,9 +520,11 @@ export interface FileRoutesById {
   '/driver': typeof DriverRoute
   '/gdpr': typeof GdprRoute
   '/judges': typeof JudgesRoute
+  '/judges-menu': typeof JudgesMenuRoute
   '/juror': typeof JurorRoute
   '/juror-demo': typeof JurorDemoRoute
   '/juror-qr': typeof JurorQrRoute
+  '/jury-menu': typeof JuryMenuRoute
   '/kds': typeof KdsRoute
   '/menu': typeof MenuRoute
   '/privacy': typeof PrivacyRoute
@@ -567,9 +585,11 @@ export interface FileRouteTypes {
     | '/driver'
     | '/gdpr'
     | '/judges'
+    | '/judges-menu'
     | '/juror'
     | '/juror-demo'
     | '/juror-qr'
+    | '/jury-menu'
     | '/kds'
     | '/menu'
     | '/privacy'
@@ -628,9 +648,11 @@ export interface FileRouteTypes {
     | '/driver'
     | '/gdpr'
     | '/judges'
+    | '/judges-menu'
     | '/juror'
     | '/juror-demo'
     | '/juror-qr'
+    | '/jury-menu'
     | '/kds'
     | '/menu'
     | '/privacy'
@@ -689,9 +711,11 @@ export interface FileRouteTypes {
     | '/driver'
     | '/gdpr'
     | '/judges'
+    | '/judges-menu'
     | '/juror'
     | '/juror-demo'
     | '/juror-qr'
+    | '/jury-menu'
     | '/kds'
     | '/menu'
     | '/privacy'
@@ -751,9 +775,11 @@ export interface RootRouteChildren {
   DriverRoute: typeof DriverRoute
   GdprRoute: typeof GdprRoute
   JudgesRoute: typeof JudgesRoute
+  JudgesMenuRoute: typeof JudgesMenuRoute
   JurorRoute: typeof JurorRoute
   JurorDemoRoute: typeof JurorDemoRoute
   JurorQrRoute: typeof JurorQrRoute
+  JuryMenuRoute: typeof JuryMenuRoute
   KdsRoute: typeof KdsRoute
   MenuRoute: typeof MenuRoute
   PrivacyRoute: typeof PrivacyRoute
@@ -871,6 +897,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof KdsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/jury-menu': {
+      id: '/jury-menu'
+      path: '/jury-menu'
+      fullPath: '/jury-menu'
+      preLoaderRoute: typeof JuryMenuRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/juror-qr': {
       id: '/juror-qr'
       path: '/juror-qr'
@@ -890,6 +923,13 @@ declare module '@tanstack/react-router' {
       path: '/juror'
       fullPath: '/juror'
       preLoaderRoute: typeof JurorRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/judges-menu': {
+      id: '/judges-menu'
+      path: '/judges-menu'
+      fullPath: '/judges-menu'
+      preLoaderRoute: typeof JudgesMenuRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/judges': {
@@ -1231,9 +1271,11 @@ const rootRouteChildren: RootRouteChildren = {
   DriverRoute: DriverRoute,
   GdprRoute: GdprRoute,
   JudgesRoute: JudgesRoute,
+  JudgesMenuRoute: JudgesMenuRoute,
   JurorRoute: JurorRoute,
   JurorDemoRoute: JurorDemoRoute,
   JurorQrRoute: JurorQrRoute,
+  JuryMenuRoute: JuryMenuRoute,
   KdsRoute: KdsRoute,
   MenuRoute: MenuRoute,
   PrivacyRoute: PrivacyRoute,
