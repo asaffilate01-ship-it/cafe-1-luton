@@ -474,6 +474,38 @@ function KDS() {
   const [bulking, setBulking] = useState(false);
   const [chromeHidden, setChromeHidden] = useState(false);
   const [deliverooOpen, setDeliverooOpen] = useState(false);
+  // "Live" means the shop's Hub watcher checked in recently, so Deliveroo
+  // orders land here on their own and nobody needs to key anything in.
+  const [deliverooLive, setDeliverooLive] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    async function check() {
+      const { data } = await (supabase as unknown as {
+        from: (t: string) => {
+          select: (c: string) => {
+            eq: (c: string, v: string) => {
+              maybeSingle: () => Promise<{ data: { last_seen_at: string } | null }>;
+            };
+          };
+        };
+      })
+        .from("integration_status")
+        .select("last_seen_at")
+        .eq("key", "deliveroo_hub")
+        .maybeSingle();
+      if (cancelled) return;
+      const seen = data?.last_seen_at ? new Date(data.last_seen_at).getTime() : 0;
+      // The watcher checks in every minute; allow three misses before alarming.
+      setDeliverooLive(seen > Date.now() - 180_000);
+    }
+    void check();
+    const id = window.setInterval(() => void check(), 60_000);
+    return () => {
+      cancelled = true;
+      window.clearInterval(id);
+    };
+  }, []);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
