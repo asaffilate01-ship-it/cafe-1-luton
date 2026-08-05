@@ -25,6 +25,7 @@ import {
   Plus,
 } from "lucide-react";
 import { ManualOrderDialog } from "@/components/manual-order-dialog";
+import { InstallAppButton } from "@/components/install-app-button";
 import { useWakeLock } from "@/hooks/use-wake-lock";
 import { syncSumupPos } from "@/lib/sumup-pos.functions";
 import { orderCode } from "@/lib/order-code";
@@ -250,6 +251,7 @@ export const Route = createFileRoute("/kds")({
       { name: "description", content: "Live kitchen tickets for Cafe1." },
       { name: "robots", content: "noindex" },
     ],
+    links: [{ rel: "manifest", href: "/kds.webmanifest" }],
   }),
   component: KdsPage,
 });
@@ -875,6 +877,7 @@ function KDS() {
               >
                 Test print
               </a>
+              <InstallAppButton manifest="/kds.webmanifest" label="Install KDS" />
               <div className="flex items-center gap-1 rounded-full bg-primary-foreground/10 p-1">
                 {([58, 80] as const).map((w) => (
                   <button
