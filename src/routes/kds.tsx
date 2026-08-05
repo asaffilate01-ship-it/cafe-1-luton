@@ -291,6 +291,20 @@ function KDS() {
     const saved = window.localStorage.getItem("cafe1-kds-station") as Station | null;
     return saved && STATIONS.includes(saved) ? saved : "ALL";
   });
+  // Urdu script mode: the same English words written in Urdu letters — no
+  // translation, so nothing about the order can be misread.
+  const [urdu, setUrdu] = useState(false);
+  // Bottom-bar sheet on phones and tablets.
+  const [sheet, setSheet] = useState<null | "stations" | "more">(null);
+  useEffect(() => {
+    setUrdu(window.localStorage.getItem("cafe1-kds-urdu") === "1");
+  }, []);
+  function toggleUrdu() {
+    setUrdu((on) => {
+      window.localStorage.setItem("cafe1-kds-urdu", on ? "0" : "1");
+      return !on;
+    });
+  }
   const { user } = useSession();
   const { has } = useRoles(user);
 
