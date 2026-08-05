@@ -1,8 +1,9 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 import { Plus, Trash2, X } from "lucide-react";
 import { createManualOrder, type ManualChannel } from "@/lib/manual-order.functions";
+import { listAccounts } from "@/lib/accounts.functions";
 import { JURY_DELIVERY_ROOMS } from "@/components/order-setup-gate";
 
 type Line = { name: string; qty: number; notes: string };
@@ -37,6 +38,9 @@ export function ManualOrderDialog({
   onCreated?: () => void;
 }) {
   const create = useServerFn(createManualOrder);
+  const loadAccounts = useServerFn(listAccounts);
+  const [accounts, setAccounts] = useState<{ id: string; name: string }[]>([]);
+  const [accountId, setAccountId] = useState("");
   const [channel, setChannel] = useState<ManualChannel>("deliveroo");
   const [reference, setReference] = useState("");
   const [customerName, setCustomerName] = useState("");
@@ -56,6 +60,13 @@ export function ManualOrderDialog({
   const [notes, setNotes] = useState("");
   const [lines, setLines] = useState<Line[]>([emptyLine()]);
   const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    if (!open || paymentMethod !== "account" || accounts.length) return;
+    void loadAccounts()
+      .then((rows) => setAccounts(rows.map((r) => ({ id: r.id, name: r.name }))))
+      .catch(() => setAccounts([]));
+  }, [open, paymentMethod]); // eslint-disable-line react-hooks/exhaustive-deps
 
   if (!open) return null;
 
@@ -113,6 +124,7 @@ export function ManualOrderDialog({
           type,
           total_cents: Math.round((Number(total) || 0) * 100),
           payment_method: paymentMethod,
+          account_id: paymentMethod === "account" && accountId ? accountId : undefined,
           paid,
           notes: notes.trim() || undefined,
           table_number: table.trim() || undefined,
