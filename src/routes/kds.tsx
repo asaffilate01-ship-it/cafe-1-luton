@@ -1087,21 +1087,21 @@ function KDS() {
           return (
             <div
               key={t.id}
-              className={`flex flex-col overflow-hidden rounded-xl border-4 bg-white p-3 shadow-sm ring-2 transition-shadow ${channel.border} ${channel.ring} ${hot ? "shadow-brand" : ""}`}
+              className={`flex flex-col overflow-hidden rounded-2xl border-4 bg-white p-4 shadow-sm ring-2 transition-shadow sm:rounded-xl sm:p-3 ${channel.border} ${channel.ring} ${hot ? "shadow-brand" : ""}`}
             >
               <div
-                className={`-mx-3 -mt-3 mb-2 px-3 py-1 text-center text-[10px] font-black uppercase tracking-[0.14em] text-white ${cook ? "bg-blue-600" : "bg-amber-500"}`}
+                className={`-mx-4 -mt-4 mb-2 px-3 py-1.5 text-center text-[11px] font-black uppercase tracking-[0.14em] text-white sm:-mx-3 sm:-mt-3 sm:py-1 sm:text-[10px] ${cook ? "bg-blue-600" : "bg-amber-500"}`}
               >
                 {cook ? "Cook / hot food" : "No cooking needed"}
                 <UrduLine on={urdu} text={cook ? "Cook hot food" : "No cooking needed"} />
               </div>
               <div
-                className={`-mx-3 -mt-2 mb-2 px-3 py-1 text-center text-[11px] font-black uppercase tracking-[0.18em] ${channel.chip}`}
+                className={`-mx-4 -mt-2 mb-2 px-3 py-1 text-center text-[11px] font-black uppercase tracking-[0.18em] sm:-mx-3 ${channel.chip}`}
               >
                 {channel.label}
               </div>
               {scheduledAt && (
-                <div className="-mx-3 -mt-2 mb-2 bg-violet-700 px-3 py-1.5 text-center text-white">
+                <div className="-mx-4 -mt-2 mb-2 bg-violet-700 px-3 py-1.5 text-center text-white sm:-mx-3">
                   <p className="font-display text-base font-black uppercase leading-none tracking-[0.14em]">
                     Later order · for{" "}
                     {scheduledAt.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
@@ -1114,7 +1114,9 @@ function KDS() {
                 </div>
               )}
               <div className="flex items-start justify-between gap-2">
-                <p className="font-display text-lg font-bold leading-none">#{t.order_number}</p>
+                <p className="font-display text-xl font-bold leading-none sm:text-lg">
+                  #{t.order_number}
+                </p>
                 <div className="flex flex-wrap items-center justify-end gap-1">
                   <span
                     className={`rounded-full px-1.5 py-px text-[9px] font-black uppercase tracking-wide ${channel.chip}`}
