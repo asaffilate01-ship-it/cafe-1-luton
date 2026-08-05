@@ -1077,6 +1077,7 @@ function KDS() {
                 className={`-mx-3 -mt-3 mb-2 px-3 py-1 text-center text-[10px] font-black uppercase tracking-[0.14em] text-white ${cook ? "bg-blue-600" : "bg-amber-500"}`}
               >
                 {cook ? "Cook / hot food" : "No cooking needed"}
+                <UrduLine on={urdu} text={cook ? "Cook hot food" : "No cooking needed"} />
               </div>
               <div
                 className={`-mx-3 -mt-2 mb-2 px-3 py-1 text-center text-[11px] font-black uppercase tracking-[0.18em] ${channel.chip}`}
@@ -1143,6 +1144,15 @@ function KDS() {
                     ? "TAKEAWAY"
                     : (TYPE_LABEL[t.type] ?? t.type.replace("_", " ").toUpperCase())}
                 </p>
+                <UrduLine
+                  on={urdu}
+                  className="text-base"
+                  text={
+                    t.source === "sumup_pos" && t.type === "collection"
+                      ? "takeaway"
+                      : (TYPE_LABEL[t.type] ?? t.type.replace("_", " "))
+                  }
+                />
                 <p className="mt-0.5 text-sm font-black leading-none">
                   {whenLabel(t) === "ASAP" ? "ASAP" : `FOR ${whenLabel(t)}`}
                 </p>
@@ -1159,6 +1169,7 @@ function KDS() {
               </div>
               <p className="mt-1.5 text-xs font-black uppercase tracking-wide text-foreground">
                 {t.customer_name}
+                <UrduLine on={urdu} text={t.customer_name ?? ""} />
               </p>
               {t.status !== "preparing" && t.status !== "ready" && (
                 <p className="mt-1.5 rounded-lg bg-slate-200 px-2 py-1 text-center text-[10px] font-black uppercase tracking-widest text-slate-700">
@@ -1187,6 +1198,7 @@ function KDS() {
                   </p>
                   <p className="font-display text-base font-black uppercase leading-tight">
                     {t.jury_room}
+                    <UrduLine on={urdu} text={t.jury_room} />
                   </p>
                 </div>
               )}
@@ -1231,6 +1243,7 @@ function KDS() {
                   <li key={group.category ?? "uncategorised"}>
                     <span className="block rounded bg-slate-200/70 px-1.5 py-0.5 text-xs font-black uppercase tracking-wide text-slate-700">
                       {group.category ?? "Other items"}
+                      <UrduLine on={urdu} text={group.category ?? "Other items"} />
                     </span>
                     <ul className="mt-1 space-y-1.5">
                       {group.items.map((i) => (
@@ -1240,13 +1253,17 @@ function KDS() {
                           />
                           <span className="min-w-0 flex-1 font-semibold">
                             <span className="font-black text-primary">{i.qty}×</span> {i.name}
+                            <UrduLine on={urdu} text={i.name} className="text-lg" />
                             {station === "ALL" && i.station_code && (
                               <span className="ml-1 align-middle rounded bg-slate-200 px-1 py-px text-[10px] font-bold text-slate-700">
                                 {i.station_code}
                               </span>
                             )}
                             {i.notes ? (
-                              <em className="block text-sm font-medium text-muted-foreground">— {i.notes}</em>
+                              <em className="block text-sm font-medium text-muted-foreground">
+                                — {i.notes}
+                                <UrduLine on={urdu} text={i.notes} />
+                              </em>
                             ) : null}
                           </span>
                         </li>
