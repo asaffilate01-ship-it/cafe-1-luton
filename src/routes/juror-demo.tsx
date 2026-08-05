@@ -18,6 +18,7 @@ import {
   CheckCircle2,
   Lock,
   Building2,
+  Server,
 } from "lucide-react";
 
 export const Route = createFileRoute("/juror-demo")({
@@ -55,22 +56,29 @@ type Step = {
 
 const steps: Step[] = [
   {
-    title: "1. The court issues a code",
+    title: "1. The court hands out a printed sheet",
     who: "Jury Officer",
     icon: Printer,
-    say: "We print a book of numbered slips. You hand them out at induction, exactly like a raffle book, and write the slip number next to the juror's name on your own register. Café 1 never sees that register — no names, no emails, no phone numbers ever reach us.",
+    say: "We print the juror information sheets for you. Each A4 sheet already carries that juror's voucher code and 6-digit PIN at the top, a ruled box for you to write the juror's name in pen, then a plain-English explanation of the scheme and the FAQs — so the sheet answers most questions on its own. At induction you write the name on the sheet and copy the code next to that name on your own allocation register. That register is the only place a name is ever linked to a code, and it stays with the court: no names, emails or phone numbers ever reach Café 1.",
     screen: () => (
       <div className="mx-auto max-w-sm rounded-2xl border-2 border-dashed border-border bg-white p-6 text-center shadow-sm">
         <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">
-          St Albans Crown Court · Slip 004
+          Café 1 · Juror information sheet (page 1)
         </p>
         <p className="mt-4 font-mono text-xl font-black tracking-wider">{DEMO_CODE}</p>
         <p className="mt-3 text-xs font-bold uppercase tracking-widest text-muted-foreground">
           6-digit PIN
         </p>
         <p className="font-mono text-2xl font-black tracking-[0.3em]">{DEMO_PIN}</p>
+        <div className="mt-4 rounded-lg border border-dashed border-border p-3 text-left">
+          <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">
+            Juror&apos;s name (written by the Jury Officer)
+          </p>
+          <div className="mt-3 border-b border-foreground/40" />
+        </div>
         <p className="mt-4 text-xs text-muted-foreground">
-          Valid Mon–Fri sitting days · {money(JUROR_DAILY_ALLOWANCE_CENTS)} each day
+          Valid Mon–Fri sitting days · {money(JUROR_DAILY_ALLOWANCE_CENTS)} each day. Explanation
+          and FAQs printed overleaf for the juror to keep.
         </p>
       </div>
     ),
@@ -79,7 +87,7 @@ const steps: Step[] = [
     title: "2. The juror checks the code",
     who: "Juror, on their phone",
     icon: Ticket,
-    say: "The juror scans the QR code in the jury room or at the till. They type in the code and the PIN — both are needed, every single time, so a lost slip on its own is useless.",
+    say: "The juror scans the QR code on their sheet, in the jury room or at the till. They type in the code and the PIN — both are needed, every single time, so a mislaid sheet on its own is useless.",
     screen: () => (
       <div className="mx-auto max-w-md rounded-2xl border border-border bg-card p-5 shadow-sm">
         <p className="text-xs font-black uppercase tracking-widest text-muted-foreground">
