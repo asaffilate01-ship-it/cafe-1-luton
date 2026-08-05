@@ -312,11 +312,16 @@ function KDS() {
           .filter((i) => i.order_id === o.id)
           .map((item) => {
             const meta = metadata(item);
+            // The menu's own category is the truth when we matched the line to a
+            // real menu item; POS labels are often vague ("Hot Food", "Misc") or
+            // just wrong, so they only fill the gaps.
+            const posLabel = usefulLabel(item.category_label);
             const category =
-              item.category_label?.trim() ||
+              (meta.matched ? meta.category : null) ||
+              posLabel ||
               meta.category ||
               guessCategory(item.name) ||
-              (meta.needs_cooking ? "Hot food" : "Other items");
+              "Other items";
             return {
               ...item,
               cook: meta.needs_cooking,
