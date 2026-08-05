@@ -25,7 +25,6 @@ import {
   Plus,
   Printer,
   Settings2,
-  Languages,
   LayoutGrid,
   MoreHorizontal,
   X,
@@ -45,7 +44,6 @@ import {
   usefulLabel,
 } from "@/lib/cooking";
 import { useConnectionStatus } from "@/hooks/use-connection-status";
-import { toUrduScript } from "@/lib/urdu-translit";
 
 type Item = {
   id: string;
@@ -260,10 +258,6 @@ export const Route = createFileRoute("/kds")({
     ],
     links: [
       { rel: "manifest", href: "/kds.webmanifest" },
-      {
-        rel: "stylesheet",
-        href: "https://fonts.googleapis.com/css2?family=Noto+Nastaliq+Urdu:wght@400;700&display=swap",
-      },
     ],
   }),
   component: KdsPage,
@@ -302,20 +296,8 @@ function KDS() {
     const saved = window.localStorage.getItem("cafe1-kds-station") as Station | null;
     return saved && STATIONS.includes(saved) ? saved : "ALL";
   });
-  // Urdu script mode: the same English words written in Urdu letters — no
-  // translation, so nothing about the order can be misread.
-  const [urdu, setUrdu] = useState(false);
   // Bottom-bar sheet on phones and tablets.
   const [sheet, setSheet] = useState<null | "stations" | "more">(null);
-  useEffect(() => {
-    setUrdu(window.localStorage.getItem("cafe1-kds-urdu") === "1");
-  }, []);
-  function toggleUrdu() {
-    setUrdu((on) => {
-      window.localStorage.setItem("cafe1-kds-urdu", on ? "0" : "1");
-      return !on;
-    });
-  }
   const { user } = useSession();
   const { has } = useRoles(user);
 
@@ -909,20 +891,6 @@ function KDS() {
                 <RefreshCw className="h-4 w-4" />
                 <span className="hidden sm:inline">Refresh</span>
               </button>
-              <button
-                type="button"
-                onClick={toggleUrdu}
-                aria-pressed={urdu}
-                className={`flex items-center gap-1 rounded-full px-3 py-1.5 text-xs font-semibold ${
-                  urdu
-                    ? "bg-primary-foreground text-primary"
-                    : "bg-primary-foreground/10 hover:bg-primary-foreground/20"
-                }`}
-                title="Show every ticket line in Urdu letters as well as English — the words are only re-spelt, never translated"
-              >
-                <Languages className="h-4 w-4" />
-                <span>اردو</span>
-              </button>
               <details className="relative">
                 <summary className="flex cursor-pointer list-none items-center gap-1 rounded-full bg-primary-foreground/10 px-3 py-1.5 text-xs font-semibold hover:bg-primary-foreground/20 [&::-webkit-details-marker]:hidden">
                   <Settings2 className="h-4 w-4" />
@@ -1146,7 +1114,6 @@ function KDS() {
                 className={`-mx-4 -mt-4 mb-2 px-3 py-1.5 text-center text-[11px] font-black uppercase tracking-[0.14em] text-white sm:-mx-3 sm:-mt-3 sm:py-1 sm:text-[10px] ${cook ? "bg-blue-600" : "bg-amber-500"}`}
               >
                 {cook ? "Cook / hot food" : "No cooking needed"}
-                <UrduLine on={urdu} text={cook ? "Cook hot food" : "No cooking needed"} />
               </div>
               <div
                 className={`-mx-4 -mt-2 mb-2 px-3 py-1 text-center text-[11px] font-black uppercase tracking-[0.18em] sm:-mx-3 ${channel.chip}`}
@@ -1215,15 +1182,6 @@ function KDS() {
                     ? "TAKEAWAY"
                     : (TYPE_LABEL[t.type] ?? t.type.replace("_", " ").toUpperCase())}
                 </p>
-                <UrduLine
-                  on={urdu}
-                  className="text-base"
-                  text={
-                    t.source === "sumup_pos" && t.type === "collection"
-                      ? "takeaway"
-                      : (TYPE_LABEL[t.type] ?? t.type.replace("_", " "))
-                  }
-                />
                 <p className="mt-0.5 text-sm font-black leading-none">
                   {whenLabel(t) === "ASAP" ? "ASAP" : `FOR ${whenLabel(t)}`}
                 </p>
@@ -1240,7 +1198,6 @@ function KDS() {
               </div>
               <p className="mt-1.5 text-xs font-black uppercase tracking-wide text-foreground">
                 {t.customer_name}
-                <UrduLine on={urdu} text={t.customer_name ?? ""} />
               </p>
               {t.status !== "preparing" && t.status !== "ready" && (
                 <p className="mt-1.5 rounded-lg bg-slate-200 px-2 py-1 text-center text-[10px] font-black uppercase tracking-widest text-slate-700">
@@ -1269,7 +1226,6 @@ function KDS() {
                   </p>
                   <p className="font-display text-base font-black uppercase leading-tight">
                     {t.jury_room}
-                    <UrduLine on={urdu} text={t.jury_room} />
                   </p>
                 </div>
               )}
@@ -1314,7 +1270,6 @@ function KDS() {
                   <li key={group.category ?? "uncategorised"}>
                     <span className="block rounded bg-slate-200/70 px-1.5 py-0.5 text-xs font-black uppercase tracking-wide text-slate-700">
                       {group.category ?? "Other items"}
-                      <UrduLine on={urdu} text={group.category ?? "Other items"} />
                     </span>
                     <ul className="mt-1 space-y-1.5">
                       {group.items.map((i) => (
@@ -1324,7 +1279,6 @@ function KDS() {
                           />
                           <span className="min-w-0 flex-1 font-semibold">
                             <span className="font-black text-primary">{i.qty}×</span> {i.name}
-                            <UrduLine on={urdu} text={i.name} className="text-lg" />
                             {station === "ALL" && i.station_code && (
                               <span className="ml-1 align-middle rounded bg-slate-200 px-1 py-px text-[10px] font-bold text-slate-700">
                                 {i.station_code}
@@ -1333,7 +1287,6 @@ function KDS() {
                             {i.notes ? (
                               <em className="block text-sm font-medium text-muted-foreground">
                                 — {i.notes}
-                                <UrduLine on={urdu} text={i.notes} />
                               </em>
                             ) : null}
                           </span>
@@ -1565,7 +1518,7 @@ function KDS() {
       )}
       <nav
         aria-label="Kitchen display navigation"
-        className="fixed inset-x-0 bottom-0 z-40 grid grid-cols-5 gap-1 border-t border-border bg-primary px-2 pb-[env(safe-area-inset-bottom)] pt-1.5 text-primary-foreground lg:hidden"
+        className="fixed inset-x-0 bottom-0 z-40 grid grid-cols-4 gap-1 border-t border-border bg-primary px-2 pb-[env(safe-area-inset-bottom)] pt-1.5 text-primary-foreground lg:hidden"
       >
         <button
           onClick={() => {
@@ -1600,16 +1553,6 @@ function KDS() {
           Add
         </button>
         <button
-          onClick={toggleUrdu}
-          aria-pressed={urdu}
-          className={`flex flex-col items-center gap-0.5 rounded-xl px-1 py-1.5 text-[10px] font-bold ${
-            urdu ? "bg-primary-foreground text-primary" : ""
-          }`}
-        >
-          <Languages className="h-5 w-5" />
-          اردو
-        </button>
-        <button
           onClick={() => setSheet(sheet === "more" ? null : "more")}
           className={`flex flex-col items-center gap-0.5 rounded-xl px-1 py-1.5 text-[10px] font-bold ${
             sheet === "more" ? "bg-primary-foreground text-primary" : ""
@@ -1625,24 +1568,6 @@ function KDS() {
 
 function AlertsToggle() {
   return <AlertsToggleInner />;
-}
-
-/**
- * Shows the same English words written in Urdu letters underneath the English
- * line. This is transliteration only — nothing is translated, so an item can
- * never be misread as something else.
- */
-function UrduLine({ on, text, className = "" }: { on: boolean; text: string; className?: string }) {
-  if (!on || !text) return null;
-  return (
-    <span
-      dir="rtl"
-      lang="ur"
-      className={`mt-0.5 block font-urdu text-sm font-normal normal-case tracking-normal opacity-90 ${className}`}
-    >
-      {toUrduScript(text)}
-    </span>
-  );
 }
 
 function SyncPill({
