@@ -913,17 +913,21 @@ function KDS() {
           const minsUntilDue = scheduledAt
             ? Math.round((scheduledAt.getTime() - now) / 60000)
             : null;
+          const channel = CHANNEL[channelOf(t)];
           return (
             <div
               key={t.id}
-              className={`flex flex-col overflow-hidden rounded-xl border-2 bg-white p-3 shadow-sm ring-1 ring-black/5 transition-shadow ${
-                cook ? "border-blue-600" : "border-amber-400"
-              } ${hot ? "shadow-brand" : ""}`}
+              className={`flex flex-col overflow-hidden rounded-xl border-4 bg-white p-3 shadow-sm ring-2 transition-shadow ${channel.border} ${channel.ring} ${hot ? "shadow-brand" : ""}`}
             >
               <div
                 className={`-mx-3 -mt-3 mb-2 px-3 py-1 text-center text-[10px] font-black uppercase tracking-[0.14em] text-white ${cook ? "bg-blue-600" : "bg-amber-500"}`}
               >
                 {cook ? "Cook / hot food" : "No cooking needed"}
+              </div>
+              <div
+                className={`-mx-3 -mt-2 mb-2 px-3 py-1 text-center text-[11px] font-black uppercase tracking-[0.18em] ${channel.chip}`}
+              >
+                {channel.label}
               </div>
               {scheduledAt && (
                 <div className="-mx-3 -mt-2 mb-2 bg-violet-700 px-3 py-1.5 text-center text-white">
@@ -941,35 +945,11 @@ function KDS() {
               <div className="flex items-start justify-between gap-2">
                 <p className="font-display text-lg font-bold leading-none">#{t.order_number}</p>
                 <div className="flex flex-wrap items-center justify-end gap-1">
-                  {t.source === "sumup_pos" && (
-                    <span className="rounded-full bg-blue-600 px-1.5 py-px text-[9px] font-black uppercase tracking-wide text-white">
-                      SumUp POS
-                    </span>
-                  )}
-                  {t.source === "deliveroo" && (
-                    <span className="rounded-full bg-[#00CCBC] px-1.5 py-px text-[9px] font-black uppercase tracking-wide text-white">
-                      Deliveroo
-                    </span>
-                  )}
-                  {t.source === "counter" && (
-                    <span className="rounded-full bg-slate-700 px-1.5 py-px text-[9px] font-black uppercase tracking-wide text-white">
-                      Counter
-                    </span>
-                  )}
-                  {SIDE_TONE[t.pos_terminal ?? ""] && (
-                    <span
-                      className={`rounded-full px-1.5 py-px text-[9px] font-black uppercase tracking-wide text-white ${SIDE_TONE[t.pos_terminal!]}`}
-                    >
-                      {t.pos_terminal === "public" ? "Public side" : t.pos_terminal}
-                    </span>
-                  )}
-                  {t.source !== "sumup_pos" &&
-                    t.source !== "deliveroo" &&
-                    t.source !== "counter" && (
-                      <span className="rounded-full bg-purple-600 px-1.5 py-px text-[9px] font-black uppercase tracking-wide text-white">
-                        Website
-                      </span>
-                    )}
+                  <span
+                    className={`rounded-full px-1.5 py-px text-[9px] font-black uppercase tracking-wide ${channel.chip}`}
+                  >
+                    {channel.label}
+                  </span>
                   <span
                     className={`rounded-full px-1.5 py-px text-[9px] font-black uppercase tracking-wide ${t.payment_method === "cash" ? "bg-emerald-600 text-white" : "bg-slate-800 text-white"}`}
                   >
@@ -992,7 +972,9 @@ function KDS() {
                   minute: "2-digit",
                 })}
               </p>
-              <div className="mt-1.5 rounded-lg bg-primary px-2.5 py-1.5 text-primary-foreground">
+              <div
+                className={`mt-1.5 rounded-lg px-2.5 py-1.5 ${TYPE_TONE[t.type] ?? "bg-slate-500 text-white"}`}
+              >
                 <p className="flex items-center gap-1.5 font-display text-lg font-black uppercase leading-none tracking-wide">
                   {(() => {
                     const Icon =
@@ -1015,7 +997,7 @@ function KDS() {
                 )}
                 <button
                   onClick={() => markDineIn(t.id, t.type)}
-                  className="mt-1.5 rounded-full bg-primary-foreground/20 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wide hover:bg-primary-foreground/30"
+                  className="mt-1.5 rounded-full bg-black/15 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wide hover:bg-black/25"
                   title="Switch this ticket between dine in and pickup"
                 >
                   {t.type === "dine_in" ? "Change to pickup" : "Mark as dine in"}
@@ -1024,13 +1006,11 @@ function KDS() {
               <p className="mt-1.5 text-xs font-black uppercase tracking-wide text-foreground">
                 {t.customer_name}
               </p>
-              {SIDE_TONE[t.pos_terminal ?? ""] && (
+              {t.pos_terminal && (
                 <p
-                  className={`mt-1.5 rounded-lg px-2 py-1 text-center font-display font-black uppercase tracking-wide text-white ${
-                    t.pos_terminal === "public" ? "text-xs" : "text-sm"
-                  } ${SIDE_TONE[t.pos_terminal!]}`}
+                  className={`mt-1.5 rounded-lg px-2 py-1 text-center font-display text-sm font-black uppercase tracking-wide ${channel.chip}`}
                 >
-                  {t.pos_terminal === "public" ? "Public side" : t.pos_terminal}
+                  {t.pos_terminal === "public" ? "Public side" : `${t.pos_terminal} side`}
                 </p>
               )}
               {t.source === "deliveroo" && (
@@ -1041,7 +1021,18 @@ function KDS() {
               <p className="mt-1 inline-block self-start rounded bg-slate-900 px-1.5 py-0.5 font-mono text-[11px] font-black tracking-widest text-white">
                 {orderCode(t)}
               </p>
-              {(t.type === "delivery" ||
+              {t.jury_room && (t.type === "delivery" || t.type === "dine_in") && (
+                <div className="mt-1.5 rounded-lg border-2 border-red-600 bg-red-50 p-1.5 text-red-900">
+                  <p className="text-[9px] font-black uppercase tracking-widest">
+                    {t.type === "delivery" ? "Deliver to (court)" : "Serve at (court)"}
+                  </p>
+                  <p className="font-display text-base font-black uppercase leading-tight">
+                    {t.jury_room}
+                  </p>
+                </div>
+              )}
+              {!t.jury_room &&
+                (t.type === "delivery" ||
                 t.postcode ||
                 t.address_line1 ||
                 t.company_name) && (
