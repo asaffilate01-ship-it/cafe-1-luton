@@ -218,6 +218,10 @@ setInterval(async () => {
       console.warn("\n[hub] session ended — reconnecting…");
       if (!(await signIn())) console.error("[hub] still signed out; will retry on the next cycle.");
       recovering = false;
+    } else {
+      // Keep the saved session fresh so a restart resumes without signing in
+      // again — which is what would disturb the tablet.
+      await context.storageState({ path: SESSION_FILE }).catch(() => {});
     }
   } catch (err) {
     recovering = false;
