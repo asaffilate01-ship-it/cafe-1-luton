@@ -29,6 +29,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { OrderSetupGate } from "@/components/order-setup-gate";
+import { useJurySession } from "@/lib/jury-session";
 import { describeContext, useOrderContext, orderContext } from "@/lib/order-context";
 
 export const Route = createFileRoute("/menu")({
@@ -62,6 +63,7 @@ function MenuPage() {
   const { juror: jurorParam } = Route.useSearch();
   const ctx = useOrderContext();
   const [gateOpen, setGateOpen] = useState(false);
+  const jurySessionActive = useJurySession();
   useEffect(() => {
     if (!ctx) setGateOpen(true);
   }, [ctx]);
@@ -335,7 +337,12 @@ function MenuPage() {
           </button>
         </div>
       </div>
-      <OrderSetupGate open={gateOpen} onClose={() => setGateOpen(false)} dismissible={!!ctx} />
+      <OrderSetupGate
+        open={gateOpen}
+        onClose={() => setGateOpen(false)}
+        dismissible={!!ctx}
+        juryOnly={!!jurySessionActive}
+      />
 
       {/* Sticky search + category pills */}
       <div
