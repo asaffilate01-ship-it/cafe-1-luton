@@ -36,3 +36,7 @@ test-results/
 .env
 .env.*
 !.env.example
+
+# Deliveroo shop watcher (local machine credentials + session)
+scripts/deliveroo-hub-watcher.env
+.deliveroo-hub-session.json
