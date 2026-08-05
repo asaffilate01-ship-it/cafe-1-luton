@@ -380,6 +380,7 @@ function DemoPage() {
               ) : (
                 <Link
                   to="/juror"
+                  search={{} as never}
                   className="inline-flex h-11 items-center gap-2 rounded-xl bg-primary px-5 font-bold text-primary-foreground"
                 >
                   Try it for real <ArrowRight className="h-4 w-4" />
@@ -400,6 +401,7 @@ function DemoPage() {
             <div className="mt-3 flex flex-wrap gap-2">
               <Link
                 to="/juror"
+                search={{} as never}
                 className="inline-flex h-10 items-center gap-2 rounded-xl border border-primary px-4 font-bold text-primary"
               >
                 Juror portal
