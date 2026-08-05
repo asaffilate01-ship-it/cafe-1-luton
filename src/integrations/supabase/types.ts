@@ -595,6 +595,30 @@ export type Database = {
           },
         ]
       }
+      integration_status: {
+        Row: {
+          detail: string | null
+          healthy: boolean
+          key: string
+          last_seen_at: string
+          updated_at: string
+        }
+        Insert: {
+          detail?: string | null
+          healthy?: boolean
+          key: string
+          last_seen_at?: string
+          updated_at?: string
+        }
+        Update: {
+          detail?: string | null
+          healthy?: boolean
+          key?: string
+          last_seen_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       inventory_items: {
         Row: {
           active: boolean
