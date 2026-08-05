@@ -221,6 +221,8 @@ export function toUrduScript(text: string): string {
   if (cached !== undefined) return cached;
   const out = text.replace(/[A-Za-z]+/g, (word) => {
     const lower = word.toLowerCase();
+    // Single letters are quantities/sizes ("x2", "L") — leave them alone.
+    if (word.length === 1) return word;
     // Leave shouty codes and initialisms (KDS, TGTG, AL1) as they are.
     if (word.length <= 3 && word === word.toUpperCase() && !WORDS[lower]) return word;
     return transliterateWord(lower);
