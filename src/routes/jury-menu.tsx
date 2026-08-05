@@ -1,11 +1,12 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { SiteHeader } from "@/components/site-header";
 import { GatedMenuList } from "@/components/gated-menu-list";
+import { OrderSetupGate } from "@/components/order-setup-gate";
 import { lookupVoucher } from "@/lib/vouchers.functions";
 import { jurySession, useJurySession } from "@/lib/jury-session";
-import { orderContext } from "@/lib/order-context";
+import { orderContext, useOrderContext } from "@/lib/order-context";
 import { JUROR_DELIVERY_VENUES, JUROR_DAILY_ALLOWANCE_CENTS } from "@/lib/juror";
 import { money } from "@/lib/format";
 import { ShieldCheck, Lock, LogOut, Building2 } from "lucide-react";
