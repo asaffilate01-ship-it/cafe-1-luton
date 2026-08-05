@@ -252,6 +252,128 @@ export const deleteAccountPayment = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
+/**
+ * Every order billed to a tab (manual/KDS orders included), with filters for
+ * unpaid-only and account/customer name.
+ */
+export const listTabOrders = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .validator((d: unknown) =>
+    z
+      .object({
+        status: z.enum(["all", "unpaid", "paid"]).default("unpaid"),
+        q: z.string().max(120).optional(),
+      })
+      .parse(d ?? {}),
+  )
+  .handler(async ({ data, context }) => {
+    let query = context.supabase
+      .from("orders")
+      .select(
+        "id,order_number,account_id,customer_name,company_name,type,source,pos_terminal,payment_method,payment_status,status,total_cents,refunded_cents,created_at",
+      )
+      .or("account_id.not.is.null,payment_method.eq.account")
+      .order("created_at", { ascending: false })
+      .limit(400);
+    if (data.status === "unpaid") query = query.eq("payment_status", "on_account");
+    if (data.status === "paid") query = query.neq("payment_status", "on_account");
+    const { data: orders, error } = await query;
+    if (error) throw new Error(error.message);
+
+    const ids = (orders ?? []).map((o) => o.id);
+    const { data: items } = ids.length
+      ? await context.supabase
+          .from("order_items")
+          .select("order_id,name,qty,unit_price_cents,notes")
+          .in("order_id", ids)
+      : { data: [] as { order_id: string; name: string; qty: number; unit_price_cents: number; notes: string | null }[] };
+    const { data: accounts } = await context.supabase.from("accounts").select("id,name");
+    const nameById = new Map((accounts ?? []).map((a) => [a.id, a.name]));
+
+    const term = (data.q ?? "").trim().toLowerCase();
+    const rows = (orders ?? [])
+      .map((o) => ({
+        ...o,
+        account_name: o.account_id ? (nameById.get(o.account_id) ?? null) : null,
+        due_cents: Math.max(0, o.total_cents - o.refunded_cents),
+        items: (items ?? []).filter((i) => i.order_id === o.id),
+      }))
+      .filter(
+        (o) =>
+          !term ||
+          (o.account_name ?? "").toLowerCase().includes(term) ||
+          o.customer_name.toLowerCase().includes(term) ||
+          (o.company_name ?? "").toLowerCase().includes(term) ||
+          String(o.order_number).includes(term),
+      );
+    return {
+      rows,
+      total_due_cents: rows
+        .filter((r) => r.payment_status === "on_account")
+        .reduce((s, r) => s + r.due_cents, 0),
+    };
+  });
+
+/** Mark selected tab orders as fully paid, stamped with the payment time. */
+export const markTabOrdersPaid = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .validator((d: unknown) =>
+    z
+      .object({
+        order_ids: z.array(z.string().uuid()).min(1).max(200),
+        method: z.enum(["cash", "card", "bank_transfer", "other"]).default("bank_transfer"),
+        reference: z.string().max(120).optional(),
+      })
+      .parse(d),
+  )
+  .handler(async ({ data, context }) => {
+    await requireAdmin(context);
+    const paidAt = new Date().toISOString();
+    const { data: orders, error: oErr } = await context.supabase
+      .from("orders")
+      .select("id,order_number,account_id,total_cents,refunded_cents")
+      .in("id", data.order_ids)
+      .eq("payment_status", "on_account");
+    if (oErr) throw new Error(oErr.message);
+    if (!orders?.length) return { ok: true, paid_at: paidAt, count: 0 };
+
+    const { error } = await context.supabase
+      .from("orders")
+      .update({ payment_status: "paid" })
+      .in(
+        "id",
+        orders.map((o) => o.id),
+      )
+      .eq("payment_status", "on_account");
+    if (error) throw new Error(error.message);
+
+    // Keep a dated receipt line per account. settled_at is stamped so the row
+    // is history only and does not double-count against the balance.
+    const byAccount = new Map<string, { amount: number; numbers: number[] }>();
+    for (const o of orders) {
+      if (!o.account_id) continue;
+      const entry = byAccount.get(o.account_id) ?? { amount: 0, numbers: [] };
+      entry.amount += Math.max(0, o.total_cents - o.refunded_cents);
+      entry.numbers.push(o.order_number);
+      byAccount.set(o.account_id, entry);
+    }
+    if (byAccount.size) {
+      const { error: pErr } = await context.supabase.from("account_payments").insert(
+        [...byAccount].map(([account_id, entry]) => ({
+          account_id,
+          amount_cents: entry.amount,
+          method: data.method,
+          reference: data.reference || null,
+          note: `Paid in full: orders ${entry.numbers.map((n) => `#${n}`).join(", ")}`,
+          recorded_by: context.userId,
+          settled_at: paidAt,
+        })),
+      );
+      if (pErr) throw new Error(pErr.message);
+    }
+    return { ok: true, paid_at: paidAt, count: orders.length };
+  });
+
 /** Mark all currently-on-tab orders for an account as paid (settlement). */
 export const settleAccount = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
