@@ -858,6 +858,7 @@ function KDS() {
                 {linkDown ? <WifiOff className="h-3.5 w-3.5" /> : <Wifi className="h-3.5 w-3.5" />}
                 {linkDown ? "Offline" : "Online"}
               </span>
+              <div className="hidden flex-wrap items-center justify-end gap-2 lg:flex">
               <span
                 className={`flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-bold ${
                   deliverooLive
@@ -963,9 +964,10 @@ function KDS() {
                   </button>
                 </div>
               </details>
+              </div>
             </div>
           </div>
-          <div className="mx-auto flex max-w-[110rem] flex-wrap items-center gap-2 px-3 pb-3 text-xs font-semibold sm:px-4 sm:gap-3">
+          <div className="mx-auto hidden max-w-[110rem] flex-wrap items-center gap-2 px-3 pb-3 text-xs font-semibold sm:gap-3 sm:px-4 lg:flex">
             <button
               onClick={() => setAll("preparing", "ready")}
               disabled={
