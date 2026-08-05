@@ -611,6 +611,15 @@ function KDS() {
                 <RefreshCw className={`h-4 w-4 ${syncing ? "animate-spin" : ""}`} />
                 <span>{syncing ? "Syncing…" : "Sync SumUp POS"}</span>
               </button>
+              <button
+                onClick={() => setDeliverooOpen(true)}
+                disabled={!canCompleteOrders}
+                className="flex items-center gap-1 rounded-full bg-[#00CCBC] px-3 py-1.5 text-xs font-bold text-black hover:opacity-90 disabled:opacity-40"
+                title="Key in an order from the Deliveroo tablet so it shows on this display"
+              >
+                <Bike className="h-4 w-4" />
+                <span>Add Deliveroo</span>
+              </button>
               <a
                 href={`/print/test?paper=${kdsPaper}&preview=1`}
                 target="_blank"
