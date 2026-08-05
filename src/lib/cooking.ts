@@ -88,8 +88,9 @@ const CATEGORY_RULES: Array<{ category: string; phrases?: string[]; words?: stri
   // Drinks first — a "chicken shawarma" never mentions coffee, but a
   // "chicken soup latte" style clash would otherwise land in food.
   { category: "Hot Drinks", phrases: ["hot chocolate", "flat white", "white americano"], words: ["tea", "coffee", "latte", "cappuccino", "capuccino", "cappucino", "americano", "mocha", "mochacciano", "espresso", "macchiato", "chai", "matcha", "hotchocolate"] },
-  { category: "Milkshakes", words: ["milkshake", "shake", "oreo", "caramel"] },
-  { category: "Fillings", phrases: ["mayo sweetcorn", "cheese tomato", "tuna mayo", "cheese onion", "cheese beans", "chicken mayo"] },
+  { category: "Milkshakes", phrases: ["caramel milkshake", "caramel shake"], words: ["milkshake", "shake", "oreo"] },
+  // Sandwich/jacket fillings come off the till as bare ingredient lists.
+  { category: "Fillings", phrases: ["mayo sweetcorn", "mayo and sweetcorn", "cheese and tomato", "tuna mayo", "tuna and mayo", "cheese and onion", "cheese and beans", "chicken mayo", "chicken and mayo"] },
   { category: "Mocktails", phrases: ["redbull mojito"], words: ["mojito", "mocktail"] },
   { category: "Iced Coffee", phrases: ["iced coffee", "iced latte"] },
   { category: "Drinks", phrases: ["bottled drink", "energy drink", "soft drink", "red bull"], words: ["coke", "pepsi", "water", "juice", "can", "cans", "bottle", "lemonade", "fanta", "sprite", "smoothie", "redbull", "monster", "tango", "irnbru"] },
