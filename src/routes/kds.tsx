@@ -25,6 +25,10 @@ import {
   Plus,
   Printer,
   Settings2,
+  Languages,
+  LayoutGrid,
+  MoreHorizontal,
+  X,
 } from "lucide-react";
 import { ManualOrderDialog } from "@/components/manual-order-dialog";
 import { InstallAppButton } from "@/components/install-app-button";
@@ -41,6 +45,7 @@ import {
   usefulLabel,
 } from "@/lib/cooking";
 import { useConnectionStatus } from "@/hooks/use-connection-status";
+import { toUrduScript } from "@/lib/urdu-translit";
 
 type Item = {
   id: string;
@@ -253,7 +258,13 @@ export const Route = createFileRoute("/kds")({
       { name: "description", content: "Live kitchen tickets for Cafe1." },
       { name: "robots", content: "noindex" },
     ],
-    links: [{ rel: "manifest", href: "/kds.webmanifest" }],
+    links: [
+      { rel: "manifest", href: "/kds.webmanifest" },
+      {
+        rel: "stylesheet",
+        href: "https://fonts.googleapis.com/css2?family=Noto+Nastaliq+Urdu:wght@400;700&display=swap",
+      },
+    ],
   }),
   component: KdsPage,
 });
@@ -291,6 +302,20 @@ function KDS() {
     const saved = window.localStorage.getItem("cafe1-kds-station") as Station | null;
     return saved && STATIONS.includes(saved) ? saved : "ALL";
   });
+  // Urdu script mode: the same English words written in Urdu letters — no
+  // translation, so nothing about the order can be misread.
+  const [urdu, setUrdu] = useState(false);
+  // Bottom-bar sheet on phones and tablets.
+  const [sheet, setSheet] = useState<null | "stations" | "more">(null);
+  useEffect(() => {
+    setUrdu(window.localStorage.getItem("cafe1-kds-urdu") === "1");
+  }, []);
+  function toggleUrdu() {
+    setUrdu((on) => {
+      window.localStorage.setItem("cafe1-kds-urdu", on ? "0" : "1");
+      return !on;
+    });
+  }
   const { user } = useSession();
   const { has } = useRoles(user);
 
@@ -833,6 +858,7 @@ function KDS() {
                 {linkDown ? <WifiOff className="h-3.5 w-3.5" /> : <Wifi className="h-3.5 w-3.5" />}
                 {linkDown ? "Offline" : "Online"}
               </span>
+              <div className="hidden flex-wrap items-center justify-end gap-2 lg:flex">
               <span
                 className={`flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-bold ${
                   deliverooLive
@@ -875,6 +901,20 @@ function KDS() {
               >
                 <RefreshCw className="h-4 w-4" />
                 <span className="hidden sm:inline">Refresh</span>
+              </button>
+              <button
+                type="button"
+                onClick={toggleUrdu}
+                aria-pressed={urdu}
+                className={`flex items-center gap-1 rounded-full px-3 py-1.5 text-xs font-semibold ${
+                  urdu
+                    ? "bg-primary-foreground text-primary"
+                    : "bg-primary-foreground/10 hover:bg-primary-foreground/20"
+                }`}
+                title="Show every ticket line in Urdu letters as well as English — the words are only re-spelt, never translated"
+              >
+                <Languages className="h-4 w-4" />
+                <span>اردو</span>
               </button>
               <details className="relative">
                 <summary className="flex cursor-pointer list-none items-center gap-1 rounded-full bg-primary-foreground/10 px-3 py-1.5 text-xs font-semibold hover:bg-primary-foreground/20 [&::-webkit-details-marker]:hidden">
@@ -938,9 +978,10 @@ function KDS() {
                   </button>
                 </div>
               </details>
+              </div>
             </div>
           </div>
-          <div className="mx-auto flex max-w-[110rem] flex-wrap items-center gap-2 px-3 pb-3 text-xs font-semibold sm:px-4 sm:gap-3">
+          <div className="mx-auto hidden max-w-[110rem] flex-wrap items-center gap-2 px-3 pb-3 text-xs font-semibold sm:gap-3 sm:px-4 lg:flex">
             <button
               onClick={() => setAll("preparing", "ready")}
               disabled={
@@ -1020,7 +1061,7 @@ function KDS() {
           </div>
         </header>
       )}
-      <div className="mx-auto grid max-w-[110rem] gap-3 p-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
+      <div className="mx-auto grid max-w-[110rem] gap-3 p-3 pb-28 sm:grid-cols-2 lg:grid-cols-3 lg:pb-3 xl:grid-cols-4 2xl:grid-cols-5">
         {visibleTickets.map((t) => {
           const elapsedSec = Math.max(
             0,
@@ -1052,6 +1093,7 @@ function KDS() {
                 className={`-mx-3 -mt-3 mb-2 px-3 py-1 text-center text-[10px] font-black uppercase tracking-[0.14em] text-white ${cook ? "bg-blue-600" : "bg-amber-500"}`}
               >
                 {cook ? "Cook / hot food" : "No cooking needed"}
+                <UrduLine on={urdu} text={cook ? "Cook hot food" : "No cooking needed"} />
               </div>
               <div
                 className={`-mx-3 -mt-2 mb-2 px-3 py-1 text-center text-[11px] font-black uppercase tracking-[0.18em] ${channel.chip}`}
@@ -1118,6 +1160,15 @@ function KDS() {
                     ? "TAKEAWAY"
                     : (TYPE_LABEL[t.type] ?? t.type.replace("_", " ").toUpperCase())}
                 </p>
+                <UrduLine
+                  on={urdu}
+                  className="text-base"
+                  text={
+                    t.source === "sumup_pos" && t.type === "collection"
+                      ? "takeaway"
+                      : (TYPE_LABEL[t.type] ?? t.type.replace("_", " "))
+                  }
+                />
                 <p className="mt-0.5 text-sm font-black leading-none">
                   {whenLabel(t) === "ASAP" ? "ASAP" : `FOR ${whenLabel(t)}`}
                 </p>
@@ -1134,6 +1185,7 @@ function KDS() {
               </div>
               <p className="mt-1.5 text-xs font-black uppercase tracking-wide text-foreground">
                 {t.customer_name}
+                <UrduLine on={urdu} text={t.customer_name ?? ""} />
               </p>
               {t.status !== "preparing" && t.status !== "ready" && (
                 <p className="mt-1.5 rounded-lg bg-slate-200 px-2 py-1 text-center text-[10px] font-black uppercase tracking-widest text-slate-700">
@@ -1162,6 +1214,7 @@ function KDS() {
                   </p>
                   <p className="font-display text-base font-black uppercase leading-tight">
                     {t.jury_room}
+                    <UrduLine on={urdu} text={t.jury_room} />
                   </p>
                 </div>
               )}
@@ -1206,6 +1259,7 @@ function KDS() {
                   <li key={group.category ?? "uncategorised"}>
                     <span className="block rounded bg-slate-200/70 px-1.5 py-0.5 text-xs font-black uppercase tracking-wide text-slate-700">
                       {group.category ?? "Other items"}
+                      <UrduLine on={urdu} text={group.category ?? "Other items"} />
                     </span>
                     <ul className="mt-1 space-y-1.5">
                       {group.items.map((i) => (
@@ -1215,13 +1269,17 @@ function KDS() {
                           />
                           <span className="min-w-0 flex-1 font-semibold">
                             <span className="font-black text-primary">{i.qty}×</span> {i.name}
+                            <UrduLine on={urdu} text={i.name} className="text-lg" />
                             {station === "ALL" && i.station_code && (
                               <span className="ml-1 align-middle rounded bg-slate-200 px-1 py-px text-[10px] font-bold text-slate-700">
                                 {i.station_code}
                               </span>
                             )}
                             {i.notes ? (
-                              <em className="block text-sm font-medium text-muted-foreground">— {i.notes}</em>
+                              <em className="block text-sm font-medium text-muted-foreground">
+                                — {i.notes}
+                                <UrduLine on={urdu} text={i.notes} />
+                              </em>
                             ) : null}
                           </span>
                         </li>
@@ -1312,12 +1370,224 @@ function KDS() {
           </div>
         )}
       </div>
+
+      {/* Phone / tablet: native-style bottom bar so the whole board stays thumb-reachable */}
+      {sheet && (
+        <div
+          className="fixed inset-0 z-40 bg-black/50 lg:hidden"
+          onClick={() => setSheet(null)}
+          aria-hidden="true"
+        />
+      )}
+      {sheet && (
+        <div
+          role="dialog"
+          aria-label={sheet === "stations" ? "Kitchen stations" : "Display tools"}
+          className="fixed inset-x-0 bottom-0 z-50 max-h-[75vh] overflow-y-auto rounded-t-3xl border-t border-border bg-card p-4 pb-[calc(5.5rem+env(safe-area-inset-bottom))] text-card-foreground shadow-2xl lg:hidden"
+        >
+          <div className="mx-auto mb-3 h-1.5 w-12 rounded-full bg-muted" />
+          <div className="mb-3 flex items-center justify-between">
+            <h2 className="font-display text-lg font-bold">
+              {sheet === "stations" ? "Station" : "Tools"}
+            </h2>
+            <button
+              onClick={() => setSheet(null)}
+              className="grid h-9 w-9 place-items-center rounded-full bg-muted"
+              aria-label="Close"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          </div>
+          {sheet === "stations" ? (
+            <div className="grid grid-cols-2 gap-2">
+              {STATIONS.map((value) => (
+                <button
+                  key={value}
+                  onClick={() => {
+                    setStation(value);
+                    window.localStorage.setItem("cafe1-kds-station", value);
+                    setSheet(null);
+                  }}
+                  className={`rounded-2xl px-4 py-3 text-sm font-black tracking-wide ${
+                    station === value
+                      ? "bg-primary text-primary-foreground"
+                      : "bg-muted text-foreground"
+                  }`}
+                >
+                  {value}
+                </button>
+              ))}
+            </div>
+          ) : (
+            <div className="space-y-2">
+              <div className="grid grid-cols-2 gap-2">
+                <button
+                  onClick={() => {
+                    setAll("preparing", "ready");
+                    setSheet(null);
+                  }}
+                  disabled={
+                    bulking || !canCompleteOrders || !tickets.some((t) => t.status === "preparing")
+                  }
+                  className="rounded-2xl bg-blue-600 px-4 py-3 text-sm font-bold text-white disabled:opacity-40"
+                >
+                  Mark all ready
+                </button>
+                <button
+                  onClick={() => {
+                    setAll("ready", "completed");
+                    setSheet(null);
+                  }}
+                  disabled={
+                    bulking || !canCompleteOrders || !tickets.some((t) => t.status === "ready")
+                  }
+                  className="rounded-2xl bg-emerald-600 px-4 py-3 text-sm font-bold text-white disabled:opacity-40"
+                >
+                  Mark all complete
+                </button>
+              </div>
+              <button
+                onClick={() => {
+                  setRecall(!recall);
+                  setSheet(null);
+                }}
+                className="w-full rounded-2xl bg-muted px-4 py-3 text-left text-sm font-bold"
+              >
+                {recall ? "Unrecall last 15 orders" : "Recall last 15 orders"}
+              </button>
+              <button
+                onClick={manualSync}
+                disabled={syncing}
+                className="flex w-full items-center gap-2 rounded-2xl bg-muted px-4 py-3 text-left text-sm font-semibold disabled:opacity-50"
+              >
+                <RefreshCw className={`h-4 w-4 ${syncing ? "animate-spin" : ""}`} />
+                {syncing ? "Syncing…" : "Sync SumUp POS"}
+              </button>
+              <a
+                href={`/print/test?paper=${kdsPaper}&preview=1`}
+                target="_blank"
+                rel="noreferrer"
+                className="flex w-full items-center gap-2 rounded-2xl bg-muted px-4 py-3 text-sm font-semibold"
+              >
+                <Printer className="h-4 w-4" /> Test print
+              </a>
+              <div className="flex items-center justify-between gap-2 rounded-2xl bg-muted px-4 py-3 text-sm font-semibold">
+                <span>Paper width</span>
+                <span className="flex items-center gap-1 rounded-full bg-background p-1">
+                  {([58, 80] as const).map((w) => (
+                    <button
+                      key={w}
+                      onClick={() => pickPaper(w)}
+                      className={`rounded-full px-3 py-1 text-xs font-bold ${kdsPaper === w ? "bg-primary text-primary-foreground" : "opacity-70"}`}
+                    >
+                      {w}mm
+                    </button>
+                  ))}
+                </span>
+              </div>
+              <div className="rounded-2xl bg-muted px-2 py-1">
+                <InstallAppButton
+                  manifest="/kds.webmanifest"
+                  label="Install KDS app"
+                  className="flex w-full items-center gap-2 rounded-xl px-2 py-2 text-sm font-semibold"
+                />
+              </div>
+              <button
+                onClick={() => window.location.reload()}
+                className="flex w-full items-center gap-2 rounded-2xl bg-muted px-4 py-3 text-left text-sm font-semibold"
+              >
+                <RefreshCw className="h-4 w-4" /> Refresh screen
+              </button>
+              <button
+                onClick={() => void signOutAndRedirect()}
+                className="w-full rounded-2xl bg-primary px-4 py-3 text-sm font-bold text-primary-foreground"
+              >
+                Sign out
+              </button>
+            </div>
+          )}
+        </div>
+      )}
+      <nav
+        aria-label="Kitchen display navigation"
+        className="fixed inset-x-0 bottom-0 z-40 grid grid-cols-5 gap-1 border-t border-border bg-primary px-2 pb-[env(safe-area-inset-bottom)] pt-1.5 text-primary-foreground lg:hidden"
+      >
+        <button
+          onClick={() => {
+            setSheet(null);
+            window.scrollTo({ top: 0, behavior: "smooth" });
+          }}
+          className="flex flex-col items-center gap-0.5 rounded-xl px-1 py-1.5 text-[10px] font-bold"
+        >
+          <LayoutGrid className="h-5 w-5" />
+          Board
+        </button>
+        <button
+          onClick={() => setSheet(sheet === "stations" ? null : "stations")}
+          className={`flex flex-col items-center gap-0.5 rounded-xl px-1 py-1.5 text-[10px] font-bold ${
+            sheet === "stations" ? "bg-primary-foreground text-primary" : ""
+          }`}
+        >
+          <Settings2 className="h-5 w-5" />
+          {station}
+        </button>
+        <button
+          onClick={() => {
+            setSheet(null);
+            setManualOpen(true);
+          }}
+          disabled={!canCompleteOrders}
+          className="flex flex-col items-center gap-0.5 rounded-xl px-1 py-1.5 text-[10px] font-bold disabled:opacity-40"
+        >
+          <span className="grid h-8 w-8 place-items-center rounded-full bg-[#00CCBC] text-black">
+            <Plus className="h-5 w-5" />
+          </span>
+          Add
+        </button>
+        <button
+          onClick={toggleUrdu}
+          aria-pressed={urdu}
+          className={`flex flex-col items-center gap-0.5 rounded-xl px-1 py-1.5 text-[10px] font-bold ${
+            urdu ? "bg-primary-foreground text-primary" : ""
+          }`}
+        >
+          <Languages className="h-5 w-5" />
+          اردو
+        </button>
+        <button
+          onClick={() => setSheet(sheet === "more" ? null : "more")}
+          className={`flex flex-col items-center gap-0.5 rounded-xl px-1 py-1.5 text-[10px] font-bold ${
+            sheet === "more" ? "bg-primary-foreground text-primary" : ""
+          }`}
+        >
+          <MoreHorizontal className="h-5 w-5" />
+          More
+        </button>
+      </nav>
     </div>
   );
 }
 
 function AlertsToggle() {
   return <AlertsToggleInner />;
+}
+
+/**
+ * Shows the same English words written in Urdu letters underneath the English
+ * line. This is transliteration only — nothing is translated, so an item can
+ * never be misread as something else.
+ */
+function UrduLine({ on, text, className = "" }: { on: boolean; text: string; className?: string }) {
+  if (!on || !text) return null;
+  return (
+    <span
+      dir="rtl"
+      lang="ur"
+      className={`mt-0.5 block font-urdu text-sm font-normal normal-case tracking-normal opacity-90 ${className}`}
+    >
+      {toUrduScript(text)}
+    </span>
+  );
 }
 
 function SyncPill({
