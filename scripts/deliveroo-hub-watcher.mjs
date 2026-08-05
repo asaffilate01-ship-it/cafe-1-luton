@@ -19,7 +19,7 @@
  * Give it the device Hub account so it signs itself in and recovers on its own
  * if Hub ever logs it out — a browser session expires, the device account does
  * not, so this is the reliable choice when there is only one login.
- *   HUB_EMAIL=... HUB_PASSWORD=... DELIVEROO_BRIDGE_SECRET=xxx \
+ *   HUB_USERNAME=... HUB_PASSWORD=... DELIVEROO_BRIDGE_SECRET=xxx \
  *     node scripts/deliveroo-hub-watcher.mjs
  *
  * Because the tablet uses that same account, this deliberately re-uses its
@@ -157,7 +157,7 @@ async function signIn() {
   lastSignInAt = Date.now();
   console.log("\n[hub] signing in with the device account…");
   try {
-    const email = page.locator('input[type="email"], input[name*="email" i], input[name*="user" i]').first();
+    const email = page.locator('input[name*="user" i], input[id*="user" i], input[type="email"], input[name*="email" i], input[type="text"]').first();
     await email.waitFor({ state: "visible", timeout: 20000 });
     await email.fill(HUB_EMAIL);
     const pw = page.locator('input[type="password"]').first();
@@ -186,8 +186,8 @@ if (await isSignedOut()) {
   if (!ok) {
     console.error(
       fs.existsSync(SESSION_FILE)
-        ? "Saved session has expired. Set HUB_EMAIL/HUB_PASSWORD, or re-run with --login."
-        : "No saved session. Set HUB_EMAIL/HUB_PASSWORD, or run once with --login."
+        ? "Saved session has expired. Set HUB_USERNAME/HUB_PASSWORD, or re-run with --login."
+        : "No saved session. Set HUB_USERNAME/HUB_PASSWORD, or run once with --login."
     );
     await browser.close();
     process.exit(1);
