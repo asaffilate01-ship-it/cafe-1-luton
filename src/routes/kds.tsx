@@ -1080,6 +1080,37 @@ function KDS() {
               </button>
             )}
             <span className="mx-1 hidden h-4 w-px bg-primary-foreground/30 sm:block" />
+            <div
+              className="hidden flex-wrap items-center gap-1 lg:flex"
+              aria-label="Order source filter"
+            >
+              {FEEDS.map(({ key, label, Icon }) => {
+                const count = tickets.filter((t) => matchesFeed(key, t)).length;
+                const on = feed === key;
+                return (
+                  <button
+                    key={key}
+                    type="button"
+                    onClick={() => setFeed(key)}
+                    aria-pressed={on}
+                    className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[10px] font-black tracking-wide ${
+                      on ? "bg-primary-foreground text-primary" : "bg-primary-foreground/10"
+                    }`}
+                  >
+                    <Icon className="h-3.5 w-3.5" />
+                    {label}
+                    <span
+                      className={`rounded-full px-1 text-[9px] leading-4 ${
+                        on ? "bg-primary text-primary-foreground" : "bg-primary-foreground/20"
+                      }`}
+                    >
+                      {count}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+            <span className="mx-1 hidden h-4 w-px bg-primary-foreground/30 lg:block" />
             <div className="flex flex-wrap items-center gap-1" aria-label="Kitchen station filter">
               {STATIONS.map((value) => (
                 <button
