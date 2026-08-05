@@ -13,8 +13,8 @@
  * untouched; all interpretation happens server-side, which means this file
  * should never need updating once it is running.
  *
- * Setup (once, on any always-on shop PC):
- *   npm install playwright && npx playwright install chromium
+ * Setup (once, on any always-on shop PC): run install-deliveroo-watcher.ps1.
+ * The installer adds Playwright and its private Chromium automatically.
  *
  * Give it the device Hub account so it signs itself in and recovers on its own
  * if Hub ever logs it out — a browser session expires, the device account does
@@ -77,7 +77,7 @@ let chromium;
 try {
   ({ chromium } = await import("playwright"));
 } catch {
-  console.error("Playwright is not installed. Run:  npm install playwright && npx playwright install chromium");
+  console.error("The private browser is missing. Run install-deliveroo-watcher.ps1 again.");
   process.exit(1);
 }
 

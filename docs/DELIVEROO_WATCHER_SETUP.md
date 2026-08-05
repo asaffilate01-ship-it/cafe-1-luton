@@ -29,6 +29,10 @@ on, and restarts itself if it ever stops.
 4. Right-click `install-deliveroo-watcher.ps1` and choose
    **Run with PowerShell**.
 
+The installer automatically installs Playwright and its private Chromium
+browser without asking you to run npm or approve another installer. Keep the
+window open while it finishes; the first setup can take several minutes.
+
 That's it. Within a minute the kitchen display badge turns green,
 **Deliveroo auto**.
 
