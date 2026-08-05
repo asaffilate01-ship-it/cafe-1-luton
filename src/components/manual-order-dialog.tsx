@@ -304,6 +304,23 @@ export function ManualOrderDialog({
               <option value="account">House account / tab</option>
             </select>
           </label>
+          {paymentMethod === "account" && (
+            <label className="text-sm font-medium sm:col-span-2">
+              Which tab account?
+              <select
+                value={accountId}
+                onChange={(event) => setAccountId(event.target.value)}
+                className={field}
+              >
+                <option value="">Select an account…</option>
+                {accounts.map((a) => (
+                  <option key={a.id} value={a.id}>
+                    {a.name}
+                  </option>
+                ))}
+              </select>
+            </label>
+          )}
           <label className="mt-1 flex items-center gap-2 self-end text-sm font-medium">
             <input
               type="checkbox"
