@@ -179,6 +179,7 @@ function AccountsManager() {
             </tbody>
           </table>
         </div>
+        <TabOrdersPanel onChanged={() => void refresh()} />
       </div>
 
       {showCreate && (
