@@ -20,6 +20,8 @@ import {
   ShoppingBag,
   HandPlatter,
   Bike,
+  WifiOff,
+  Wifi,
 } from "lucide-react";
 import { DeliverooTicketDialog } from "@/components/deliveroo-ticket-dialog";
 import { useWakeLock } from "@/hooks/use-wake-lock";
@@ -27,6 +29,7 @@ import { syncSumupPos } from "@/lib/sumup-pos.functions";
 import { orderCode } from "@/lib/order-code";
 import { getStaffMenuItems } from "@/lib/menu-operations.functions";
 import { fuzzyMenuKey, guessCategory, looksCooked, usefulLabel } from "@/lib/cooking";
+import { useConnectionStatus } from "@/hooks/use-connection-status";
 
 type Item = {
   id: string;
@@ -602,6 +605,8 @@ function KDS() {
     }))
     .filter((ticket) => ticket.items.length > 0);
   const canCompleteOrders = station === "ALL" || station === "PASS";
+  const conn = useConnectionStatus();
+  const linkDown = conn.offline || conn.backendDown;
 
   if (user && !has("admin") && !has("staff"))
     return <div className="p-10 text-center text-muted-foreground">Not authorised.</div>;
@@ -609,6 +614,23 @@ function KDS() {
   return (
     <div className="min-h-screen bg-secondary">
       {!chromeHidden && <AdminNav />}
+      {linkDown && (
+        <div
+          role="alert"
+          className="sticky top-0 z-40 flex items-center justify-center gap-3 bg-red-600 px-4 py-2 text-center text-sm font-bold text-white"
+        >
+          <WifiOff className="h-5 w-5 shrink-0 animate-pulse" />
+          <span>
+            {conn.offline
+              ? "No internet on this display — new orders are NOT coming through."
+              : "Cannot reach the Cafe1 system — new orders are NOT coming through."}{" "}
+            {conn.lastOkAt
+              ? `Last connected ${Math.max(0, Math.round((now - conn.lastOkAt) / 60000))} min ago.`
+              : ""}{" "}
+            Check the internet, then this bar disappears on its own.
+          </span>
+        </div>
+      )}
       <DeliverooTicketDialog open={deliverooOpen} onClose={() => setDeliverooOpen(false)} />
       {chromeHidden ? (
         <div className="sticky top-0 z-30 flex items-center justify-between gap-2 border-b border-border bg-primary px-3 py-1 text-primary-foreground">
@@ -616,6 +638,11 @@ function KDS() {
             {visibleTickets.length} active · {station}
           </span>
           <SyncPill lastSync={lastSync} ok={syncOk} now={now} compact />
+          {linkDown && (
+            <span className="flex items-center gap-1 rounded-full bg-red-600 px-2.5 py-1 text-[11px] font-black text-white">
+              <WifiOff className="h-3.5 w-3.5" /> Offline
+            </span>
+          )}
           <div className="flex items-center gap-2">
             <button
               onClick={() => setAll("preparing", "ready")}
@@ -648,6 +675,19 @@ function KDS() {
           <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-4">
             <h1 className="font-display text-2xl font-bold">Kitchen Display · Cafe1</h1>
             <div className="flex items-center gap-3">
+              <span
+                className={`flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-bold ${
+                  linkDown ? "bg-red-600 text-white" : "bg-emerald-500 text-black"
+                }`}
+                title={
+                  linkDown
+                    ? "This display has lost its connection — orders are not updating."
+                    : "This display is connected and receiving orders."
+                }
+              >
+                {linkDown ? <WifiOff className="h-3.5 w-3.5" /> : <Wifi className="h-3.5 w-3.5" />}
+                {linkDown ? "Offline" : "Online"}
+              </span>
               <AlertsToggle />
               <WakeToggle />
               <button
