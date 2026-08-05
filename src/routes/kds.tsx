@@ -21,6 +21,7 @@ import {
   HandPlatter,
   Bike,
 } from "lucide-react";
+import { DeliverooTicketDialog } from "@/components/deliveroo-ticket-dialog";
 import { useWakeLock } from "@/hooks/use-wake-lock";
 import { syncSumupPos } from "@/lib/sumup-pos.functions";
 import { orderCode } from "@/lib/order-code";
@@ -464,6 +465,7 @@ function KDS() {
 
   const [bulking, setBulking] = useState(false);
   const [chromeHidden, setChromeHidden] = useState(false);
+  const [deliverooOpen, setDeliverooOpen] = useState(false);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -545,6 +547,7 @@ function KDS() {
   return (
     <div className="min-h-screen bg-secondary">
       {!chromeHidden && <AdminNav />}
+      <DeliverooTicketDialog open={deliverooOpen} onClose={() => setDeliverooOpen(false)} />
       {chromeHidden ? (
         <div className="sticky top-0 z-30 flex items-center justify-between gap-2 border-b border-border bg-primary px-3 py-1 text-primary-foreground">
           <span className="text-xs font-bold uppercase tracking-wide opacity-90">
@@ -608,6 +611,15 @@ function KDS() {
               >
                 <RefreshCw className={`h-4 w-4 ${syncing ? "animate-spin" : ""}`} />
                 <span>{syncing ? "Syncing…" : "Sync SumUp POS"}</span>
+              </button>
+              <button
+                onClick={() => setDeliverooOpen(true)}
+                disabled={!canCompleteOrders}
+                className="flex items-center gap-1 rounded-full bg-[#00CCBC] px-3 py-1.5 text-xs font-bold text-black hover:opacity-90 disabled:opacity-40"
+                title="Key in an order from the Deliveroo tablet so it shows on this display"
+              >
+                <Bike className="h-4 w-4" />
+                <span>Add Deliveroo</span>
               </button>
               <a
                 href={`/print/test?paper=${kdsPaper}&preview=1`}
