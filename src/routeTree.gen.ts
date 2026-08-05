@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as WatcherDownloadRouteImport } from './routes/watcher-download'
 import { Route as TillRouteImport } from './routes/till'
 import { Route as TermsRouteImport } from './routes/terms'
 import { Route as TeamLoginRouteImport } from './routes/team-login'
@@ -73,6 +74,11 @@ import { Route as ApiPublicDeliverooWebhookRouteImport } from './routes/api/publ
 import { Route as ApiPublicDeliverooPrintBridgeRouteImport } from './routes/api/public/deliveroo/print-bridge'
 import { Route as ApiPublicDeliverooHubIngestRouteImport } from './routes/api/public/deliveroo/hub-ingest'
 
+const WatcherDownloadRoute = WatcherDownloadRouteImport.update({
+  id: '/watcher-download',
+  path: '/watcher-download',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const TillRoute = TillRouteImport.update({
   id: '/till',
   path: '/till',
@@ -422,6 +428,7 @@ export interface FileRoutesByFullPath {
   '/team-login': typeof TeamLoginRoute
   '/terms': typeof TermsRoute
   '/till': typeof TillRoute
+  '/watcher-download': typeof WatcherDownloadRoute
   '/admin/accounts': typeof AdminAccountsRoute
   '/admin/banners': typeof AdminBannersRoute
   '/admin/blog': typeof AdminBlogRoute
@@ -487,6 +494,7 @@ export interface FileRoutesByTo {
   '/team-login': typeof TeamLoginRoute
   '/terms': typeof TermsRoute
   '/till': typeof TillRoute
+  '/watcher-download': typeof WatcherDownloadRoute
   '/admin/accounts': typeof AdminAccountsRoute
   '/admin/banners': typeof AdminBannersRoute
   '/admin/blog': typeof AdminBlogRoute
@@ -553,6 +561,7 @@ export interface FileRoutesById {
   '/team-login': typeof TeamLoginRoute
   '/terms': typeof TermsRoute
   '/till': typeof TillRoute
+  '/watcher-download': typeof WatcherDownloadRoute
   '/admin/accounts': typeof AdminAccountsRoute
   '/admin/banners': typeof AdminBannersRoute
   '/admin/blog': typeof AdminBlogRoute
@@ -620,6 +629,7 @@ export interface FileRouteTypes {
     | '/team-login'
     | '/terms'
     | '/till'
+    | '/watcher-download'
     | '/admin/accounts'
     | '/admin/banners'
     | '/admin/blog'
@@ -685,6 +695,7 @@ export interface FileRouteTypes {
     | '/team-login'
     | '/terms'
     | '/till'
+    | '/watcher-download'
     | '/admin/accounts'
     | '/admin/banners'
     | '/admin/blog'
@@ -750,6 +761,7 @@ export interface FileRouteTypes {
     | '/team-login'
     | '/terms'
     | '/till'
+    | '/watcher-download'
     | '/admin/accounts'
     | '/admin/banners'
     | '/admin/blog'
@@ -816,6 +828,7 @@ export interface RootRouteChildren {
   TeamLoginRoute: typeof TeamLoginRoute
   TermsRoute: typeof TermsRoute
   TillRoute: typeof TillRoute
+  WatcherDownloadRoute: typeof WatcherDownloadRoute
   AdminAccountsRoute: typeof AdminAccountsRoute
   AdminBannersRoute: typeof AdminBannersRoute
   AdminBlogRoute: typeof AdminBlogRoute
@@ -855,6 +868,13 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/watcher-download': {
+      id: '/watcher-download'
+      path: '/watcher-download'
+      fullPath: '/watcher-download'
+      preLoaderRoute: typeof WatcherDownloadRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/till': {
       id: '/till'
       path: '/till'
@@ -1328,6 +1348,7 @@ const rootRouteChildren: RootRouteChildren = {
   TeamLoginRoute: TeamLoginRoute,
   TermsRoute: TermsRoute,
   TillRoute: TillRoute,
+  WatcherDownloadRoute: WatcherDownloadRoute,
   AdminAccountsRoute: AdminAccountsRoute,
   AdminBannersRoute: AdminBannersRoute,
   AdminBlogRoute: AdminBlogRoute,
