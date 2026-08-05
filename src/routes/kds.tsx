@@ -1518,7 +1518,7 @@ function KDS() {
       )}
       <nav
         aria-label="Kitchen display navigation"
-        className="fixed inset-x-0 bottom-0 z-40 grid grid-cols-4 gap-1 border-t border-border bg-primary px-2 pb-[env(safe-area-inset-bottom)] pt-1.5 text-primary-foreground lg:hidden"
+        className="fixed inset-x-0 bottom-0 z-40 grid grid-cols-3 gap-1 border-t border-border bg-primary px-2 pb-[env(safe-area-inset-bottom)] pt-1.5 text-primary-foreground lg:hidden"
       >
         <button
           onClick={() => {
@@ -1528,7 +1528,7 @@ function KDS() {
           className="flex flex-col items-center gap-0.5 rounded-xl px-1 py-1.5 text-[10px] font-bold"
         >
           <LayoutGrid className="h-5 w-5" />
-          Board
+          Live orders
         </button>
         <button
           onClick={() => setSheet(sheet === "stations" ? null : "stations")}
@@ -1538,19 +1538,6 @@ function KDS() {
         >
           <Settings2 className="h-5 w-5" />
           {station}
-        </button>
-        <button
-          onClick={() => {
-            setSheet(null);
-            setManualOpen(true);
-          }}
-          disabled={!canCompleteOrders}
-          className="flex flex-col items-center gap-0.5 rounded-xl px-1 py-1.5 text-[10px] font-bold disabled:opacity-40"
-        >
-          <span className="grid h-8 w-8 place-items-center rounded-full bg-[#00CCBC] text-black">
-            <Plus className="h-5 w-5" />
-          </span>
-          Add
         </button>
         <button
           onClick={() => setSheet(sheet === "more" ? null : "more")}
