@@ -247,6 +247,13 @@ function JuryMenuPage() {
         <p className="text-xs font-black uppercase tracking-widest text-muted-foreground">
           Where are you eating?
         </p>
+        <button
+          type="button"
+          onClick={() => setGateOpen(true)}
+          className="mt-2 inline-flex h-9 items-center rounded-full border border-primary px-4 text-xs font-bold text-primary hover:bg-primary/5"
+        >
+          {ctx ? "Change how you'd like your order" : "How would you like your order?"}
+        </button>
         <div className="mt-3 grid gap-2 sm:grid-cols-3">
           <button
             type="button"
