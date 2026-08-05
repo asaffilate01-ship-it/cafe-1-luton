@@ -29,7 +29,14 @@ import { useWakeLock } from "@/hooks/use-wake-lock";
 import { syncSumupPos } from "@/lib/sumup-pos.functions";
 import { orderCode } from "@/lib/order-code";
 import { getStaffMenuItems } from "@/lib/menu-operations.functions";
-import { fuzzyMenuKey, guessCategory, looksCooked, usefulLabel } from "@/lib/cooking";
+import {
+  fuzzyMenuKey,
+  guessCategory,
+  looksCooked,
+  normaliseItemName,
+  preferCategory,
+  usefulLabel,
+} from "@/lib/cooking";
 import { useConnectionStatus } from "@/hooks/use-connection-status";
 
 type Item = {
@@ -170,6 +177,20 @@ type Station = (typeof STATIONS)[number];
  * Menu items rarely carry an explicit station code, so work one out from the
  * dish itself. Without this every station filter empties the whole board.
  */
+/**
+ * The same dish name can sit in several menu categories. When the till gives us
+ * no category to disambiguate, pick the one Cafe1 sells it as by default — a
+ * bare filling list is a sandwich unless the till says toastie or baguette.
+ */
+function preferMenuMeta<T extends { category: string | null }>(
+  candidates: T[] | undefined,
+): T | undefined {
+  if (!candidates?.length) return undefined;
+  if (candidates.length === 1) return candidates[0];
+  const winner = preferCategory(candidates.map((c) => c.category));
+  return candidates.find((c) => c.category === winner) ?? candidates[0];
+}
+
 function groupByCategory(items: Item[]): { category: string | null; items: Item[] }[] {
   const groups: { category: string | null; items: Item[] }[] = [];
   const index = new Map<string, number>();
@@ -353,10 +374,10 @@ function KDS() {
         matched?: boolean;
       };
       const byId = new Map<string, MenuMeta>();
-      const byName = new Map<string, MenuMeta>();
-      // Several categories reuse the same item name ("Cheese & Onion" is both a
-      // panini and a samosa), so a bare name lookup can land on the wrong dish.
-      const ambiguous = new Set<string>();
+      // Several categories reuse the same item name ("Chicken, Mayo, Sweetcorn"
+      // is a sandwich, a toastie and a baguette), and the till types punctuation
+      // its own way, so match on the normalised name and keep every candidate.
+      const byName = new Map<string, MenuMeta[]>();
       const byCatName = new Map<string, MenuMeta>();
       for (const m of (menu ?? []) as Array<{
         id: string;
@@ -374,36 +395,22 @@ function KDS() {
           matched: true,
         };
         byId.set(m.id, meta);
-        const key = m.name.trim().toLowerCase();
-        if (byName.has(key)) ambiguous.add(key);
-        byName.set(key, meta);
-        if (meta.category) byCatName.set(`${meta.category.trim().toLowerCase()}|${key}`, meta);
+        const key = normaliseItemName(m.name);
+        byName.set(key, [...(byName.get(key) ?? []), meta]);
+        if (meta.category) byCatName.set(`${normaliseItemName(meta.category)}|${key}`, meta);
       }
-      const nameKeys = Array.from(byName.keys()).filter((k) => !ambiguous.has(k));
+      const nameKeys = Array.from(byName.keys());
       const metadata = (item: Item): MenuMeta => {
-        const key = item.name.trim().toLowerCase();
-        const withCategory = item.category_label
-          ? byCatName.get(`${item.category_label.trim().toLowerCase()}|${key}`)
+        const key = normaliseItemName(item.name);
+        const label = usefulLabel(item.category_label);
+        const withCategory = label
+          ? byCatName.get(`${normaliseItemName(label)}|${key}`)
           : undefined;
-        const direct =
-          (item.menu_item_id ? byId.get(item.menu_item_id) : undefined) ??
-          withCategory ??
-          (ambiguous.has(key) ? undefined : byName.get(key));
+        const byIdMeta = item.menu_item_id ? byId.get(item.menu_item_id) : undefined;
+        const candidates = byName.get(key) ?? byName.get(fuzzyMenuKey(item.name, nameKeys) ?? "");
+        const direct = byIdMeta ?? withCategory ?? preferMenuMeta(candidates);
         if (direct) return direct;
-        // Name shared by several categories and the POS gave us no category —
-        // keep the line's own name and fall back to keyword cooking rules.
-        if (ambiguous.has(key)) {
-          const cooked = looksCooked(item.name);
-          return {
-            needs_cooking: cooked,
-            station_code: cooked ? "HOT" : "PASS",
-            prep_seconds: 0,
-            category: null,
-          };
-        }
-        // POS-typed names rarely match exactly — fuzzy match, then keywords.
-        const fuzzy = fuzzyMenuKey(item.name, nameKeys);
-        if (fuzzy) return byName.get(fuzzy)!;
+        // Nothing on the menu looks like it — fall back to keyword rules.
         const cooked = looksCooked(item.name);
         return {
           needs_cooking: cooked,

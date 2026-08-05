@@ -89,8 +89,9 @@ const CATEGORY_RULES: Array<{ category: string; phrases?: string[]; words?: stri
   // "chicken soup latte" style clash would otherwise land in food.
   { category: "Hot Drinks", phrases: ["hot chocolate", "flat white", "white americano"], words: ["tea", "coffee", "latte", "cappuccino", "capuccino", "cappucino", "americano", "mocha", "mochacciano", "espresso", "macchiato", "chai", "matcha", "hotchocolate"] },
   { category: "Milkshakes", phrases: ["caramel milkshake", "caramel shake"], words: ["milkshake", "shake", "oreo"] },
-  // Sandwich/jacket fillings come off the till as bare ingredient lists.
-  { category: "Fillings", phrases: ["mayo sweetcorn", "mayo and sweetcorn", "cheese and tomato", "tuna mayo", "tuna and mayo", "cheese and onion", "cheese and beans", "chicken mayo", "chicken and mayo"] },
+  // Bare ingredient lists ("Chicken, Mayo, Sweetcorn") come off the till with no
+  // bread named. Cafe1 sells those as sandwiches unless the till says otherwise.
+  { category: "Sandwiches", phrases: ["mayo sweetcorn", "mayo and sweetcorn", "cheese and tomato", "tuna mayo", "tuna and mayo", "cheese and onion", "cheese and beans", "chicken mayo", "chicken and mayo", "chicken and sweetcorn", "egg mayo", "egg and mayo", "ham and cheese", "cheese and pickle", "coronation chicken"] },
   { category: "Mocktails", phrases: ["redbull mojito"], words: ["mojito", "mocktail"] },
   { category: "Iced Coffee", phrases: ["iced coffee", "iced latte"] },
   { category: "Drinks", phrases: ["bottled drink", "energy drink", "soft drink", "red bull"], words: ["coke", "pepsi", "water", "juice", "can", "cans", "bottle", "lemonade", "fanta", "sprite", "smoothie", "redbull", "monster", "tango", "irnbru"] },
@@ -169,4 +170,31 @@ export function guessCategory(name: string): string | null {
     if (rule.words?.some((w) => tokens.has(w) || tokens.has(singular(w)))) return rule.category;
   }
   return null;
+}
+
+/**
+ * When one dish name lives in several menu categories, this decides which one
+ * the kitchen sees. Cafe1 defaults a plain filling list to a sandwich; toasties,
+ * baguettes and paninis are only used when the till names them.
+ */
+const CATEGORY_PREFERENCE = [
+  "Sandwiches",
+  "Rolls",
+  "Baguettes",
+  "Toasties",
+  "Panini",
+  "Wraps",
+  "Jackets",
+  "Salads",
+  "Cold Past Pot",
+];
+
+export function preferCategory(categories: Array<string | null>): string | null {
+  const present = categories.filter((c): c is string => !!c);
+  if (!present.length) return null;
+  for (const wanted of CATEGORY_PREFERENCE) {
+    const hit = present.find((c) => c.trim().toLowerCase() === wanted.toLowerCase());
+    if (hit) return hit;
+  }
+  return present[0];
 }
