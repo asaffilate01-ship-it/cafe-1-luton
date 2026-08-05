@@ -9,5 +9,7 @@ Disallow: /order/
 Disallow: /print/
 Disallow: /checkout
 Disallow: /api/
+Disallow: /watcher-download
+Disallow: /downloads/
 
 Sitemap: https://cafe1stalbans.co.uk/sitemap.xml
