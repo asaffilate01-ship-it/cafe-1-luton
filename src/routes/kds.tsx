@@ -187,6 +187,16 @@ const STATIONS = ["ALL", "HOT", "SANDWICH", "DRINKS", "PASS"] as const;
  * our own delivery orders plus the delivery-partner channels.
  */
 type FeedKey = "all" | "jury" | "judge" | "public" | "delivery" | "web";
+
+/** Shared order-source filters used by the desktop toolbar and mobile nav. */
+const FEEDS = [
+  { key: "all", label: "Live orders", Icon: LayoutGrid },
+  { key: "jury", label: "Jury", Icon: Scale },
+  { key: "judge", label: "Judges", Icon: Gavel },
+  { key: "public", label: "Public", Icon: Users },
+  { key: "delivery", label: "Delivery", Icon: Bike },
+  { key: "web", label: "Web", Icon: Globe },
+] as const satisfies ReadonlyArray<{ key: FeedKey; label: string; Icon: typeof LayoutGrid }>;
 function matchesFeed(
   feed: FeedKey,
   t: { source: string | null; pos_terminal: string | null; type: string },
@@ -1080,6 +1090,37 @@ function KDS() {
               </button>
             )}
             <span className="mx-1 hidden h-4 w-px bg-primary-foreground/30 sm:block" />
+            <div
+              className="hidden flex-wrap items-center gap-1 lg:flex"
+              aria-label="Order source filter"
+            >
+              {FEEDS.map(({ key, label, Icon }) => {
+                const count = tickets.filter((t) => matchesFeed(key, t)).length;
+                const on = feed === key;
+                return (
+                  <button
+                    key={key}
+                    type="button"
+                    onClick={() => setFeed(key)}
+                    aria-pressed={on}
+                    className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[10px] font-black tracking-wide ${
+                      on ? "bg-primary-foreground text-primary" : "bg-primary-foreground/10"
+                    }`}
+                  >
+                    <Icon className="h-3.5 w-3.5" />
+                    {label}
+                    <span
+                      className={`rounded-full px-1 text-[9px] leading-4 ${
+                        on ? "bg-primary text-primary-foreground" : "bg-primary-foreground/20"
+                      }`}
+                    >
+                      {count}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+            <span className="mx-1 hidden h-4 w-px bg-primary-foreground/30 lg:block" />
             <div className="flex flex-wrap items-center gap-1" aria-label="Kitchen station filter">
               {STATIONS.map((value) => (
                 <button
@@ -1576,16 +1617,7 @@ function KDS() {
         aria-label="Kitchen display navigation"
         className="fixed inset-x-0 bottom-0 z-40 grid grid-cols-7 gap-0.5 border-t border-border bg-primary px-1 pb-[env(safe-area-inset-bottom)] pt-1.5 text-primary-foreground lg:hidden"
       >
-        {(
-          [
-            { key: "all", label: "Live orders", Icon: LayoutGrid },
-            { key: "jury", label: "Jury", Icon: Scale },
-            { key: "judge", label: "Judges", Icon: Gavel },
-            { key: "public", label: "Public", Icon: Users },
-            { key: "delivery", label: "Delivery", Icon: Bike },
-            { key: "web", label: "Web", Icon: Globe },
-          ] as const
-        ).map(({ key, label, Icon }) => {
+        {FEEDS.map(({ key, label, Icon }) => {
           const count = tickets.filter((t) => matchesFeed(key, t)).length;
           const on = feed === key;
           return (
