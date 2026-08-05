@@ -34,7 +34,7 @@ export const Route = createFileRoute("/juror-demo")({
       {
         property: "og:description",
         content:
-          "Seven simulated screens showing the whole juror voucher journey end to end, using demo data only.",
+          "Eight simulated screens showing the whole juror voucher journey end to end — printed juror sheets, opt-in, ordering, redemption, the nightly claim and system security — using demo data only.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
