@@ -30,6 +30,8 @@ const OrderSchema = z.object({
   type: z.enum(["delivery", "collection", "dine_in"]).default("collection"),
   total_cents: z.number().int().min(0).max(1_000_000).default(0),
   payment_method: z.enum(["card", "cash", "account", "platform"]).default("platform"),
+  /** House account the tab charge belongs to (required for a real tab bill). */
+  account_id: z.string().uuid().optional(),
   paid: z.boolean().default(true),
   notes: z.string().max(500).optional(),
   table_number: z.string().max(40).optional(),
@@ -97,6 +99,7 @@ export const createManualOrder = createServerFn({ method: "POST" })
 
     const units = data.items.reduce((sum, line) => sum + line.qty, 0);
     const total = data.total_cents;
+    const onAccount = data.payment_method === "account" && !data.paid;
 
     const { data: inserted, error } = await supabaseAdmin
       .from("orders")
@@ -106,6 +109,7 @@ export const createManualOrder = createServerFn({ method: "POST" })
         type: data.type,
         status: "preparing",
         payment_status: data.paid ? "paid" : data.payment_method === "account" ? "on_account" : "pending",
+        account_id: data.payment_method === "account" ? (data.account_id ?? null) : null,
         payment_method: data.payment_method,
         subtotal_cents: total,
         delivery_fee_cents: 0,
