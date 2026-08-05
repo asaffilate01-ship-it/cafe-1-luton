@@ -65,6 +65,7 @@ type Order = {
   postcode: string | null;
   delivery_notes: string | null;
   pos_terminal: string | null;
+  jury_room: string | null;
 };
 type Ticket = Order & { items: Item[]; needsCooking: boolean };
 
@@ -268,7 +269,7 @@ function KDS() {
       const { data: orders } = await supabase
         .from("orders")
         .select(
-          "id, order_number, status, type, customer_name, created_at, schedule_mode, scheduled_for, table_number, source, payment_method, payment_status, customer_phone, company_name, address_line1, address_line2, city, postcode, delivery_notes, pos_terminal",
+          "id, order_number, status, type, customer_name, created_at, schedule_mode, scheduled_for, table_number, source, payment_method, payment_status, customer_phone, company_name, address_line1, address_line2, city, postcode, delivery_notes, pos_terminal, jury_room",
         )
         .in("status", ["preparing", "ready"])
         .order("created_at");
