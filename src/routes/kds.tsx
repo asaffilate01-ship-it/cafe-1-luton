@@ -25,6 +25,10 @@ import {
   Plus,
   Printer,
   Settings2,
+  Languages,
+  LayoutGrid,
+  MoreHorizontal,
+  X,
 } from "lucide-react";
 import { ManualOrderDialog } from "@/components/manual-order-dialog";
 import { InstallAppButton } from "@/components/install-app-button";
@@ -41,6 +45,7 @@ import {
   usefulLabel,
 } from "@/lib/cooking";
 import { useConnectionStatus } from "@/hooks/use-connection-status";
+import { toUrduScript } from "@/lib/urdu-translit";
 
 type Item = {
   id: string;
