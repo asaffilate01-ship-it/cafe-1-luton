@@ -891,6 +891,15 @@ function KDS() {
                 Test print
               </a>
               <InstallAppButton manifest="/kds.webmanifest" label="Install KDS" />
+              <button
+                type="button"
+                onClick={() => window.location.reload()}
+                className="flex items-center gap-1 rounded-full bg-primary-foreground/10 px-3 py-1.5 text-xs font-semibold hover:bg-primary-foreground/20"
+                title="Reload the kitchen display — use this if the internet dropped or the screen looks stuck"
+              >
+                <RefreshCw className="h-4 w-4" />
+                <span>Refresh</span>
+              </button>
               <div className="flex items-center gap-1 rounded-full bg-primary-foreground/10 p-1">
                 {([58, 80] as const).map((w) => (
                   <button
