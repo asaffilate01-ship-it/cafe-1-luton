@@ -346,17 +346,21 @@ function KDS() {
         .order("created_at");
       let rows = (orders ?? []) as Order[];
       if (recall) {
-        const dayStart = new Date();
-        dayStart.setHours(0, 0, 0, 0);
+        // Rolling 24-hour window, not "since midnight": a late shift running
+        // past midnight would otherwise recall nothing at all.
+        const since = new Date(Date.now() - 24 * 60 * 60 * 1000);
         const { data: recent } = await supabase
           .from("orders")
           .select(COLUMNS)
-          .gte("created_at", dayStart.toISOString())
+          .gte("created_at", since.toISOString())
           .in("status", ["paid", "preparing", "ready", "out_for_delivery", "delivered", "completed"])
           .order("created_at", { ascending: false })
           .limit(15);
         const seen = new Set(rows.map((o) => o.id));
         rows = rows.concat(((recent ?? []) as Order[]).filter((o) => !seen.has(o.id)));
+        if (!recent?.length) {
+          toast.info("No orders in the last 24 hours to recall.");
+        }
       }
       // Cancelled / refunded orders must never sit on the kitchen display.
       const live = rows.filter(
