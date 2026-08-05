@@ -66,6 +66,13 @@ function JuryMenuPage() {
   const [pin, setPin] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const ctx = useOrderContext();
+  const [gateOpen, setGateOpen] = useState(false);
+
+  // As soon as the Jury Only menu unlocks, ask how they'd like their order.
+  useEffect(() => {
+    if (session && !ctx) setGateOpen(true);
+  }, [session, ctx]);
 
   const jurorFilter = useCallback((item: { juror_menu: boolean }) => item.juror_menu, []);
 
