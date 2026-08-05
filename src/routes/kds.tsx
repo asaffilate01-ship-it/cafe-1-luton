@@ -251,6 +251,7 @@ export const Route = createFileRoute("/kds")({
       { name: "description", content: "Live kitchen tickets for Cafe1." },
       { name: "robots", content: "noindex" },
     ],
+    links: [{ rel: "manifest", href: "/kds.webmanifest" }],
   }),
   component: KdsPage,
 });
