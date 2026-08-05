@@ -140,12 +140,6 @@ function channelOf(t: { source: string | null; pos_terminal: string | null }): C
   if (src === "sumup_pos" || src === "counter" || src === "till") return "public";
   return "web";
 }
-/** Which counter rang the sale up — jury, judge or public side. */
-const SIDE_TONE: Record<string, string> = {
-  jury: "bg-indigo-600",
-  judge: "bg-fuchsia-700",
-  public: "bg-teal-600",
-};
 const STATIONS = ["ALL", "HOT", "SANDWICH", "DRINKS", "PASS"] as const;
 type Station = (typeof STATIONS)[number];
 
