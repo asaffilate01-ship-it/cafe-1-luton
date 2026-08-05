@@ -244,6 +244,8 @@ function KDS() {
         station_code: string;
         prep_seconds: number;
         category: string | null;
+        /** True when the line was matched to a real menu item. */
+        matched?: boolean;
       };
       const byId = new Map<string, MenuMeta>();
       const byName = new Map<string, MenuMeta>();
@@ -264,6 +266,7 @@ function KDS() {
           station_code: m.station_code || "PASS",
           prep_seconds: Math.max(0, m.prep_seconds || 0),
           category: m.category_id ? (catName.get(m.category_id) ?? null) : null,
+          matched: true,
         };
         byId.set(m.id, meta);
         const key = m.name.trim().toLowerCase();
