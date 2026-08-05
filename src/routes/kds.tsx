@@ -484,7 +484,7 @@ function KDS() {
       if (timer) window.clearTimeout(timer);
       supabase.removeChannel(ch);
     };
-  }, [getMenuItems]);
+  }, [getMenuItems, recall]);
 
   // Auto-poll SumUp POS every 30s while KDS is open (staff/admin only)
   useEffect(() => {
