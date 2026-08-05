@@ -835,10 +835,13 @@ function KDS() {
           </div>
         </div>
       ) : (
-        <header className="border-b border-border bg-primary text-primary-foreground">
-          <div className="mx-auto grid max-w-[110rem] grid-cols-[minmax(0,1fr)_auto] items-center gap-x-3 gap-y-2 px-3 py-3 sm:px-4">
-            <h1 className="min-w-0 truncate font-display text-lg font-bold sm:text-xl lg:text-2xl">
-              <span className="lg:hidden">KDS · Cafe1</span>
+        <header className="sticky top-0 z-30 border-b border-border bg-primary text-primary-foreground lg:static">
+          <div className="mx-auto grid max-w-[110rem] grid-cols-[minmax(0,1fr)_auto] items-center gap-x-3 gap-y-2 px-3 py-2.5 sm:px-4 lg:py-3">
+            <h1 className="min-w-0 truncate font-display text-base font-bold sm:text-lg lg:text-2xl">
+              <span className="lg:hidden">
+                KDS · {visibleTickets.length} active
+                <span className="ml-1 text-xs font-semibold opacity-70">{station}</span>
+              </span>
               <span className="hidden lg:inline">Kitchen Display · Cafe1</span>
             </h1>
             <div className="flex min-w-0 flex-wrap items-center justify-end gap-2">
@@ -1087,21 +1090,21 @@ function KDS() {
           return (
             <div
               key={t.id}
-              className={`flex flex-col overflow-hidden rounded-xl border-4 bg-white p-3 shadow-sm ring-2 transition-shadow ${channel.border} ${channel.ring} ${hot ? "shadow-brand" : ""}`}
+              className={`flex flex-col overflow-hidden rounded-2xl border-4 bg-white p-4 shadow-sm ring-2 transition-shadow sm:rounded-xl sm:p-3 ${channel.border} ${channel.ring} ${hot ? "shadow-brand" : ""}`}
             >
               <div
-                className={`-mx-3 -mt-3 mb-2 px-3 py-1 text-center text-[10px] font-black uppercase tracking-[0.14em] text-white ${cook ? "bg-blue-600" : "bg-amber-500"}`}
+                className={`-mx-4 -mt-4 mb-2 px-3 py-1.5 text-center text-[11px] font-black uppercase tracking-[0.14em] text-white sm:-mx-3 sm:-mt-3 sm:py-1 sm:text-[10px] ${cook ? "bg-blue-600" : "bg-amber-500"}`}
               >
                 {cook ? "Cook / hot food" : "No cooking needed"}
                 <UrduLine on={urdu} text={cook ? "Cook hot food" : "No cooking needed"} />
               </div>
               <div
-                className={`-mx-3 -mt-2 mb-2 px-3 py-1 text-center text-[11px] font-black uppercase tracking-[0.18em] ${channel.chip}`}
+                className={`-mx-4 -mt-2 mb-2 px-3 py-1 text-center text-[11px] font-black uppercase tracking-[0.18em] sm:-mx-3 ${channel.chip}`}
               >
                 {channel.label}
               </div>
               {scheduledAt && (
-                <div className="-mx-3 -mt-2 mb-2 bg-violet-700 px-3 py-1.5 text-center text-white">
+                <div className="-mx-4 -mt-2 mb-2 bg-violet-700 px-3 py-1.5 text-center text-white sm:-mx-3">
                   <p className="font-display text-base font-black uppercase leading-none tracking-[0.14em]">
                     Later order · for{" "}
                     {scheduledAt.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
@@ -1114,7 +1117,9 @@ function KDS() {
                 </div>
               )}
               <div className="flex items-start justify-between gap-2">
-                <p className="font-display text-lg font-bold leading-none">#{t.order_number}</p>
+                <p className="font-display text-xl font-bold leading-none sm:text-lg">
+                  #{t.order_number}
+                </p>
                 <div className="flex flex-wrap items-center justify-end gap-1">
                   <span
                     className={`rounded-full px-1.5 py-px text-[9px] font-black uppercase tracking-wide ${channel.chip}`}
@@ -1288,11 +1293,11 @@ function KDS() {
                   </li>
                 ))}
               </ul>
-              <div className="mt-2 flex gap-1.5">
+              <div className="mt-3 flex flex-wrap gap-2 sm:mt-2 sm:gap-1.5">
                 {canCompleteOrders && t.status === "preparing" && (
                   <button
                     onClick={() => set(t.id, "ready", { undoTo: "preparing" })}
-                    className={`h-8 flex-1 rounded-full text-xs font-bold ${cook ? "bg-blue-600 text-white hover:bg-blue-700" : "bg-amber-400 text-amber-950 hover:bg-amber-500"}`}
+                    className={`h-12 min-w-[8rem] flex-1 rounded-full text-sm font-bold active:scale-[0.98] sm:h-8 sm:text-xs ${cook ? "bg-blue-600 text-white hover:bg-blue-700" : "bg-amber-400 text-amber-950 hover:bg-amber-500"}`}
                   >
                     Mark ready
                   </button>
@@ -1301,13 +1306,13 @@ function KDS() {
                   <>
                     <button
                       onClick={() => set(t.id, "completed", { undoTo: "ready" })}
-                      className="h-8 flex-1 rounded-full bg-emerald-600 text-xs font-semibold text-white hover:bg-emerald-700"
+                      className="h-12 min-w-[8rem] flex-1 rounded-full bg-emerald-600 text-sm font-bold text-white active:scale-[0.98] hover:bg-emerald-700 sm:h-8 sm:text-xs sm:font-semibold"
                     >
                       Mark complete
                     </button>
                     <button
                       onClick={() => set(t.id, "preparing")}
-                      className="h-8 rounded-full border border-border px-3 text-xs font-semibold hover:border-primary hover:text-primary"
+                      className="h-12 rounded-full border border-border px-4 text-sm font-semibold hover:border-primary hover:text-primary sm:h-8 sm:px-3 sm:text-xs"
                       title="Sent to ready by mistake — put it back in preparing"
                     >
                       ↩ Undo ready
@@ -1321,7 +1326,7 @@ function KDS() {
                     t.status === "paid") && (
                     <button
                       onClick={() => set(t.id, "preparing")}
-                      className="h-8 flex-1 rounded-full bg-amber-500 text-xs font-bold text-white hover:bg-amber-600"
+                      className="h-12 min-w-[8rem] flex-1 rounded-full bg-amber-500 text-sm font-bold text-white active:scale-[0.98] hover:bg-amber-600 sm:h-8 sm:text-xs"
                       title="Reopen this ticket back into the kitchen"
                     >
                       ↩ Reopen ticket
@@ -1331,7 +1336,7 @@ function KDS() {
                   href={`/print/${t.id}?paper=${kdsPaper}&preview=1`}
                   target="_blank"
                   rel="noreferrer"
-                  className="grid h-8 w-8 place-items-center rounded-full border border-border text-xs hover:border-primary hover:text-primary"
+                  className="grid h-12 w-12 place-items-center rounded-full border border-border text-base hover:border-primary hover:text-primary sm:h-8 sm:w-8 sm:text-xs"
                   aria-label="Print preview"
                   title="Preview then print"
                 >
@@ -1341,7 +1346,7 @@ function KDS() {
                   href={`/print/${t.id}?paper=${kdsPaper}`}
                   target="_blank"
                   rel="noreferrer"
-                  className="grid h-8 w-8 place-items-center rounded-full border border-border text-xs hover:border-primary hover:text-primary"
+                  className="grid h-12 w-12 place-items-center rounded-full border border-border text-base hover:border-primary hover:text-primary sm:h-8 sm:w-8 sm:text-xs"
                   aria-label="Print"
                   title="Print now"
                 >
