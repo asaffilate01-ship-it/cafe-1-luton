@@ -23,6 +23,8 @@ import {
   Building2,
   Leaf,
   ArrowRight,
+  Server,
+  Lock,
 } from "lucide-react";
 
 export { JUROR_CODE_KEY };
@@ -360,12 +362,16 @@ function JurorPage() {
         <section className="mx-auto max-w-5xl px-4 py-14">
           <h2 className="font-display text-3xl font-black">How the scheme works</h2>
           <div className="mt-6 grid gap-4 md:grid-cols-3">
-            <Card icon={Ticket} title="1. Your code">
-              The Jury Officer gives you an anonymous voucher code with your induction paperwork.
-              Café 1 never receives your name or any personal details — only the code.
+            <Card icon={Ticket} title="1. Your printed sheet">
+              At induction the Jury Officer gives you an A4 sheet with your anonymous voucher code
+              and 6-digit PIN printed at the top, your name written in pen by the officer, and a
+              plain-English explanation with FAQs for you to keep. The court keeps its own register
+              matching names to codes — Café 1 never receives your name or any personal details,
+              only the code.
             </Card>
             <Card icon={ShieldCheck} title="2. Opt in once">
-              Scan the QR code at the Café 1 till, or on the customer screen, and enter your code.
+              Scan the QR code on your sheet, at the Café 1 till or on the customer screen, and
+              enter your code and PIN.
               Opting in means you take the voucher scheme instead of claiming HMCTS subsistence
               expenses for the rest of your service — one or the other, never both.
             </Card>
@@ -395,6 +401,17 @@ function JurorPage() {
               Every redemption records the voucher reference, date, time, receipt number, amount
               redeemed and any balance you paid — so HMCTS receives a single, fully reconciled
               claim.
+            </Card>
+            <Card icon={Server} title="Secure hosting">
+              The system runs on AWS cloud infrastructure in the UK/EEA with managed patching,
+              encryption in transit and at rest, automated backups, row-level database access
+              control and an immutable audit log. Admin accounts use two-factor authentication and
+              your PIN is only ever stored as a cryptographic hash.
+            </Card>
+            <Card icon={Lock} title="Safe card payments">
+              Anything above your allowance is taken through SumUp, an FCA-authorised, PCI DSS
+              compliant payment gateway with 3-D Secure and tokenised Apple Pay and Google Pay.
+              Café 1 never sees or stores your card details.
             </Card>
             <Card icon={Clock} title="Long court days">
               If the Jury Officer confirms that attendance exceeded 10 hours, a manager can raise

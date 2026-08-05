@@ -18,6 +18,7 @@ import {
   CheckCircle2,
   Lock,
   Building2,
+  Server,
 } from "lucide-react";
 
 export const Route = createFileRoute("/juror-demo")({
@@ -33,7 +34,7 @@ export const Route = createFileRoute("/juror-demo")({
       {
         property: "og:description",
         content:
-          "Seven simulated screens showing the whole juror voucher journey end to end, using demo data only.",
+          "Eight simulated screens showing the whole juror voucher journey end to end — printed juror sheets, opt-in, ordering, redemption, the nightly claim and system security — using demo data only.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
@@ -55,22 +56,29 @@ type Step = {
 
 const steps: Step[] = [
   {
-    title: "1. The court issues a code",
+    title: "1. The court hands out a printed sheet",
     who: "Jury Officer",
     icon: Printer,
-    say: "We print a book of numbered slips. You hand them out at induction, exactly like a raffle book, and write the slip number next to the juror's name on your own register. Café 1 never sees that register — no names, no emails, no phone numbers ever reach us.",
+    say: "We print the juror information sheets for you. Each A4 sheet already carries that juror's voucher code and 6-digit PIN at the top, a ruled box for you to write the juror's name in pen, then a plain-English explanation of the scheme and the FAQs — so the sheet answers most questions on its own. At induction you write the name on the sheet and copy the code next to that name on your own allocation register. That register is the only place a name is ever linked to a code, and it stays with the court: no names, emails or phone numbers ever reach Café 1.",
     screen: () => (
       <div className="mx-auto max-w-sm rounded-2xl border-2 border-dashed border-border bg-white p-6 text-center shadow-sm">
         <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">
-          St Albans Crown Court · Slip 004
+          Café 1 · Juror information sheet (page 1)
         </p>
         <p className="mt-4 font-mono text-xl font-black tracking-wider">{DEMO_CODE}</p>
         <p className="mt-3 text-xs font-bold uppercase tracking-widest text-muted-foreground">
           6-digit PIN
         </p>
         <p className="font-mono text-2xl font-black tracking-[0.3em]">{DEMO_PIN}</p>
+        <div className="mt-4 rounded-lg border border-dashed border-border p-3 text-left">
+          <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">
+            Juror&apos;s name (written by the Jury Officer)
+          </p>
+          <div className="mt-3 border-b border-foreground/40" />
+        </div>
         <p className="mt-4 text-xs text-muted-foreground">
-          Valid Mon–Fri sitting days · {money(JUROR_DAILY_ALLOWANCE_CENTS)} each day
+          Valid Mon–Fri sitting days · {money(JUROR_DAILY_ALLOWANCE_CENTS)} each day. Explanation
+          and FAQs printed overleaf for the juror to keep.
         </p>
       </div>
     ),
@@ -79,7 +87,7 @@ const steps: Step[] = [
     title: "2. The juror checks the code",
     who: "Juror, on their phone",
     icon: Ticket,
-    say: "The juror scans the QR code in the jury room or at the till. They type in the code and the PIN — both are needed, every single time, so a lost slip on its own is useless.",
+    say: "The juror scans the QR code on their sheet, in the jury room or at the till. They type in the code and the PIN — both are needed, every single time, so a mislaid sheet on its own is useless.",
     screen: () => (
       <div className="mx-auto max-w-md rounded-2xl border border-border bg-card p-5 shadow-sm">
         <p className="text-xs font-black uppercase tracking-widest text-muted-foreground">
@@ -225,7 +233,49 @@ const steps: Step[] = [
       </div>
     ),
   },
+  {
+    title: "8. Security, hosting and payments",
+    who: "Café 1 systems",
+    icon: Server,
+    say: "The whole system runs on AWS cloud infrastructure in the UK/EEA, with managed patching, encryption in transit and at rest, automated backups and row-level database access control. Card payments are taken through SumUp, an FCA-authorised, PCI DSS compliant payment gateway with 3-D Secure and tokenised Apple Pay and Google Pay — Café 1 never holds card details. Voucher PINs are stored only as cryptographic hashes, admin accounts require two-factor authentication, and every voucher action is written to an immutable audit log.",
+    screen: () => (
+      <div className="mx-auto grid max-w-lg gap-2 text-sm sm:grid-cols-2">
+        <Fact icon={Server} title="AWS cloud hosting (UK/EEA)">
+          Managed patching, TLS in transit, encryption at rest, automated backups.
+        </Fact>
+        <Fact icon={Lock} title="PCI DSS compliant payments">
+          SumUp gateway, 3-D Secure/SCA, tokenised Apple &amp; Google Pay. No card data held by
+          Café 1.
+        </Fact>
+        <Fact icon={ShieldCheck} title="Access control">
+          Two-factor authentication on admin accounts, named staff logins, PINs stored hashed with
+          lock-out and rate limiting.
+        </Fact>
+        <Fact icon={FileSpreadsheet} title="Immutable audit log">
+          Every issue, opt-in, redemption and adjustment recorded against the anonymous code only.
+        </Fact>
+      </div>
+    ),
+  },
 ];
+
+function Fact({
+  icon: Icon,
+  title,
+  children,
+}: {
+  icon: typeof Ticket;
+  title: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="rounded-xl border border-border bg-card p-4">
+      <Icon className="h-5 w-5 text-primary" />
+      <p className="mt-2 font-bold">{title}</p>
+      <p className="mt-1 text-xs leading-relaxed text-muted-foreground">{children}</p>
+    </div>
+  );
+}
 
 function DemoPage() {
   const [i, setI] = useState(0);
@@ -245,8 +295,9 @@ function DemoPage() {
               The whole process, start to finish
             </h1>
             <p className="mt-3 max-w-2xl text-primary-foreground/85">
-              Seven screens showing exactly what the Jury Officer, the juror and Café 1 each see.
-              Everything below is simulated — no live voucher, order or claim is created.
+              Eight screens showing exactly what the Jury Officer, the juror and Café 1 each see,
+              from the printed juror sheet through to security and hosting. Everything below is
+              simulated — no live voucher, order or claim is created.
             </p>
           </div>
         </section>
@@ -309,8 +360,9 @@ function DemoPage() {
               Want to try it hands-on?
             </p>
             <p className="mt-1">
-              Ask Café 1 for a demonstration slip. Demo codes behave exactly like real ones but are
-              marked <strong>DEMO</strong> in every report, so nothing is ever claimed from HMCTS.
+              Ask Café 1 for a sample juror information sheet. Demo codes behave exactly like real
+              ones but are marked <strong>DEMO</strong> in every report, so nothing is ever claimed
+              from HMCTS.
             </p>
             <div className="mt-3 flex flex-wrap gap-2">
               <Link
