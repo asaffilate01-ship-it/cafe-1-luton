@@ -474,6 +474,38 @@ function KDS() {
   const [bulking, setBulking] = useState(false);
   const [chromeHidden, setChromeHidden] = useState(false);
   const [deliverooOpen, setDeliverooOpen] = useState(false);
+  // "Live" means the shop's Hub watcher checked in recently, so Deliveroo
+  // orders land here on their own and nobody needs to key anything in.
+  const [deliverooLive, setDeliverooLive] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    async function check() {
+      const { data } = await (supabase as unknown as {
+        from: (t: string) => {
+          select: (c: string) => {
+            eq: (c: string, v: string) => {
+              maybeSingle: () => Promise<{ data: { last_seen_at: string } | null }>;
+            };
+          };
+        };
+      })
+        .from("integration_status")
+        .select("last_seen_at")
+        .eq("key", "deliveroo_hub")
+        .maybeSingle();
+      if (cancelled) return;
+      const seen = data?.last_seen_at ? new Date(data.last_seen_at).getTime() : 0;
+      // The watcher checks in every minute; allow three misses before alarming.
+      setDeliverooLive(seen > Date.now() - 180_000);
+    }
+    void check();
+    const id = window.setInterval(() => void check(), 60_000);
+    return () => {
+      cancelled = true;
+      window.clearInterval(id);
+    };
+  }, []);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -640,11 +672,30 @@ function KDS() {
                 <RefreshCw className={`h-4 w-4 ${syncing ? "animate-spin" : ""}`} />
                 <span>{syncing ? "Syncing…" : "Sync SumUp POS"}</span>
               </button>
+              <span
+                className={`flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-bold ${
+                  deliverooLive
+                    ? "bg-[#00CCBC] text-black"
+                    : "bg-primary-foreground/15 text-primary-foreground"
+                }`}
+                title={
+                  deliverooLive
+                    ? "Deliveroo orders are arriving here automatically"
+                    : "The shop's Deliveroo link is not reporting in — key tickets in manually until it is back"
+                }
+              >
+                <Bike className="h-3.5 w-3.5" />
+                {deliverooLive === null
+                  ? "Deliveroo…"
+                  : deliverooLive
+                    ? "Deliveroo auto"
+                    : "Deliveroo offline"}
+              </span>
               <button
                 onClick={() => setDeliverooOpen(true)}
                 disabled={!canCompleteOrders}
                 className="flex items-center gap-1 rounded-full bg-[#00CCBC] px-3 py-1.5 text-xs font-bold text-black hover:opacity-90 disabled:opacity-40"
-                title="Key in an order from the Deliveroo tablet so it shows on this display"
+                title="Fallback only — key in a Deliveroo ticket by hand if the auto-link is offline"
               >
                 <Bike className="h-4 w-4" />
                 <span>Add Deliveroo</span>

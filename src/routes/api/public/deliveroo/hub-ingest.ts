@@ -1,6 +1,11 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { extractHubOrders } from "@/lib/deliveroo-hub";
-import { bridgeSecretMatches, ingestDeliverooOrder, readBridgeSecret } from "@/lib/deliveroo-ingest.server";
+import {
+  bridgeSecretMatches,
+  ingestDeliverooOrder,
+  readBridgeSecret,
+  recordIntegrationHeartbeat,
+} from "@/lib/deliveroo-ingest.server";
 
 /**
  * Ingest orders observed in Deliveroo Restaurant Hub.
@@ -29,6 +34,10 @@ export const Route = createFileRoute("/api/public/deliveroo/hub-ingest")({
         const raw = await request.text();
         if (!raw.trim()) return Response.json({ error: "Empty payload" }, { status: 400 });
         if (raw.length > 400_000) return Response.json({ error: "Payload too large" }, { status: 413 });
+
+        // Every authenticated call proves the shop watcher is alive, even the
+        // quiet ones that carry no orders.
+        await recordIntegrationHeartbeat("deliveroo_hub", "Restaurant Hub watcher connected");
 
         let payload: unknown;
         try {

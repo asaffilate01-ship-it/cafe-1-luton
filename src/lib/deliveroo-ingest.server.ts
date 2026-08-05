@@ -18,6 +18,36 @@ export type IngestOrder = {
 export type IngestResult = { order_id: string; reference: string; duplicate: boolean };
 
 /**
+ * Record that a bridge is alive. The kitchen display reads this so staff can
+ * see at a glance that Deliveroo orders are arriving on their own, rather
+ * than discovering a dead link only when a ticket never appears.
+ */
+export async function recordIntegrationHeartbeat(key: string, detail: string): Promise<void> {
+  try {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    await (supabaseAdmin as unknown as {
+      from: (t: string) => {
+        upsert: (v: Record<string, unknown>, o: { onConflict: string }) => Promise<unknown>;
+      };
+    })
+      .from("integration_status")
+      .upsert(
+        {
+          key,
+          healthy: true,
+          detail,
+          last_seen_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        },
+        { onConflict: "key" },
+      );
+  } catch (err) {
+    // A missed heartbeat must never block an order reaching the kitchen.
+    console.error("heartbeat failed", key, (err as Error).message);
+  }
+}
+
+/**
  * Compare a caller-supplied secret against the configured one without
  * leaking length information through early exit.
  */
