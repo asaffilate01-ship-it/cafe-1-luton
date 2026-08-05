@@ -770,7 +770,7 @@ function KDS() {
       )}
       <ManualOrderDialog open={manualOpen} onClose={() => setManualOpen(false)} />
       {chromeHidden ? (
-        <div className="sticky top-0 z-30 flex items-center justify-between gap-2 border-b border-border bg-primary px-3 py-1 text-primary-foreground">
+        <div className="sticky top-0 z-30 flex flex-wrap items-center justify-between gap-x-3 gap-y-1 border-b border-border bg-primary px-3 py-1.5 text-primary-foreground">
           <span className="text-xs font-bold uppercase tracking-wide opacity-90">
             {visibleTickets.length} active · {station}
           </span>
@@ -780,7 +780,7 @@ function KDS() {
               <WifiOff className="h-3.5 w-3.5" /> Offline
             </span>
           )}
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <button
               onClick={() => setAll("preparing", "ready")}
               disabled={
