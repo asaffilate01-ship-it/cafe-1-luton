@@ -46,6 +46,28 @@
 import fs from "node:fs";
 import path from "node:path";
 import readline from "node:readline";
+import { fileURLToPath } from "node:url";
+
+/**
+ * Read settings from deliveroo-hub-watcher.env sitting next to this file, so
+ * running the watcher by hand (for example with --login) behaves the same as
+ * the scheduled task. Anything already in the environment wins.
+ */
+function loadEnvFile() {
+  const here = path.dirname(fileURLToPath(import.meta.url));
+  const file = path.join(here, "deliveroo-hub-watcher.env");
+  if (!fs.existsSync(file)) return;
+  for (const raw of fs.readFileSync(file, "utf8").split(/\r?\n/)) {
+    const line = raw.trim();
+    if (!line || line.startsWith("#")) continue;
+    const eq = line.indexOf("=");
+    if (eq < 1) continue;
+    const key = line.slice(0, eq).trim();
+    const value = line.slice(eq + 1).trim().replace(/^["']|["']$/g, "");
+    if (!process.env[key]) process.env[key] = value;
+  }
+}
+loadEnvFile();
 
 const LOGIN = process.argv.includes("--login");
 const BASE = (process.env.CAFE1_URL || "https://cafe1stalbans.co.uk").replace(/\/$/, "");
