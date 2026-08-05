@@ -880,6 +880,17 @@ function KDS() {
             >
               Mark all complete
             </button>
+            <button
+              onClick={() => setRecall((v) => !v)}
+              className={`rounded-full px-3 py-1.5 text-xs font-bold ${
+                recall
+                  ? "bg-primary-foreground text-primary"
+                  : "bg-primary-foreground/15 text-primary-foreground hover:bg-primary-foreground/25"
+              }`}
+              title="Pull the last 15 orders of today back onto the board so you can reopen a mistake"
+            >
+              {recall ? "Hide recalled orders" : "Recall last 15"}
+            </button>
             <span className="mx-1 h-4 w-px bg-primary-foreground/30" />
             <div className="flex items-center gap-1" aria-label="Kitchen station filter">
               {STATIONS.map((value) => (
