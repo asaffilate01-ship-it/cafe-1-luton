@@ -287,7 +287,7 @@ function Checkout() {
   }>(null);
   const [beverageIds, setBeverageIds] = useState<string[]>([]);
   const [voucherBusy, setVoucherBusy] = useState(false);
-  const [juryRoom, setJuryRoom] = useState("");
+  const [juryRoom, setJuryRoom] = useState(ctx?.jury_room ?? "");
   const [voucherError, setVoucherError] = useState<string | null>(null);
   async function applyVoucher() {
     const code = voucherInput.trim().toUpperCase();

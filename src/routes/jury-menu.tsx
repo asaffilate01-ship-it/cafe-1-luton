@@ -39,9 +39,18 @@ export const Route = createFileRoute("/jury-menu")({
 });
 
 const ROOMS = [
-  { id: "crown", label: "Jury Lounge — St Albans Crown Court", venue: JUROR_DELIVERY_VENUES[0] },
   {
-    id: "magistrates",
+    id: "crown-lounge",
+    label: "Main Jury Lounge — St Albans Crown Court",
+    venue: JUROR_DELIVERY_VENUES[0],
+  },
+  {
+    id: "crown-rooms",
+    label: "Jury Rooms — St Albans Crown Court",
+    venue: JUROR_DELIVERY_VENUES[0],
+  },
+  {
+    id: "magistrates-rooms",
     label: "Jury Rooms — St Albans Magistrates' Court",
     venue: JUROR_DELIVERY_VENUES[1],
   },
@@ -98,6 +107,7 @@ function JuryMenuPage() {
       mode: "delivery",
       schedule_mode: "asap",
       postcode: room.venue.postcode,
+      jury_room: room.label,
     });
     toast.success(`Delivery to the ${room.label}`);
   }
