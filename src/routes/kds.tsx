@@ -226,6 +226,10 @@ function KDS() {
   // was what made "mark ready" feel sluggish. Cache for a few minutes.
   const menuCache = useRef<{ at: number; menu: unknown; cats: unknown } | null>(null);
   const [kdsPaper, setKdsPaper] = useState<58 | 80>(80);
+  // "Recall" pulls the last 15 orders of today back onto the board (any
+  // status) so a mis-tapped ready/complete can be reversed — and so the
+  // colour scheme can be checked against real tickets.
+  const [recall, setRecall] = useState(false);
   const update = useServerFn(updateOrderStatus);
   const setFulfil = useServerFn(setOrderFulfilment);
   const sync = useServerFn(syncSumupPos);
@@ -260,15 +264,29 @@ function KDS() {
 
   useEffect(() => {
     async function load() {
+      const COLUMNS =
+        "id, order_number, status, type, customer_name, created_at, schedule_mode, scheduled_for, table_number, source, payment_method, payment_status, customer_phone, company_name, address_line1, address_line2, city, postcode, delivery_notes, pos_terminal, jury_room";
       const { data: orders } = await supabase
         .from("orders")
-        .select(
-          "id, order_number, status, type, customer_name, created_at, schedule_mode, scheduled_for, table_number, source, payment_method, payment_status, customer_phone, company_name, address_line1, address_line2, city, postcode, delivery_notes, pos_terminal, jury_room",
-        )
+        .select(COLUMNS)
         .in("status", ["preparing", "ready"])
         .order("created_at");
+      let rows = (orders ?? []) as Order[];
+      if (recall) {
+        const dayStart = new Date();
+        dayStart.setHours(0, 0, 0, 0);
+        const { data: recent } = await supabase
+          .from("orders")
+          .select(COLUMNS)
+          .gte("created_at", dayStart.toISOString())
+          .in("status", ["paid", "preparing", "ready", "out_for_delivery", "delivered", "completed"])
+          .order("created_at", { ascending: false })
+          .limit(15);
+        const seen = new Set(rows.map((o) => o.id));
+        rows = rows.concat(((recent ?? []) as Order[]).filter((o) => !seen.has(o.id)));
+      }
       // Cancelled / refunded orders must never sit on the kitchen display.
-      const live = ((orders ?? []) as Order[]).filter(
+      const live = rows.filter(
         (o) =>
           o.payment_status !== "refunded" &&
           o.payment_status !== "failed" &&
@@ -466,7 +484,7 @@ function KDS() {
       if (timer) window.clearTimeout(timer);
       supabase.removeChannel(ch);
     };
-  }, [getMenuItems]);
+  }, [getMenuItems, recall]);
 
   // Auto-poll SumUp POS every 30s while KDS is open (staff/admin only)
   useEffect(() => {
@@ -519,16 +537,29 @@ function KDS() {
     }
   }
 
-  async function set(id: string, status: "preparing" | "ready" | "completed") {
+  type KdsStatus = "paid" | "preparing" | "ready" | "completed";
+
+  async function set(id: string, status: KdsStatus, opts?: { undoTo?: KdsStatus }) {
     // Paint the change straight away; the realtime refetch reconciles after.
     const previous = tickets;
     setTickets((prev) =>
-      status === "completed"
+      status === "completed" && !recall
         ? prev.filter((t) => t.id !== id)
         : prev.map((t) => (t.id === id ? { ...t, status } : t)),
     );
     try {
       await update({ data: { order_id: id, status } });
+      if (opts?.undoTo) {
+        const back = opts.undoTo;
+        const ticket = previous.find((t) => t.id === id);
+        toast.success(`#${ticket?.order_number ?? ""} marked ${status.replace("_", " ")}`, {
+          duration: 12000,
+          action: {
+            label: "Undo",
+            onClick: () => void set(id, back),
+          },
+        });
+      }
     } catch (e) {
       setTickets(previous);
       toast.error(e instanceof Error ? e.message : "Failed");
@@ -849,6 +880,17 @@ function KDS() {
             >
               Mark all complete
             </button>
+            <button
+              onClick={() => setRecall((v) => !v)}
+              className={`rounded-full px-3 py-1.5 text-xs font-bold ${
+                recall
+                  ? "bg-primary-foreground text-primary"
+                  : "bg-primary-foreground/15 text-primary-foreground hover:bg-primary-foreground/25"
+              }`}
+              title="Pull the last 15 orders of today back onto the board so you can reopen a mistake"
+            >
+              {recall ? "Hide recalled orders" : "Recall last 15"}
+            </button>
             <span className="mx-1 h-4 w-px bg-primary-foreground/30" />
             <div className="flex items-center gap-1" aria-label="Kitchen station filter">
               {STATIONS.map((value) => (
@@ -1000,6 +1042,11 @@ function KDS() {
               <p className="mt-1.5 text-xs font-black uppercase tracking-wide text-foreground">
                 {t.customer_name}
               </p>
+              {t.status !== "preparing" && t.status !== "ready" && (
+                <p className="mt-1.5 rounded-lg bg-slate-200 px-2 py-1 text-center text-[10px] font-black uppercase tracking-widest text-slate-700">
+                  Recalled · {t.status.replace(/_/g, " ")}
+                </p>
+              )}
               {t.pos_terminal && (
                 <p
                   className={`mt-1.5 rounded-lg px-2 py-1 text-center font-display text-sm font-black uppercase tracking-wide ${channel.chip}`}
@@ -1093,20 +1140,42 @@ function KDS() {
               <div className="mt-2 flex gap-1.5">
                 {canCompleteOrders && t.status === "preparing" && (
                   <button
-                    onClick={() => set(t.id, "ready")}
+                    onClick={() => set(t.id, "ready", { undoTo: "preparing" })}
                     className={`h-8 flex-1 rounded-full text-xs font-bold ${cook ? "bg-blue-600 text-white hover:bg-blue-700" : "bg-amber-400 text-amber-950 hover:bg-amber-500"}`}
                   >
                     Mark ready
                   </button>
                 )}
                 {canCompleteOrders && t.status === "ready" && (
-                  <button
-                    onClick={() => set(t.id, "completed")}
-                    className="h-8 flex-1 rounded-full bg-emerald-600 text-xs font-semibold text-white hover:bg-emerald-700"
-                  >
-                    Mark complete
-                  </button>
+                  <>
+                    <button
+                      onClick={() => set(t.id, "completed", { undoTo: "ready" })}
+                      className="h-8 flex-1 rounded-full bg-emerald-600 text-xs font-semibold text-white hover:bg-emerald-700"
+                    >
+                      Mark complete
+                    </button>
+                    <button
+                      onClick={() => set(t.id, "preparing")}
+                      className="h-8 rounded-full border border-border px-3 text-xs font-semibold hover:border-primary hover:text-primary"
+                      title="Sent to ready by mistake — put it back in preparing"
+                    >
+                      ↩ Undo ready
+                    </button>
+                  </>
                 )}
+                {canCompleteOrders &&
+                  (t.status === "completed" ||
+                    t.status === "delivered" ||
+                    t.status === "out_for_delivery" ||
+                    t.status === "paid") && (
+                    <button
+                      onClick={() => set(t.id, "preparing")}
+                      className="h-8 flex-1 rounded-full bg-amber-500 text-xs font-bold text-white hover:bg-amber-600"
+                      title="Reopen this ticket back into the kitchen"
+                    >
+                      ↩ Reopen ticket
+                    </button>
+                  )}
                 <a
                   href={`/print/${t.id}?paper=${kdsPaper}&preview=1`}
                   target="_blank"
