@@ -42,7 +42,7 @@ export function ManualOrderDialog({
   const [customerName, setCustomerName] = useState("");
   const [type, setType] = useState<"delivery" | "collection" | "dine_in">("collection");
   const [table, setTable] = useState("");
-  const [juryRoom, setJuryRoom] = useState(JURY_DELIVERY_ROOMS[0].label);
+  const [juryRoom, setJuryRoom] = useState<string>(JURY_DELIVERY_ROOMS[0].label);
   const [company, setCompany] = useState("");
   const [address1, setAddress1] = useState("");
   const [address2, setAddress2] = useState("");
