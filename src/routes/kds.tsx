@@ -547,6 +547,7 @@ function KDS() {
   return (
     <div className="min-h-screen bg-secondary">
       {!chromeHidden && <AdminNav />}
+      <DeliverooTicketDialog open={deliverooOpen} onClose={() => setDeliverooOpen(false)} />
       {chromeHidden ? (
         <div className="sticky top-0 z-30 flex items-center justify-between gap-2 border-b border-border bg-primary px-3 py-1 text-primary-foreground">
           <span className="text-xs font-bold uppercase tracking-wide opacity-90">
