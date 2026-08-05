@@ -763,6 +763,7 @@ function KDS() {
   );
 
   const visibleTickets = tickets
+    .filter((ticket) => matchesFeed(feed, ticket))
     .map((ticket) => ({
       ...ticket,
       items:
