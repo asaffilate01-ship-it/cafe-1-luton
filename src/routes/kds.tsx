@@ -180,6 +180,31 @@ function channelOf(t: { source: string | null; pos_terminal: string | null }): C
   return "web";
 }
 const STATIONS = ["ALL", "HOT", "SANDWICH", "DRINKS", "PASS"] as const;
+
+/**
+ * Phone/tablet feed filter. "delivery" covers anything going out the door —
+ * our own delivery orders plus the delivery-partner channels.
+ */
+type FeedKey = "all" | "jury" | "public" | "delivery" | "web";
+function matchesFeed(
+  feed: FeedKey,
+  t: { source: string | null; pos_terminal: string | null; type: string },
+): boolean {
+  if (feed === "all") return true;
+  const channel = channelOf(t);
+  if (feed === "delivery") {
+    return (
+      t.type === "delivery" ||
+      channel === "deliveroo" ||
+      channel === "just_eat" ||
+      channel === "uber_eats" ||
+      channel === "tgtg"
+    );
+  }
+  if (feed === "jury") return channel === "jury" || channel === "judge";
+  if (feed === "public") return channel === "public";
+  return channel === "web";
+}
 type Station = (typeof STATIONS)[number];
 
 /**
