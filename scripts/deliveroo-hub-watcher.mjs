@@ -15,6 +15,15 @@
  *
  * Setup (once, on any always-on shop PC):
  *   npm install playwright && npx playwright install chromium
+ *
+ * Preferred — give it the device/tablet Hub account so it signs itself in and
+ * recovers on its own if Hub ever logs it out. Use an account that is NOT the
+ * one staff use day to day: Hub ends the older session when the same account
+ * signs in somewhere else, so a shared account would keep kicking people out.
+ *   HUB_EMAIL=... HUB_PASSWORD=... DELIVEROO_BRIDGE_SECRET=xxx \
+ *     node scripts/deliveroo-hub-watcher.mjs
+ *
+ * Fallback — sign in by hand once, if the account uses 2FA or an email link:
  *   DELIVEROO_BRIDGE_SECRET=xxx node scripts/deliveroo-hub-watcher.mjs --login
  *     ^ opens a window; sign into Hub by hand, then press Enter here.
  *       The session is saved so later runs start signed in.
@@ -25,6 +34,8 @@
  * Optional env:
  *   CAFE1_URL      target site (default https://cafe1stalbans.co.uk)
  *   HUB_URL        Hub orders page (default https://restaurant-hub.deliveroo.net/orders)
+ *   HUB_EMAIL      device account username/email for unattended sign-in
+ *   HUB_PASSWORD   device account password (keep it in the machine's env, not here)
  *   SESSION_FILE   where the signed-in session is stored
  *   REFRESH_MS     how often to re-check when Hub is quiet (default 45000)
  */
@@ -38,6 +49,8 @@ const HUB_URL = process.env.HUB_URL || "https://restaurant-hub.deliveroo.net/ord
 const SECRET = process.env.DELIVEROO_BRIDGE_SECRET;
 const SESSION_FILE = path.resolve(process.env.SESSION_FILE || "./.deliveroo-hub-session.json");
 const REFRESH_MS = Number(process.env.REFRESH_MS || 45000);
+const HUB_EMAIL = process.env.HUB_EMAIL;
+const HUB_PASSWORD = process.env.HUB_PASSWORD;
 const ENDPOINT = `${BASE}/api/public/deliveroo/hub-ingest`;
 
 if (!SECRET) {
@@ -106,10 +119,53 @@ if (LOGIN) {
   process.exit(0);
 }
 
-if (!fs.existsSync(SESSION_FILE)) {
-  console.error("No saved session. Run once with --login first.");
-  await browser.close();
-  process.exit(1);
+/** Hub bounces signed-out visitors to a login screen; detect that either way. */
+async function isSignedOut() {
+  if (/login|sign[-_]?in|auth/i.test(page.url())) return true;
+  return await page
+    .locator('input[type="password"]')
+    .first()
+    .isVisible()
+    .catch(() => false);
+}
+
+/** Sign in with the device account. Returns false if it did not take. */
+async function signIn() {
+  if (!HUB_EMAIL || !HUB_PASSWORD) return false;
+  console.log("\n[hub] signing in with the device account…");
+  try {
+    const email = page.locator('input[type="email"], input[name*="email" i], input[name*="user" i]').first();
+    await email.waitFor({ state: "visible", timeout: 20000 });
+    await email.fill(HUB_EMAIL);
+    const pw = page.locator('input[type="password"]').first();
+    await pw.fill(HUB_PASSWORD);
+    await pw.press("Enter");
+    await page.waitForLoadState("networkidle", { timeout: 30000 }).catch(() => {});
+    if (await isSignedOut()) {
+      console.error("[hub] sign-in did not complete — the account may need 2FA. Use --login once instead.");
+      return false;
+    }
+    await page.goto(HUB_URL, { waitUntil: "domcontentloaded" }).catch(() => {});
+    await context.storageState({ path: SESSION_FILE }).catch(() => {});
+    console.log("[hub] signed in; session saved.");
+    return true;
+  } catch (err) {
+    console.error("[hub] sign-in failed:", err.message);
+    return false;
+  }
+}
+
+if (await isSignedOut()) {
+  const ok = await signIn();
+  if (!ok) {
+    console.error(
+      fs.existsSync(SESSION_FILE)
+        ? "Saved session has expired. Set HUB_EMAIL/HUB_PASSWORD, or re-run with --login."
+        : "No saved session. Set HUB_EMAIL/HUB_PASSWORD, or run once with --login."
+    );
+    await browser.close();
+    process.exit(1);
+  }
 }
 
 console.log(`[hub] watching ${HUB_URL} -> ${ENDPOINT}`);
@@ -117,8 +173,22 @@ console.log("[hub] the tablet keeps working as normal; this only mirrors orders 
 
 // Hub pushes new orders over its own live connection, but reload periodically
 // so a dropped connection or an expired session can never silently stall.
-setInterval(() => {
-  page.reload({ waitUntil: "domcontentloaded" }).catch((err) => console.error("[hub] reload failed:", err.message));
+let recovering = false;
+setInterval(async () => {
+  if (recovering) return;
+  try {
+    await page.reload({ waitUntil: "domcontentloaded" });
+    // Hub can end the session at any time; sign straight back in unattended.
+    if (await isSignedOut()) {
+      recovering = true;
+      console.warn("\n[hub] session ended — reconnecting…");
+      if (!(await signIn())) console.error("[hub] still signed out; will retry on the next cycle.");
+      recovering = false;
+    }
+  } catch (err) {
+    recovering = false;
+    console.error("[hub] reload failed:", err.message);
+  }
 }, REFRESH_MS);
 
 const shutdown = async () => {
