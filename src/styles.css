@@ -175,6 +175,12 @@
     font-family: var(--font-display);
     letter-spacing: -0.01em;
   }
+  /* Urdu script mode on the kitchen display (transliterated English words) */
+  .font-urdu {
+    font-family: "Noto Nastaliq Urdu", "Jameel Noori Nastaleeq", "Noto Naskh Arabic", serif;
+    line-height: 2;
+    letter-spacing: 0;
+  }
   /* Better tap targets & no double-tap zoom on interactive controls */
   button,
   a,
