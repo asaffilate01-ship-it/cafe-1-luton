@@ -22,6 +22,7 @@ import {
   Bike,
   WifiOff,
   Wifi,
+  Plus,
 } from "lucide-react";
 import { ManualOrderDialog } from "@/components/manual-order-dialog";
 import { useWakeLock } from "@/hooks/use-wake-lock";
