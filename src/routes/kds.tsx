@@ -23,6 +23,8 @@ import {
   WifiOff,
   Wifi,
   Plus,
+  Printer,
+  Settings2,
 } from "lucide-react";
 import { ManualOrderDialog } from "@/components/manual-order-dialog";
 import { InstallAppButton } from "@/components/install-app-button";
