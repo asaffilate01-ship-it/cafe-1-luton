@@ -226,6 +226,10 @@ function KDS() {
   // was what made "mark ready" feel sluggish. Cache for a few minutes.
   const menuCache = useRef<{ at: number; menu: unknown; cats: unknown } | null>(null);
   const [kdsPaper, setKdsPaper] = useState<58 | 80>(80);
+  // "Recall" pulls the last 15 orders of today back onto the board (any
+  // status) so a mis-tapped ready/complete can be reversed — and so the
+  // colour scheme can be checked against real tickets.
+  const [recall, setRecall] = useState(false);
   const update = useServerFn(updateOrderStatus);
   const setFulfil = useServerFn(setOrderFulfilment);
   const sync = useServerFn(syncSumupPos);
