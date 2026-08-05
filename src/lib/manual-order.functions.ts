@@ -99,7 +99,6 @@ export const createManualOrder = createServerFn({ method: "POST" })
 
     const units = data.items.reduce((sum, line) => sum + line.qty, 0);
     const total = data.total_cents;
-    const onAccount = data.payment_method === "account" && !data.paid;
 
     const { data: inserted, error } = await supabaseAdmin
       .from("orders")
