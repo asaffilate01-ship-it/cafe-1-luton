@@ -146,7 +146,7 @@ function JuryMenuPage() {
                 {busy ? "Checking…" : "Open the Jury Only menu"}
               </button>
             </form>
-            <p className="mt-5 text-xs text-muted-foreground">
+            <div className="mt-5">
               <button
                 type="button"
                 onClick={() => {
@@ -162,7 +162,7 @@ function JuryMenuPage() {
               >
                 I haven't opted in — open the menu and I'll just pay
               </button>
-            </p>
+            </div>
             <p className="mt-4 text-center text-xs text-muted-foreground">
               Every juror can order from this menu. Without the voucher scheme there's no daily
               allowance and no 10% food discount — you simply pay by card, Apple/Google Pay or cash.{" "}
