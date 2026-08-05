@@ -63,6 +63,7 @@ function MenuPage() {
   const { juror: jurorParam } = Route.useSearch();
   const ctx = useOrderContext();
   const [gateOpen, setGateOpen] = useState(false);
+  const jurySessionActive = useJurySession();
   useEffect(() => {
     if (!ctx) setGateOpen(true);
   }, [ctx]);
