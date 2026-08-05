@@ -987,6 +987,52 @@ function KDS() {
               </details>
               </div>
             </div>
+            {/* Phone / tablet: compact pill row — Deliveroo health + key in an order */}
+            <div className="col-span-2 -mx-0.5 flex items-center gap-2 overflow-x-auto pb-0.5 lg:hidden [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+              <button
+                type="button"
+                onClick={() => setManualOpen(true)}
+                disabled={!canCompleteOrders}
+                className="flex shrink-0 items-center gap-1.5 rounded-full bg-primary-foreground px-3 py-2 text-xs font-bold text-primary shadow-sm active:scale-[0.97] disabled:opacity-40"
+                aria-label="Add a manual order"
+              >
+                <Plus className="h-4 w-4" /> Add order
+              </button>
+              <span
+                role="status"
+                aria-live="polite"
+                className={`flex shrink-0 items-center gap-1.5 rounded-full px-3 py-2 text-xs font-bold ${
+                  deliverooLive === null
+                    ? "bg-primary-foreground/15 text-primary-foreground"
+                    : deliverooLive
+                      ? "bg-[#00CCBC] text-black"
+                      : "bg-red-600 text-white"
+                }`}
+              >
+                <span
+                  className={`h-2 w-2 rounded-full ${
+                    deliverooLive === null
+                      ? "bg-primary-foreground/60"
+                      : deliverooLive
+                        ? "animate-pulse bg-black/70"
+                        : "bg-white"
+                  }`}
+                />
+                <Bike className="h-4 w-4" />
+                {deliverooLive === null
+                  ? "Deliveroo…"
+                  : deliverooLive
+                    ? "Deliveroo online"
+                    : "Deliveroo offline"}
+              </span>
+              {deliverooLive === false ? (
+                <span className="shrink-0 rounded-full bg-primary-foreground/15 px-3 py-2 text-[11px] font-semibold text-primary-foreground">
+                  {deliverooSeenAt
+                    ? `Last seen ${Math.max(1, Math.round((now - deliverooSeenAt) / 60000))} min ago — key tickets in by hand`
+                    : "Watcher never checked in — key tickets in by hand"}
+                </span>
+              ) : null}
+            </div>
           </div>
           <div className="mx-auto hidden max-w-[110rem] flex-wrap items-center gap-2 px-3 pb-3 text-xs font-semibold sm:gap-3 sm:px-4 lg:flex">
             <button
