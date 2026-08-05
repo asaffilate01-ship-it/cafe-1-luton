@@ -26,7 +26,7 @@ import { useWakeLock } from "@/hooks/use-wake-lock";
 import { syncSumupPos } from "@/lib/sumup-pos.functions";
 import { orderCode } from "@/lib/order-code";
 import { getStaffMenuItems } from "@/lib/menu-operations.functions";
-import { fuzzyMenuKey, guessCategory, looksCooked } from "@/lib/cooking";
+import { fuzzyMenuKey, guessCategory, looksCooked, usefulLabel } from "@/lib/cooking";
 
 type Item = {
   id: string;
