@@ -68,6 +68,7 @@ type Order = {
 };
 type Ticket = Order & { items: Item[]; needsCooking: boolean };
 
+
 const TYPE_LABEL: Record<string, string> = {
   dine_in: "DINE IN",
   collection: "PICKUP",
