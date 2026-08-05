@@ -1124,20 +1124,42 @@ function KDS() {
               <div className="mt-2 flex gap-1.5">
                 {canCompleteOrders && t.status === "preparing" && (
                   <button
-                    onClick={() => set(t.id, "ready")}
+                    onClick={() => set(t.id, "ready", { undoTo: "preparing" })}
                     className={`h-8 flex-1 rounded-full text-xs font-bold ${cook ? "bg-blue-600 text-white hover:bg-blue-700" : "bg-amber-400 text-amber-950 hover:bg-amber-500"}`}
                   >
                     Mark ready
                   </button>
                 )}
                 {canCompleteOrders && t.status === "ready" && (
-                  <button
-                    onClick={() => set(t.id, "completed")}
-                    className="h-8 flex-1 rounded-full bg-emerald-600 text-xs font-semibold text-white hover:bg-emerald-700"
-                  >
-                    Mark complete
-                  </button>
+                  <>
+                    <button
+                      onClick={() => set(t.id, "completed", { undoTo: "ready" })}
+                      className="h-8 flex-1 rounded-full bg-emerald-600 text-xs font-semibold text-white hover:bg-emerald-700"
+                    >
+                      Mark complete
+                    </button>
+                    <button
+                      onClick={() => set(t.id, "preparing")}
+                      className="h-8 rounded-full border border-border px-3 text-xs font-semibold hover:border-primary hover:text-primary"
+                      title="Sent to ready by mistake — put it back in preparing"
+                    >
+                      ↩ Undo ready
+                    </button>
+                  </>
                 )}
+                {canCompleteOrders &&
+                  (t.status === "completed" ||
+                    t.status === "delivered" ||
+                    t.status === "out_for_delivery" ||
+                    t.status === "paid") && (
+                    <button
+                      onClick={() => set(t.id, "preparing")}
+                      className="h-8 flex-1 rounded-full bg-amber-500 text-xs font-bold text-white hover:bg-amber-600"
+                      title="Reopen this ticket back into the kitchen"
+                    >
+                      ↩ Reopen ticket
+                    </button>
+                  )}
                 <a
                   href={`/print/${t.id}?paper=${kdsPaper}&preview=1`}
                   target="_blank"
