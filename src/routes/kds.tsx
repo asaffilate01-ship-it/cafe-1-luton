@@ -569,6 +569,8 @@ function KDS() {
     let inFlight = false;
     let queued = false;
     let timer: number | undefined;
+    let retry: number | undefined;
+    let cancelled = false;
     async function run() {
       if (inFlight) {
         queued = true;
@@ -577,6 +579,15 @@ function KDS() {
       inFlight = true;
       try {
         await load();
+        if (!cancelled) setFeedStale(false);
+      } catch {
+        // Keep whatever is already on screen and try again shortly. Blanking
+        // the board on a wifi blip is what made orders "disappear".
+        if (!cancelled) {
+          setFeedStale(true);
+          if (retry) window.clearTimeout(retry);
+          retry = window.setTimeout(() => void run(), 3000);
+        }
       } finally {
         inFlight = false;
         if (queued) {
@@ -647,7 +658,9 @@ function KDS() {
     };
     document.addEventListener("visibilitychange", onVisible);
     return () => {
+      cancelled = true;
       if (timer) window.clearTimeout(timer);
+      if (retry) window.clearTimeout(retry);
       window.clearInterval(poll);
       document.removeEventListener("visibilitychange", onVisible);
       supabase.removeChannel(ch);
