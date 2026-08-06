@@ -5,7 +5,7 @@ import { signOutAndRedirect } from "@/lib/sign-out";
 import { useEffect, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useServerFn } from "@tanstack/react-start";
-import { updateOrderStatus, setOrderFulfilment } from "@/lib/orders.functions";
+import { updateOrderStatus, setOrderFulfilment, setOrderChannel } from "@/lib/orders.functions";
 import { toast } from "sonner";
 import { useSession, useRoles } from "@/hooks/use-auth";
 import { useAlertOnIncrease, useNotificationPermission, playChime } from "@/hooks/use-order-alerts";
@@ -31,6 +31,7 @@ import {
   Settings2,
   LayoutGrid,
   MoreHorizontal,
+  Shuffle,
   X,
 } from "lucide-react";
 import { ManualOrderDialog } from "@/components/manual-order-dialog";
@@ -182,6 +183,34 @@ function channelOf(t: { source: string | null; pos_terminal: string | null }): C
 }
 const STATIONS = ["ALL", "HOT", "SANDWICH", "DRINKS", "PASS"] as const;
 
+/** Areas a ticket can be moved to by hand from the card. */
+const REASSIGN_CHANNELS: ChannelKey[] = [
+  "public",
+  "jury",
+  "judge",
+  "web",
+  "deliveroo",
+  "just_eat",
+  "uber_eats",
+  "tgtg",
+];
+
+/**
+ * Local mirror of what cafe1_reassign_order_channel writes, so a moved card
+ * recolours immediately instead of waiting for the round trip.
+ */
+function channelFields(
+  next: ChannelKey,
+  currentSource: string | null,
+): { source: string; pos_terminal: string | null } {
+  if (next === "jury" || next === "judge" || next === "public") {
+    const src = (currentSource ?? "").toLowerCase();
+    const keepTill = src === "sumup_pos" || src === "counter" || src === "till";
+    return { source: keepTill ? src : "counter", pos_terminal: next };
+  }
+  return { source: next, pos_terminal: null };
+}
+
 /**
  * Phone/tablet feed filter. "delivery" covers anything going out the door —
  * our own delivery orders plus the delivery-partner channels.
@@ -329,6 +358,9 @@ function KDS() {
   const [recall, setRecall] = useState(false);
   const update = useServerFn(updateOrderStatus);
   const setFulfil = useServerFn(setOrderFulfilment);
+  const setChannel = useServerFn(setOrderChannel);
+  // Which ticket currently has its "move to another area" picker open.
+  const [reassignFor, setReassignFor] = useState<string | null>(null);
   const sync = useServerFn(syncSumupPos);
   const getMenuItems = useServerFn(getStaffMenuItems);
   const [syncing, setSyncing] = useState(false);
@@ -793,6 +825,26 @@ function KDS() {
     }
   }
 
+  /**
+   * Move a ticket to another area when it came in on the wrong side — e.g. a
+   * jury order rung up on the public till. Applied optimistically so the card
+   * recolours instantly, then confirmed by the server.
+   */
+  async function reassignChannel(t: Ticket, next: ChannelKey) {
+    const previous = tickets;
+    setReassignFor(null);
+    setTickets((prev) =>
+      prev.map((x) => (x.id === t.id ? { ...x, ...channelFields(next, x.source) } : x)),
+    );
+    try {
+      await setChannel({ data: { order_id: t.id, channel: next } });
+      toast.success(`#${t.order_number} moved to ${CHANNEL[next].label}`);
+    } catch (e) {
+      setTickets(previous);
+      toast.error(e instanceof Error ? e.message : "Could not move this ticket");
+    }
+  }
+
   async function markDineIn(id: string, current: string) {
     try {
       if (current === "dine_in") {
@@ -1236,6 +1288,41 @@ function KDS() {
                 className={`-mx-4 -mt-2 mb-2 px-3 py-1 text-center text-[11px] font-black uppercase tracking-[0.18em] sm:-mx-3 ${channel.chip}`}
               >
                 {channel.label}
+              </div>
+              <div className="-mt-1 mb-2">
+                <button
+                  type="button"
+                  onClick={() => setReassignFor(reassignFor === t.id ? null : t.id)}
+                  className="flex w-full items-center justify-center gap-1.5 rounded-full border border-border py-1.5 text-[11px] font-bold uppercase tracking-wide text-muted-foreground hover:border-primary hover:text-primary sm:py-1 sm:text-[10px]"
+                  aria-expanded={reassignFor === t.id}
+                  title="Move this ticket to a different area"
+                >
+                  <Shuffle className="h-3.5 w-3.5" aria-hidden="true" />
+                  Move area
+                </button>
+                {reassignFor === t.id && (
+                  <div className="mt-1.5 grid grid-cols-2 gap-1.5 rounded-xl border border-border bg-slate-50 p-2">
+                    {REASSIGN_CHANNELS.map((key) => {
+                      const target = CHANNEL[key];
+                      const current = channelOf(t) === key;
+                      return (
+                        <button
+                          key={key}
+                          type="button"
+                          disabled={current}
+                          onClick={() => reassignChannel(t, key)}
+                          className={`h-10 rounded-lg px-2 text-[11px] font-black uppercase tracking-wide sm:h-8 sm:text-[10px] ${
+                            current
+                              ? "cursor-default border border-dashed border-slate-400 bg-white text-slate-400"
+                              : `${target.chip} active:scale-[0.98]`
+                          }`}
+                        >
+                          {current ? `${target.label} ✓` : target.label}
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
               </div>
               {scheduledAt && (
                 <div className="-mx-4 -mt-2 mb-2 bg-violet-700 px-3 py-1.5 text-center text-white sm:-mx-3">

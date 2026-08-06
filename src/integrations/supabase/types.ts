@@ -2667,6 +2667,74 @@ export type Database = {
         Args: { _business_date: string; _site_id: string }
         Returns: Json
       }
+      cafe1_reassign_order_channel: {
+        Args: { _channel: string; _order_id: string }
+        Returns: {
+          abandoned_at: string | null
+          account_id: string | null
+          address_line1: string | null
+          address_line2: string | null
+          city: string | null
+          company_name: string | null
+          created_at: string
+          customer_email: string | null
+          customer_id: string | null
+          customer_name: string
+          customer_phone: string
+          delivered_at: string | null
+          deliveroo_order_id: string | null
+          delivery_fee_cents: number
+          delivery_notes: string | null
+          discount_cents: number
+          driver_id: string | null
+          guest_token: string
+          id: string
+          idempotency_key: string | null
+          inventory_posted_at: string | null
+          juror_discount_cents: number
+          jury_room: string | null
+          loyalty_awarded: boolean
+          loyalty_free_drinks_used: number
+          loyalty_stamps_pending: number
+          operator_id: string | null
+          order_number: number
+          payment_method: string
+          payment_status: Database["public"]["Enums"]["payment_status"]
+          picked_up_at: string | null
+          points_earned: number
+          pos_terminal: string | null
+          postcode: string | null
+          promo_code: string | null
+          promo_discount_cents: number
+          ready_at: string | null
+          refunded_cents: number
+          schedule_mode: string
+          scheduled_for: string | null
+          site_id: string
+          source: string
+          status: Database["public"]["Enums"]["order_status"]
+          subtotal_cents: number
+          sumup_checkout_id: string | null
+          sumup_order_ref: string | null
+          sumup_reference: string | null
+          sumup_transaction_id: string | null
+          table_number: string | null
+          till_shift_id: string | null
+          total_cents: number
+          tracking_token_hash: string | null
+          type: Database["public"]["Enums"]["order_type"]
+          updated_at: string
+          void_reason: string | null
+          voucher_cents: number
+          voucher_holder_id: string | null
+        }
+        SetofOptions: {
+          from: "*"
+          to: "orders"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       cafe1_record_stock_movement: { Args: { _payload: Json }; Returns: Json }
       cafe1_refresh_operational_alerts: {
         Args: { _site_id: string }
