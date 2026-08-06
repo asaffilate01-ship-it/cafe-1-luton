@@ -797,6 +797,26 @@ function KDS() {
     }
   }
 
+  /**
+   * Move a ticket to another area when it came in on the wrong side — e.g. a
+   * jury order rung up on the public till. Applied optimistically so the card
+   * recolours instantly, then confirmed by the server.
+   */
+  async function reassignChannel(t: Ticket, next: ChannelKey) {
+    const previous = tickets;
+    setReassignFor(null);
+    setTickets((prev) =>
+      prev.map((x) => (x.id === t.id ? { ...x, ...channelFields(next, x.source) } : x)),
+    );
+    try {
+      await setChannel({ data: { order_id: t.id, channel: next } });
+      toast.success(`#${t.order_number} moved to ${CHANNEL[next].label}`);
+    } catch (e) {
+      setTickets(previous);
+      toast.error(e instanceof Error ? e.message : "Could not move this ticket");
+    }
+  }
+
   async function markDineIn(id: string, current: string) {
     try {
       if (current === "dine_in") {
