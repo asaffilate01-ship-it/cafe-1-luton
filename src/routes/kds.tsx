@@ -183,6 +183,34 @@ function channelOf(t: { source: string | null; pos_terminal: string | null }): C
 }
 const STATIONS = ["ALL", "HOT", "SANDWICH", "DRINKS", "PASS"] as const;
 
+/** Areas a ticket can be moved to by hand from the card. */
+const REASSIGN_CHANNELS: ChannelKey[] = [
+  "public",
+  "jury",
+  "judge",
+  "web",
+  "deliveroo",
+  "just_eat",
+  "uber_eats",
+  "tgtg",
+];
+
+/**
+ * Local mirror of what cafe1_reassign_order_channel writes, so a moved card
+ * recolours immediately instead of waiting for the round trip.
+ */
+function channelFields(
+  next: ChannelKey,
+  currentSource: string | null,
+): { source: string; pos_terminal: string | null } {
+  if (next === "jury" || next === "judge" || next === "public") {
+    const src = (currentSource ?? "").toLowerCase();
+    const keepTill = src === "sumup_pos" || src === "counter" || src === "till";
+    return { source: keepTill ? src : "counter", pos_terminal: next };
+  }
+  return { source: next, pos_terminal: null };
+}
+
 /**
  * Phone/tablet feed filter. "delivery" covers anything going out the door —
  * our own delivery orders plus the delivery-partner channels.
