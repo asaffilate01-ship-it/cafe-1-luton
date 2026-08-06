@@ -118,13 +118,41 @@ function findType(order: Record<string, Json>): "delivery" | "collection" {
   return "delivery";
 }
 
-/** Anything with a reference and at least one readable item is an order. */
+/**
+ * Hub's order-list endpoints often return the order summary with the basket
+ * fetched separately, so requiring items would silently drop real orders.
+ * An object counts as an order when it has a reference plus either readable
+ * items or at least two other order-shaped fields.
+ */
+const ORDER_SIGNAL_KEYS = [
+  "status",
+  "order_status",
+  "fulfillment_type",
+  "fulfilment_type",
+  "order_type",
+  "delivery_type",
+  "total",
+  "order_total",
+  "total_price",
+  "gross_total",
+  "customer",
+  "consumer",
+  "customer_name",
+  "placed_at",
+  "created_at",
+  "prepare_for",
+  "delivery",
+  "asap",
+];
+
 function looksLikeOrder(value: Json): value is Record<string, Json> {
   if (!isObject(value)) return false;
   const ref = pick(value, ["order_number", "display_id", "friendly_id", "reference", "short_code", "id", "order_id"]);
   if (ref === undefined) return false;
   const items = pick(value, ["items", "order_items", "lines", "line_items", "products", "dishes"]);
-  return Array.isArray(items) && items.length > 0;
+  if (Array.isArray(items) && items.length > 0) return true;
+  const signals = ORDER_SIGNAL_KEYS.filter((key) => pick(value, [key]) !== undefined).length;
+  return signals >= 2;
 }
 
 /** Walk an arbitrary payload and pull out every order-shaped object. */
@@ -144,13 +172,14 @@ function findOrderObjects(payload: Json, depth = 0, found: Record<string, Json>[
 }
 
 function normaliseOrder(order: Record<string, Json>): HubOrder | null {
-  const items = findItems(order);
-  if (!items.length) return null;
-
+  const found = findItems(order);
   const reference =
     asString(pick(order, ["order_number", "display_id", "friendly_id", "reference", "short_code", "order_id", "id"])) ??
     null;
   if (!reference) return null;
+  // A ticket with a placeholder line still reaches the kitchen; a dropped
+  // order does not. Hub often lists the basket on a separate call.
+  const items = found.length ? found : [{ name: "Deliveroo order", qty: 1, notes: null }];
 
   const customer = pick(order, ["customer", "consumer", "customer_name", "recipient"]);
   const total = pick(order, ["total", "order_total", "total_price", "gross_total", "amount", "price"]);
