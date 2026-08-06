@@ -645,6 +645,8 @@ function KDS() {
         ? prev.filter((t) => t.id !== id)
         : prev.map((t) => (t.id === id ? { ...t, status } : t)),
     );
+    if (status === "completed" && !recall) clearedIds.current.set(id, Date.now());
+    else clearedIds.current.delete(id);
     try {
       await update({ data: { order_id: id, status } });
       if (opts?.undoTo) {
@@ -660,6 +662,7 @@ function KDS() {
       }
     } catch (e) {
       setTickets(previous);
+      clearedIds.current.delete(id);
       toast.error(e instanceof Error ? e.message : "Failed");
     }
   }
@@ -750,11 +753,13 @@ function KDS() {
         ? prev.filter((t) => !ids.includes(t.id))
         : prev.map((t) => (ids.includes(t.id) ? { ...t, status } : t)),
     );
+    if (status === "completed") for (const id of ids) clearedIds.current.set(id, Date.now());
     try {
       await Promise.all(ids.map((id) => update({ data: { order_id: id, status } })));
       toast.success(`${ids.length} marked ${status}`);
     } catch (e) {
       setTickets(previous);
+      for (const id of ids) clearedIds.current.delete(id);
       toast.error(e instanceof Error ? e.message : "Failed");
     } finally {
       setBulking(false);
