@@ -859,15 +859,23 @@ function KDS() {
   async function reassignChannel(t: Ticket, next: ChannelKey) {
     const previous = tickets;
     setReassignFor(null);
+    setMoveState((s) => ({ ...s, [t.id]: "saving" }));
     setTickets((prev) =>
       prev.map((x) => (x.id === t.id ? { ...x, ...channelFields(next, x.source) } : x)),
     );
     try {
       await setChannel({ data: { order_id: t.id, channel: next } });
+      setMoveState((s) => {
+        const { [t.id]: _drop, ...rest } = s;
+        return rest;
+      });
       toast.success(`#${t.order_number} moved to ${CHANNEL[next].label}`);
     } catch (e) {
       setTickets(previous);
-      toast.error(e instanceof Error ? e.message : "Could not move this ticket");
+      const message = e instanceof Error ? e.message : "Could not move this ticket";
+      console.error("[kds] move area failed", e);
+      setMoveState((s) => ({ ...s, [t.id]: message }));
+      toast.error(`Move failed: ${message}`);
     }
   }
 
