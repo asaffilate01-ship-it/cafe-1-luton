@@ -2,6 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { SiteHeader, SiteFooter } from "@/components/site-header";
 import { money } from "@/lib/format";
+import { PagePasswordGate } from "@/components/page-password-gate";
 import {
   JUROR_DAILY_ALLOWANCE_CENTS,
   JUROR_FOOD_DISCOUNT_PERCENT,
@@ -40,8 +41,16 @@ export const Route = createFileRoute("/juror-demo")({
       { name: "twitter:card", content: "summary" },
     ],
   }),
-  component: DemoPage,
+  component: GatedDemoPage,
 });
+
+function GatedDemoPage() {
+  return (
+    <PagePasswordGate storageKey="cafe1.juror-demo.gate" title="Juror Scheme Walkthrough">
+      <DemoPage />
+    </PagePasswordGate>
+  );
+}
 
 const DEMO_CODE = "J-4821-7K9P";
 const DEMO_PIN = "418 302";
