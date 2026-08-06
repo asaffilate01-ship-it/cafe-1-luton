@@ -46,13 +46,13 @@ export const Route = createFileRoute("/juror")({
       {
         name: "description",
         content:
-          "Check your anonymous juror voucher code, opt into the Café 1 Juror Voucher Scheme, see today's £5.71 allowance remaining and order from the dedicated Juror Menu for collection or jury room delivery.",
+          "Opt into the Café 1 Juror Voucher Scheme with your HMCTS Juror ID, get your one-time six-digit PIN, check today's £5.71 allowance and order from the dedicated Juror Menu for collection or jury room delivery.",
       },
       { property: "og:title", content: "Juror Voucher Scheme — Café 1, St Albans Crown Court" },
       {
         property: "og:description",
         content:
-          "Anonymous voucher codes, a daily allowance, a dedicated Juror Menu and 10% off food above the allowance for scheme members at Café 1.",
+          "Opt in with your HMCTS Juror ID, receive a one-time six-digit PIN, and get a daily allowance plus 10% off food above it at Café 1.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
