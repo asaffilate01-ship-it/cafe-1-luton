@@ -470,7 +470,107 @@ function AdminVouchers() {
           </div>
         </div>
 
-        {/* Issue a batch */}
+        {/* Activate the Juror IDs supplied by the Jury Office */}
+        {manager && (
+          <form
+            onSubmit={activateBatch}
+            className="mt-8 rounded-2xl border border-primary/40 bg-primary/5 p-5"
+          >
+            <p className="flex items-center gap-2 font-semibold text-primary">
+              <ListPlus className="h-4 w-4" /> Activate HMCTS Juror IDs
+            </p>
+            <p className="mt-1 text-xs text-muted-foreground">
+              Paste the Juror IDs sent by the Jury Office (one per line, or comma separated). No
+              PINs are created here — each juror generates their own six-digit PIN when they opt in,
+              and it is shown to them once only.
+            </p>
+            <textarea
+              value={idText}
+              onChange={(e) => setIdText(e.target.value)}
+              rows={5}
+              placeholder={"J-4821-7K9P\nJ-4822-2M4T\nJ-4823-9QX1"}
+              className="mt-3 w-full rounded-xl border border-border bg-background p-3 font-mono text-sm"
+            />
+            <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+              <label className="text-sm">
+                <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                  Batch label
+                </span>
+                <input
+                  value={idBatch}
+                  onChange={(e) => setIdBatch(e.target.value)}
+                  className="mt-1 h-11 w-full rounded-xl border border-border bg-background px-3 text-sm"
+                />
+              </label>
+              <label className="text-sm">
+                <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                  Active from
+                </span>
+                <input
+                  type="date"
+                  value={idFrom}
+                  onChange={(e) => setIdFrom(e.target.value)}
+                  className="mt-1 h-11 w-full rounded-xl border border-border bg-background px-3 text-sm"
+                />
+              </label>
+              <label className="text-sm">
+                <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                  Weeks active
+                </span>
+                <input
+                  type="number"
+                  min="1"
+                  max="26"
+                  value={idWeeks}
+                  onChange={(e) => setIdWeeks(e.target.value)}
+                  className="mt-1 h-11 w-full rounded-xl border border-border bg-background px-3 text-sm"
+                />
+              </label>
+              <div className="flex items-end">
+                <button
+                  disabled={activating || !parsedIds.length}
+                  className="h-11 w-full rounded-xl bg-primary px-5 font-semibold text-primary-foreground hover:bg-primary-hover disabled:opacity-60"
+                >
+                  {activating ? "Activating…" : `Activate ${parsedIds.length || ""} IDs`.trim()}
+                </button>
+              </div>
+            </div>
+            {activated.length > 0 && (
+              <div className="mt-4 rounded-xl border border-border bg-card p-4 text-sm">
+                <p className="font-semibold">
+                  {activated.filter((r) => r.status === "activated").length} newly activated ·{" "}
+                  {activated.filter((r) => r.status === "updated").length} already on the scheme
+                </p>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  Valid {activated[0]?.valid_from} → {activated[0]?.valid_until}. Jurors opt in
+                  themselves with their Juror ID.
+                </p>
+                <button
+                  type="button"
+                  onClick={() =>
+                    downloadCsv(
+                      [
+                        ["Juror ID", "Status", "Valid from", "Valid until"],
+                        ...activated.map((r) => [
+                          r.juror_id,
+                          r.status,
+                          r.valid_from,
+                          r.valid_until,
+                        ]),
+                      ],
+                      `cafe1-juror-ids-${idBatch.replace(/\W+/g, "-").toLowerCase()}.csv`,
+                    )
+                  }
+                  className="mt-3 flex h-10 items-center gap-2 rounded-xl border border-border px-4 text-sm font-semibold hover:bg-muted"
+                >
+                  <Download className="h-4 w-4" /> Download activation record
+                </button>
+              </div>
+            )}
+          </form>
+        )}
+
+        {/* Legacy: issue anonymous codes when the court cannot supply Juror IDs */}
         {manager ? (
           <form onSubmit={issueBatch} className="mt-8 rounded-2xl border border-border bg-card p-5">
             <p className="font-semibold">Issue codes for an induction</p>
