@@ -511,8 +511,8 @@ function JurorPage() {
               Menu is open to all jurors, whether or not you join the scheme.
             </Card>
             <Card icon={Building2} title="Sitting in the Magistrates' Court?">
-              Scan the QR code in the jury room to order online, enter your code, choose your jury
-              room and a delivery time. We&apos;ll bring it to you.
+              Scan the QR code in the jury room to order online, enter your Juror ID and PIN, choose
+              your jury room and a delivery time. We&apos;ll bring it to you.
             </Card>
             <Card icon={UtensilsCrossed} title="Dietary requirements & allergies">
               Tell us in the notes box when you order, or speak to us at the counter, and we&apos;ll
