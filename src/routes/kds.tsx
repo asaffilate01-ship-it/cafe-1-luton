@@ -315,6 +315,10 @@ function KDS() {
   const [tickets, setTickets] = useState<Ticket[]>([]);
   // Ids currently shown on the board — used to announce cancellations/refunds.
   const liveIds = useRef<Set<string>>(new Set());
+  // Tickets the operator just cleared. A refetch that was already in flight can
+  // come back with the pre-update row and put a completed ticket back on the
+  // board, so we hide these ids for a short window until the server agrees.
+  const clearedIds = useRef<Map<string, number>>(new Map());
   // Menu + categories change rarely; refetching them on every realtime event
   // was what made "mark ready" feel sluggish. Cache for a few minutes.
   const menuCache = useRef<{ at: number; menu: unknown; cats: unknown } | null>(null);
@@ -387,12 +391,19 @@ function KDS() {
         }
       }
       // Cancelled / refunded orders must never sit on the kitchen display.
+      const CLEARED_MS = 90_000;
+      for (const [id, at] of clearedIds.current) {
+        if (Date.now() - at > CLEARED_MS) clearedIds.current.delete(id);
+      }
       const live = rows.filter(
         (o) =>
           o.payment_status !== "refunded" &&
           o.payment_status !== "failed" &&
           o.status !== "cancelled" &&
-          o.status !== "refunded",
+          o.status !== "refunded" &&
+          // Just cleared on this device — keep it off the board unless the
+          // operator is deliberately recalling finished orders.
+          (recall || !clearedIds.current.has(o.id)),
       );
       const ids = live.map((o) => o.id);
       const { data: items } = ids.length
@@ -634,6 +645,8 @@ function KDS() {
         ? prev.filter((t) => t.id !== id)
         : prev.map((t) => (t.id === id ? { ...t, status } : t)),
     );
+    if (status === "completed" && !recall) clearedIds.current.set(id, Date.now());
+    else clearedIds.current.delete(id);
     try {
       await update({ data: { order_id: id, status } });
       if (opts?.undoTo) {
@@ -649,6 +662,7 @@ function KDS() {
       }
     } catch (e) {
       setTickets(previous);
+      clearedIds.current.delete(id);
       toast.error(e instanceof Error ? e.message : "Failed");
     }
   }
@@ -739,11 +753,13 @@ function KDS() {
         ? prev.filter((t) => !ids.includes(t.id))
         : prev.map((t) => (ids.includes(t.id) ? { ...t, status } : t)),
     );
+    if (status === "completed") for (const id of ids) clearedIds.current.set(id, Date.now());
     try {
       await Promise.all(ids.map((id) => update({ data: { order_id: id, status } })));
       toast.success(`${ids.length} marked ${status}`);
     } catch (e) {
       setTickets(previous);
+      for (const id of ids) clearedIds.current.delete(id);
       toast.error(e instanceof Error ? e.message : "Failed");
     } finally {
       setBulking(false);
