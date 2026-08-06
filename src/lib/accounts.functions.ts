@@ -134,6 +134,39 @@ export const createAccount = createServerFn({ method: "POST" })
     throw new Error("Could not generate a unique access code, try again.");
   });
 
+/**
+ * Counter-friendly account creation: any signed-in operator (admin or staff) can
+ * add a judge/advocate tab on the fly from the manual order dialog.
+ */
+export const quickAddAccount = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .validator((d: unknown) => z.object({ name: z.string().min(2).max(120) }).parse(d))
+  .handler(async ({ data, context }) => {
+    const [{ data: isAdmin }, { data: isStaff }] = await Promise.all([
+      context.supabase.rpc("has_role", { _user_id: context.userId, _role: "admin" }),
+      context.supabase.rpc("has_role", { _user_id: context.userId, _role: "staff" }),
+    ]);
+    if (!isAdmin && !isStaff) throw new Error("Staff sign-in required");
+    const name = data.name.trim();
+    const { data: existing } = await context.supabase
+      .from("accounts")
+      .select("id,name")
+      .ilike("name", name)
+      .limit(1)
+      .maybeSingle();
+    if (existing) return { id: existing.id, name: existing.name, existed: true as const };
+    for (let attempt = 0; attempt < 5; attempt++) {
+      const { data: row, error } = await context.supabase
+        .from("accounts")
+        .insert({ name, access_code_hash: await codeHash(randomCode()) })
+        .select("id,name")
+        .single();
+      if (!error) return { id: row.id, name: row.name, existed: false as const };
+      if (!/duplicate|unique/i.test(error.message)) throw new Error(error.message);
+    }
+    throw new Error("Could not create the account, try again.");
+  });
+
 export const updateAccount = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .validator((d: unknown) =>
