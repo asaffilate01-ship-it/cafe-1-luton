@@ -50,7 +50,7 @@ export function ManualOrderDialog({
   const [channel, setChannel] = useState<ManualChannel>("deliveroo");
   const [reference, setReference] = useState("");
   const [customerName, setCustomerName] = useState("");
-  const [type, setType] = useState<"delivery" | "collection" | "dine_in">("collection");
+  const [type, setType] = useState<Fulfilment>("collection");
   const [table, setTable] = useState("");
   const [juryRoom, setJuryRoom] = useState<string>(JURY_DELIVERY_ROOMS[0].label);
   const [company, setCompany] = useState("");
