@@ -58,7 +58,7 @@ export const Route = createFileRoute("/juror")({
       { name: "twitter:card", content: "summary" },
     ],
   }),
-  component: JurorPage,
+  component: GatedJurorPage,
 });
 
 type Balance = Extract<Awaited<ReturnType<typeof lookupVoucher>>, { found: true }>;
