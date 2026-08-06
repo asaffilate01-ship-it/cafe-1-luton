@@ -343,7 +343,7 @@ export const syncSumupPos = createServerFn({ method: "POST" })
       const cardTail = t.card?.last_4_digits ? ` ••${t.card.last_4_digits}` : "";
       const fulfilment = deriveFulfilment(detailed, products);
       const posSide = derivePosSide(detailed, products, mapping);
-      const schedule = deriveSchedule(t, products);
+      const schedule = deriveSchedule(detailed, products);
 
       const { data: inserted, error: insErr } = await supabaseAdmin
         .from("orders")
@@ -353,7 +353,7 @@ export const syncSumupPos = createServerFn({ method: "POST" })
           type: fulfilment.type,
           table_number: fulfilment.table_number,
           pos_terminal: posSide,
-          delivery_notes: sumupOrderNote(t),
+          delivery_notes: sumupOrderNote(detailed),
           status: "preparing",
           payment_status: "paid",
           subtotal_cents: totalCents,
