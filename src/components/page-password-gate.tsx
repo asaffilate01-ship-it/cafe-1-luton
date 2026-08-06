@@ -11,11 +11,10 @@ const PASSWORD = "AL13JU";
  */
 export function PagePasswordGate({
   storageKey,
-  title,
   children,
 }: {
   storageKey: string;
-  title: string;
+  title?: string;
   children: React.ReactNode;
 }) {
   const [unlocked, setUnlocked] = useState(false);
@@ -56,13 +55,11 @@ export function PagePasswordGate({
         <div className="mb-5 grid h-12 w-12 place-items-center rounded-full bg-primary text-primary-foreground">
           <Lock className="h-6 w-6" />
         </div>
-        <h1 className="font-display text-2xl font-black">{title}</h1>
-        <p className="mt-2 text-sm text-muted-foreground">
-          This page is private. Enter the access password provided by Café 1.
-        </p>
+        <h1 className="font-display text-2xl font-black">Private page</h1>
+        <p className="mt-2 text-sm text-muted-foreground">Enter the password to continue.</p>
         <div className="mt-6">
           <PasswordField
-            label="Access password"
+            label="Password"
             value={value}
             minLength={1}
             onChange={(next) => {
@@ -71,9 +68,9 @@ export function PagePasswordGate({
             }}
           />
         </div>
-        {error && <p className="mt-2 text-sm text-destructive">That password isn't right.</p>}
+        {error && <p className="mt-2 text-sm text-destructive">Incorrect password.</p>}
         <button className="mt-5 h-12 w-full rounded-full bg-primary font-semibold text-primary-foreground shadow-brand">
-          Unlock page
+          Continue
         </button>
       </form>
     </div>
