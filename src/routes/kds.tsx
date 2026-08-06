@@ -391,12 +391,19 @@ function KDS() {
         }
       }
       // Cancelled / refunded orders must never sit on the kitchen display.
+      const CLEARED_MS = 90_000;
+      for (const [id, at] of clearedIds.current) {
+        if (Date.now() - at > CLEARED_MS) clearedIds.current.delete(id);
+      }
       const live = rows.filter(
         (o) =>
           o.payment_status !== "refunded" &&
           o.payment_status !== "failed" &&
           o.status !== "cancelled" &&
-          o.status !== "refunded",
+          o.status !== "refunded" &&
+          // Just cleared on this device — keep it off the board unless the
+          // operator is deliberately recalling finished orders.
+          (recall || !clearedIds.current.has(o.id)),
       );
       const ids = live.map((o) => o.id);
       const { data: items } = ids.length
