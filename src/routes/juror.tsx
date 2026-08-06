@@ -98,7 +98,7 @@ function JurorPage() {
         setBalance(null);
         setError(
           ("message" in res && res.message) ||
-            "Sorry, that voucher code isn't valid. Please double-check it or ask the Jury Officer.",
+            "Sorry, that Juror ID and PIN weren't recognised. Please double-check them, or ask the Café 1 team if you need your PIN reset.",
         );
       } else {
         setBalance(res);

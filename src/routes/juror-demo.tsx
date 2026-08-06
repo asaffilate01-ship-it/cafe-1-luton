@@ -28,7 +28,7 @@ export const Route = createFileRoute("/juror-demo")({
       {
         name: "description",
         content:
-          "A step-by-step demonstration of the Café 1 Juror Voucher Scheme: issuing anonymous codes, opting in, ordering, redeeming the £5.71 daily allowance and the nightly HMCTS claim report.",
+          "A step-by-step demonstration of the Café 1 Juror Voucher Scheme: activating HMCTS Juror IDs, opting in and issuing the one-time PIN, ordering, redeeming the £5.71 daily allowance and the nightly HMCTS claim report.",
       },
       { property: "og:title", content: "Juror Voucher Scheme — Live Walkthrough" },
       {
@@ -161,12 +161,12 @@ const steps: Step[] = [
     title: "5. The private JURY ONLY menu",
     who: "Juror",
     icon: Lock,
-    say: "In the jury lounge and the jury rooms there's a poster with a QR code. Scanning it opens a menu nobody else can see: the juror keys in their voucher code and PIN, and only then does the JURY ONLY menu unlock. It's a separate, dedicated menu — and orders from it can only be collected at Café 1 or delivered to the Jury Lounge at the Crown Court or the Jury Rooms at the Magistrates' Court. Never to a home or office address.",
+    say: "In the jury lounge and the jury rooms there's a poster with a QR code. Scanning it opens a menu nobody else can see: the juror keys in their Juror ID and PIN, and only then does the JURY ONLY menu unlock. It's a separate, dedicated menu — and orders from it can only be collected at Café 1 or delivered to the Jury Lounge at the Crown Court or the Jury Rooms at the Magistrates' Court. Never to a home or office address.",
     screen: () => (
       <div className="mx-auto max-w-md rounded-2xl border border-border bg-card p-5 text-sm shadow-sm">
         <div className="rounded-xl bg-primary px-4 py-3 text-center text-primary-foreground">
           <p className="font-display text-lg font-black tracking-wide">JURY ONLY MENU</p>
-          <p className="text-xs opacity-90">Unlocked with your voucher code and PIN</p>
+          <p className="text-xs opacity-90">Unlocked with your Juror ID and PIN</p>
         </div>
         <div className="mt-4 space-y-2">
           <div className="flex items-center gap-2 rounded-xl border border-border px-3 py-2">
@@ -292,7 +292,7 @@ const steps: Step[] = [
     title: "9. The nightly HMCTS claim",
     who: "Café 1 → HMCTS",
     icon: FileSpreadsheet,
-    say: "Every night the system produces one reconciled claim line per redemption: voucher code, date, time, receipt number, amount redeemed and anything the juror paid themselves. We only ever claim what was actually spent. If HMCTS ever needs to trace a line back to a person, they match the code against your own register — which is why that register is the only record the court needs to keep.",
+    say: "Every night the system produces one reconciled claim line per redemption: Juror ID, date, time, receipt number, amount redeemed and anything the juror paid themselves. We only ever claim what was actually spent. If HMCTS ever needs to trace a line back to a person, they match the Juror ID against their own HMCTS records — Café 1 never holds anything identifiable. We can provide one complete itemised report plus a filtered report per Juror ID, locked against editing.",
     screen: () => (
       <div className="mx-auto max-w-lg overflow-hidden rounded-2xl border border-border bg-card text-xs shadow-sm">
         <div className="grid grid-cols-4 bg-muted px-3 py-2 font-black uppercase tracking-widest">
@@ -339,7 +339,7 @@ const steps: Step[] = [
           lock-out and rate limiting.
         </Fact>
         <Fact icon={FileSpreadsheet} title="Immutable audit log">
-          Every issue, opt-in, redemption and adjustment recorded against the anonymous code only.
+          Every issue, opt-in, redemption and adjustment recorded against the Juror ID only.
         </Fact>
       </div>
     ),

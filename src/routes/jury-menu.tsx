@@ -23,13 +23,13 @@ export const Route = createFileRoute("/jury-menu")({
       {
         name: "description",
         content:
-          "Private Jury Only menu at Café 1. Verify your anonymous juror voucher code and PIN to order for collection or delivery to the Jury Lounge at Crown Court or the Jury Rooms at the Magistrates' Court.",
+          "Private Jury Only menu at Café 1. Verify your HMCTS Juror ID and PIN to order for collection or delivery to the Jury Lounge at Crown Court or the Jury Rooms at the Magistrates' Court.",
       },
       { property: "og:title", content: "Jury Only Menu — Café 1, St Albans" },
       {
         property: "og:description",
         content:
-          "Gated juror menu — voucher code and PIN required. Served to the Jury Lounge and Jury Rooms only.",
+          "Gated juror menu — Juror ID and PIN required. Served to the Jury Lounge and Jury Rooms only.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
@@ -85,7 +85,7 @@ function JuryMenuPage() {
       if (!res.found) {
         setError(
           ("message" in res && res.message) ||
-            "That voucher code and PIN weren't recognised. Please check your juror sheet.",
+            "That Juror ID and PIN weren't recognised. Please check them and try again.",
         );
         return;
       }
@@ -134,7 +134,7 @@ function JuryMenuPage() {
             </p>
             <h1 className="mt-2 font-display text-3xl font-black">Verify your voucher</h1>
             <p className="mt-2 text-sm text-muted-foreground">
-              This menu is only for jurors serving at St Albans. Enter the voucher code and 6-digit
+              This menu is only for jurors serving at St Albans. Enter your HMCTS Juror ID and 6-digit
               PIN printed on your juror sheet. We never see your name or any personal details.
             </p>
             <form onSubmit={verify} className="mt-6 space-y-3">
@@ -237,7 +237,7 @@ function JuryMenuPage() {
           </div>
           <p className="mt-3 text-xs text-primary-foreground/70">
             {session.code
-              ? `Daily allowance ${money(JUROR_DAILY_ALLOWANCE_CENTS)} on sitting days. Re-enter your code and PIN at checkout to apply it.`
+              ? `Daily allowance ${money(JUROR_DAILY_ALLOWANCE_CENTS)} on sitting days. Re-enter your Juror ID and PIN at checkout to apply it.`
               : "You're not on the voucher scheme, so there's no allowance or 10% food discount — pay by card, Apple/Google Pay or cash. You can opt in any time on the juror page."}
           </p>
         </div>
