@@ -108,7 +108,15 @@ function sumupOrderNote(t: SumupTxn, products?: SumupTxn["products"]): string | 
 }
 
 /** Fetches the detailed SumUp transaction and returns its kitchen note, if any. */
-async function sumupNoteForTransaction(t: SumupTxn, key: string): Promise<string | null> {
+/**
+ * Pulls the full sale from SumUp. The history listing carries no basket, and
+ * the detailed transaction sometimes drops the line descriptions that hold the
+ * till operator's note, so the receipt endpoint is used as a second source.
+ */
+async function loadSumupSale(
+  t: SumupTxn,
+  key: string,
+): Promise<{ detailed: SumupTxn; products: SumupTxn["products"] }> {
   let detailed: SumupTxn = t;
   let products = t.products;
   try {
@@ -124,7 +132,43 @@ async function sumupNoteForTransaction(t: SumupTxn, key: string): Promise<string
   } catch {
     /* ignore detail fetch errors — the listing note is still used */
   }
-  return sumupOrderNote(detailed, products);
+
+  const receiptProducts = await sumupReceiptProducts(detailed, key);
+  if (receiptProducts?.length) {
+    products = (products?.length ? products : receiptProducts).map((p, i) => {
+      const match =
+        receiptProducts.find(
+          (r) => (r.name ?? "").trim().toLowerCase() === (p.name ?? "").trim().toLowerCase(),
+        ) ?? receiptProducts[i];
+      return match ? { ...match, ...p, description: p.description ?? match.description } : p;
+    });
+  }
+  return { detailed, products };
+}
+
+/** Merchant code, needed by the receipt endpoint. Parsed off the sale itself. */
+function merchantCode(t: SumupTxn): string | null {
+  const parts = (t.client_transaction_id ?? "").split(":");
+  const code = parts.length > 4 ? parts[4] : "";
+  return code || process.env.SUMUP_MERCHANT_CODE || null;
+}
+
+/** Basket lines from the receipt endpoint, which keeps the operator's note. */
+async function sumupReceiptProducts(t: SumupTxn, key: string): Promise<SumupTxn["products"]> {
+  const code = t.transaction_code;
+  const mid = merchantCode(t);
+  if (!code || !mid) return undefined;
+  try {
+    const r = await fetch(
+      `https://api.sumup.com/v1.1/receipts/${encodeURIComponent(code)}?mid=${encodeURIComponent(mid)}`,
+      { headers: { Authorization: `Bearer ${key}` } },
+    );
+    if (!r.ok) return undefined;
+    const j = (await r.json()) as { transaction_data?: { products?: SumupTxn["products"] } };
+    return j.transaction_data?.products;
+  } catch {
+    return undefined;
+  }
 }
 
 
@@ -410,7 +454,8 @@ export const syncSumupPos = createServerFn({ method: "POST" })
         // after the ticket was first created. Backfill it so the till note
         // always shows on the kitchen card.
         if (!existing.delivery_notes) {
-          const backfill = await sumupNoteForTransaction(t, key);
+          const sale = await loadSumupSale(t, key);
+          const backfill = sumupOrderNote(sale.detailed, sale.products);
           if (backfill) {
             await supabaseAdmin
               .from("orders")
@@ -424,18 +469,7 @@ export const syncSumupPos = createServerFn({ method: "POST" })
 
       // Try to fetch details: the basket, and the SumUp login that took the sale
       // (neither is present on the history listing).
-      let products: SumupTxn["products"] = t.products;
-      let detailed: SumupTxn = t;
-      try {
-        const d = await fetch(`https://api.sumup.com/v0.1/me/transactions?id=${encodeURIComponent(t.id)}`, {
-          headers: { Authorization: `Bearer ${key}` },
-        });
-        if (d.ok) {
-          const dj = (await d.json()) as SumupTxn;
-          detailed = { ...t, ...dj };
-          if (dj.products?.length) products = dj.products;
-        }
-      } catch { /* ignore detail fetch errors */ }
+      const { detailed, products } = await loadSumupSale(t, key);
 
       const totalCents = Math.round(Number(t.amount) * 100);
       const cardTail = t.card?.last_4_digits ? ` ••${t.card.last_4_digits}` : "";
