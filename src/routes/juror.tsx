@@ -2,7 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { SiteHeader, SiteFooter } from "@/components/site-header";
-import { lookupVoucher, optInVoucher } from "@/lib/vouchers.functions";
+import { lookupVoucher, optInWithJurorId } from "@/lib/vouchers.functions";
 import { verifyJurorAttendance } from "@/lib/juror-attendance.functions";
 import {
   JUROR_CODE_KEY,
@@ -25,6 +25,8 @@ import {
   ArrowRight,
   Server,
   Lock,
+  KeyRound,
+  Eye,
 } from "lucide-react";
 
 export { JUROR_CODE_KEY };
@@ -64,9 +66,13 @@ type Balance = Extract<Awaited<ReturnType<typeof lookupVoucher>>, { found: true 
 function JurorPage() {
   const { code: codeParam, src, attendance } = Route.useSearch();
   const lookup = useServerFn(lookupVoucher);
-  const optIn = useServerFn(optInVoucher);
+  const optIn = useServerFn(optInWithJurorId);
   const verifyAttendance = useServerFn(verifyJurorAttendance);
 
+  const [mode, setMode] = useState<"opt-in" | "balance">("opt-in");
+  const [optInId, setOptInId] = useState(codeParam ?? "");
+  const [issuedPin, setIssuedPin] = useState<{ code: string; pin: string } | null>(null);
+  const [secondsLeft, setSecondsLeft] = useState(60);
   const [input, setInput] = useState(codeParam ?? "");
   const [pin, setPin] = useState("");
   const [balance, setBalance] = useState<Balance | null>(null);
@@ -116,38 +122,66 @@ function JurorPage() {
     }
   }
 
+  // One-time PIN reveal: 60 seconds on screen, then it is gone for good.
+  useEffect(() => {
+    if (!issuedPin) return;
+    setSecondsLeft(60);
+    const timer = window.setInterval(() => {
+      setSecondsLeft((s) => {
+        if (s <= 1) {
+          window.clearInterval(timer);
+          setIssuedPin(null);
+          return 0;
+        }
+        return s - 1;
+      });
+    }, 1000);
+    return () => window.clearInterval(timer);
+  }, [issuedPin]);
+
   // Fraud control: codes are never stored on the device. Only a code passed
   // in the scanned link is pre-filled; purge anything older builds saved.
   useEffect(() => {
     if (typeof window !== "undefined") window.localStorage.removeItem(JUROR_CODE_KEY);
     if (codeParam) {
       setInput(codeParam.toUpperCase());
+      setOptInId(codeParam.toUpperCase());
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   async function join() {
-    if (!balance) return;
+    const code = optInId.trim().toUpperCase();
+    if (!code) return;
     setOptingIn(true);
+    setError(null);
     try {
       const res = await optIn({
         data: {
-          code: balance.code,
-          pin,
+          code,
           source: src === "till" ? "till" : src === "jury_room" ? "jury_room" : "online",
         },
       });
-      if (res.ok) {
-        toast.success(
-          res.already
-            ? "You're already on the scheme"
-            : "You're on the scheme — enjoy your allowance",
-        );
-        await check(balance.code);
-      } else toast.error(res.message);
+      if (res.ok && res.pin) {
+        setIssuedPin({ code, pin: res.pin });
+        setInput(code);
+      } else if (res.ok && res.already) {
+        toast.message(res.message);
+        setMode("balance");
+        setInput(code);
+      } else {
+        setError(res.message);
+        toast.error(res.message);
+      }
     } finally {
       setOptingIn(false);
     }
+  }
+
+  function closePinReveal() {
+    setIssuedPin(null);
+    setMode("balance");
+    toast.success("Keep your Juror ID and PIN safe — you'll need both to order.");
   }
 
   return (
@@ -165,8 +199,8 @@ function JurorPage() {
             </h1>
             <p className="mt-4 max-w-2xl text-lg text-primary-foreground/85">
               A {money(JUROR_DAILY_ALLOWANCE_CENTS)} allowance for every sitting day of your jury
-              service, redeemable at Café 1 inside St Albans Crown Court. Completely anonymous — we
-              only ever see your voucher code, never your name or any personal details.
+              service, redeemable at Café 1 inside St Albans Crown Court. Your voucher is your HMCTS
+              Juror ID — we never see your name, email or any other personal details.
             </p>
             <Link
               to="/juror-demo"
@@ -180,11 +214,82 @@ function JurorPage() {
         {/* code panel */}
         <section className="mx-auto -mt-8 max-w-3xl px-4">
           <div className="rounded-3xl border border-border bg-card p-6 shadow-xl sm:p-8">
+            <div className="mb-5 grid grid-cols-2 gap-1 rounded-2xl bg-muted p-1 text-sm font-bold">
+              <button
+                type="button"
+                onClick={() => setMode("opt-in")}
+                className={`h-10 rounded-xl ${mode === "opt-in" ? "bg-card shadow" : "text-muted-foreground"}`}
+              >
+                Opt in with your Juror ID
+              </button>
+              <button
+                type="button"
+                onClick={() => setMode("balance")}
+                className={`h-10 rounded-xl ${mode === "balance" ? "bg-card shadow" : "text-muted-foreground"}`}
+              >
+                Already opted in
+              </button>
+            </div>
+
+            {mode === "opt-in" ? (
+              <div>
+                <label
+                  htmlFor="juror-id"
+                  className="text-xs font-black uppercase tracking-widest text-muted-foreground"
+                >
+                  Your HMCTS Juror ID
+                </label>
+                <p className="mt-2 text-sm text-muted-foreground">
+                  Enter the Juror ID the court gave you. We&apos;ll create a six-digit PIN for you
+                  and show it once, for 60 seconds. Write it down — after that it is stored only as
+                  a secure hash and nobody, including us, can read it back.
+                </p>
+                <p className="mt-3 rounded-xl border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900">
+                  <strong>Please read before opting in.</strong> Joining the voucher scheme means
+                  you take your food and drink through Café 1 for the rest of your jury service and{" "}
+                  <strong>will not claim HMCTS subsistence expenses</strong> during that time. It is
+                  one or the other — you cannot use both.
+                </p>
+                <div className="mt-3 grid gap-2 sm:grid-cols-[1fr_auto]">
+                  <input
+                    id="juror-id"
+                    value={optInId}
+                    onChange={(e) => {
+                      setOptInId(e.target.value.toUpperCase());
+                      setError(null);
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") void join();
+                    }}
+                    placeholder="JUROR ID"
+                    className="h-12 rounded-xl border border-border bg-background px-4 font-mono text-lg uppercase tracking-wider outline-none focus:border-primary"
+                  />
+                  <button
+                    onClick={() => void join()}
+                    disabled={optingIn || optInId.trim().length < 3}
+                    className="inline-flex h-12 items-center justify-center gap-2 rounded-xl bg-primary px-6 font-bold text-primary-foreground disabled:opacity-50"
+                  >
+                    {optingIn ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <ShieldCheck className="h-4 w-4" />
+                    )}
+                    Confirm opt in
+                  </button>
+                </div>
+                {error && (
+                  <p className="mt-3 inline-flex items-start gap-2 text-sm text-destructive">
+                    <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" /> {error}
+                  </p>
+                )}
+              </div>
+            ) : (
+              <>
             <label
               htmlFor="juror-code"
               className="text-xs font-black uppercase tracking-widest text-muted-foreground"
             >
-              Your voucher code
+              Your Juror ID
             </label>
             <div className="mt-2 grid gap-2 sm:grid-cols-[1fr_150px_auto]">
               <input
@@ -197,7 +302,7 @@ function JurorPage() {
                 onKeyDown={(e) => {
                   if (e.key === "Enter") void check();
                 }}
-                placeholder="CV-XXXXX-XXXXX"
+                placeholder="JUROR ID"
                 className="h-12 flex-1 rounded-xl border border-border bg-background px-4 font-mono text-lg uppercase tracking-wider outline-none focus:border-primary"
               />
               <input
@@ -236,7 +341,7 @@ function JurorPage() {
             )}
             {attendance && !balance && !error && (
               <p className="mt-3 text-sm text-muted-foreground">
-                Enter your anonymous voucher code to finish the one-time attendance check.
+                Enter your Juror ID and PIN to finish the one-time attendance check.
               </p>
             )}
 
@@ -310,29 +415,6 @@ function JurorPage() {
                   </p>
                 )}
 
-                {!balance.opted_in && balance.usable && (
-                  <>
-                  <p className="rounded-xl border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900">
-                    <strong>Please read before opting in.</strong> Joining the voucher scheme means
-                    you take your food and drink through Café 1 for the rest of your jury service
-                    and <strong>will not claim HMCTS subsistence expenses</strong> during that time.
-                    It is one or the other — you cannot use both schemes or mix them.
-                  </p>
-                  <button
-                    onClick={() => void join()}
-                    disabled={optingIn}
-                    className="inline-flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-primary font-bold text-primary-foreground disabled:opacity-50"
-                  >
-                    {optingIn ? (
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                    ) : (
-                      <ShieldCheck className="h-4 w-4" />
-                    )}
-                    Opt in — voucher scheme instead of expenses
-                  </button>
-                  </>
-                )}
-
                 <div className="grid gap-2 sm:grid-cols-2">
                   <Link
                     to="/jury-menu"
@@ -355,8 +437,48 @@ function JurorPage() {
                 </p>
               </div>
             )}
+              </>
+            )}
           </div>
         </section>
+
+        {issuedPin && (
+          <div className="fixed inset-0 z-50 grid place-items-center bg-black/70 p-4">
+            <div
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="pin-reveal-title"
+              className="w-full max-w-md rounded-3xl border border-border bg-card p-6 text-center shadow-2xl"
+            >
+              <div className="mx-auto grid h-12 w-12 place-items-center rounded-full bg-primary text-primary-foreground">
+                <KeyRound className="h-6 w-6" />
+              </div>
+              <h2 id="pin-reveal-title" className="mt-4 font-display text-2xl font-black">
+                Write this PIN down now
+              </h2>
+              <p className="mt-2 text-sm text-muted-foreground">
+                Juror ID <span className="font-mono font-bold">{issuedPin.code}</span>
+              </p>
+              <p className="mt-5 font-mono text-5xl font-black tracking-[0.35em] text-primary">
+                {issuedPin.pin}
+              </p>
+              <p className="mt-4 inline-flex items-center gap-2 rounded-full bg-muted px-4 py-1.5 text-sm font-bold">
+                <Eye className="h-4 w-4" /> Hidden in {secondsLeft}s
+              </p>
+              <p className="mt-4 text-sm text-muted-foreground">
+                This PIN is shown once and once only. From now on it is held as a cryptographic hash
+                — it cannot be displayed again by anyone. If you lose it, a member of the Café 1
+                team can issue you a replacement.
+              </p>
+              <button
+                onClick={closePinReveal}
+                className="mt-6 inline-flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-primary font-bold text-primary-foreground"
+              >
+                <CheckCircle2 className="h-4 w-4" /> OK — I&apos;ve written it down
+              </button>
+            </div>
+          </div>
+        )}
 
         {/* how it works */}
         <section className="mx-auto max-w-5xl px-4 py-14">
