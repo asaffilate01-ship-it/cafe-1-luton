@@ -265,7 +265,33 @@ function Admin() {
           </section>
         )}
 
-        <div className="mt-6 overflow-hidden rounded-2xl border border-border bg-card">
+        <div className="mt-6 flex flex-wrap items-center gap-2">
+          {(
+            [
+              ["all", `All orders (${orders.length})`],
+              [
+                "tabs",
+                `Unpaid tab orders (${orders.filter((o) => o.payment_status === "on_account").length})`,
+              ],
+            ] as const
+          ).map(([key, label]) => (
+            <button
+              key={key}
+              onClick={() => setFeed(key)}
+              className={`rounded-full px-4 py-1.5 text-xs font-semibold ${feed === key ? "bg-primary text-primary-foreground" : "border border-border hover:border-primary hover:text-primary"}`}
+            >
+              {label}
+            </button>
+          ))}
+          <Link
+            to="/admin/accounts"
+            className="ml-auto rounded-full border border-border px-4 py-1.5 text-xs font-semibold hover:border-primary hover:text-primary"
+          >
+            House accounts →
+          </Link>
+        </div>
+
+        <div className="mt-3 overflow-hidden rounded-2xl border border-border bg-card">
           <table className="w-full text-sm">
             <thead className="bg-primary-soft text-left text-xs uppercase tracking-wider text-primary">
               <tr>
@@ -279,7 +305,10 @@ function Admin() {
               </tr>
             </thead>
             <tbody className="divide-y divide-border">
-              {orders.map((o) => (
+              {(feed === "tabs"
+                ? orders.filter((o) => o.payment_status === "on_account")
+                : orders
+              ).map((o) => (
                 <tr key={o.id}>
                   <td className="p-3 font-semibold">#{o.order_number}</td>
                   <td className="p-3">
@@ -301,10 +330,21 @@ function Admin() {
                   </td>
                   <td className="p-3">
                     <span
-                      className={`rounded-full px-2 py-0.5 text-xs font-semibold ${o.payment_status === "paid" ? "bg-primary-soft text-primary" : "bg-secondary text-muted-foreground"}`}
+                      className={`rounded-full px-2 py-0.5 text-xs font-semibold ${
+                        o.payment_status === "paid"
+                          ? "bg-primary-soft text-primary"
+                          : o.payment_status === "on_account"
+                            ? "bg-destructive/10 text-destructive"
+                            : "bg-secondary text-muted-foreground"
+                      }`}
                     >
-                      {o.payment_status}
+                      {o.payment_status === "on_account" ? "Unpaid · tab" : o.payment_status}
                     </span>
+                    {o.payment_status === "on_account" && (
+                      <span className="mt-1 block text-xs text-muted-foreground">
+                        {o.accounts?.name ?? "House account"}
+                      </span>
+                    )}
                   </td>
                   <td className="p-3 capitalize">{o.status.replace(/_/g, " ")}</td>
                   <td className="p-3 font-semibold">{money(o.total_cents)}</td>
