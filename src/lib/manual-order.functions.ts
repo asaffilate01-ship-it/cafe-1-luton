@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { guessCategory } from "@/lib/cooking";
 
 const LineSchema = z.object({
   name: z.string().min(1).max(120),
@@ -85,16 +86,33 @@ export const createManualOrder = createServerFn({ method: "POST" })
 
     const routing = CHANNEL_ROUTING[data.channel];
     const reference = data.reference?.trim().toUpperCase() || "";
-    const dedupeKey = reference ? `manual:${data.channel}:${reference}` : null;
+    // Only marketplaces issue a genuinely unique order reference. On counter,
+    // court and phone tickets staff reuse loose labels ("CURRY CLUB"), so
+    // de-duplicating on those silently swallowed the second real order.
+    const MARKETPLACES: ManualChannel[] = ["deliveroo", "just_eat", "uber_eats", "tgtg"];
+    const dedupeKey =
+      reference && MARKETPLACES.includes(data.channel)
+        ? `manual:${data.channel}:${reference}`
+        : null;
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
     if (dedupeKey) {
       const { data: existing } = await supabaseAdmin
         .from("orders")
-        .select("id")
+        .select("id, order_number")
         .eq("deliveroo_order_id", dedupeKey)
+        // A marketplace recycles its short references, so only treat a recent
+        // ticket as the same order.
+        .gte("created_at", new Date(Date.now() - 12 * 60 * 60 * 1000).toISOString())
+        .order("created_at", { ascending: false })
         .maybeSingle();
-      if (existing) return { order_id: existing.id, duplicate: true as const };
+      if (existing) {
+        return {
+          order_id: existing.id,
+          duplicate: true as const,
+          order_number: existing.order_number as number,
+        };
+      }
     }
 
     const units = data.items.reduce((sum, line) => sum + line.qty, 0);
@@ -122,6 +140,7 @@ export const createManualOrder = createServerFn({ method: "POST" })
         source: routing.source,
         pos_terminal: routing.terminal,
         deliveroo_order_id: dedupeKey,
+        sumup_reference: dedupeKey ? null : reference || null,
         table_number: data.type === "dine_in" ? data.table_number?.trim() || null : null,
         jury_room: data.jury_room?.trim() || null,
         company_name: data.company_name?.trim() || null,
@@ -142,10 +161,13 @@ export const createManualOrder = createServerFn({ method: "POST" })
         name: line.name.trim(),
         qty: line.qty,
         unit_price_cents: unit,
+        // Without a category the kitchen card can't group the line under a
+        // heading, so work one out from the dish name.
+        category_label: guessCategory(line.name.trim()) ?? null,
         notes: line.notes?.trim() || null,
       })),
     );
     if (lineError) throw new Error(lineError.message);
 
-    return { order_id: inserted.id, duplicate: false as const };
+    return { order_id: inserted.id, duplicate: false as const, order_number: null };
   });

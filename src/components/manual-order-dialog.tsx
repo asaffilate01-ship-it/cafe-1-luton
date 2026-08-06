@@ -138,10 +138,17 @@ export function ManualOrderDialog({
         },
       });
       if (result.duplicate) {
-        toast.info(`${meta.label} ${reference.trim().toUpperCase()} is already on the display`);
-      } else {
-        toast.success(`${meta.label} order sent to the kitchen`);
+        // Keep the form open so staff can change the reference and send it —
+        // closing here made a real second order look like it had been sent.
+        toast.error(
+          `${meta.label} ${reference.trim().toUpperCase()} is already on the display${
+            result.order_number ? ` as #${result.order_number}` : ""
+          }. Change the reference to send a separate ticket.`,
+        );
+        onCreated?.();
+        return;
       }
+      toast.success(`${meta.label} order sent to the kitchen`);
       reset();
       onCreated?.();
       onClose();
