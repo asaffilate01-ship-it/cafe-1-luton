@@ -9,6 +9,10 @@ export const getRouter = () => {
     routeTree,
     context: { queryClient },
     scrollRestoration: true,
+    // Fetch the next page's code as soon as a link is hovered/tapped, so
+    // navigation feels instant instead of waiting for a cold chunk.
+    defaultPreload: "intent",
+    defaultPreloadDelay: 50,
     defaultPreloadStaleTime: 0,
   });
 
