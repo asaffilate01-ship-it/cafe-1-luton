@@ -1343,6 +1343,16 @@ function KDS() {
                   <Shuffle className="h-3.5 w-3.5" aria-hidden="true" />
                   Move area
                 </button>
+                {moveState[t.id] === "saving" && (
+                  <p className="mt-1 text-center text-[10px] font-bold uppercase tracking-wide text-muted-foreground">
+                    Moving…
+                  </p>
+                )}
+                {moveState[t.id] && moveState[t.id] !== "saving" && (
+                  <p className="mt-1 rounded-lg bg-red-50 px-2 py-1 text-center text-[10px] font-bold text-red-700">
+                    Move failed — {moveState[t.id]}
+                  </p>
+                )}
                 {reassignFor === t.id && (
                   <div className="mt-1.5 grid grid-cols-2 gap-1.5 rounded-xl border border-border bg-slate-50 p-2">
                     {REASSIGN_CHANNELS.map((key) => {
