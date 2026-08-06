@@ -166,12 +166,13 @@ function JurorPage() {
         setIssuedPin({ code, pin: res.pin });
         setInput(code);
       } else if (res.ok && res.already) {
-        toast.message(res.message);
+        toast.message(res.message ?? "You're already opted in.");
         setMode("balance");
         setInput(code);
       } else {
-        setError(res.message);
-        toast.error(res.message);
+        const message = res.message ?? "That Juror ID could not be checked. Please try again.";
+        setError(message);
+        toast.error(message);
       }
     } finally {
       setOptingIn(false);
