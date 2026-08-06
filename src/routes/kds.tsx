@@ -361,6 +361,9 @@ function KDS() {
   const setChannel = useServerFn(setOrderChannel);
   // Which ticket currently has its "move to another area" picker open.
   const [reassignFor, setReassignFor] = useState<string | null>(null);
+  // True when the last read of the order feed failed, so the board is showing
+  // the previous tickets rather than a real empty kitchen.
+  const [feedStale, setFeedStale] = useState(false);
   const sync = useServerFn(syncSumupPos);
   const getMenuItems = useServerFn(getStaffMenuItems);
   const [syncing, setSyncing] = useState(false);
