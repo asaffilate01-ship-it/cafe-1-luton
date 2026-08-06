@@ -28,10 +28,10 @@ const POSTERS = [
   {
     path: "/juror",
     eyebrow: "Jury room poster",
-    title: "Your daily café allowance",
+    title: "Opt in with your Juror ID",
     lines: [
       "Scan with your phone camera.",
-      "Enter your voucher code and 6-digit PIN.",
+      "Enter your Juror ID and 6-digit PIN.",
       "£5.71 each sitting day — Monday to Friday.",
     ],
     foot: "No name, email or phone number is ever collected.",
@@ -41,7 +41,7 @@ const POSTERS = [
     eyebrow: "Jury room poster",
     title: "JURY ONLY MENU",
     lines: [
-      "Scan, then enter your voucher code and PIN.",
+      "Scan, then enter your Juror ID and PIN.",
       "Collect at Café 1, or delivery to the Jury Lounge",
       "at Crown Court or the Jury Rooms at the Magistrates'.",
     ],
@@ -53,7 +53,7 @@ const POSTERS = [
     title: "Juror voucher — scan here",
     lines: [
       "Check your remaining allowance before you order.",
-      "Staff key in the code; you type the PIN yourself.",
+      "Staff key in your Juror ID; you type the PIN yourself.",
       "Pay only the difference.",
     ],
     foot: "Unused allowance expires at close of business each day.",
@@ -63,7 +63,7 @@ const POSTERS = [
     eyebrow: "Jury Officer / demonstration",
     title: "See the whole process",
     lines: [
-      "A seven-screen walkthrough of the scheme.",
+      "A ten-screen walkthrough of the scheme.",
       "Simulated data only — nothing is claimed.",
     ],
     foot: "For briefings and induction sessions.",

@@ -2574,6 +2574,20 @@ export type Database = {
         Returns: boolean
       }
       award_loyalty_for_order: { Args: { _order_id: string }; Returns: boolean }
+      cafe1_activate_juror_ids: {
+        Args: {
+          _batch: string
+          _juror_ids: string[]
+          _valid_from?: string
+          _weeks?: number
+        }
+        Returns: {
+          juror_id: string
+          status: string
+          valid_from: string
+          valid_until: string
+        }[]
+      }
       cafe1_add_court_working_days: {
         Args: { _days: number; _from: string }
         Returns: string
@@ -2657,6 +2671,10 @@ export type Database = {
       cafe1_refresh_operational_alerts: {
         Args: { _site_id: string }
         Returns: number
+      }
+      cafe1_reset_juror_pin: {
+        Args: { _holder_id: string; _reason: string }
+        Returns: Json
       }
       cafe1_resolve_alert: { Args: { _alert_id: string }; Returns: boolean }
       cafe1_save_inventory_item: {
@@ -2979,6 +2997,16 @@ export type Database = {
       }
       increment_promo_use: { Args: { _code: string }; Returns: undefined }
       is_court_working_day: { Args: { _d: string }; Returns: boolean }
+      juror_opt_in_with_id: {
+        Args: { _code: string; _source?: string }
+        Returns: {
+          already: boolean
+          message: string
+          ok: boolean
+          pin: string
+          valid_until: string
+        }[]
+      }
       open_till_shift: {
         Args: { _opening_float_cents: number; _terminal: string }
         Returns: {

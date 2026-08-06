@@ -127,3 +127,58 @@ export const optInVoucher = createServerFn({ method: "POST" })
       already: !!row?.already,
     };
   });
+
+/**
+ * HMCTS Juror ID opt-in. The juror keys in the Juror ID they were issued by
+ * the court; the system generates the six-digit PIN, returns it exactly once
+ * for the juror to write down, and keeps only a hash from that point on.
+ */
+export const optInWithJurorId = createServerFn({ method: "POST" })
+  .validator((d: unknown) =>
+    z
+      .object({
+        code: z.string().trim().min(3).max(40),
+        source: z.enum(["till", "display", "online", "jury_room"]).default("online"),
+      })
+      .parse(d),
+  )
+  .handler(async ({ data }) => {
+    const { checkThrottle, recordAttempt, requestIdentity } = await import("./rate-limit.server");
+    const ident = requestIdentity();
+    const gate = await checkThrottle("voucher", ident);
+    if (!gate.allowed)
+      return { ok: false as const, message: gate.message, pin: null, already: false };
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { callOperationsRpc } = await import("./ops-rpc");
+    let rows: Array<{
+      ok: boolean;
+      message: string;
+      pin: string | null;
+      already: boolean;
+      valid_until: string | null;
+    }>;
+    try {
+      rows = await callOperationsRpc(supabaseAdmin, "juror_opt_in_with_id", {
+        _code: data.code,
+        _source: data.source,
+      });
+    } catch (error) {
+      console.error("[vouchers] juror id opt-in failed", error);
+      await recordAttempt("voucher", ident, false);
+      return {
+        ok: false as const,
+        message: "Could not complete that opt-in. Please try again.",
+        pin: null,
+        already: false,
+      };
+    }
+    const row = rows[0];
+    await recordAttempt("voucher", ident, !!row?.ok);
+    return {
+      ok: !!row?.ok,
+      message: row?.message ?? "That Juror ID is not recognised",
+      pin: row?.pin ?? null,
+      already: !!row?.already,
+      valid_until: row?.valid_until ?? null,
+    };
+  });

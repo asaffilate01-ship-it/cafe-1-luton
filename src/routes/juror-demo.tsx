@@ -28,7 +28,7 @@ export const Route = createFileRoute("/juror-demo")({
       {
         name: "description",
         content:
-          "A step-by-step demonstration of the Café 1 Juror Voucher Scheme: issuing anonymous codes, opting in, ordering, redeeming the £5.71 daily allowance and the nightly HMCTS claim report.",
+          "A step-by-step demonstration of the Café 1 Juror Voucher Scheme: activating HMCTS Juror IDs, opting in and issuing the one-time PIN, ordering, redeeming the £5.71 daily allowance and the nightly HMCTS claim report.",
       },
       { property: "og:title", content: "Juror Voucher Scheme — Live Walkthrough" },
       {
@@ -43,7 +43,7 @@ export const Route = createFileRoute("/juror-demo")({
   component: DemoPage,
 });
 
-const DEMO_CODE = "CV-DEMO-4821-7K9P";
+const DEMO_CODE = "J-4821-7K9P";
 const DEMO_PIN = "418 302";
 
 type Step = {
@@ -56,42 +56,65 @@ type Step = {
 
 const steps: Step[] = [
   {
-    title: "1. The court hands out a printed sheet",
+    title: "1. The Jury Office sends us the Juror IDs",
     who: "Jury Officer",
     icon: Printer,
-    say: "We print the juror information sheets for you. Each A4 sheet already carries that juror's voucher code and 6-digit PIN at the top, a ruled box for you to write the juror's name in pen, then a plain-English explanation of the scheme and the FAQs — so the sheet answers most questions on its own. At induction you write the name on the sheet and copy the code next to that name on your own allocation register. That register is the only place a name is ever linked to a code, and it stays with the court: no names, emails or phone numbers ever reach Café 1.",
+    say: "At least 24 hours before induction, the Jury Office sends us the HMCTS Juror IDs of the jurors attending, by an agreed secure method — a copy-and-paste list, or a CSV produced by a small extraction tool we can provide. No names, emails or phone numbers, and nothing else. We activate those IDs on the voucher system for 12 weeks. Only HMCTS can match an ID to a person, so nothing identifiable ever reaches Café 1. We also supply the printed information sheet and FAQs for the induction pack — it carries no code and no PIN, so a mislaid sheet is worthless.",
     screen: () => (
       <div className="mx-auto max-w-sm rounded-2xl border-2 border-dashed border-border bg-white p-6 text-center shadow-sm">
         <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">
-          Café 1 · Juror information sheet (page 1)
+          Jury Office · secure Juror ID list
         </p>
-        <p className="mt-4 font-mono text-xl font-black tracking-wider">{DEMO_CODE}</p>
-        <p className="mt-3 text-xs font-bold uppercase tracking-widest text-muted-foreground">
-          6-digit PIN
-        </p>
-        <p className="font-mono text-2xl font-black tracking-[0.3em]">{DEMO_PIN}</p>
-        <div className="mt-4 rounded-lg border border-dashed border-border p-3 text-left">
-          <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">
-            Juror&apos;s name (written by the Jury Officer)
-          </p>
-          <div className="mt-3 border-b border-foreground/40" />
+        <div className="mt-4 space-y-1 rounded-lg border border-border bg-muted/40 p-3 text-left font-mono text-sm">
+          <p>{DEMO_CODE}</p>
+          <p>J-4822-2M4T</p>
+          <p>J-4823-9QX1</p>
+          <p className="text-muted-foreground">…</p>
         </div>
+        <p className="mt-3 text-xs font-bold uppercase tracking-widest text-muted-foreground">
+          Activated for 12 weeks
+        </p>
         <p className="mt-4 text-xs text-muted-foreground">
-          Valid Mon–Fri sitting days · {money(JUROR_DAILY_ALLOWANCE_CENTS)} each day. Explanation
-          and FAQs printed overleaf for the juror to keep.
+          Juror IDs only — no names, emails or phone numbers. Valid Mon–Fri sitting days ·{" "}
+          {money(JUROR_DAILY_ALLOWANCE_CENTS)} each day.
         </p>
       </div>
     ),
   },
   {
-    title: "2. The juror checks the code",
+    title: "2. The juror opts in and receives a one-time PIN",
+    who: "Juror, on their phone or at the counter",
+    icon: ShieldCheck,
+    say: "The juror scans the QR code on their sheet, in the jury room or at the Café 1 counter. They enter their Juror ID — the one HMCTS already gave them — and confirm they want to opt in. The system then generates a unique six-digit PIN and shows it on screen for 60 seconds only. The juror writes it down and presses OK. From that moment the PIN exists nowhere in readable form: it is held solely as a cryptographic hash, so nobody — not Café 1, not an administrator, not HMCTS — can ever display it again. If a juror loses their PIN, a member of the Café 1 team issues a replacement, which is again shown once.",
+    screen: () => (
+      <div className="mx-auto max-w-md rounded-2xl border border-border bg-card p-6 text-center shadow-sm">
+        <p className="text-xs font-black uppercase tracking-widest text-primary">
+          Write this PIN down now
+        </p>
+        <p className="mt-2 text-sm text-muted-foreground">
+          Juror ID <span className="font-mono font-bold">{DEMO_CODE}</span>
+        </p>
+        <p className="mt-4 font-mono text-4xl font-black tracking-[0.3em] text-primary">
+          {DEMO_PIN}
+        </p>
+        <p className="mt-3 inline-flex items-center gap-2 rounded-full bg-muted px-4 py-1.5 text-xs font-bold">
+          <Lock className="h-3.5 w-3.5" /> Hidden in 60s — shown once, then hashed
+        </p>
+        <div className="mt-4 flex h-11 items-center justify-center rounded-xl bg-primary text-sm font-bold text-primary-foreground">
+          OK — I&apos;ve written it down
+        </div>
+      </div>
+    ),
+  },
+  {
+    title: "3. Juror ID and PIN are the login from then on",
     who: "Juror, on their phone",
     icon: Ticket,
-    say: "The juror scans the QR code on their sheet, in the jury room or at the till. They type in the code and the PIN — both are needed, every single time, so a mislaid sheet on its own is useless.",
+    say: "From then on the Juror ID and the PIN together are the login for the scheme — both are needed, every single time, at the till and online. That keeps a mislaid sheet or an overheard ID useless on its own.",
     screen: () => (
       <div className="mx-auto max-w-md rounded-2xl border border-border bg-card p-5 shadow-sm">
         <p className="text-xs font-black uppercase tracking-widest text-muted-foreground">
-          Your voucher code
+          Your Juror ID
         </p>
         <div className="mt-2 grid gap-2 sm:grid-cols-[1fr_110px]">
           <div className="flex h-11 items-center rounded-xl border border-border px-3 font-mono text-sm">
@@ -107,16 +130,16 @@ const steps: Step[] = [
           <Mini label="Left today" value={money(JUROR_DAILY_ALLOWANCE_CENTS)} highlight />
         </div>
         <p className="mt-3 inline-flex items-center gap-1.5 text-xs text-muted-foreground">
-          <Lock className="h-3.5 w-3.5" /> The code is never saved on the phone.
+          <Lock className="h-3.5 w-3.5" /> The Juror ID and PIN are never saved on the phone.
         </p>
       </div>
     ),
   },
   {
-    title: "3. Opting in — one scheme or the other",
+    title: "4. Opting in — one scheme or the other",
     who: "Juror",
     icon: ShieldCheck,
-    say: "Opting in is a choice the juror makes once. It means they take their food and drink through Café 1 for the rest of their service and will not claim HMCTS subsistence expenses. It is one or the other — never both, never a mix. Opting in also unlocks the extra 10% off food above the allowance.",
+    say: "Opting in is a choice the juror makes once, on their first day, and it stays in place for the rest of their service. It means they take their food and drink through Café 1 and will not claim HMCTS subsistence expenses. It is one or the other — never both, never a mix. Opting in also unlocks the extra 10% off non-beverage items above the allowance.",
     screen: () => (
       <div className="mx-auto max-w-md space-y-3">
         <div className="rounded-xl border border-amber-300 bg-amber-50 p-4 text-sm text-amber-900">
@@ -135,15 +158,15 @@ const steps: Step[] = [
     ),
   },
   {
-    title: "4. The private JURY ONLY menu",
+    title: "5. The private JURY ONLY menu",
     who: "Juror",
     icon: Lock,
-    say: "In the jury lounge and the jury rooms there's a poster with a QR code. Scanning it opens a menu nobody else can see: the juror keys in their voucher code and PIN, and only then does the JURY ONLY menu unlock. It's a separate, dedicated menu — and orders from it can only be collected at Café 1 or delivered to the Jury Lounge at the Crown Court or the Jury Rooms at the Magistrates' Court. Never to a home or office address.",
+    say: "In the jury lounge and the jury rooms there's a poster with a QR code. Scanning it opens a menu nobody else can see: the juror keys in their Juror ID and PIN, and only then does the JURY ONLY menu unlock. It's a separate, dedicated menu — and orders from it can only be collected at Café 1 or delivered to the Jury Lounge at the Crown Court or the Jury Rooms at the Magistrates' Court. Never to a home or office address.",
     screen: () => (
       <div className="mx-auto max-w-md rounded-2xl border border-border bg-card p-5 text-sm shadow-sm">
         <div className="rounded-xl bg-primary px-4 py-3 text-center text-primary-foreground">
           <p className="font-display text-lg font-black tracking-wide">JURY ONLY MENU</p>
-          <p className="text-xs opacity-90">Unlocked with your voucher code and PIN</p>
+          <p className="text-xs opacity-90">Unlocked with your Juror ID and PIN</p>
         </div>
         <div className="mt-4 space-y-2">
           <div className="flex items-center gap-2 rounded-xl border border-border px-3 py-2">
@@ -168,7 +191,7 @@ const steps: Step[] = [
     ),
   },
   {
-    title: "5. Ordering from the Jury menu",
+    title: "6. Ordering from the Jury menu",
     who: "Juror",
     icon: UtensilsCrossed,
     say: "Every juror can use the menu, whether or not they opt in — jurors who stay on expenses just tap 'I haven't opted in' and pay by card, Apple or Google Pay or cash, with no allowance and no 10% discount. They can collect at the counter, or — if they're sitting in the Magistrates' Court — have it delivered to the jury room at a chosen time. Deliveries only ever go inside the court estate. Once the juror has their food it's theirs to enjoy wherever they like — they're welcome to take it off the premises and eat outside, provided the court has told them they're free to leave the building.",
@@ -222,7 +245,7 @@ const steps: Step[] = [
     ),
   },
   {
-    title: "6. At the till",
+    title: "7. At the till",
     who: "Café 1 counter",
     icon: Ticket,
     say: "Exactly the same at the counter. Staff key in the code and the juror types the PIN on the customer screen — staff never see it. The allowance comes off automatically and the juror pays only the difference.",
@@ -251,7 +274,7 @@ const steps: Step[] = [
     ),
   },
   {
-    title: "7. Use it or lose it",
+    title: "8. Use it or lose it",
     who: "The rules, automatically enforced",
     icon: CheckCircle2,
     say: "The allowance is per sitting day. Anything unused at close of business disappears — it can never be carried over, saved up or exchanged for cash. Weekends and bank holidays give no allowance at all. If the Jury Officer confirms attendance over 10 hours, a manager can raise that one day to " +
@@ -266,10 +289,10 @@ const steps: Step[] = [
     ),
   },
   {
-    title: "8. The nightly HMCTS claim",
+    title: "9. The nightly HMCTS claim",
     who: "Café 1 → HMCTS",
     icon: FileSpreadsheet,
-    say: "Every night the system produces one reconciled claim line per redemption: voucher code, date, time, receipt number, amount redeemed and anything the juror paid themselves. We only ever claim what was actually spent. If HMCTS ever needs to trace a line back to a person, they match the code against your own register — which is why that register is the only record the court needs to keep.",
+    say: "Every night the system produces one reconciled claim line per redemption: Juror ID, date, time, receipt number, amount redeemed and anything the juror paid themselves. We only ever claim what was actually spent. If HMCTS ever needs to trace a line back to a person, they match the Juror ID against their own HMCTS records — Café 1 never holds anything identifiable. We can provide one complete itemised report plus a filtered report per Juror ID, locked against editing.",
     screen: () => (
       <div className="mx-auto max-w-lg overflow-hidden rounded-2xl border border-border bg-card text-xs shadow-sm">
         <div className="grid grid-cols-4 bg-muted px-3 py-2 font-black uppercase tracking-widest">
@@ -298,7 +321,7 @@ const steps: Step[] = [
     ),
   },
   {
-    title: "9. Security, hosting and payments",
+    title: "10. Security, hosting and payments",
     who: "Café 1 systems",
     icon: Server,
     say: "The whole system runs on AWS cloud infrastructure in the UK/EEA, with managed patching, encryption in transit and at rest, automated backups and row-level database access control. Card payments are taken through SumUp, an FCA-authorised, PCI DSS compliant payment gateway with 3-D Secure and tokenised Apple Pay and Google Pay — Café 1 never holds card details. Voucher PINs are stored only as cryptographic hashes, admin accounts require two-factor authentication, and every voucher action is written to an immutable audit log.",
@@ -316,7 +339,7 @@ const steps: Step[] = [
           lock-out and rate limiting.
         </Fact>
         <Fact icon={FileSpreadsheet} title="Immutable audit log">
-          Every issue, opt-in, redemption and adjustment recorded against the anonymous code only.
+          Every issue, opt-in, redemption and adjustment recorded against the Juror ID only.
         </Fact>
       </div>
     ),

@@ -7,7 +7,16 @@ import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { money } from "@/lib/format";
-import { Ticket, Download, CalendarPlus, Power, ShieldCheck, Clock3 } from "lucide-react";
+import {
+  Ticket,
+  Download,
+  CalendarPlus,
+  Power,
+  ShieldCheck,
+  Clock3,
+  KeyRound,
+  ListPlus,
+} from "lucide-react";
 import { QrCode } from "@/components/qr-code";
 import {
   JUROR_DAILY_ALLOWANCE_CENTS,
@@ -20,6 +29,9 @@ import {
   listJurorClaimRows,
   manageJurorVoucher,
   setJurorDailyAllowance,
+  activateJurorIds,
+  resetJurorPin,
+  type ActivatedJurorId,
   type IssuedJurorCredential,
 } from "@/lib/juror-admin.functions";
 
@@ -194,6 +206,73 @@ function AdminVouchers() {
   const [issued, setIssued] = useState<IssuedJurorCredential[]>([]);
   const [slips, setSlips] = useState<IssuedJurorCredential[]>([]);
   const [printMode, setPrintMode] = useState<"juror" | "officer">("juror");
+
+  /* ------------- HMCTS Juror ID activation ------------- */
+  const activateIds = useServerFn(activateJurorIds);
+  const resetPin = useServerFn(resetJurorPin);
+  const [idBatch, setIdBatch] = useState(`Jury Office ${today()}`);
+  const [idWeeks, setIdWeeks] = useState("12");
+  const [idFrom, setIdFrom] = useState(today());
+  const [idText, setIdText] = useState("");
+  const [activating, setActivating] = useState(false);
+  const [activated, setActivated] = useState<ActivatedJurorId[]>([]);
+
+  const parsedIds = useMemo(
+    () =>
+      Array.from(
+        new Set(
+          idText
+            .split(/[\s,;]+/)
+            .map((v) => v.replace(/[^A-Za-z0-9-]/g, "").toUpperCase())
+            .filter((v) => v.length >= 3 && v.length <= 40),
+        ),
+      ),
+    [idText],
+  );
+
+  async function activateBatch(e: React.FormEvent) {
+    e.preventDefault();
+    if (!parsedIds.length) {
+      toast.error("Paste at least one Juror ID");
+      return;
+    }
+    setActivating(true);
+    try {
+      const rows = await activateIds({
+        data: {
+          batch: idBatch,
+          juror_ids: parsedIds.slice(0, 500),
+          valid_from: idFrom,
+          weeks: Math.min(Math.max(parseInt(idWeeks || "0", 10) || 12, 1), 26),
+        },
+      });
+      setActivated(rows);
+      toast.success(`${rows.length} Juror IDs activated for ${idWeeks} weeks`);
+      qc.invalidateQueries({ queryKey: ["voucher-holders"] });
+      qc.invalidateQueries({ queryKey: ["voucher-events"] });
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Could not activate those Juror IDs");
+    } finally {
+      setActivating(false);
+    }
+  }
+
+  async function issueReplacementPin(h: Holder) {
+    const reason = window.prompt(
+      `Reason for issuing a replacement PIN for ${h.code}:`,
+      "Juror mislaid their PIN",
+    );
+    if (!reason?.trim()) return;
+    try {
+      const result = await resetPin({ data: { holder_id: h.id, reason } });
+      window.alert(
+        `Replacement PIN for ${result.code}: ${result.pin}\n\nRead it to the juror now — it is shown once and stored only as a hash.`,
+      );
+      qc.invalidateQueries({ queryKey: ["voucher-events"] });
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Could not reset that PIN");
+    }
+  }
 
   const slipUrl = (code: string) =>
     `https://cafe1stalbans.co.uk/juror?code=${encodeURIComponent(code)}&src=slip`;
@@ -391,7 +470,107 @@ function AdminVouchers() {
           </div>
         </div>
 
-        {/* Issue a batch */}
+        {/* Activate the Juror IDs supplied by the Jury Office */}
+        {manager && (
+          <form
+            onSubmit={activateBatch}
+            className="mt-8 rounded-2xl border border-primary/40 bg-primary/5 p-5"
+          >
+            <p className="flex items-center gap-2 font-semibold text-primary">
+              <ListPlus className="h-4 w-4" /> Activate HMCTS Juror IDs
+            </p>
+            <p className="mt-1 text-xs text-muted-foreground">
+              Paste the Juror IDs sent by the Jury Office (one per line, or comma separated). No
+              PINs are created here — each juror generates their own six-digit PIN when they opt in,
+              and it is shown to them once only.
+            </p>
+            <textarea
+              value={idText}
+              onChange={(e) => setIdText(e.target.value)}
+              rows={5}
+              placeholder={"J-4821-7K9P\nJ-4822-2M4T\nJ-4823-9QX1"}
+              className="mt-3 w-full rounded-xl border border-border bg-background p-3 font-mono text-sm"
+            />
+            <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+              <label className="text-sm">
+                <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                  Batch label
+                </span>
+                <input
+                  value={idBatch}
+                  onChange={(e) => setIdBatch(e.target.value)}
+                  className="mt-1 h-11 w-full rounded-xl border border-border bg-background px-3 text-sm"
+                />
+              </label>
+              <label className="text-sm">
+                <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                  Active from
+                </span>
+                <input
+                  type="date"
+                  value={idFrom}
+                  onChange={(e) => setIdFrom(e.target.value)}
+                  className="mt-1 h-11 w-full rounded-xl border border-border bg-background px-3 text-sm"
+                />
+              </label>
+              <label className="text-sm">
+                <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                  Weeks active
+                </span>
+                <input
+                  type="number"
+                  min="1"
+                  max="26"
+                  value={idWeeks}
+                  onChange={(e) => setIdWeeks(e.target.value)}
+                  className="mt-1 h-11 w-full rounded-xl border border-border bg-background px-3 text-sm"
+                />
+              </label>
+              <div className="flex items-end">
+                <button
+                  disabled={activating || !parsedIds.length}
+                  className="h-11 w-full rounded-xl bg-primary px-5 font-semibold text-primary-foreground hover:bg-primary-hover disabled:opacity-60"
+                >
+                  {activating ? "Activating…" : `Activate ${parsedIds.length || ""} IDs`.trim()}
+                </button>
+              </div>
+            </div>
+            {activated.length > 0 && (
+              <div className="mt-4 rounded-xl border border-border bg-card p-4 text-sm">
+                <p className="font-semibold">
+                  {activated.filter((r) => r.status === "activated").length} newly activated ·{" "}
+                  {activated.filter((r) => r.status === "updated").length} already on the scheme
+                </p>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  Valid {activated[0]?.valid_from} → {activated[0]?.valid_until}. Jurors opt in
+                  themselves with their Juror ID.
+                </p>
+                <button
+                  type="button"
+                  onClick={() =>
+                    downloadCsv(
+                      [
+                        ["Juror ID", "Status", "Valid from", "Valid until"],
+                        ...activated.map((r) => [
+                          r.juror_id,
+                          r.status,
+                          r.valid_from,
+                          r.valid_until,
+                        ]),
+                      ],
+                      `cafe1-juror-ids-${idBatch.replace(/\W+/g, "-").toLowerCase()}.csv`,
+                    )
+                  }
+                  className="mt-3 flex h-10 items-center gap-2 rounded-xl border border-border px-4 text-sm font-semibold hover:bg-muted"
+                >
+                  <Download className="h-4 w-4" /> Download activation record
+                </button>
+              </div>
+            )}
+          </form>
+        )}
+
+        {/* Legacy: issue anonymous codes when the court cannot supply Juror IDs */}
         {manager ? (
           <form onSubmit={issueBatch} className="mt-8 rounded-2xl border border-border bg-card p-5">
             <p className="font-semibold">Issue codes for an induction</p>
@@ -593,6 +772,14 @@ function AdminVouchers() {
                         title={h.active ? "Deactivate" : "Reactivate for 5 working days"}
                       >
                         <Power className="h-4 w-4" />
+                      </button>
+                      <button
+                        onClick={() => issueReplacementPin(h)}
+                        className="rounded-lg p-2 text-muted-foreground hover:text-primary"
+                        aria-label={`Issue a replacement PIN for ${h.code}`}
+                        title="Issue a replacement one-time PIN"
+                      >
+                        <KeyRound className="h-4 w-4" />
                       </button>
                     </>
                   )}
