@@ -121,33 +121,6 @@ export const resetJurorPin = createServerFn({ method: "POST" })
     );
   });
 
-const legacyManageJurorVoucher = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
-  .validator((value: unknown) =>
-    z
-      .object({
-        holder_id: z.string().uuid(),
-        action: z.enum(["extend", "deactivate", "reactivate"]),
-        working_days: z.number().int().min(0).max(60).default(0),
-        reason: z.string().trim().min(4).max(300),
-      })
-      .parse(value),
-  )
-  .handler(async ({ data, context }) => {
-    requireManagerMfa(context.claims);
-    return callOperationsRpc<{
-      id: string;
-      code: string;
-      active: boolean;
-      valid_until: string;
-    }>(context.supabase, "cafe1_manage_juror_voucher", {
-      _holder_id: data.holder_id,
-      _action: data.action,
-      _working_days: data.working_days,
-      _reason: data.reason,
-    });
-  });
-
 export const setJurorDailyAllowance = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .validator((value: unknown) =>
