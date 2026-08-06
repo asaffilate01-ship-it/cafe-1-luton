@@ -63,7 +63,7 @@ const POSTERS = [
     eyebrow: "Jury Officer / demonstration",
     title: "See the whole process",
     lines: [
-      "A seven-screen walkthrough of the scheme.",
+      "A ten-screen walkthrough of the scheme.",
       "Simulated data only — nothing is claimed.",
     ],
     foot: "For briefings and induction sessions.",

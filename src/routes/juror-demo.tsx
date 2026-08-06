@@ -158,7 +158,7 @@ const steps: Step[] = [
     ),
   },
   {
-    title: "4. The private JURY ONLY menu",
+    title: "5. The private JURY ONLY menu",
     who: "Juror",
     icon: Lock,
     say: "In the jury lounge and the jury rooms there's a poster with a QR code. Scanning it opens a menu nobody else can see: the juror keys in their voucher code and PIN, and only then does the JURY ONLY menu unlock. It's a separate, dedicated menu — and orders from it can only be collected at Café 1 or delivered to the Jury Lounge at the Crown Court or the Jury Rooms at the Magistrates' Court. Never to a home or office address.",
@@ -191,7 +191,7 @@ const steps: Step[] = [
     ),
   },
   {
-    title: "5. Ordering from the Jury menu",
+    title: "6. Ordering from the Jury menu",
     who: "Juror",
     icon: UtensilsCrossed,
     say: "Every juror can use the menu, whether or not they opt in — jurors who stay on expenses just tap 'I haven't opted in' and pay by card, Apple or Google Pay or cash, with no allowance and no 10% discount. They can collect at the counter, or — if they're sitting in the Magistrates' Court — have it delivered to the jury room at a chosen time. Deliveries only ever go inside the court estate. Once the juror has their food it's theirs to enjoy wherever they like — they're welcome to take it off the premises and eat outside, provided the court has told them they're free to leave the building.",
@@ -245,7 +245,7 @@ const steps: Step[] = [
     ),
   },
   {
-    title: "6. At the till",
+    title: "7. At the till",
     who: "Café 1 counter",
     icon: Ticket,
     say: "Exactly the same at the counter. Staff key in the code and the juror types the PIN on the customer screen — staff never see it. The allowance comes off automatically and the juror pays only the difference.",
@@ -274,7 +274,7 @@ const steps: Step[] = [
     ),
   },
   {
-    title: "7. Use it or lose it",
+    title: "8. Use it or lose it",
     who: "The rules, automatically enforced",
     icon: CheckCircle2,
     say: "The allowance is per sitting day. Anything unused at close of business disappears — it can never be carried over, saved up or exchanged for cash. Weekends and bank holidays give no allowance at all. If the Jury Officer confirms attendance over 10 hours, a manager can raise that one day to " +
@@ -289,7 +289,7 @@ const steps: Step[] = [
     ),
   },
   {
-    title: "8. The nightly HMCTS claim",
+    title: "9. The nightly HMCTS claim",
     who: "Café 1 → HMCTS",
     icon: FileSpreadsheet,
     say: "Every night the system produces one reconciled claim line per redemption: voucher code, date, time, receipt number, amount redeemed and anything the juror paid themselves. We only ever claim what was actually spent. If HMCTS ever needs to trace a line back to a person, they match the code against your own register — which is why that register is the only record the court needs to keep.",
@@ -321,7 +321,7 @@ const steps: Step[] = [
     ),
   },
   {
-    title: "9. Security, hosting and payments",
+    title: "10. Security, hosting and payments",
     who: "Café 1 systems",
     icon: Server,
     say: "The whole system runs on AWS cloud infrastructure in the UK/EEA, with managed patching, encryption in transit and at rest, automated backups and row-level database access control. Card payments are taken through SumUp, an FCA-authorised, PCI DSS compliant payment gateway with 3-D Secure and tokenised Apple Pay and Google Pay — Café 1 never holds card details. Voucher PINs are stored only as cryptographic hashes, admin accounts require two-factor authentication, and every voucher action is written to an immutable audit log.",
