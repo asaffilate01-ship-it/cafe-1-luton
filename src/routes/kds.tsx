@@ -572,6 +572,21 @@ function KDS() {
             playChime();
           }
         }
+        // Status changes from another till/phone apply straight away so every
+        // connected screen shows the same board within a second.
+        if (!dropId && o?.id && liveIds.current.has(o.id) && o.status) {
+          const next = o.status as Order["status"];
+          const stillLive = next === "preparing" || next === "ready" || next === "paid";
+          if (!stillLive && !recall) {
+            liveIds.current.delete(o.id);
+            clearedIds.current.set(o.id, Date.now());
+            setTickets((prev) => prev.filter((t) => t.id !== o.id));
+            return;
+          }
+          clearedIds.current.delete(o.id);
+          setTickets((prev) => prev.map((t) => (t.id === o.id ? { ...t, status: next } : t)));
+          return;
+        }
         scheduleLoad();
       })
       .on("postgres_changes", { event: "*", schema: "public", table: "order_items" }, () =>
