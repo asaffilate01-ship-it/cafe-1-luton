@@ -5,7 +5,7 @@ import { signOutAndRedirect } from "@/lib/sign-out";
 import { useEffect, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useServerFn } from "@tanstack/react-start";
-import { updateOrderStatus, setOrderFulfilment } from "@/lib/orders.functions";
+import { updateOrderStatus, setOrderFulfilment, setOrderChannel } from "@/lib/orders.functions";
 import { toast } from "sonner";
 import { useSession, useRoles } from "@/hooks/use-auth";
 import { useAlertOnIncrease, useNotificationPermission, playChime } from "@/hooks/use-order-alerts";
@@ -31,6 +31,7 @@ import {
   Settings2,
   LayoutGrid,
   MoreHorizontal,
+  Shuffle,
   X,
 } from "lucide-react";
 import { ManualOrderDialog } from "@/components/manual-order-dialog";
