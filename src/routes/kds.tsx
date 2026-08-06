@@ -361,6 +361,9 @@ function KDS() {
   const setChannel = useServerFn(setOrderChannel);
   // Which ticket currently has its "move to another area" picker open.
   const [reassignFor, setReassignFor] = useState<string | null>(null);
+  // True when the last read of the order feed failed, so the board is showing
+  // the previous tickets rather than a real empty kitchen.
+  const [feedStale, setFeedStale] = useState(false);
   const sync = useServerFn(syncSumupPos);
   const getMenuItems = useServerFn(getStaffMenuItems);
   const [syncing, setSyncing] = useState(false);
@@ -399,11 +402,17 @@ function KDS() {
     async function load() {
       const COLUMNS =
         "id, order_number, status, type, customer_name, created_at, schedule_mode, scheduled_for, table_number, source, payment_method, payment_status, customer_phone, company_name, address_line1, address_line2, city, postcode, delivery_notes, pos_terminal, jury_room";
-      const { data: orders } = await supabase
+      const { data: orders, error: ordersError } = await supabase
         .from("orders")
         .select(COLUMNS)
         .in("status", ["preparing", "ready"])
         .order("created_at");
+      // A dropped connection or a token refresh mid-request returns no rows.
+      // Treat that as "we don't know", not "the kitchen is empty" — wiping the
+      // board and showing "no active orders" is what forced a manual refresh.
+      if (ordersError || !orders) {
+        throw new Error(ordersError?.message ?? "Could not reach the order feed");
+      }
       let rows = (orders ?? []) as Order[];
       if (recall) {
         // Rolling 24-hour window, not "since midnight": a late shift running
@@ -438,12 +447,14 @@ function KDS() {
           (recall || !clearedIds.current.has(o.id)),
       );
       const ids = live.map((o) => o.id);
-      const { data: items } = ids.length
+      const itemsRes = ids.length
         ? await supabase
             .from("order_items")
             .select("id, order_id, menu_item_id, name, qty, notes, category_label")
             .in("order_id", ids)
-        : { data: [] as Item[] };
+        : { data: [] as Item[], error: null };
+      if (itemsRes.error) throw new Error(itemsRes.error.message);
+      const items = itemsRes.data;
       const fresh =
         menuCache.current && Date.now() - menuCache.current.at < 300_000
           ? menuCache.current
@@ -558,6 +569,8 @@ function KDS() {
     let inFlight = false;
     let queued = false;
     let timer: number | undefined;
+    let retry: number | undefined;
+    let cancelled = false;
     async function run() {
       if (inFlight) {
         queued = true;
@@ -566,6 +579,15 @@ function KDS() {
       inFlight = true;
       try {
         await load();
+        if (!cancelled) setFeedStale(false);
+      } catch {
+        // Keep whatever is already on screen and try again shortly. Blanking
+        // the board on a wifi blip is what made orders "disappear".
+        if (!cancelled) {
+          setFeedStale(true);
+          if (retry) window.clearTimeout(retry);
+          retry = window.setTimeout(() => void run(), 3000);
+        }
       } finally {
         inFlight = false;
         if (queued) {
@@ -636,7 +658,9 @@ function KDS() {
     };
     document.addEventListener("visibilitychange", onVisible);
     return () => {
+      cancelled = true;
       if (timer) window.clearTimeout(timer);
+      if (retry) window.clearTimeout(retry);
       window.clearInterval(poll);
       document.removeEventListener("visibilitychange", onVisible);
       supabase.removeChannel(ch);
@@ -1252,6 +1276,15 @@ function KDS() {
         </header>
       )}
       <div className="mx-auto grid max-w-[110rem] gap-3 p-3 pb-28 sm:grid-cols-2 lg:grid-cols-3 lg:pb-3 xl:grid-cols-4 2xl:grid-cols-5">
+        {feedStale && (
+          <div
+            role="status"
+            className="col-span-full rounded-xl border-2 border-amber-500 bg-amber-50 px-4 py-2 text-center text-sm font-bold text-amber-900"
+          >
+            Connection dropped — showing the last known board and retrying. Orders are not being
+            lost.
+          </div>
+        )}
         {visibleTickets.map((t) => {
           const elapsedSec = Math.max(
             0,
