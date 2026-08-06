@@ -7,7 +7,16 @@ import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { money } from "@/lib/format";
-import { Ticket, Download, CalendarPlus, Power, ShieldCheck, Clock3 } from "lucide-react";
+import {
+  Ticket,
+  Download,
+  CalendarPlus,
+  Power,
+  ShieldCheck,
+  Clock3,
+  KeyRound,
+  ListPlus,
+} from "lucide-react";
 import { QrCode } from "@/components/qr-code";
 import {
   JUROR_DAILY_ALLOWANCE_CENTS,
@@ -20,6 +29,9 @@ import {
   listJurorClaimRows,
   manageJurorVoucher,
   setJurorDailyAllowance,
+  activateJurorIds,
+  resetJurorPin,
+  type ActivatedJurorId,
   type IssuedJurorCredential,
 } from "@/lib/juror-admin.functions";
 
