@@ -1289,6 +1289,41 @@ function KDS() {
               >
                 {channel.label}
               </div>
+              <div className="-mt-1 mb-2">
+                <button
+                  type="button"
+                  onClick={() => setReassignFor(reassignFor === t.id ? null : t.id)}
+                  className="flex w-full items-center justify-center gap-1.5 rounded-full border border-border py-1.5 text-[11px] font-bold uppercase tracking-wide text-muted-foreground hover:border-primary hover:text-primary sm:py-1 sm:text-[10px]"
+                  aria-expanded={reassignFor === t.id}
+                  title="Move this ticket to a different area"
+                >
+                  <Shuffle className="h-3.5 w-3.5" aria-hidden="true" />
+                  Move area
+                </button>
+                {reassignFor === t.id && (
+                  <div className="mt-1.5 grid grid-cols-2 gap-1.5 rounded-xl border border-border bg-slate-50 p-2">
+                    {REASSIGN_CHANNELS.map((key) => {
+                      const target = CHANNEL[key];
+                      const current = channelOf(t) === key;
+                      return (
+                        <button
+                          key={key}
+                          type="button"
+                          disabled={current}
+                          onClick={() => reassignChannel(t, key)}
+                          className={`h-10 rounded-lg px-2 text-[11px] font-black uppercase tracking-wide sm:h-8 sm:text-[10px] ${
+                            current
+                              ? "cursor-default border border-dashed border-slate-400 bg-white text-slate-400"
+                              : `${target.chip} active:scale-[0.98]`
+                          }`}
+                        >
+                          {current ? `${target.label} ✓` : target.label}
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
               {scheduledAt && (
                 <div className="-mx-4 -mt-2 mb-2 bg-violet-700 px-3 py-1.5 text-center text-white sm:-mx-3">
                   <p className="font-display text-base font-black uppercase leading-none tracking-[0.14em]">
