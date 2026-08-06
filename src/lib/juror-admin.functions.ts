@@ -71,6 +71,83 @@ export const manageJurorVoucher = createServerFn({ method: "POST" })
     });
   });
 
+export type ActivatedJurorId = {
+  juror_id: string;
+  status: "activated" | "updated";
+  valid_from: string;
+  valid_until: string;
+};
+
+/**
+ * Activates the HMCTS Juror IDs supplied by the Jury Office. No PIN is issued
+ * here — the juror generates their own PIN when they opt in.
+ */
+export const activateJurorIds = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .validator((value: unknown) =>
+    z
+      .object({
+        batch: z.string().trim().min(2).max(120),
+        juror_ids: z.array(z.string().trim().min(3).max(40)).min(1).max(500),
+        valid_from: IsoDate,
+        weeks: z.number().int().min(1).max(26).default(12),
+      })
+      .parse(value),
+  )
+  .handler(async ({ data, context }) => {
+    requireManagerMfa(context.claims);
+    return callOperationsRpc<ActivatedJurorId[]>(context.supabase, "cafe1_activate_juror_ids", {
+      _batch: data.batch,
+      _juror_ids: data.juror_ids,
+      _valid_from: data.valid_from,
+      _weeks: data.weeks,
+    });
+  });
+
+/** Manager-only replacement PIN, returned once for the juror to note down. */
+export const resetJurorPin = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .validator((value: unknown) =>
+    z
+      .object({ holder_id: z.string().uuid(), reason: z.string().trim().min(4).max(300) })
+      .parse(value),
+  )
+  .handler(async ({ data, context }) => {
+    requireManagerMfa(context.claims);
+    return callOperationsRpc<{ code: string; pin: string }>(
+      context.supabase,
+      "cafe1_reset_juror_pin",
+      { _holder_id: data.holder_id, _reason: data.reason },
+    );
+  });
+
+const legacyManageJurorVoucher = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .validator((value: unknown) =>
+    z
+      .object({
+        holder_id: z.string().uuid(),
+        action: z.enum(["extend", "deactivate", "reactivate"]),
+        working_days: z.number().int().min(0).max(60).default(0),
+        reason: z.string().trim().min(4).max(300),
+      })
+      .parse(value),
+  )
+  .handler(async ({ data, context }) => {
+    requireManagerMfa(context.claims);
+    return callOperationsRpc<{
+      id: string;
+      code: string;
+      active: boolean;
+      valid_until: string;
+    }>(context.supabase, "cafe1_manage_juror_voucher", {
+      _holder_id: data.holder_id,
+      _action: data.action,
+      _working_days: data.working_days,
+      _reason: data.reason,
+    });
+  });
+
 export const setJurorDailyAllowance = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .validator((value: unknown) =>
