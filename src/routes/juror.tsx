@@ -11,6 +11,7 @@ import {
   JUROR_FOOD_DISCOUNT_PERCENT,
 } from "@/lib/juror";
 import { money } from "@/lib/format";
+import { PagePasswordGate } from "@/components/page-password-gate";
 import { toast } from "sonner";
 import {
   ShieldCheck,
@@ -30,6 +31,14 @@ import {
 } from "lucide-react";
 
 export { JUROR_CODE_KEY };
+
+function GatedJurorPage() {
+  return (
+    <PagePasswordGate storageKey="cafe1.juror.gate" title="Juror Voucher Scheme">
+      <JurorPage />
+    </PagePasswordGate>
+  );
+}
 
 export const Route = createFileRoute("/juror")({
   validateSearch: (s: Record<string, unknown>) => ({
@@ -58,7 +67,7 @@ export const Route = createFileRoute("/juror")({
       { name: "twitter:card", content: "summary" },
     ],
   }),
-  component: JurorPage,
+  component: GatedJurorPage,
 });
 
 type Balance = Extract<Awaited<ReturnType<typeof lookupVoucher>>, { found: true }>;
