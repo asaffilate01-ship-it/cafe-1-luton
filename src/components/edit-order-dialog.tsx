@@ -33,7 +33,21 @@ export function EditOrderDialog({
 }: {
   order: EditableOrder | null;
   onClose: () => void;
-  onSaved?: () => void;
+  onSaved?: (patch: {
+    id: string;
+    customer_name: string;
+    customer_phone: string;
+    table_number: string | null;
+    jury_room: string | null;
+    company_name: string | null;
+    address_line1: string | null;
+    address_line2: string | null;
+    postcode: string | null;
+    delivery_notes: string | null;
+    payment_method: string;
+    payment_status: string;
+    items: { name: string; qty: number; notes: string | null }[];
+  }) => void;
 }) {
   const save = useServerFn(updateManualOrder);
   const loadAccounts = useServerFn(listAccounts);
@@ -134,7 +148,22 @@ export function EditOrderDialog({
         },
       });
       toast.success(`Order #${order.order_number} updated`);
-      onSaved?.();
+      onSaved?.({
+        id: order.id,
+        customer_name: name.trim() || "Counter customer",
+        customer_phone: phone.trim(),
+        table_number: table.trim() || null,
+        jury_room: room.trim() || null,
+        company_name: company.trim() || null,
+        address_line1: address1.trim() || null,
+        address_line2: address2.trim() || null,
+        postcode: postcode.trim().toUpperCase() || null,
+        delivery_notes: notes.trim() || null,
+        payment_method: paymentMethod,
+        payment_status:
+          paymentMethod === "account" ? "on_account" : paid ? "paid" : "pending",
+        items: items.map((i) => ({ name: i.name, qty: i.qty, notes: i.notes ?? null })),
+      });
       onClose();
     } catch (cause) {
       toast.error(cause instanceof Error ? cause.message : "Could not save the changes");
