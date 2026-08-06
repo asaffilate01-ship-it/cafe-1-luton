@@ -330,6 +330,9 @@ function KDS() {
   const [recall, setRecall] = useState(false);
   const update = useServerFn(updateOrderStatus);
   const setFulfil = useServerFn(setOrderFulfilment);
+  const setChannel = useServerFn(setOrderChannel);
+  // Which ticket currently has its "move to another area" picker open.
+  const [reassignFor, setReassignFor] = useState<string | null>(null);
   const sync = useServerFn(syncSumupPos);
   const getMenuItems = useServerFn(getStaffMenuItems);
   const [syncing, setSyncing] = useState(false);
