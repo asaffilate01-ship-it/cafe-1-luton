@@ -4,7 +4,9 @@ import { SiteHeader, SiteFooter } from "@/components/site-header";
 import { PromoBanner } from "@/components/promo-banner";
 import { PromoCarousel } from "@/components/promo-carousel";
 import { StoreStatus } from "@/components/store-status";
-import heroImage from "@/assets/cafe1-hero.jpg.asset.json";
+// Compressed WebP: the original hero was a 740 KB JPEG and was the slowest
+// thing on first paint.
+import heroImage from "@/assets/cafe1-hero.webp";
 import { localBusinessJsonLd } from "@/lib/nap";
 
 export const Route = createFileRoute("/")({
@@ -16,19 +18,19 @@ export const Route = createFileRoute("/")({
       { property: "og:description", content: "Order coffee, breakfast and hot food from Café 1 at St Albans Crown Court. Open to the public, with free delivery within half a mile, collection or dine-in." },
       { property: "og:type", content: "website" },
       { property: "og:url", content: "https://cafe1stalbans.co.uk/" },
-      { property: "og:image", content: `https://cafe1stalbans.co.uk${heroImage.url}` },
+      { property: "og:image", content: `https://cafe1stalbans.co.uk${heroImage}` },
       { name: "twitter:card", content: "summary_large_image" },
-      { name: "twitter:image", content: `https://cafe1stalbans.co.uk${heroImage.url}` },
+      { name: "twitter:image", content: `https://cafe1stalbans.co.uk${heroImage}` },
     ],
     links: [
       { rel: "canonical", href: "https://cafe1stalbans.co.uk/" },
-      { rel: "preload", as: "image", href: heroImage.url, fetchPriority: "high" },
+      { rel: "preload", as: "image", href: heroImage, fetchPriority: "high" },
     ],
     scripts: [
       {
         type: "application/ld+json",
         children: JSON.stringify(
-          localBusinessJsonLd(`https://cafe1stalbans.co.uk${heroImage.url}`),
+          localBusinessJsonLd(`https://cafe1stalbans.co.uk${heroImage}`),
         ),
       },
     ],
@@ -74,10 +76,10 @@ function Home() {
 
           <div className="relative">
             <img
-              src={heroImage.url}
+              src={heroImage}
               alt="Café 1 spread: full English breakfast, fish and chips, jacket potato, loaded fries and a mug of tea"
-              width={1024}
-              height={1024}
+              width={1200}
+              height={960}
               loading="eager"
               decoding="async"
               fetchPriority="high"
