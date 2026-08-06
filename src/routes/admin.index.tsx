@@ -32,6 +32,8 @@ type OrderRow = {
   scheduled_for: string | null;
   schedule_mode: string | null;
   driver_id: string | null;
+  account_id: string | null;
+  accounts?: { name: string } | null;
 };
 type Driver = { id: string; full_name: string | null; email: string | null };
 
