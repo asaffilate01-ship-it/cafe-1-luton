@@ -1276,6 +1276,15 @@ function KDS() {
         </header>
       )}
       <div className="mx-auto grid max-w-[110rem] gap-3 p-3 pb-28 sm:grid-cols-2 lg:grid-cols-3 lg:pb-3 xl:grid-cols-4 2xl:grid-cols-5">
+        {feedStale && (
+          <div
+            role="status"
+            className="col-span-full rounded-xl border-2 border-amber-500 bg-amber-50 px-4 py-2 text-center text-sm font-bold text-amber-900"
+          >
+            Connection dropped — showing the last known board and retrying. Orders are not being
+            lost.
+          </div>
+        )}
         {visibleTickets.map((t) => {
           const elapsedSec = Math.max(
             0,
