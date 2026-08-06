@@ -652,7 +652,9 @@ export const setOrderChannel = createServerFn({ method: "POST" })
   )
   .handler(async ({ data, context }) => {
     // The generated types predate this function, so call it untyped.
-    const rpc = context.supabase.rpc as unknown as (
+    // NOTE: must stay bound to the client — a detached `rpc` loses `this`
+    // and throws "Cannot read properties of undefined (reading 'rest')".
+    const rpc = context.supabase.rpc.bind(context.supabase) as unknown as (
       fn: string,
       args: Record<string, unknown>,
     ) => Promise<{ error: { message: string } | null }>;
