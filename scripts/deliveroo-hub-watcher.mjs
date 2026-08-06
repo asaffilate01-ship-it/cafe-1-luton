@@ -117,8 +117,13 @@ try {
   process.exit(1);
 }
 
-/** Hub endpoints worth forwarding. Deliberately broad — the server filters. */
-const INTERESTING = /order|ticket|kitchen/i;
+/**
+ * Skip only things that plainly cannot carry an order (assets, analytics).
+ * Everything else is forwarded and filtered server-side, because Hub renames
+ * its endpoints and an order missed here never reaches the kitchen.
+ */
+const IGNORED = /\.(js|css|png|jpe?g|svg|gif|woff2?|ico|map)(\?|$)|segment|sentry|datadog|google|analytics|intercom/i;
+let seenPayloads = 0;
 
 async function forward(payloadText, sourceUrl) {
   try {
@@ -149,11 +154,27 @@ const page = await context.newPage();
 
 context.on("response", async (response) => {
   const url = response.url();
-  if (!INTERESTING.test(url)) return;
+  if (IGNORED.test(url)) return;
   if (!(response.headers()["content-type"] || "").includes("json")) return;
   const text = await response.text().catch(() => "");
   if (!text || text.length > 400_000) return;
+  seenPayloads += 1;
   await forward(text, url);
+});
+
+/**
+ * Hub pushes new orders over a live socket rather than a fresh request, so
+ * watching HTTP alone can miss an order until the next reload — mirror the
+ * socket frames too.
+ */
+page.on("websocket", (ws) => {
+  ws.on("framereceived", async (frame) => {
+    const text = typeof frame.payload === "string" ? frame.payload : "";
+    if (!text || text.length > 400_000) return;
+    if (!text.trimStart().startsWith("{") && !text.trimStart().startsWith("[")) return;
+    seenPayloads += 1;
+    await forward(text, "websocket");
+  });
 });
 
 await page.goto(HUB_URL, { waitUntil: "domcontentloaded" }).catch(() => {});
@@ -254,7 +275,17 @@ console.log("[hub] the tablet keeps working as normal; this only mirrors orders 
  * can show "Deliveroo auto-link live" instead of leaving staff guessing.
  */
 async function heartbeat() {
-  await forward(JSON.stringify({ heartbeat: true, at: new Date().toISOString() }), "heartbeat");
+  const signedOut = await isSignedOut().catch(() => null);
+  await forward(
+    JSON.stringify({
+      heartbeat: true,
+      at: new Date().toISOString(),
+      page: page.url(),
+      signedOut,
+      payloadsSeen: seenPayloads,
+    }),
+    "heartbeat",
+  );
 }
 await heartbeat();
 setInterval(() => void heartbeat(), 60_000);
