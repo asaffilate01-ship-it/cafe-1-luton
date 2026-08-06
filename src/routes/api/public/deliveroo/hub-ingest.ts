@@ -35,10 +35,6 @@ export const Route = createFileRoute("/api/public/deliveroo/hub-ingest")({
         if (!raw.trim()) return Response.json({ error: "Empty payload" }, { status: 400 });
         if (raw.length > 400_000) return Response.json({ error: "Payload too large" }, { status: 413 });
 
-        // Every authenticated call proves the shop watcher is alive, even the
-        // quiet ones that carry no orders.
-        await recordIntegrationHeartbeat("deliveroo_hub", "Restaurant Hub watcher connected");
-
         let payload: unknown;
         try {
           payload = JSON.parse(raw);
@@ -46,8 +42,25 @@ export const Route = createFileRoute("/api/public/deliveroo/hub-ingest")({
           return Response.json({ error: "Invalid JSON" }, { status: 400 });
         }
 
+        // Every authenticated call proves the shop watcher is alive, even the
+        // quiet ones that carry no orders. Heartbeats also report whether Hub
+        // is still signed in, so a dead link is visible before an order is
+        // missed rather than after.
+        const beat = payload as { heartbeat?: boolean; signedOut?: boolean; payloadsSeen?: number };
+        const detail =
+          beat && beat.heartbeat
+            ? beat.signedOut
+              ? "Signed out of Restaurant Hub — orders are NOT arriving"
+              : `Restaurant Hub watcher connected · ${beat.payloadsSeen ?? 0} Hub payloads seen`
+            : "Restaurant Hub watcher connected";
+        await recordIntegrationHeartbeat("deliveroo_hub", detail);
+
         const orders = extractHubOrders(payload);
         if (!orders.length) {
+          if (!beat?.heartbeat) {
+            // Helps trace a Hub payload shape we do not yet recognise.
+            console.warn("Hub payload not recognised as orders:", raw.slice(0, 400));
+          }
           // Not an error: Hub sends plenty of unrelated payloads.
           return Response.json({ ok: true, created: 0, duplicates: 0, recognised: 0 });
         }
