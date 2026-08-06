@@ -773,6 +773,14 @@ function AdminVouchers() {
                       >
                         <Power className="h-4 w-4" />
                       </button>
+                      <button
+                        onClick={() => issueReplacementPin(h)}
+                        className="rounded-lg p-2 text-muted-foreground hover:text-primary"
+                        aria-label={`Issue a replacement PIN for ${h.code}`}
+                        title="Issue a replacement one-time PIN"
+                      >
+                        <KeyRound className="h-4 w-4" />
+                      </button>
                     </>
                   )}
                 </div>
