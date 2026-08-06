@@ -418,25 +418,7 @@ export const syncSumupPos = createServerFn({ method: "POST" })
 
       if (insErr || !inserted) { skipped++; continue; }
 
-      // Our own menu is the fallback source of a category when SumUp's basket
-      // doesn't carry one, matched on the product name the till sent.
-      const { data: menuRows } = await supabaseAdmin
-        .from("menu_items")
-        .select("id, name, menu_categories(name)");
-      const menuByName = new Map<string, Array<{ id: string; category: string | null }>>();
-      for (const m of (menuRows ?? []) as Array<{
-        id: string;
-        name: string;
-        menu_categories: { name: string } | null;
-      }>) {
-        const key = m.name.trim().toLowerCase();
-        const matches = menuByName.get(key) ?? [];
-        matches.push({
-          id: m.id,
-          category: m.menu_categories?.name ?? null,
-        });
-        menuByName.set(key, matches);
-      }
+      const menuByName = await menuByNameIndex();
 
       const matchMenuItem = (product: NonNullable<SumupTxn["products"]>[number]) => {
         const matches = menuByName.get((product.name ?? "").trim().toLowerCase()) ?? [];
@@ -482,12 +464,16 @@ export const syncSumupPos = createServerFn({ method: "POST" })
       .or("sumup_transaction_id.not.is.null,sumup_order_ref.not.is.null")
       .in("status", ["paid", "preparing", "ready", "out_for_delivery", "delivered", "completed"]);
 
+    let lookups = 0;
     for (const o of live ?? []) {
       const refKey = o.sumup_transaction_id ?? o.sumup_order_ref;
       if (!refKey) continue;
       let voided_as = voidByRef.get(o.sumup_transaction_id ?? "") ?? voidByRef.get(o.sumup_order_ref ?? "");
       const seen = items.some((t) => t.id === o.sumup_transaction_id || t.transaction_code === o.sumup_order_ref);
-      if (!voided_as && !seen) {
+      // Cap the one-by-one SumUp lookups: they are the slowest part of the
+      // sweep and older tickets get picked up on a later pass anyway.
+      if (!voided_as && !seen && lookups < 10) {
+        lookups++;
         // Not in the recent window — ask SumUp directly.
         try {
           const param = o.sumup_transaction_id ? `id=${encodeURIComponent(o.sumup_transaction_id)}` : `transaction_code=${encodeURIComponent(o.sumup_order_ref!)}`;
