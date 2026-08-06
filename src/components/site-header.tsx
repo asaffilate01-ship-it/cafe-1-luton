@@ -4,7 +4,8 @@ import { ShoppingBag, ReceiptText, MapPin, Facebook, Instagram, Youtube, Music2,
 import { useState } from "react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { openCookieSettings } from "@/lib/cookie-consent";
-import logo from "@/assets/cafe1-logo.png.asset.json";
+// Compressed WebP: the original logo was a 500 KB PNG on every page.
+import logo from "@/assets/cafe1-logo.webp";
 import { useCart } from "@/lib/cart";
 import { useSession } from "@/hooks/use-auth";
 import { useTab } from "@/lib/tab";
@@ -37,7 +38,7 @@ export function SiteHeader() {
     <header className="sticky top-0 z-40 border-b border-border bg-background/85 backdrop-blur">
       <div className="mx-auto flex h-20 max-w-6xl items-center justify-between px-4">
         <Link to="/" className="flex items-center gap-2">
-          <img src={logo.url} alt="Café 1 logo" className="h-14 w-auto sm:h-16" width={64} height={64} />
+          <img src={logo} alt="Café 1 logo" className="h-14 w-auto sm:h-16" width={64} height={64} fetchPriority="high" />
           <span className="sr-only">Café 1</span>
         </Link>
         <nav className="hidden items-center gap-6 text-sm font-medium sm:flex">
@@ -116,7 +117,7 @@ export function SiteFooter() {
       <div className="mx-auto flex max-w-6xl flex-col gap-6 px-4 py-10 text-sm text-muted-foreground sm:flex-row sm:justify-between">
         <div className="flex flex-col gap-1">
           <div className="flex items-center gap-2">
-            <img src={logo.url} alt="Café 1 logo" className="h-10 w-auto" width={40} height={40} loading="lazy" />
+            <img src={logo} alt="Café 1 logo" className="h-10 w-auto" width={40} height={40} loading="lazy" />
             <span>© {new Date().getFullYear()}</span>
           </div>
           <address className="flex flex-col gap-1 not-italic">
