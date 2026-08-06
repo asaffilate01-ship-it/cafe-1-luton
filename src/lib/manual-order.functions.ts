@@ -171,3 +171,83 @@ export const createManualOrder = createServerFn({ method: "POST" })
 
     return { order_id: inserted.id, duplicate: false as const, order_number: null };
   });
+
+const EditSchema = z.object({
+  order_id: z.string().uuid(),
+  customer_name: z.string().max(100).optional(),
+  customer_phone: z.string().max(40).optional(),
+  total_cents: z.number().int().min(0).max(1_000_000),
+  payment_method: z.enum(["card", "cash", "account", "platform"]),
+  account_id: z.string().uuid().nullable().optional(),
+  paid: z.boolean(),
+  notes: z.string().max(500).optional(),
+  table_number: z.string().max(40).optional(),
+  jury_room: z.string().max(120).optional(),
+  company_name: z.string().max(160).optional(),
+  address_line1: z.string().max(160).optional(),
+  address_line2: z.string().max(160).optional(),
+  postcode: z.string().max(20).optional(),
+  items: z.array(LineSchema).min(1).max(60),
+});
+
+/**
+ * Lets the counter correct a hand-keyed ticket (wrong amount, name, room or
+ * items) without cancelling and re-sending it to the kitchen.
+ */
+export const updateManualOrder = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) => EditSchema.parse(input))
+  .handler(async ({ data, context }) => {
+    const [{ data: isAdmin }, { data: isStaff }] = await Promise.all([
+      context.supabase.rpc("has_role", { _user_id: context.userId, _role: "admin" }),
+      context.supabase.rpc("has_role", { _user_id: context.userId, _role: "staff" }),
+    ]);
+    if (!isAdmin && !isStaff) throw new Error("Kitchen or manager access required");
+
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const total = data.total_cents;
+    const units = data.items.reduce((sum, line) => sum + line.qty, 0);
+    const unit = units > 0 ? Math.round(total / units) : 0;
+
+    const { error } = await supabaseAdmin
+      .from("orders")
+      .update({
+        customer_name: data.customer_name?.trim() || "Counter customer",
+        customer_phone: data.customer_phone?.trim() || "",
+        subtotal_cents: total,
+        total_cents: total,
+        payment_method: data.payment_method,
+        payment_status: data.paid
+          ? "paid"
+          : data.payment_method === "account"
+            ? "on_account"
+            : "pending",
+        account_id: data.payment_method === "account" ? (data.account_id ?? null) : null,
+        table_number: data.table_number?.trim() || null,
+        jury_room: data.jury_room?.trim() || null,
+        company_name: data.company_name?.trim() || null,
+        address_line1: data.address_line1?.trim() || null,
+        address_line2: data.address_line2?.trim() || null,
+        postcode: data.postcode?.trim().toUpperCase() || null,
+        delivery_notes: data.notes?.trim() || null,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", data.order_id);
+    if (error) throw new Error(error.message);
+
+    // Items are rewritten wholesale: staff edit the ticket as a list, not row by row.
+    await supabaseAdmin.from("order_items").delete().eq("order_id", data.order_id);
+    const { error: lineError } = await supabaseAdmin.from("order_items").insert(
+      data.items.map((line) => ({
+        order_id: data.order_id,
+        name: line.name.trim(),
+        qty: line.qty,
+        unit_price_cents: unit,
+        category_label: guessCategory(line.name.trim()) ?? null,
+        notes: line.notes?.trim() || null,
+      })),
+    );
+    if (lineError) throw new Error(lineError.message);
+
+    return { ok: true as const };
+  });
