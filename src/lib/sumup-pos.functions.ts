@@ -80,13 +80,53 @@ function sumupLineNote(p: NonNullable<SumupTxn["products"]>[number]): string | n
   return unique.length ? unique.join(" · ") : null;
 }
 
-/** Reads whichever order-level note the SumUp till sent with the sale. */
-function sumupOrderNote(t: SumupTxn): string | null {
-  const note = [t.description, t.comment, t.note, t.notes]
+/**
+ * Reads whichever order-level note the SumUp till sent with the sale. Kitchen
+ * staff must never miss a till note, so when the sale has no order-level note
+ * we roll the basket-line notes up into the ticket note strip as well.
+ */
+function sumupOrderNote(t: SumupTxn, products?: SumupTxn["products"]): string | null {
+  const orderNotes = [t.description, t.comment, t.note, t.notes]
     .map((s) => (s ?? "").trim())
-    .filter(Boolean)[0];
-  return note || null;
+    .filter(Boolean);
+  const lineNotes = (products ?? t.products ?? [])
+    .map((p) => {
+      const note = sumupLineNote(p);
+      if (!note) return "";
+      const name = (p.name ?? "").trim();
+      return name ? `${name}: ${note}` : note;
+    })
+    .filter(Boolean);
+  const seen = new Set<string>();
+  const unique = [...orderNotes, ...lineNotes].filter((s) => {
+    const k = s.toLowerCase();
+    if (seen.has(k)) return false;
+    seen.add(k);
+    return true;
+  });
+  return unique.length ? unique.join(" · ") : null;
 }
+
+/** Fetches the detailed SumUp transaction and returns its kitchen note, if any. */
+async function sumupNoteForTransaction(t: SumupTxn, key: string): Promise<string | null> {
+  let detailed: SumupTxn = t;
+  let products = t.products;
+  try {
+    const d = await fetch(
+      `https://api.sumup.com/v0.1/me/transactions?id=${encodeURIComponent(t.id)}`,
+      { headers: { Authorization: `Bearer ${key}` } },
+    );
+    if (d.ok) {
+      const dj = (await d.json()) as SumupTxn;
+      detailed = { ...t, ...dj };
+      if (dj.products?.length) products = dj.products;
+    }
+  } catch {
+    /* ignore detail fetch errors — the listing note is still used */
+  }
+  return sumupOrderNote(detailed, products);
+}
+
 
 /** A sale is void when SumUp cancelled/failed it, or the full amount was refunded. */
 function isVoidTxn(t: Pick<SumupTxn, "status" | "amount" | "refunded_amount">): "refunded" | "cancelled" | null {
@@ -362,10 +402,25 @@ export const syncSumupPos = createServerFn({ method: "POST" })
       // Dedupe against existing orders (either from webhook match or previous sync).
       const { data: existing } = await supabaseAdmin
         .from("orders")
-        .select("id")
+        .select("id, delivery_notes")
         .or(`sumup_order_ref.eq.${ref},sumup_transaction_id.eq.${t.id}`)
         .maybeSingle();
-      if (existing) { skipped++; continue; }
+      if (existing) {
+        // The note is often only on the detailed transaction, which arrives
+        // after the ticket was first created. Backfill it so the till note
+        // always shows on the kitchen card.
+        if (!existing.delivery_notes) {
+          const backfill = await sumupNoteForTransaction(t, key);
+          if (backfill) {
+            await supabaseAdmin
+              .from("orders")
+              .update({ delivery_notes: backfill })
+              .eq("id", existing.id);
+          }
+        }
+        skipped++;
+        continue;
+      }
 
       // Try to fetch details: the basket, and the SumUp login that took the sale
       // (neither is present on the history listing).
@@ -396,7 +451,7 @@ export const syncSumupPos = createServerFn({ method: "POST" })
           type: fulfilment.type,
           table_number: fulfilment.table_number,
           pos_terminal: posSide,
-          delivery_notes: sumupOrderNote(detailed),
+          delivery_notes: sumupOrderNote(detailed, products),
           status: "preparing",
           payment_status: "paid",
           subtotal_cents: totalCents,
