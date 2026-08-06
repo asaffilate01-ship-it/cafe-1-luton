@@ -485,18 +485,17 @@ function JurorPage() {
         <section className="mx-auto max-w-5xl px-4 py-14">
           <h2 className="font-display text-3xl font-black">How the scheme works</h2>
           <div className="mt-6 grid gap-4 md:grid-cols-3">
-            <Card icon={Ticket} title="1. Your printed sheet">
-              At induction the Jury Officer gives you an A4 sheet with your anonymous voucher code
-              and 6-digit PIN printed at the top, your name written in pen by the officer, and a
-              plain-English explanation with FAQs for you to keep. The court keeps its own register
-              matching names to codes — Café 1 never receives your name or any personal details,
-              only the code.
+            <Card icon={Ticket} title="1. Your HMCTS Juror ID">
+              The Jury Office sends us only the Juror IDs of the jurors attending — no names, emails
+              or phone numbers. We activate those IDs for up to 12 weeks. Your Juror ID is the one
+              HMCTS already gave you, and only HMCTS can match it to you.
             </Card>
-            <Card icon={ShieldCheck} title="2. Opt in once">
-              Scan the QR code on your sheet, at the Café 1 till or on the customer screen, and
-              enter your code and PIN.
-              Opting in means you take the voucher scheme instead of claiming HMCTS subsistence
-              expenses for the rest of your service — one or the other, never both.
+            <Card icon={KeyRound} title="2. Opt in and get your PIN">
+              Scan the QR code on your information sheet, in the jury room, or at the Café 1
+              counter. Enter your Juror ID and confirm you want to opt in. The system creates a
+              six-digit PIN and shows it for 60 seconds — write it down, press OK, and it is never
+              displayed again. Opting in means you take the voucher scheme instead of claiming HMCTS
+              subsistence expenses for the rest of your service — one or the other, never both.
             </Card>
             <Card icon={UtensilsCrossed} title="3. Use it daily">
               {money(JUROR_DAILY_ALLOWANCE_CENTS)} each sitting day, usable across as many purchases
