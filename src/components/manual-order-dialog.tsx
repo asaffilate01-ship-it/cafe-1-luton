@@ -24,8 +24,14 @@ const CHANNELS: { value: ManualChannel; label: string; hint: string }[] = [
 const FULFILMENTS = [
   { value: "collection", label: "Takeaway / collection" },
   { value: "dine_in", label: "Dine in" },
+  { value: "dine_in_judges", label: "Dine in — Judges' room" },
   { value: "delivery", label: "Delivery" },
 ] as const;
+
+/** Where a "Dine in — Judges' room" ticket is served. */
+const JUDGES_ROOM = "Judges' Room — St Albans Court";
+
+type Fulfilment = (typeof FULFILMENTS)[number]["value"];
 
 /** Lets counter staff push any order — marketplace, court or phone — onto the KDS. */
 export function ManualOrderDialog({
