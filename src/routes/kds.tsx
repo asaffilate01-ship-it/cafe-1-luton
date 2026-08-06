@@ -35,6 +35,7 @@ import {
   X,
 } from "lucide-react";
 import { ManualOrderDialog } from "@/components/manual-order-dialog";
+import { EditOrderDialog } from "@/components/edit-order-dialog";
 import { InstallAppButton } from "@/components/install-app-button";
 import { useWakeLock } from "@/hooks/use-wake-lock";
 import { syncSumupPos } from "@/lib/sumup-pos.functions";
@@ -363,6 +364,8 @@ function KDS() {
   const [reassignFor, setReassignFor] = useState<string | null>(null);
   /** Per-ticket move state so the card itself shows progress and failures. */
   const [moveState, setMoveState] = useState<Record<string, "saving" | string>>({});
+  // Ticket currently being corrected (wrong amount, name, room or items).
+  const [editId, setEditId] = useState<string | null>(null);
   // True when the last read of the order feed failed, so the board is showing
   // the previous tickets rather than a real empty kitchen.
   const [feedStale, setFeedStale] = useState(false);
@@ -954,6 +957,49 @@ function KDS() {
         </div>
       )}
       <ManualOrderDialog open={manualOpen} onClose={() => setManualOpen(false)} />
+      <EditOrderDialog
+        order={(() => {
+          const t = tickets.find((x) => x.id === editId);
+          return t
+            ? {
+                id: t.id,
+                order_number: t.order_number,
+                customer_name: t.customer_name,
+                customer_phone: t.customer_phone,
+                table_number: t.table_number,
+                jury_room: t.jury_room,
+                company_name: t.company_name,
+                address_line1: t.address_line1,
+                address_line2: t.address_line2,
+                postcode: t.postcode,
+                delivery_notes: t.delivery_notes,
+                payment_method: t.payment_method,
+                payment_status: t.payment_status,
+                items: t.items.map((i) => ({ name: i.name, qty: i.qty, notes: i.notes })),
+              }
+            : null;
+        })()}
+        onClose={() => setEditId(null)}
+        onSaved={(patch) =>
+          setTickets((prev) =>
+            prev.map((t) =>
+              t.id === patch.id
+                ? {
+                    ...t,
+                    ...patch,
+                    items: patch.items.map((line, index) => ({
+                      ...(t.items[index] ?? t.items[0]),
+                      id: `${t.id}-edit-${index}`,
+                      name: line.name,
+                      qty: line.qty,
+                      notes: line.notes,
+                    })),
+                  }
+                : t,
+            ),
+          )
+        }
+      />
       {chromeHidden ? (
         <div className="sticky top-0 z-30 flex flex-wrap items-center justify-between gap-x-3 gap-y-1 border-b border-border bg-primary px-3 py-1.5 text-primary-foreground">
           <span className="text-xs font-bold uppercase tracking-wide opacity-90">
@@ -1342,6 +1388,15 @@ function KDS() {
                 >
                   <Shuffle className="h-3.5 w-3.5" aria-hidden="true" />
                   Move area
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setEditId(t.id)}
+                  className="mt-1.5 flex w-full items-center justify-center gap-1.5 rounded-full border border-border py-1.5 text-[11px] font-bold uppercase tracking-wide text-muted-foreground hover:border-primary hover:text-primary sm:py-1 sm:text-[10px]"
+                  title="Correct the details, amount or items on this ticket"
+                >
+                  <Pencil className="h-3.5 w-3.5" aria-hidden="true" />
+                  Edit ticket
                 </button>
                 {moveState[t.id] === "saving" && (
                   <p className="mt-1 text-center text-[10px] font-bold uppercase tracking-wide text-muted-foreground">
