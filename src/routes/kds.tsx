@@ -32,6 +32,7 @@ import {
   LayoutGrid,
   MoreHorizontal,
   Shuffle,
+  Pencil,
   X,
 } from "lucide-react";
 import { ManualOrderDialog } from "@/components/manual-order-dialog";
