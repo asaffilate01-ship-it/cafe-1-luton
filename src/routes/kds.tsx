@@ -1400,9 +1400,14 @@ function KDS() {
                   >
                     {channel.label}
                   </span>
-                  {t.payment_method === "on_account" || t.payment_status === "unpaid" ? (
+                  {t.payment_method === "account" ||
+                  t.payment_status === "on_account" ||
+                  t.payment_status === "unpaid" ||
+                  t.payment_status === "pending" ? (
                     <span className="rounded-full bg-amber-500 px-1.5 py-px text-[9px] font-black uppercase tracking-wide text-black">
-                      {t.payment_method === "on_account" ? "Tab · Unpaid" : "Unpaid"}
+                      {t.payment_method === "account" || t.payment_status === "on_account"
+                        ? "Tab · Unpaid"
+                        : "Unpaid"}
                     </span>
                   ) : (
                     <span
