@@ -247,7 +247,7 @@ function AdminVouchers() {
         },
       });
       setActivated(rows);
-      toast.success(`${rows.length} Juror IDs活 activated for ${idWeeks} weeks`);
+      toast.success(`${rows.length} Juror IDs activated for ${idWeeks} weeks`);
       qc.invalidateQueries({ queryKey: ["voucher-holders"] });
       qc.invalidateQueries({ queryKey: ["voucher-events"] });
     } catch (error) {
