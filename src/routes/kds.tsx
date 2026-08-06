@@ -572,14 +572,41 @@ function KDS() {
             playChime();
           }
         }
+        // Status changes from another till/phone apply straight away so every
+        // connected screen shows the same board within a second.
+        if (!dropId && o?.id && liveIds.current.has(o.id) && o.status) {
+          const next = o.status as Order["status"];
+          const stillLive = next === "preparing" || next === "ready" || next === "paid";
+          if (!stillLive && !recall) {
+            liveIds.current.delete(o.id);
+            clearedIds.current.set(o.id, Date.now());
+            setTickets((prev) => prev.filter((t) => t.id !== o.id));
+            return;
+          }
+          clearedIds.current.delete(o.id);
+          setTickets((prev) => prev.map((t) => (t.id === o.id ? { ...t, status: next } : t)));
+          return;
+        }
         scheduleLoad();
       })
       .on("postgres_changes", { event: "*", schema: "public", table: "order_items" }, () =>
         scheduleLoad(),
       )
       .subscribe();
+    // Safety net: if the realtime socket drops (phone sleeps, wifi blips) the
+    // board would silently freeze, so re-read it every 15s regardless.
+    const poll = window.setInterval(() => {
+      if (typeof document !== "undefined" && document.visibilityState === "hidden") return;
+      scheduleLoad();
+    }, 15000);
+    const onVisible = () => {
+      if (document.visibilityState === "visible") scheduleLoad();
+    };
+    document.addEventListener("visibilitychange", onVisible);
     return () => {
       if (timer) window.clearTimeout(timer);
+      window.clearInterval(poll);
+      document.removeEventListener("visibilitychange", onVisible);
       supabase.removeChannel(ch);
     };
   }, [getMenuItems, recall]);

@@ -251,6 +251,26 @@ export const syncSumupPos = createServerFn({ method: "POST" })
     const { data: isStaff } = await context.supabase.rpc("has_role", { _user_id: context.userId, _role: "staff" });
     if (!isAdmin && !isStaff) throw new Error("Forbidden");
 
+    const { supabaseAdmin: admin } = await import("@/integrations/supabase/client.server");
+
+    // Every open kitchen display polls this. Without a shared brake, five
+    // screens meant five full SumUp sweeps every 15s, which is what made
+    // status updates and manual orders crawl. One sweep per 20s, shop-wide.
+    const THROTTLE_MS = 20_000;
+    const { data: gate } = await admin
+      .from("integration_status")
+      .select("last_seen_at")
+      .eq("key", "sumup_pos_sync")
+      .maybeSingle();
+    const lastAt = gate?.last_seen_at ? new Date(gate.last_seen_at).getTime() : 0;
+    if (Date.now() - lastAt < THROTTLE_MS) {
+      return { imported: 0, skipped: 0, voided: 0, throttled: true, error: null };
+    }
+    await admin.from("integration_status").upsert(
+      { key: "sumup_pos_sync", healthy: true, last_seen_at: new Date().toISOString(), updated_at: new Date().toISOString() },
+      { onConflict: "key" },
+    );
+
     // Pull the last 24h of transactions, NEWEST FIRST and paginated. SumUp
     // returns the oldest rows of the window by default, so a busy day pushes
     // the newest sales off the first page and they never reach the kitchen.
@@ -283,7 +303,30 @@ export const syncSumupPos = createServerFn({ method: "POST" })
       }
     }
 
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const supabaseAdmin = admin;
+
+    // Our own menu is the fallback source of a category when SumUp's basket
+    // doesn't carry one. Fetched once per sweep, not once per imported order.
+    let menuIndex: Map<string, Array<{ id: string; category: string | null }>> | null = null;
+    async function menuByNameIndex() {
+      if (menuIndex) return menuIndex;
+      const { data: menuRows } = await supabaseAdmin
+        .from("menu_items")
+        .select("id, name, menu_categories(name)");
+      const index = new Map<string, Array<{ id: string; category: string | null }>>();
+      for (const m of (menuRows ?? []) as Array<{
+        id: string;
+        name: string;
+        menu_categories: { name: string } | null;
+      }>) {
+        const key = m.name.trim().toLowerCase();
+        const matches = index.get(key) ?? [];
+        matches.push({ id: m.id, category: m.menu_categories?.name ?? null });
+        index.set(key, matches);
+      }
+      menuIndex = index;
+      return index;
+    }
 
     // Terminal reference → jury/public mapping, configured by staff.
     const { data: devices } = await supabaseAdmin
@@ -375,25 +418,7 @@ export const syncSumupPos = createServerFn({ method: "POST" })
 
       if (insErr || !inserted) { skipped++; continue; }
 
-      // Our own menu is the fallback source of a category when SumUp's basket
-      // doesn't carry one, matched on the product name the till sent.
-      const { data: menuRows } = await supabaseAdmin
-        .from("menu_items")
-        .select("id, name, menu_categories(name)");
-      const menuByName = new Map<string, Array<{ id: string; category: string | null }>>();
-      for (const m of (menuRows ?? []) as Array<{
-        id: string;
-        name: string;
-        menu_categories: { name: string } | null;
-      }>) {
-        const key = m.name.trim().toLowerCase();
-        const matches = menuByName.get(key) ?? [];
-        matches.push({
-          id: m.id,
-          category: m.menu_categories?.name ?? null,
-        });
-        menuByName.set(key, matches);
-      }
+      const menuByName = await menuByNameIndex();
 
       const matchMenuItem = (product: NonNullable<SumupTxn["products"]>[number]) => {
         const matches = menuByName.get((product.name ?? "").trim().toLowerCase()) ?? [];
@@ -439,12 +464,16 @@ export const syncSumupPos = createServerFn({ method: "POST" })
       .or("sumup_transaction_id.not.is.null,sumup_order_ref.not.is.null")
       .in("status", ["paid", "preparing", "ready", "out_for_delivery", "delivered", "completed"]);
 
+    let lookups = 0;
     for (const o of live ?? []) {
       const refKey = o.sumup_transaction_id ?? o.sumup_order_ref;
       if (!refKey) continue;
       let voided_as = voidByRef.get(o.sumup_transaction_id ?? "") ?? voidByRef.get(o.sumup_order_ref ?? "");
       const seen = items.some((t) => t.id === o.sumup_transaction_id || t.transaction_code === o.sumup_order_ref);
-      if (!voided_as && !seen) {
+      // Cap the one-by-one SumUp lookups: they are the slowest part of the
+      // sweep and older tickets get picked up on a later pass anyway.
+      if (!voided_as && !seen && lookups < 10) {
+        lookups++;
         // Not in the recent window — ask SumUp directly.
         try {
           const param = o.sumup_transaction_id ? `id=${encodeURIComponent(o.sumup_transaction_id)}` : `transaction_code=${encodeURIComponent(o.sumup_order_ref!)}`;
