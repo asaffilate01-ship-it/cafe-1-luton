@@ -207,6 +207,73 @@ function AdminVouchers() {
   const [slips, setSlips] = useState<IssuedJurorCredential[]>([]);
   const [printMode, setPrintMode] = useState<"juror" | "officer">("juror");
 
+  /* ------------- HMCTS Juror ID activation ------------- */
+  const activateIds = useServerFn(activateJurorIds);
+  const resetPin = useServerFn(resetJurorPin);
+  const [idBatch, setIdBatch] = useState(`Jury Office ${today()}`);
+  const [idWeeks, setIdWeeks] = useState("12");
+  const [idFrom, setIdFrom] = useState(today());
+  const [idText, setIdText] = useState("");
+  const [activating, setActivating] = useState(false);
+  const [activated, setActivated] = useState<ActivatedJurorId[]>([]);
+
+  const parsedIds = useMemo(
+    () =>
+      Array.from(
+        new Set(
+          idText
+            .split(/[\s,;]+/)
+            .map((v) => v.replace(/[^A-Za-z0-9-]/g, "").toUpperCase())
+            .filter((v) => v.length >= 3 && v.length <= 40),
+        ),
+      ),
+    [idText],
+  );
+
+  async function activateBatch(e: React.FormEvent) {
+    e.preventDefault();
+    if (!parsedIds.length) {
+      toast.error("Paste at least one Juror ID");
+      return;
+    }
+    setActivating(true);
+    try {
+      const rows = await activateIds({
+        data: {
+          batch: idBatch,
+          juror_ids: parsedIds.slice(0, 500),
+          valid_from: idFrom,
+          weeks: Math.min(Math.max(parseInt(idWeeks || "0", 10) || 12, 1), 26),
+        },
+      });
+      setActivated(rows);
+      toast.success(`${rows.length} Juror IDs活 activated for ${idWeeks} weeks`);
+      qc.invalidateQueries({ queryKey: ["voucher-holders"] });
+      qc.invalidateQueries({ queryKey: ["voucher-events"] });
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Could not activate those Juror IDs");
+    } finally {
+      setActivating(false);
+    }
+  }
+
+  async function issueReplacementPin(h: Holder) {
+    const reason = window.prompt(
+      `Reason for issuing a replacement PIN for ${h.code}:`,
+      "Juror mislaid their PIN",
+    );
+    if (!reason?.trim()) return;
+    try {
+      const result = await resetPin({ data: { holder_id: h.id, reason } });
+      window.alert(
+        `Replacement PIN for ${result.code}: ${result.pin}\n\nRead it to the juror now — it is shown once and stored only as a hash.`,
+      );
+      qc.invalidateQueries({ queryKey: ["voucher-events"] });
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Could not reset that PIN");
+    }
+  }
+
   const slipUrl = (code: string) =>
     `https://cafe1stalbans.co.uk/juror?code=${encodeURIComponent(code)}&src=slip`;
 
