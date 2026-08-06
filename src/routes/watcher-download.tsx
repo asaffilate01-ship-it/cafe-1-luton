@@ -46,7 +46,10 @@ function WatcherDownload() {
 
       <ol className="mt-10 list-decimal space-y-3 pl-5 text-sm leading-relaxed">
         <li>Install Node.js from nodejs.org (take the LTS button).</li>
-        <li>Unzip this file somewhere permanent, for example C:\Cafe1\deliveroo-watcher.</li>
+        <li>
+          Unzip this file somewhere permanent, for example C:\Cafe1\deliveroo-watcher. If you are
+          updating an existing copy, keep your current <code>deliveroo-hub-watcher.env</code> file.
+        </li>
         <li>
           Copy <code>deliveroo-hub-watcher.env.example</code> and rename the copy to{" "}
           <code>deliveroo-hub-watcher.env</code>. Open it in Notepad, fill in the Hub username,
@@ -54,7 +57,8 @@ function WatcherDownload() {
         </li>
         <li>
           Right-click <code>install-deliveroo-watcher.ps1</code> and choose{" "}
-          <strong>Run with PowerShell</strong>.
+          <strong>Run with PowerShell</strong>. The installer safely stops the old watcher first, so
+          do not double-click the <code>.cmd</code> file separately.
         </li>
         <li>
           Within a minute the kitchen display badge turns green, <strong>Deliveroo auto</strong>.

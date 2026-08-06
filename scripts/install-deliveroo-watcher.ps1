@@ -38,6 +38,27 @@ if (-not (Get-Command node -ErrorAction SilentlyContinue)) {
   exit 1
 }
 
+# Stop the existing task and its process tree before updating Playwright. A
+# running Chromium process holds files under node_modules and its profile;
+# attempting an in-place install while it is alive produces repeated Windows
+# "file is being used by another process" errors.
+Write-Host "Stopping any existing Cafe1 Deliveroo watcher..."
+$existingTask = Get-ScheduledTask -TaskName $taskName -ErrorAction SilentlyContinue
+if ($existingTask) {
+  Stop-ScheduledTask -TaskName $taskName -ErrorAction SilentlyContinue
+}
+
+$escapedScriptDir = [regex]::Escape($scriptDir)
+$watcherProcesses = Get-CimInstance Win32_Process -ErrorAction SilentlyContinue | Where-Object {
+  $_.CommandLine -and
+  $_.CommandLine -match $escapedScriptDir -and
+  ($_.CommandLine -match "deliveroo-hub-watcher\.cmd" -or $_.CommandLine -match "deliveroo-hub-watcher\.mjs")
+}
+foreach ($watcherProcess in $watcherProcesses) {
+  Stop-Process -Id $watcherProcess.ProcessId -Force -ErrorAction SilentlyContinue
+}
+Start-Sleep -Seconds 3
+
 # Install the watcher's private browser package and Chromium automatically.
 # Using npm.cmd directly avoids npx's interactive "install this package?" prompt.
 Write-Host "Installing the private browser used by the watcher (first time only)..."

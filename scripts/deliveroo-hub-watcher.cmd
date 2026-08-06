@@ -32,6 +32,21 @@ for /f "usebackq tokens=1,* delims==" %%A in ("%ENVFILE%") do (
 if not exist "%~dp0logs" mkdir "%~dp0logs"
 set "LOGFILE=%~dp0logs\deliveroo-hub-watcher.log"
 
+REM Do not start a second browser against the same saved Hub session. Two
+REM copies contend for Chromium/session files and Windows repeatedly reports
+REM "The process cannot access the file because it is being used by another
+REM process." The installer safely stops the old copy before updating it.
+set "WATCHER_RUNNING="
+for /f %%P in ('powershell.exe -NoProfile -Command "$me=[regex]::Escape('%~dp0deliveroo-hub-watcher.mjs'); if (Get-CimInstance Win32_Process -Filter 'Name = ''node.exe''' -ErrorAction SilentlyContinue ^| Where-Object { $_.CommandLine -match $me }) { 'yes' }"') do set "WATCHER_RUNNING=%%P"
+if defined WATCHER_RUNNING (
+  echo.
+  echo Cafe1 Deliveroo watcher is already running.
+  echo Do not open a second copy. To update it, run install-deliveroo-watcher.ps1.
+  echo.
+  pause
+  exit /b 0
+)
+
 :loop
 echo [%date% %time%] starting Deliveroo watcher >> "%LOGFILE%"
 node "%~dp0deliveroo-hub-watcher.mjs" >> "%LOGFILE%" 2>&1
