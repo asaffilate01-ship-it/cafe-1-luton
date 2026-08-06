@@ -24,8 +24,14 @@ const CHANNELS: { value: ManualChannel; label: string; hint: string }[] = [
 const FULFILMENTS = [
   { value: "collection", label: "Takeaway / collection" },
   { value: "dine_in", label: "Dine in" },
+  { value: "dine_in_judges", label: "Dine in — Judges' room" },
   { value: "delivery", label: "Delivery" },
 ] as const;
+
+/** Where a "Dine in — Judges' room" ticket is served. */
+const JUDGES_ROOM = "Judges' Room — St Albans Court";
+
+type Fulfilment = (typeof FULFILMENTS)[number]["value"];
 
 /** Lets counter staff push any order — marketplace, court or phone — onto the KDS. */
 export function ManualOrderDialog({
@@ -44,7 +50,7 @@ export function ManualOrderDialog({
   const [channel, setChannel] = useState<ManualChannel>("deliveroo");
   const [reference, setReference] = useState("");
   const [customerName, setCustomerName] = useState("");
-  const [type, setType] = useState<"delivery" | "collection" | "dine_in">("collection");
+  const [type, setType] = useState<Fulfilment>("collection");
   const [table, setTable] = useState("");
   const [juryRoom, setJuryRoom] = useState<string>(JURY_DELIVERY_ROOMS[0].label);
   const [company, setCompany] = useState("");
@@ -121,14 +127,20 @@ export function ManualOrderDialog({
           channel,
           reference: reference.trim() || undefined,
           customer_name: customerName.trim() || undefined,
-          type,
+          // "Judges' room" is a dine-in ticket served to a specific room.
+          type: type === "dine_in_judges" ? "dine_in" : type,
           total_cents: Math.round((Number(total) || 0) * 100),
           payment_method: paymentMethod,
           account_id: paymentMethod === "account" && accountId ? accountId : undefined,
           paid,
           notes: notes.trim() || undefined,
           table_number: table.trim() || undefined,
-          jury_room: isCourt && type !== "collection" ? juryRoom : undefined,
+          jury_room:
+            type === "dine_in_judges"
+              ? JUDGES_ROOM
+              : isCourt && type !== "collection"
+                ? juryRoom
+                : undefined,
           company_name: company.trim() || undefined,
           address_line1: address1.trim() || undefined,
           address_line2: address2.trim() || undefined,
@@ -245,14 +257,21 @@ export function ManualOrderDialog({
             />
           </label>
 
-          {type === "dine_in" && (
+          {(type === "dine_in" || type === "dine_in_judges") && (
             <label className="text-sm font-medium">
               Table
               <input value={table} onChange={(e) => setTable(e.target.value)} className={field} />
             </label>
           )}
 
-          {isCourt && type !== "collection" && (
+          {type === "dine_in_judges" && (
+            <p className="text-sm font-medium text-muted-foreground sm:col-span-2">
+              Serving to the <strong>Judges&rsquo; room</strong> — this shows on the kitchen
+              display so the runner knows where to take it.
+            </p>
+          )}
+
+          {isCourt && type !== "collection" && type !== "dine_in_judges" && (
             <label className="text-sm font-medium sm:col-span-2">
               Court location
               <select
