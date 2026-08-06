@@ -134,11 +134,6 @@ export const createAccount = createServerFn({ method: "POST" })
     throw new Error("Could not generate a unique access code, try again.");
   });
 
-export const updateAccount = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
-  .validator((d: unknown) => z.object({ name: z.string().min(1).max(120) }).parse(d))
-  .handler(async () => ({}) as never);
-
 /**
  * Counter-friendly account creation: any signed-in operator (admin or staff) can
  * add a judge/advocate tab on the fly from the manual order dialog.
@@ -172,7 +167,7 @@ export const quickAddAccount = createServerFn({ method: "POST" })
     throw new Error("Could not create the account, try again.");
   });
 
-const _updateAccountReal = createServerFn({ method: "POST" })
+export const updateAccount = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .validator((d: unknown) =>
     z
