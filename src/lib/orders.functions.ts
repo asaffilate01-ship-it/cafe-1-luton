@@ -626,6 +626,44 @@ export const setOrderFulfilment = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
+/**
+ * Move a ticket to a different area (jury / judges / public / web / a delivery
+ * partner) when it landed on the wrong side. Staff cannot update orders
+ * directly under RLS, so this goes through the audited database function.
+ */
+export const setOrderChannel = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .validator((d: unknown) =>
+    z
+      .object({
+        order_id: z.string().uuid(),
+        channel: z.enum([
+          "jury",
+          "judge",
+          "public",
+          "web",
+          "deliveroo",
+          "just_eat",
+          "uber_eats",
+          "tgtg",
+        ]),
+      })
+      .parse(d),
+  )
+  .handler(async ({ data, context }) => {
+    // The generated types predate this function, so call it untyped.
+    const rpc = context.supabase.rpc as unknown as (
+      fn: string,
+      args: Record<string, unknown>,
+    ) => Promise<{ error: { message: string } | null }>;
+    const { error } = await rpc("cafe1_reassign_order_channel", {
+      _order_id: data.order_id,
+      _channel: data.channel,
+    });
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
+
 export const markPaidManually = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .validator((d: unknown) =>
