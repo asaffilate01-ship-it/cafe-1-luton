@@ -62,6 +62,7 @@ function Admin() {
   const navigate = useNavigate();
   const [orders, setOrders] = useState<OrderRow[]>([]);
   const [drivers, setDrivers] = useState<Driver[]>([]);
+  const [feed, setFeed] = useState<"all" | "tabs">("all");
   const update = useServerFn(updateOrderStatus);
   const markPaid = useServerFn(markPaidManually);
   const assign = useServerFn(assignDriver);
@@ -77,7 +78,7 @@ function Admin() {
       const { data } = await supabase
         .from("orders")
         .select(
-          "id, order_number, status, payment_status, type, total_cents, customer_name, customer_phone, created_at, scheduled_for, schedule_mode, driver_id",
+          "id, order_number, status, payment_status, type, total_cents, customer_name, customer_phone, created_at, scheduled_for, schedule_mode, driver_id, account_id, accounts(name)",
         )
         .order("created_at", { ascending: false })
         .limit(50);
