@@ -70,6 +70,8 @@ export function EditOrderDialog({
   const [lines, setLines] = useState<Line[]>([]);
   const [saving, setSaving] = useState(false);
 
+  const orderId = order?.id ?? null;
+
   useEffect(() => {
     if (!order) return;
     setName(order.customer_name ?? "");
@@ -90,7 +92,10 @@ export function EditOrderDialog({
         ? order.items.map((i) => ({ name: i.name, qty: i.qty, notes: i.notes ?? "" }))
         : [{ name: "", qty: 1, notes: "" }],
     );
-  }, [order]);
+    // Only re-seed when a different ticket is opened — the parent rebuilds the
+    // order object on every render, which would otherwise wipe what is typed.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [orderId]);
 
   useEffect(() => {
     if (paymentMethod !== "account" || accounts.length) return;
