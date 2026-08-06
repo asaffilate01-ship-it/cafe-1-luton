@@ -3,7 +3,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 import { Plus, Trash2, X } from "lucide-react";
 import { createManualOrder, type ManualChannel } from "@/lib/manual-order.functions";
-import { listAccounts } from "@/lib/accounts.functions";
+import { listAccounts, quickAddAccount } from "@/lib/accounts.functions";
 import { JURY_DELIVERY_ROOMS } from "@/components/order-setup-gate";
 
 type Line = { name: string; qty: number; notes: string };
@@ -45,8 +45,11 @@ export function ManualOrderDialog({
 }) {
   const create = useServerFn(createManualOrder);
   const loadAccounts = useServerFn(listAccounts);
+  const addAccount = useServerFn(quickAddAccount);
   const [accounts, setAccounts] = useState<{ id: string; name: string }[]>([]);
   const [accountId, setAccountId] = useState("");
+  const [newAccountName, setNewAccountName] = useState("");
+  const [addingAccount, setAddingAccount] = useState(false);
   const [channel, setChannel] = useState<ManualChannel>("deliveroo");
   const [reference, setReference] = useState("");
   const [customerName, setCustomerName] = useState("");
@@ -70,9 +73,38 @@ export function ManualOrderDialog({
   useEffect(() => {
     if (!open || paymentMethod !== "account" || accounts.length) return;
     void loadAccounts()
-      .then((rows) => setAccounts(rows.map((r) => ({ id: r.id, name: r.name }))))
+      .then((rows) =>
+        setAccounts(
+          rows
+            .filter((r) => r.active)
+            .map((r) => ({ id: r.id, name: r.name }))
+            .sort((a, b) => a.name.localeCompare(b.name)),
+        ),
+      )
       .catch(() => setAccounts([]));
   }, [open, paymentMethod]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  /** Adds a judge/advocate tab from the counter and selects it straight away. */
+  async function createTabAccount() {
+    const name = newAccountName.trim();
+    if (name.length < 2) return toast.error("Enter the judge or advocate name");
+    setAddingAccount(true);
+    try {
+      const row = await addAccount({ data: { name } });
+      setAccounts((current) =>
+        (current.some((a) => a.id === row.id) ? current : [...current, { id: row.id, name: row.name }]).sort(
+          (a, b) => a.name.localeCompare(b.name),
+        ),
+      );
+      setAccountId(row.id);
+      setNewAccountName("");
+      toast.success(row.existed ? `${row.name} already had a tab — selected` : `${row.name} tab added`);
+    } catch (cause) {
+      toast.error(cause instanceof Error ? cause.message : "Could not add the account");
+    } finally {
+      setAddingAccount(false);
+    }
+  }
 
   if (!open) return null;
 
