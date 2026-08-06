@@ -593,8 +593,20 @@ function KDS() {
         scheduleLoad(),
       )
       .subscribe();
+    // Safety net: if the realtime socket drops (phone sleeps, wifi blips) the
+    // board would silently freeze, so re-read it every 15s regardless.
+    const poll = window.setInterval(() => {
+      if (typeof document !== "undefined" && document.visibilityState === "hidden") return;
+      scheduleLoad();
+    }, 15000);
+    const onVisible = () => {
+      if (document.visibilityState === "visible") scheduleLoad();
+    };
+    document.addEventListener("visibilitychange", onVisible);
     return () => {
       if (timer) window.clearTimeout(timer);
+      window.clearInterval(poll);
+      document.removeEventListener("visibilitychange", onVisible);
       supabase.removeChannel(ch);
     };
   }, [getMenuItems, recall]);
