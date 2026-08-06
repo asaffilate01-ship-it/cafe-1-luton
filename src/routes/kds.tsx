@@ -361,6 +361,8 @@ function KDS() {
   const setChannel = useServerFn(setOrderChannel);
   // Which ticket currently has its "move to another area" picker open.
   const [reassignFor, setReassignFor] = useState<string | null>(null);
+  /** Per-ticket move state so the card itself shows progress and failures. */
+  const [moveState, setMoveState] = useState<Record<string, "saving" | string>>({});
   // True when the last read of the order feed failed, so the board is showing
   // the previous tickets rather than a real empty kitchen.
   const [feedStale, setFeedStale] = useState(false);
