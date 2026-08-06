@@ -15,6 +15,7 @@ import { CookieBanner } from "../components/cookie-banner";
 import { MobileTabBar } from "../components/mobile-tabbar";
 import { BackToTop } from "../components/back-to-top";
 import { ConfirmHost } from "../components/confirm-dialog";
+import { Toaster } from "../components/ui/sonner";
 import { registerServiceWorker } from "../lib/register-sw";
 
 function NotFoundComponent() {
@@ -182,6 +183,8 @@ function RootComponent() {
       <BackToTop />
       <ConfirmHost />
       <MobileTabBar />
+      {/* Toast host — without this every toast.success/error in the app is silent. */}
+      <Toaster position="top-center" richColors closeButton />
     </QueryClientProvider>
   );
 }

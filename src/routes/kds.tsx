@@ -361,6 +361,8 @@ function KDS() {
   const setChannel = useServerFn(setOrderChannel);
   // Which ticket currently has its "move to another area" picker open.
   const [reassignFor, setReassignFor] = useState<string | null>(null);
+  /** Per-ticket move state so the card itself shows progress and failures. */
+  const [moveState, setMoveState] = useState<Record<string, "saving" | string>>({});
   // True when the last read of the order feed failed, so the board is showing
   // the previous tickets rather than a real empty kitchen.
   const [feedStale, setFeedStale] = useState(false);
@@ -857,15 +859,23 @@ function KDS() {
   async function reassignChannel(t: Ticket, next: ChannelKey) {
     const previous = tickets;
     setReassignFor(null);
+    setMoveState((s) => ({ ...s, [t.id]: "saving" }));
     setTickets((prev) =>
       prev.map((x) => (x.id === t.id ? { ...x, ...channelFields(next, x.source) } : x)),
     );
     try {
       await setChannel({ data: { order_id: t.id, channel: next } });
+      setMoveState((s) => {
+        const { [t.id]: _drop, ...rest } = s;
+        return rest;
+      });
       toast.success(`#${t.order_number} moved to ${CHANNEL[next].label}`);
     } catch (e) {
       setTickets(previous);
-      toast.error(e instanceof Error ? e.message : "Could not move this ticket");
+      const message = e instanceof Error ? e.message : "Could not move this ticket";
+      console.error("[kds] move area failed", e);
+      setMoveState((s) => ({ ...s, [t.id]: message }));
+      toast.error(`Move failed: ${message}`);
     }
   }
 
@@ -1333,6 +1343,16 @@ function KDS() {
                   <Shuffle className="h-3.5 w-3.5" aria-hidden="true" />
                   Move area
                 </button>
+                {moveState[t.id] === "saving" && (
+                  <p className="mt-1 text-center text-[10px] font-bold uppercase tracking-wide text-muted-foreground">
+                    Moving…
+                  </p>
+                )}
+                {moveState[t.id] && moveState[t.id] !== "saving" && (
+                  <p className="mt-1 rounded-lg bg-red-50 px-2 py-1 text-center text-[10px] font-bold text-red-700">
+                    Move failed — {moveState[t.id]}
+                  </p>
+                )}
                 {reassignFor === t.id && (
                   <div className="mt-1.5 grid grid-cols-2 gap-1.5 rounded-xl border border-border bg-slate-50 p-2">
                     {REASSIGN_CHANNELS.map((key) => {
