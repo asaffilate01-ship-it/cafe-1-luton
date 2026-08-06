@@ -444,12 +444,14 @@ function KDS() {
           (recall || !clearedIds.current.has(o.id)),
       );
       const ids = live.map((o) => o.id);
-      const { data: items } = ids.length
+      const itemsRes = ids.length
         ? await supabase
             .from("order_items")
             .select("id, order_id, menu_item_id, name, qty, notes, category_label")
             .in("order_id", ids)
-        : { data: [] as Item[] };
+        : { data: [] as Item[], error: null };
+      if (itemsRes.error) throw new Error(itemsRes.error.message);
+      const items = itemsRes.data;
       const fresh =
         menuCache.current && Date.now() - menuCache.current.at < 300_000
           ? menuCache.current
