@@ -48,14 +48,15 @@ import path from "node:path";
 import readline from "node:readline";
 import { fileURLToPath } from "node:url";
 
+const SCRIPT_DIR = path.dirname(fileURLToPath(import.meta.url));
+
 /**
  * Read settings from deliveroo-hub-watcher.env sitting next to this file, so
  * running the watcher by hand (for example with --login) behaves the same as
  * the scheduled task. Anything already in the environment wins.
  */
 function loadEnvFile() {
-  const here = path.dirname(fileURLToPath(import.meta.url));
-  const file = path.join(here, "deliveroo-hub-watcher.env");
+  const file = path.join(SCRIPT_DIR, "deliveroo-hub-watcher.env");
   if (!fs.existsSync(file)) return;
   for (const raw of fs.readFileSync(file, "utf8").split(/\r?\n/)) {
     const line = raw.trim();
@@ -73,7 +74,10 @@ const LOGIN = process.argv.includes("--login");
 const BASE = (process.env.CAFE1_URL || "https://cafe1stalbans.co.uk").replace(/\/$/, "");
 const HUB_URL = process.env.HUB_URL || "https://restaurant-hub.deliveroo.net/orders";
 const SECRET = process.env.DELIVEROO_BRIDGE_SECRET;
-const SESSION_FILE = path.resolve(process.env.SESSION_FILE || "./.deliveroo-hub-session.json");
+const SESSION_FILE = process.env.SESSION_FILE
+  ? path.resolve(process.env.SESSION_FILE)
+  : path.join(SCRIPT_DIR, ".deliveroo-hub-session.json");
+const LOCK_FILE = path.join(SCRIPT_DIR, ".deliveroo-hub-watcher.lock");
 const REFRESH_MS = Number(process.env.REFRESH_MS || 45000);
 /**
  * Two logins can be supplied. The device account is tried first because it
@@ -108,6 +112,41 @@ if (!SECRET) {
   console.error("DELIVEROO_BRIDGE_SECRET is not set — refusing to start.");
   process.exit(1);
 }
+
+/**
+ * Windows allows the runner to be opened manually while its scheduled copy is
+ * already alive. Both copies would share the browser profile/session and cause
+ * repeated file-in-use errors, so claim an exclusive process lock first.
+ */
+function claimProcessLock() {
+  try {
+    const handle = fs.openSync(LOCK_FILE, "wx");
+    fs.writeFileSync(handle, String(process.pid));
+    fs.closeSync(handle);
+    return true;
+  } catch (error) {
+    if (error?.code !== "EEXIST") throw error;
+    const existingPid = Number(fs.readFileSync(LOCK_FILE, "utf8").trim());
+    try {
+      if (Number.isInteger(existingPid) && existingPid > 0) process.kill(existingPid, 0);
+      console.error("Cafe1 Deliveroo watcher is already running — this second copy will close.");
+      return false;
+    } catch {
+      fs.rmSync(LOCK_FILE, { force: true });
+      return claimProcessLock();
+    }
+  }
+}
+
+if (!claimProcessLock()) process.exit(0);
+
+let ownsProcessLock = true;
+function releaseProcessLock() {
+  if (!ownsProcessLock) return;
+  ownsProcessLock = false;
+  fs.rmSync(LOCK_FILE, { force: true });
+}
+process.on("exit", releaseProcessLock);
 
 let chromium;
 try {
@@ -152,6 +191,19 @@ const context = await browser.newContext({
 });
 const page = await context.newPage();
 
+// Playwright writes its state file directly. Queue writes through a temporary
+// file and rename it into place so refresh, sign-in and shutdown cannot race.
+let sessionSaveQueue = Promise.resolve();
+function saveSession() {
+  sessionSaveQueue = sessionSaveQueue.then(async () => {
+    const temporaryFile = `${SESSION_FILE}.${process.pid}.tmp`;
+    await context.storageState({ path: temporaryFile });
+    fs.rmSync(SESSION_FILE, { force: true });
+    fs.renameSync(temporaryFile, SESSION_FILE);
+  });
+  return sessionSaveQueue;
+}
+
 context.on("response", async (response) => {
   const url = response.url();
   if (IGNORED.test(url)) return;
@@ -185,7 +237,7 @@ if (LOGIN) {
   const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
   await new Promise((resolve) => rl.question("", resolve));
   rl.close();
-  await context.storageState({ path: SESSION_FILE });
+  await saveSession();
   console.log(`Session saved to ${SESSION_FILE}. Now run without --login.`);
   await browser.close();
   process.exit(0);
@@ -217,7 +269,7 @@ async function attemptSignIn({ label, username, password }) {
       return false;
     }
     await page.goto(HUB_URL, { waitUntil: "domcontentloaded" }).catch(() => {});
-    await context.storageState({ path: SESSION_FILE }).catch(() => {});
+    await saveSession().catch(() => {});
     console.log(`[hub] signed in with the ${label}; session saved.`);
     return true;
   } catch (err) {
@@ -306,7 +358,7 @@ setInterval(async () => {
     } else {
       // Keep the saved session fresh so a restart resumes without signing in
       // again — which is what would disturb the tablet.
-      await context.storageState({ path: SESSION_FILE }).catch(() => {});
+      await saveSession().catch(() => {});
     }
   } catch (err) {
     recovering = false;
@@ -315,8 +367,9 @@ setInterval(async () => {
 }, REFRESH_MS);
 
 const shutdown = async () => {
-  await context.storageState({ path: SESSION_FILE }).catch(() => {});
+  await saveSession().catch(() => {});
   await browser.close().catch(() => {});
+  releaseProcessLock();
   process.exit(0);
 };
 process.on("SIGINT", shutdown);
