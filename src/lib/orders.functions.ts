@@ -651,14 +651,9 @@ export const setOrderChannel = createServerFn({ method: "POST" })
       .parse(d),
   )
   .handler(async ({ data, context }) => {
-    // The generated types predate this function, so call it untyped.
-    // NOTE: must stay bound to the client — a detached `rpc` loses `this`
-    // and throws "Cannot read properties of undefined (reading 'rest')".
-    const rpc = context.supabase.rpc.bind(context.supabase) as unknown as (
-      fn: string,
-      args: Record<string, unknown>,
-    ) => Promise<{ error: { message: string } | null }>;
-    const { error } = await rpc("cafe1_reassign_order_channel", {
+    // Call through the client object so the SDK retains its internal REST
+    // context. Aliasing or binding `rpc` can leave that context undefined.
+    const { error } = await context.supabase.rpc("cafe1_reassign_order_channel", {
       _order_id: data.order_id,
       _channel: data.channel,
     });
