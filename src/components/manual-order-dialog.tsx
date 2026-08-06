@@ -118,11 +118,15 @@ export function ManualOrderDialog({
 
   function pickChannel(next: ManualChannel) {
     setChannel(next);
-    setPaymentMethod(
-      next === "judge" ? "account" : ["deliveroo", "just_eat", "uber_eats", "tgtg"].includes(next)
-        ? "platform"
-        : "card",
-    );
+    const method =
+      next === "judge"
+        ? "account"
+        : ["deliveroo", "just_eat", "uber_eats", "tgtg"].includes(next)
+          ? "platform"
+          : "card";
+    setPaymentMethod(method);
+    // A tab is by definition unpaid until the weekly bill is settled.
+    setPaid(method !== "account");
     if (next === "tgtg") setType("collection");
   }
 
@@ -353,7 +357,11 @@ export function ManualOrderDialog({
             Payment
             <select
               value={paymentMethod}
-              onChange={(event) => setPaymentMethod(event.target.value as typeof paymentMethod)}
+              onChange={(event) => {
+                const method = event.target.value as typeof paymentMethod;
+                setPaymentMethod(method);
+                if (method === "account") setPaid(false);
+              }}
               className={field}
             >
               <option value="platform">Paid on the platform</option>
@@ -363,21 +371,52 @@ export function ManualOrderDialog({
             </select>
           </label>
           {paymentMethod === "account" && (
-            <label className="text-sm font-medium sm:col-span-2">
-              Which tab account?
-              <select
-                value={accountId}
-                onChange={(event) => setAccountId(event.target.value)}
-                className={field}
-              >
-                <option value="">Select an account…</option>
-                {accounts.map((a) => (
-                  <option key={a.id} value={a.id}>
-                    {a.name}
-                  </option>
-                ))}
-              </select>
-            </label>
+            <div className="text-sm font-medium sm:col-span-2">
+              <label>
+                Which tab account?
+                <select
+                  value={accountId}
+                  onChange={(event) => setAccountId(event.target.value)}
+                  className={field}
+                >
+                  <option value="">Select an account…</option>
+                  {accounts.map((a) => (
+                    <option key={a.id} value={a.id}>
+                      {a.name}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <div className="mt-2 flex items-end gap-2">
+                <label className="flex-1 text-xs font-medium text-muted-foreground">
+                  New judge / advocate name
+                  <input
+                    value={newAccountName}
+                    onChange={(event) => setNewAccountName(event.target.value)}
+                    onKeyDown={(event) => {
+                      if (event.key === "Enter") {
+                        event.preventDefault();
+                        void createTabAccount();
+                      }
+                    }}
+                    placeholder="e.g. HHJ Grey or Ms A Advocate"
+                    className="mt-1.5 h-11 w-full rounded-xl border border-border bg-background px-3 text-sm text-foreground"
+                  />
+                </label>
+                <button
+                  type="button"
+                  onClick={() => void createTabAccount()}
+                  disabled={addingAccount}
+                  className="inline-flex h-11 items-center gap-1.5 rounded-xl bg-primary px-3 text-sm font-bold text-primary-foreground disabled:opacity-50"
+                >
+                  <Plus className="h-4 w-4" />
+                  {addingAccount ? "Adding…" : "Add"}
+                </button>
+              </div>
+              <p className="mt-1 text-xs text-muted-foreground">
+                Saved to the tab list so you can pick it next time and filter it on the accounts page.
+              </p>
+            </div>
           )}
           <label className="mt-1 flex items-center gap-2 self-end text-sm font-medium">
             <input
