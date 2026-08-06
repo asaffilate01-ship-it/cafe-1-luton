@@ -315,6 +315,10 @@ function KDS() {
   const [tickets, setTickets] = useState<Ticket[]>([]);
   // Ids currently shown on the board — used to announce cancellations/refunds.
   const liveIds = useRef<Set<string>>(new Set());
+  // Tickets the operator just cleared. A refetch that was already in flight can
+  // come back with the pre-update row and put a completed ticket back on the
+  // board, so we hide these ids for a short window until the server agrees.
+  const clearedIds = useRef<Map<string, number>>(new Map());
   // Menu + categories change rarely; refetching them on every realtime event
   // was what made "mark ready" feel sluggish. Cache for a few minutes.
   const menuCache = useRef<{ at: number; menu: unknown; cats: unknown } | null>(null);
