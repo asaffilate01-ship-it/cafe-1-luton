@@ -454,7 +454,8 @@ export const syncSumupPos = createServerFn({ method: "POST" })
         // after the ticket was first created. Backfill it so the till note
         // always shows on the kitchen card.
         if (!existing.delivery_notes) {
-          const backfill = await sumupNoteForTransaction(t, key);
+          const sale = await loadSumupSale(t, key);
+          const backfill = sumupOrderNote(sale.detailed, sale.products);
           if (backfill) {
             await supabaseAdmin
               .from("orders")
@@ -468,18 +469,7 @@ export const syncSumupPos = createServerFn({ method: "POST" })
 
       // Try to fetch details: the basket, and the SumUp login that took the sale
       // (neither is present on the history listing).
-      let products: SumupTxn["products"] = t.products;
-      let detailed: SumupTxn = t;
-      try {
-        const d = await fetch(`https://api.sumup.com/v0.1/me/transactions?id=${encodeURIComponent(t.id)}`, {
-          headers: { Authorization: `Bearer ${key}` },
-        });
-        if (d.ok) {
-          const dj = (await d.json()) as SumupTxn;
-          detailed = { ...t, ...dj };
-          if (dj.products?.length) products = dj.products;
-        }
-      } catch { /* ignore detail fetch errors */ }
+      const { detailed, products } = await loadSumupSale(t, key);
 
       const totalCents = Math.round(Number(t.amount) * 100);
       const cardTail = t.card?.last_4_digits ? ` ••${t.card.last_4_digits}` : "";
