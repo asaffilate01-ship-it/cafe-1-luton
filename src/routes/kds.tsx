@@ -1400,11 +1400,17 @@ function KDS() {
                   >
                     {channel.label}
                   </span>
-                  <span
-                    className={`rounded-full px-1.5 py-px text-[9px] font-black uppercase tracking-wide ${t.payment_method === "cash" ? "bg-emerald-600 text-white" : "bg-slate-800 text-white"}`}
-                  >
-                    {t.payment_method === "cash" ? "Cash" : "Card"}
-                  </span>
+                  {t.payment_method === "on_account" || t.payment_status === "unpaid" ? (
+                    <span className="rounded-full bg-amber-500 px-1.5 py-px text-[9px] font-black uppercase tracking-wide text-black">
+                      {t.payment_method === "on_account" ? "Tab · Unpaid" : "Unpaid"}
+                    </span>
+                  ) : (
+                    <span
+                      className={`rounded-full px-1.5 py-px text-[9px] font-black uppercase tracking-wide ${t.payment_method === "cash" ? "bg-emerald-600 text-white" : "bg-slate-800 text-white"}`}
+                    >
+                      {t.payment_method === "cash" ? "Cash" : "Card"}
+                    </span>
+                  )}
                   <span
                     className={`rounded-full px-2 py-px font-mono text-xs font-black tabular-nums ${timerTone}`}
                     title={`Time in kitchen · target ${Math.ceil(targetSeconds / 60)} minutes`}
