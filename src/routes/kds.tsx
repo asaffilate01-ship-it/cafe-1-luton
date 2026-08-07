@@ -1089,11 +1089,11 @@ function KDS() {
         <header className="kds-header sticky top-0 z-30 border-b border-border bg-primary text-primary-foreground min-[860px]:max-lg:static lg:static">
           <div className="mx-auto grid max-w-[110rem] grid-cols-[minmax(0,1fr)_auto] items-center gap-x-3 gap-y-2 px-3 py-2.5 sm:px-4 lg:py-3">
             <h1 className="min-w-0 truncate font-display text-base font-bold sm:text-lg lg:text-2xl">
-              <span className="lg:hidden">
+              <span className="kds-title-mobile lg:hidden">
                 KDS · {visibleTickets.length} active
                 <span className="ml-1 text-xs font-semibold opacity-70">{station}</span>
               </span>
-              <span className="hidden lg:inline">Kitchen Display · Cafe1</span>
+              <span className="kds-title-desktop hidden lg:inline">Kitchen Display · Cafe1</span>
             </h1>
             <div className="flex min-w-0 flex-wrap items-center justify-end gap-2">
               <span className="hidden text-sm font-semibold opacity-80 sm:inline">
@@ -1112,7 +1112,7 @@ function KDS() {
                 {linkDown ? <WifiOff className="h-3.5 w-3.5" /> : <Wifi className="h-3.5 w-3.5" />}
                 {linkDown ? "Offline" : "Online"}
               </span>
-              <div className="hidden flex-wrap items-center justify-end gap-2 lg:flex">
+              <div className="kds-desktop-controls hidden flex-wrap items-center justify-end gap-2 lg:flex">
               <span
                 className={`flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-bold ${
                   deliverooLive
@@ -1208,6 +1208,14 @@ function KDS() {
                     title="Hide toolbar for more screen space"
                   >
                     <ChevronsUp className="h-4 w-4" /> Hide toolbar
+                  </button>
+                  <button
+                    onClick={toggleTabletLayout}
+                    className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left text-sm font-semibold hover:bg-muted"
+                    title="Force the 10-inch tablet layout: no top menu, tabs on top, 4 cards across"
+                  >
+                    <Maximize2 className="h-4 w-4" />
+                    {tabletKds ? "Use desktop layout" : "Use tablet layout"}
                   </button>
                   <button
                     onClick={() => void signOutAndRedirect()}
