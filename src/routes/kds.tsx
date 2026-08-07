@@ -1867,7 +1867,7 @@ function KDS() {
       )}
       <nav
         aria-label="Kitchen display navigation"
-        className="fixed inset-x-0 bottom-0 z-40 grid grid-cols-7 gap-0.5 border-t border-border bg-primary px-1 pb-[env(safe-area-inset-bottom)] pt-1.5 text-primary-foreground lg:hidden"
+        className="fixed inset-x-0 bottom-0 z-40 grid grid-cols-7 gap-0.5 border-t border-border bg-primary px-1 pb-[env(safe-area-inset-bottom)] pt-1.5 text-primary-foreground min-[860px]:max-lg:bottom-auto min-[860px]:max-lg:top-0 min-[860px]:max-lg:z-50 min-[860px]:max-lg:border-b min-[860px]:max-lg:border-t-0 min-[860px]:max-lg:pb-1.5 lg:hidden"
       >
         {FEEDS.map(({ key, label, Icon }) => {
           const count = tickets.filter((t) => matchesFeed(key, t)).length;
@@ -1917,6 +1917,31 @@ function KDS() {
 
 function AlertsToggle() {
   return <AlertsToggleInner />;
+}
+
+/** Lets the kitchen tablet go edge-to-edge so Chrome's address bar is hidden. */
+function FullscreenToggle() {
+  const [full, setFull] = useState(false);
+  useEffect(() => {
+    const onChange = () => setFull(Boolean(document.fullscreenElement));
+    document.addEventListener("fullscreenchange", onChange);
+    onChange();
+    return () => document.removeEventListener("fullscreenchange", onChange);
+  }, []);
+  return (
+    <button
+      type="button"
+      onClick={() => {
+        if (document.fullscreenElement) void document.exitFullscreen();
+        else void document.documentElement.requestFullscreen?.().catch(() => {});
+      }}
+      className="flex shrink-0 items-center gap-1.5 rounded-full bg-primary-foreground/15 px-3 py-2 text-xs font-bold text-primary-foreground active:scale-[0.97]"
+      title="Hide the browser address bar and use the whole screen"
+    >
+      {full ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
+      {full ? "Exit full screen" : "Full screen"}
+    </button>
+  );
 }
 
 function SyncPill({
