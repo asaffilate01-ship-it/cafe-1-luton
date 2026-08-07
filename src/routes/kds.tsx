@@ -1332,7 +1332,7 @@ function KDS() {
           </div>
         </header>
       )}
-      <div className="mx-auto grid max-w-[110rem] gap-3 p-3 pb-28 sm:grid-cols-2 lg:grid-cols-3 lg:pb-3 xl:grid-cols-4 2xl:grid-cols-5">
+      <div className="mx-auto grid max-w-[110rem] gap-3 p-3 pb-28 sm:grid-cols-2 min-[860px]:max-lg:grid-cols-4 min-[860px]:max-lg:gap-2 min-[860px]:max-lg:p-2 lg:grid-cols-3 lg:pb-3 xl:grid-cols-4 2xl:grid-cols-5">
         {feedStale && (
           <div
             role="status"
