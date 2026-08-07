@@ -1556,9 +1556,10 @@ function KDS() {
                 })}
               </p>
               <div
-                className={`mt-1.5 rounded-lg px-2.5 py-1.5 ${TYPE_TONE[t.type] ?? "bg-slate-500 text-white"}`}
+                className={`mt-1 rounded-lg px-2 py-1 ${TYPE_TONE[t.type] ?? "bg-slate-500 text-white"}`}
               >
-                <p className="flex items-center gap-1.5 font-display text-lg font-black uppercase leading-none tracking-wide">
+                <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
+                <p className="flex min-w-0 items-center gap-1 font-display text-xs font-black uppercase leading-none tracking-wide">
                   {(() => {
                     const Icon =
                       t.type === "dine_in"
@@ -1566,21 +1567,22 @@ function KDS() {
                         : t.type === "delivery"
                           ? Bike
                           : ShoppingBag;
-                    return <Icon className="h-5 w-5 shrink-0" aria-hidden="true" />;
+                    return <Icon className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />;
                   })()}
                   {t.source === "sumup_pos" && t.type === "collection"
                     ? "TAKEAWAY"
                     : (TYPE_LABEL[t.type] ?? t.type.replace("_", " ").toUpperCase())}
                 </p>
-                <p className="mt-0.5 text-sm font-black leading-none">
+                <p className="text-[11px] font-black leading-none">
                   {whenLabel(t) === "ASAP" ? "ASAP" : `FOR ${whenLabel(t)}`}
                 </p>
+                </div>
                 {t.type === "dine_in" && t.table_number && (
-                  <p className="mt-0.5 text-xs font-bold">TABLE {t.table_number}</p>
+                  <p className="mt-0.5 text-[11px] font-bold">TABLE {t.table_number}</p>
                 )}
                 <button
                   onClick={() => markDineIn(t.id, t.type)}
-                  className="mt-1.5 rounded-full bg-black/15 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wide hover:bg-black/25"
+                  className="mt-1 rounded-full bg-black/15 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wide hover:bg-black/25"
                   title="Switch this ticket between dine in and pickup"
                 >
                   {t.type === "dine_in" ? "Change to pickup" : "Mark as dine in"}
