@@ -939,7 +939,13 @@ function KDS() {
 
   return (
     <div className="min-h-screen bg-secondary">
-      {!chromeHidden && <AdminNav />}
+      {!chromeHidden && (
+        <div className="min-[860px]:max-lg:hidden">
+          <AdminNav />
+        </div>
+      )}
+      {/* 10" tablet landscape: the tab bar is pinned to the top, so reserve its height */}
+      <div aria-hidden="true" className="hidden h-14 min-[860px]:max-lg:block" />
       {linkDown && (
         <div
           role="alert"
