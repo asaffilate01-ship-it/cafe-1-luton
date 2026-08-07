@@ -1191,6 +1191,7 @@ function KDS() {
               >
                 <Plus className="h-4 w-4" /> Add order
               </button>
+              <FullscreenToggle />
               <span
                 role="status"
                 aria-live="polite"
