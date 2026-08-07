@@ -412,7 +412,7 @@
   padding-bottom: 0.375rem;
 }
 .kds-tablet .kds-pillrow {
-  display: flex;
+  display: none;
 }
 .kds-tablet .kds-header {
   position: static;
