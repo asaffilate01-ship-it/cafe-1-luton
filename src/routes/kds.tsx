@@ -1590,7 +1590,7 @@ function KDS() {
                 )}
                 <button
                   onClick={() => markDineIn(t.id, t.type)}
-                  className="mt-1 rounded-full bg-black/15 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wide hover:bg-black/25"
+                  className="kds-hide-tablet mt-1 rounded-full bg-black/15 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wide hover:bg-black/25"
                   title="Switch this ticket between dine in and pickup"
                 >
                   {t.type === "dine_in" ? "Change to pickup" : "Mark as dine in"}
@@ -1606,7 +1606,7 @@ function KDS() {
               )}
               {t.pos_terminal && (
                 <p
-                  className={`mt-1.5 rounded-lg px-2 py-1 text-center font-display text-sm font-black uppercase tracking-wide ${channel.chip}`}
+                  className={`kds-hide-tablet mt-1.5 rounded-lg px-2 py-1 text-center font-display text-sm font-black uppercase tracking-wide ${channel.chip}`}
                 >
                   {t.pos_terminal === "public" ? "Public side" : `${t.pos_terminal} side`}
                 </p>
@@ -1659,7 +1659,7 @@ function KDS() {
                 </p>
               )}
               <ul
-                className={`mt-2 flex-1 space-y-1.5 rounded-lg p-2.5 text-base ${cook ? "bg-blue-50" : "bg-amber-50"}`}
+                className={`kds-items mt-2 flex-1 space-y-1.5 rounded-lg p-2.5 text-base ${cook ? "bg-blue-50" : "bg-amber-50"}`}
               >
                 {groupByCategory(t.items).map((group) => (
                   <li key={group.category ?? "uncategorised"}>
@@ -1734,7 +1734,7 @@ function KDS() {
                   href={`/print/${t.id}?paper=${kdsPaper}&preview=1`}
                   target="_blank"
                   rel="noreferrer"
-                  className="grid h-12 w-12 place-items-center rounded-full border border-border text-base hover:border-primary hover:text-primary sm:h-8 sm:w-8 sm:text-xs"
+                  className="kds-iconbtn grid h-12 w-12 place-items-center rounded-full border border-border text-base hover:border-primary hover:text-primary sm:h-8 sm:w-8 sm:text-xs"
                   aria-label="Print preview"
                   title="Preview then print"
                 >
@@ -1744,7 +1744,7 @@ function KDS() {
                   href={`/print/${t.id}?paper=${kdsPaper}`}
                   target="_blank"
                   rel="noreferrer"
-                  className="grid h-12 w-12 place-items-center rounded-full border border-border text-base hover:border-primary hover:text-primary sm:h-8 sm:w-8 sm:text-xs"
+                  className="kds-iconbtn grid h-12 w-12 place-items-center rounded-full border border-border text-base hover:border-primary hover:text-primary sm:h-8 sm:w-8 sm:text-xs"
                   aria-label="Print"
                   title="Print now"
                 >
