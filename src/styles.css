@@ -427,6 +427,21 @@
   padding: 0.5rem;
   font-size: 13px;
 }
+.kds-tablet .kds-hide-tablet {
+  display: none !important;
+}
+.kds-tablet .kds-items {
+  font-size: 11px;
+  padding: 0.375rem;
+}
+.kds-tablet .kds-items li {
+  line-height: 1.15;
+}
+.kds-tablet .kds-iconbtn {
+  height: 1.5rem;
+  width: 1.5rem;
+  font-size: 10px;
+}
 .kds-tablet .kds-desktop-controls {
   display: none;
 }
