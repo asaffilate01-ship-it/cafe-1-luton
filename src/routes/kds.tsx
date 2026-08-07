@@ -760,6 +760,23 @@ function KDS() {
 
   const [bulking, setBulking] = useState(false);
   const [chromeHidden, setChromeHidden] = useState(false);
+  // 10" Android tablet in landscape (e.g. 1280x800). Width alone can't tell it
+  // apart from a laptop, so match the short landscape viewport + touch input.
+  const [tabletKds, setTabletKds] = useState(false);
+  useEffect(() => {
+    if (typeof window === "undefined" || !window.matchMedia) return;
+    const mq = window.matchMedia(
+      "(min-width: 860px) and (max-width: 1400px) and (max-height: 900px) and (orientation: landscape) and (pointer: coarse)",
+    );
+    const apply = () => setTabletKds(mq.matches);
+    apply();
+    if (mq.addEventListener) mq.addEventListener("change", apply);
+    else mq.addListener(apply);
+    return () => {
+      if (mq.removeEventListener) mq.removeEventListener("change", apply);
+      else mq.removeListener(apply);
+    };
+  }, []);
   const [manualOpen, setManualOpen] = useState(false);
   // "Live" means the shop's Hub watcher checked in recently, so Deliveroo
   // orders land here on their own and nobody needs to key anything in.
@@ -940,14 +957,14 @@ function KDS() {
     return <div className="p-10 text-center text-muted-foreground">Not authorised.</div>;
 
   return (
-    <div className="min-h-screen bg-secondary">
+    <div className={`min-h-screen bg-secondary${tabletKds ? " kds-tablet" : ""}`}>
       {!chromeHidden && (
-        <div className="min-[860px]:max-lg:hidden">
+        <div className="kds-adminnav min-[860px]:max-lg:hidden">
           <AdminNav />
         </div>
       )}
       {/* 10" tablet landscape: the tab bar is pinned to the top, so reserve its height */}
-      <div aria-hidden="true" className="hidden h-14 min-[860px]:max-lg:block" />
+      <div aria-hidden="true" className="kds-tabbar-spacer hidden h-14 min-[860px]:max-lg:block" />
       {linkDown && (
         <div
           role="alert"
@@ -1048,7 +1065,7 @@ function KDS() {
           </div>
         </div>
       ) : (
-        <header className="sticky top-0 z-30 border-b border-border bg-primary text-primary-foreground min-[860px]:max-lg:static lg:static">
+        <header className="kds-header sticky top-0 z-30 border-b border-border bg-primary text-primary-foreground min-[860px]:max-lg:static lg:static">
           <div className="mx-auto grid max-w-[110rem] grid-cols-[minmax(0,1fr)_auto] items-center gap-x-3 gap-y-2 px-3 py-2.5 sm:px-4 lg:py-3">
             <h1 className="min-w-0 truncate font-display text-base font-bold sm:text-lg lg:text-2xl">
               <span className="lg:hidden">
@@ -1183,7 +1200,7 @@ function KDS() {
               </div>
             </div>
             {/* Phone / tablet: compact pill row — Deliveroo health + key in an order */}
-            <div className="col-span-2 -mx-0.5 flex items-center gap-2 overflow-x-auto pb-0.5 lg:hidden [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            <div className="kds-pillrow col-span-2 -mx-0.5 flex items-center gap-2 overflow-x-auto pb-0.5 lg:hidden [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
               <button
                 type="button"
                 onClick={() => setManualOpen(true)}
@@ -1341,7 +1358,7 @@ function KDS() {
           </div>
         </header>
       )}
-      <div className="mx-auto grid max-w-[110rem] gap-3 p-3 pb-28 sm:grid-cols-2 min-[860px]:max-lg:grid-cols-4 min-[860px]:max-lg:gap-2 min-[860px]:max-lg:p-2 min-[860px]:max-lg:pb-2 lg:grid-cols-3 lg:pb-3 xl:grid-cols-4 2xl:grid-cols-5">
+      <div className="kds-grid mx-auto grid max-w-[110rem] gap-3 p-3 pb-28 sm:grid-cols-2 min-[860px]:max-lg:grid-cols-4 min-[860px]:max-lg:gap-2 min-[860px]:max-lg:p-2 min-[860px]:max-lg:pb-2 lg:grid-cols-3 lg:pb-3 xl:grid-cols-4 2xl:grid-cols-5">
         {feedStale && (
           <div
             role="status"
@@ -1376,7 +1393,7 @@ function KDS() {
           return (
             <div
               key={t.id}
-              className={`flex flex-col overflow-hidden rounded-2xl border-4 bg-white p-4 shadow-sm ring-2 transition-shadow sm:rounded-xl sm:p-3 min-[860px]:max-lg:max-h-[calc((100dvh-11rem)/2)] min-[860px]:max-lg:overflow-y-auto min-[860px]:max-lg:p-2 min-[860px]:max-lg:text-[13px] ${channel.border} ${channel.ring} ${hot ? "shadow-brand" : ""}`}
+              className={`kds-card flex flex-col overflow-hidden rounded-2xl border-4 bg-white p-4 shadow-sm ring-2 transition-shadow sm:rounded-xl sm:p-3 min-[860px]:max-lg:max-h-[calc((100dvh-11rem)/2)] min-[860px]:max-lg:overflow-y-auto min-[860px]:max-lg:p-2 min-[860px]:max-lg:text-[13px] ${channel.border} ${channel.ring} ${hot ? "shadow-brand" : ""}`}
             >
               <div
                 className={`-mx-4 -mt-4 mb-2 px-3 py-1.5 text-center text-[11px] font-black uppercase tracking-[0.14em] text-white sm:-mx-3 sm:-mt-3 sm:py-1 sm:text-[10px] ${cook ? "bg-blue-600" : "bg-amber-500"}`}
@@ -1869,7 +1886,7 @@ function KDS() {
       )}
       <nav
         aria-label="Kitchen display navigation"
-        className="fixed inset-x-0 bottom-0 z-40 grid grid-cols-7 gap-0.5 border-t border-border bg-primary px-1 pb-[env(safe-area-inset-bottom)] pt-1.5 text-primary-foreground min-[860px]:max-lg:bottom-auto min-[860px]:max-lg:top-0 min-[860px]:max-lg:z-50 min-[860px]:max-lg:border-b min-[860px]:max-lg:border-t-0 min-[860px]:max-lg:pb-1.5 lg:hidden"
+        className="kds-tabbar fixed inset-x-0 bottom-0 z-40 grid grid-cols-7 gap-0.5 border-t border-border bg-primary px-1 pb-[env(safe-area-inset-bottom)] pt-1.5 text-primary-foreground min-[860px]:max-lg:bottom-auto min-[860px]:max-lg:top-0 min-[860px]:max-lg:z-50 min-[860px]:max-lg:border-b min-[860px]:max-lg:border-t-0 min-[860px]:max-lg:pb-1.5 lg:hidden"
       >
         {FEEDS.map(({ key, label, Icon }) => {
           const count = tickets.filter((t) => matchesFeed(key, t)).length;
