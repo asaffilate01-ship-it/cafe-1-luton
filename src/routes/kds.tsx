@@ -31,6 +31,8 @@ import {
   Settings2,
   LayoutGrid,
   MoreHorizontal,
+  Maximize2,
+  Minimize2,
   Shuffle,
   Pencil,
   X,
