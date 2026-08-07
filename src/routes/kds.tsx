@@ -1430,7 +1430,7 @@ function KDS() {
           return (
             <div
               key={t.id}
-              className={`kds-card flex flex-col overflow-hidden rounded-2xl border-4 bg-white p-4 shadow-sm ring-2 transition-shadow sm:rounded-xl sm:p-3 min-[860px]:max-lg:max-h-[calc((100dvh-11rem)/2)] min-[860px]:max-lg:overflow-y-auto min-[860px]:max-lg:p-2 min-[860px]:max-lg:text-[13px] ${channel.border} ${channel.ring} ${hot ? "shadow-brand" : ""}`}
+              className={`kds-card flex flex-col rounded-2xl border-4 bg-white p-4 shadow-sm ring-2 transition-shadow sm:rounded-xl sm:p-3 min-[860px]:max-lg:p-2 min-[860px]:max-lg:text-[13px] ${channel.border} ${channel.ring} ${hot ? "shadow-brand" : ""}`}
             >
               {/* Area + cook state share one strip so the ticket stays short */}
               <div className="-mx-4 -mt-4 mb-1.5 flex text-[10px] font-black uppercase tracking-[0.12em] sm:-mx-3 sm:-mt-3">
@@ -1646,7 +1646,7 @@ function KDS() {
                 </div>
               )}
               {(t.delivery_notes || whenLabel(t) !== "ASAP") && (
-                <p className="mt-1.5 rounded-lg border-2 border-amber-400 bg-amber-100 px-2 py-1 text-base font-black uppercase leading-tight text-amber-900">
+                <p className="mt-1.5 rounded-lg border-2 border-amber-400 bg-amber-100 px-2 py-1 text-[11px] font-black uppercase leading-tight text-amber-900">
                   NOTE: {noteText(t)}
                 </p>
               )}
@@ -1672,7 +1672,7 @@ function KDS() {
                               </span>
                             )}
                             {i.notes ? (
-                              <em className="block text-sm font-medium text-muted-foreground">
+                              <em className="block text-[11px] font-medium text-muted-foreground">
                                 — {i.notes}
                               </em>
                             ) : null}
