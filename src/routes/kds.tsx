@@ -31,6 +31,8 @@ import {
   Settings2,
   LayoutGrid,
   MoreHorizontal,
+  Maximize2,
+  Minimize2,
   Shuffle,
   Pencil,
   X,
@@ -939,7 +941,13 @@ function KDS() {
 
   return (
     <div className="min-h-screen bg-secondary">
-      {!chromeHidden && <AdminNav />}
+      {!chromeHidden && (
+        <div className="min-[860px]:max-lg:hidden">
+          <AdminNav />
+        </div>
+      )}
+      {/* 10" tablet landscape: the tab bar is pinned to the top, so reserve its height */}
+      <div aria-hidden="true" className="hidden h-14 min-[860px]:max-lg:block" />
       {linkDown && (
         <div
           role="alert"
@@ -1040,7 +1048,7 @@ function KDS() {
           </div>
         </div>
       ) : (
-        <header className="sticky top-0 z-30 border-b border-border bg-primary text-primary-foreground lg:static">
+        <header className="sticky top-0 z-30 border-b border-border bg-primary text-primary-foreground min-[860px]:max-lg:static lg:static">
           <div className="mx-auto grid max-w-[110rem] grid-cols-[minmax(0,1fr)_auto] items-center gap-x-3 gap-y-2 px-3 py-2.5 sm:px-4 lg:py-3">
             <h1 className="min-w-0 truncate font-display text-base font-bold sm:text-lg lg:text-2xl">
               <span className="lg:hidden">
@@ -1185,6 +1193,7 @@ function KDS() {
               >
                 <Plus className="h-4 w-4" /> Add order
               </button>
+              <FullscreenToggle />
               <span
                 role="status"
                 aria-live="polite"
@@ -1332,7 +1341,7 @@ function KDS() {
           </div>
         </header>
       )}
-      <div className="mx-auto grid max-w-[110rem] gap-3 p-3 pb-28 sm:grid-cols-2 min-[860px]:max-lg:grid-cols-4 min-[860px]:max-lg:gap-2 min-[860px]:max-lg:p-2 lg:grid-cols-3 lg:pb-3 xl:grid-cols-4 2xl:grid-cols-5">
+      <div className="mx-auto grid max-w-[110rem] gap-3 p-3 pb-28 sm:grid-cols-2 min-[860px]:max-lg:grid-cols-4 min-[860px]:max-lg:gap-2 min-[860px]:max-lg:p-2 min-[860px]:max-lg:pb-2 lg:grid-cols-3 lg:pb-3 xl:grid-cols-4 2xl:grid-cols-5">
         {feedStale && (
           <div
             role="status"
@@ -1860,7 +1869,7 @@ function KDS() {
       )}
       <nav
         aria-label="Kitchen display navigation"
-        className="fixed inset-x-0 bottom-0 z-40 grid grid-cols-7 gap-0.5 border-t border-border bg-primary px-1 pb-[env(safe-area-inset-bottom)] pt-1.5 text-primary-foreground lg:hidden"
+        className="fixed inset-x-0 bottom-0 z-40 grid grid-cols-7 gap-0.5 border-t border-border bg-primary px-1 pb-[env(safe-area-inset-bottom)] pt-1.5 text-primary-foreground min-[860px]:max-lg:bottom-auto min-[860px]:max-lg:top-0 min-[860px]:max-lg:z-50 min-[860px]:max-lg:border-b min-[860px]:max-lg:border-t-0 min-[860px]:max-lg:pb-1.5 lg:hidden"
       >
         {FEEDS.map(({ key, label, Icon }) => {
           const count = tickets.filter((t) => matchesFeed(key, t)).length;
@@ -1910,6 +1919,31 @@ function KDS() {
 
 function AlertsToggle() {
   return <AlertsToggleInner />;
+}
+
+/** Lets the kitchen tablet go edge-to-edge so Chrome's address bar is hidden. */
+function FullscreenToggle() {
+  const [full, setFull] = useState(false);
+  useEffect(() => {
+    const onChange = () => setFull(Boolean(document.fullscreenElement));
+    document.addEventListener("fullscreenchange", onChange);
+    onChange();
+    return () => document.removeEventListener("fullscreenchange", onChange);
+  }, []);
+  return (
+    <button
+      type="button"
+      onClick={() => {
+        if (document.fullscreenElement) void document.exitFullscreen();
+        else void document.documentElement.requestFullscreen?.().catch(() => {});
+      }}
+      className="flex shrink-0 items-center gap-1.5 rounded-full bg-primary-foreground/15 px-3 py-2 text-xs font-bold text-primary-foreground active:scale-[0.97]"
+      title="Hide the browser address bar and use the whole screen"
+    >
+      {full ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
+      {full ? "Exit full screen" : "Full screen"}
+    </button>
+  );
 }
 
 function SyncPill({
