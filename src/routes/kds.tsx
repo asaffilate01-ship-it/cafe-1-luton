@@ -760,6 +760,23 @@ function KDS() {
 
   const [bulking, setBulking] = useState(false);
   const [chromeHidden, setChromeHidden] = useState(false);
+  // 10" Android tablet in landscape (e.g. 1280x800). Width alone can't tell it
+  // apart from a laptop, so match the short landscape viewport + touch input.
+  const [tabletKds, setTabletKds] = useState(false);
+  useEffect(() => {
+    if (typeof window === "undefined" || !window.matchMedia) return;
+    const mq = window.matchMedia(
+      "(min-width: 860px) and (max-width: 1400px) and (max-height: 900px) and (orientation: landscape) and (pointer: coarse)",
+    );
+    const apply = () => setTabletKds(mq.matches);
+    apply();
+    if (mq.addEventListener) mq.addEventListener("change", apply);
+    else mq.addListener(apply);
+    return () => {
+      if (mq.removeEventListener) mq.removeEventListener("change", apply);
+      else mq.removeListener(apply);
+    };
+  }, []);
   const [manualOpen, setManualOpen] = useState(false);
   // "Live" means the shop's Hub watcher checked in recently, so Deliveroo
   // orders land here on their own and nobody needs to key anything in.
