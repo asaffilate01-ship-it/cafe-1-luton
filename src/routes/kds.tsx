@@ -1240,6 +1240,14 @@ function KDS() {
                 <Plus className="h-4 w-4" /> Add order
               </button>
               <FullscreenToggle />
+              <button
+                type="button"
+                onClick={toggleTabletLayout}
+                className="flex shrink-0 items-center gap-1.5 rounded-full bg-primary-foreground/15 px-3 py-2 text-xs font-bold text-primary-foreground active:scale-[0.97]"
+                title="Switch between the tablet layout and the full desktop layout"
+              >
+                {tabletKds ? "Desktop layout" : "Tablet layout"}
+              </button>
               <span
                 role="status"
                 aria-live="polite"
