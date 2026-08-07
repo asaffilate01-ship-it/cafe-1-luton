@@ -1432,36 +1432,39 @@ function KDS() {
               key={t.id}
               className={`kds-card flex flex-col overflow-hidden rounded-2xl border-4 bg-white p-4 shadow-sm ring-2 transition-shadow sm:rounded-xl sm:p-3 min-[860px]:max-lg:max-h-[calc((100dvh-11rem)/2)] min-[860px]:max-lg:overflow-y-auto min-[860px]:max-lg:p-2 min-[860px]:max-lg:text-[13px] ${channel.border} ${channel.ring} ${hot ? "shadow-brand" : ""}`}
             >
-              <div
-                className={`-mx-4 -mt-4 mb-2 px-3 py-1.5 text-center text-[11px] font-black uppercase tracking-[0.14em] text-white sm:-mx-3 sm:-mt-3 sm:py-1 sm:text-[10px] ${cook ? "bg-blue-600" : "bg-amber-500"}`}
-              >
-                {cook ? "Cook / hot food" : "No cooking needed"}
-              </div>
-              <div
-                className={`-mx-4 -mt-2 mb-2 px-3 py-1 text-center text-[11px] font-black uppercase tracking-[0.18em] sm:-mx-3 ${channel.chip}`}
-              >
-                {channel.label}
-              </div>
-              <div className="-mt-1 mb-2">
-                <button
-                  type="button"
-                  onClick={() => setReassignFor(reassignFor === t.id ? null : t.id)}
-                  className="flex w-full items-center justify-center gap-1.5 rounded-full border border-border py-1.5 text-[11px] font-bold uppercase tracking-wide text-muted-foreground hover:border-primary hover:text-primary sm:py-1 sm:text-[10px]"
-                  aria-expanded={reassignFor === t.id}
-                  title="Move this ticket to a different area"
+              {/* Area + cook state share one strip so the ticket stays short */}
+              <div className="-mx-4 -mt-4 mb-1.5 flex text-[10px] font-black uppercase tracking-[0.12em] sm:-mx-3 sm:-mt-3">
+                <span className={`flex-1 px-2 py-1 text-center ${channel.chip}`}>
+                  {channel.label}
+                </span>
+                <span
+                  className={`flex-1 px-2 py-1 text-center text-white ${cook ? "bg-blue-600" : "bg-amber-500"}`}
                 >
-                  <Shuffle className="h-3.5 w-3.5" aria-hidden="true" />
-                  Move area
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setEditId(t.id)}
-                  className="mt-1.5 flex w-full items-center justify-center gap-1.5 rounded-full border border-border py-1.5 text-[11px] font-bold uppercase tracking-wide text-muted-foreground hover:border-primary hover:text-primary sm:py-1 sm:text-[10px]"
-                  title="Correct the details, amount or items on this ticket"
-                >
-                  <Pencil className="h-3.5 w-3.5" aria-hidden="true" />
-                  Edit ticket
-                </button>
+                  {cook ? "Cook / hot" : "No cooking"}
+                </span>
+              </div>
+              <div className="mb-1.5">
+                <div className="grid grid-cols-2 gap-1.5">
+                  <button
+                    type="button"
+                    onClick={() => setReassignFor(reassignFor === t.id ? null : t.id)}
+                    className="flex items-center justify-center gap-1 rounded-full border border-border py-1 text-[10px] font-bold uppercase tracking-wide text-muted-foreground hover:border-primary hover:text-primary"
+                    aria-expanded={reassignFor === t.id}
+                    title="Move this ticket to a different area"
+                  >
+                    <Shuffle className="h-3 w-3" aria-hidden="true" />
+                    Move area
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setEditId(t.id)}
+                    className="flex items-center justify-center gap-1 rounded-full border border-border py-1 text-[10px] font-bold uppercase tracking-wide text-muted-foreground hover:border-primary hover:text-primary"
+                    title="Correct the details, amount or items on this ticket"
+                  >
+                    <Pencil className="h-3 w-3" aria-hidden="true" />
+                    Edit ticket
+                  </button>
+                </div>
                 {moveState[t.id] === "saving" && (
                   <p className="mt-1 text-center text-[10px] font-bold uppercase tracking-wide text-muted-foreground">
                     Moving…
@@ -1553,9 +1556,10 @@ function KDS() {
                 })}
               </p>
               <div
-                className={`mt-1.5 rounded-lg px-2.5 py-1.5 ${TYPE_TONE[t.type] ?? "bg-slate-500 text-white"}`}
+                className={`mt-1 rounded-lg px-2 py-1 ${TYPE_TONE[t.type] ?? "bg-slate-500 text-white"}`}
               >
-                <p className="flex items-center gap-1.5 font-display text-lg font-black uppercase leading-none tracking-wide">
+                <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
+                <p className="flex min-w-0 items-center gap-1 font-display text-xs font-black uppercase leading-none tracking-wide">
                   {(() => {
                     const Icon =
                       t.type === "dine_in"
@@ -1563,21 +1567,22 @@ function KDS() {
                         : t.type === "delivery"
                           ? Bike
                           : ShoppingBag;
-                    return <Icon className="h-5 w-5 shrink-0" aria-hidden="true" />;
+                    return <Icon className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />;
                   })()}
                   {t.source === "sumup_pos" && t.type === "collection"
                     ? "TAKEAWAY"
                     : (TYPE_LABEL[t.type] ?? t.type.replace("_", " ").toUpperCase())}
                 </p>
-                <p className="mt-0.5 text-sm font-black leading-none">
+                <p className="text-[11px] font-black leading-none">
                   {whenLabel(t) === "ASAP" ? "ASAP" : `FOR ${whenLabel(t)}`}
                 </p>
+                </div>
                 {t.type === "dine_in" && t.table_number && (
-                  <p className="mt-0.5 text-xs font-bold">TABLE {t.table_number}</p>
+                  <p className="mt-0.5 text-[11px] font-bold">TABLE {t.table_number}</p>
                 )}
                 <button
                   onClick={() => markDineIn(t.id, t.type)}
-                  className="mt-1.5 rounded-full bg-black/15 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wide hover:bg-black/25"
+                  className="mt-1 rounded-full bg-black/15 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wide hover:bg-black/25"
                   title="Switch this ticket between dine in and pickup"
                 >
                   {t.type === "dine_in" ? "Change to pickup" : "Mark as dine in"}
