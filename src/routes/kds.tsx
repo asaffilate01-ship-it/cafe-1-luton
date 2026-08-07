@@ -1367,7 +1367,7 @@ function KDS() {
           return (
             <div
               key={t.id}
-              className={`flex flex-col overflow-hidden rounded-2xl border-4 bg-white p-4 shadow-sm ring-2 transition-shadow sm:rounded-xl sm:p-3 ${channel.border} ${channel.ring} ${hot ? "shadow-brand" : ""}`}
+              className={`flex flex-col overflow-hidden rounded-2xl border-4 bg-white p-4 shadow-sm ring-2 transition-shadow sm:rounded-xl sm:p-3 min-[860px]:max-lg:max-h-[calc((100dvh-11rem)/2)] min-[860px]:max-lg:overflow-y-auto min-[860px]:max-lg:p-2 min-[860px]:max-lg:text-[13px] ${channel.border} ${channel.ring} ${hot ? "shadow-brand" : ""}`}
             >
               <div
                 className={`-mx-4 -mt-4 mb-2 px-3 py-1.5 text-center text-[11px] font-black uppercase tracking-[0.14em] text-white sm:-mx-3 sm:-mt-3 sm:py-1 sm:text-[10px] ${cook ? "bg-blue-600" : "bg-amber-500"}`}
