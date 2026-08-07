@@ -15,6 +15,7 @@ function validEnvironment(overrides = {}) {
     SUMUP_API_KEY: "live-sumup-key",
     SUMUP_MERCHANT_CODE: "merchant-code",
     SUMUP_AFFILIATE_KEY: "affiliate-key",
+    GOOGLE_PAY_MERCHANT_ID: "123456789012345678",
     CRON_SECRET: "0123456789abcdefghijklmnopqrstuvwxyz",
     REQUIRE_ADMIN_MFA: "true",
     ENABLE_DEV_LOGIN: "false",

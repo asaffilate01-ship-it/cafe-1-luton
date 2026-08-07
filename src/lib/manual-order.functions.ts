@@ -76,7 +76,7 @@ const FALLBACK_NAME: Record<ManualChannel, string> = {
 
 export const createManualOrder = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: unknown) => OrderSchema.parse(input))
+  .validator((input: unknown) => OrderSchema.parse(input))
   .handler(async ({ data, context }) => {
     const [{ data: isAdmin }, { data: isStaff }] = await Promise.all([
       context.supabase.rpc("has_role", { _user_id: context.userId, _role: "admin" }),
@@ -196,7 +196,7 @@ const EditSchema = z.object({
  */
 export const updateManualOrder = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: unknown) => EditSchema.parse(input))
+  .validator((input: unknown) => EditSchema.parse(input))
   .handler(async ({ data, context }) => {
     const [{ data: isAdmin }, { data: isStaff }] = await Promise.all([
       context.supabase.rpc("has_role", { _user_id: context.userId, _role: "admin" }),

@@ -45,7 +45,7 @@ const POSTERS = [
       "Collect at Café 1, or delivery to the Jury Lounge",
       "at Crown Court or the Jury Rooms at the Magistrates'.",
     ],
-    foot: "Café 1 · St Albans Crown Court · AL1 3JW",
+    foot: "Café 1 · St Albans Crown Court · AL1 3JU",
   },
   {
     path: "/juror",
@@ -62,10 +62,7 @@ const POSTERS = [
     path: "/juror-demo",
     eyebrow: "Jury Officer / demonstration",
     title: "See the whole process",
-    lines: [
-      "A ten-screen walkthrough of the scheme.",
-      "Simulated data only — nothing is claimed.",
-    ],
+    lines: ["A ten-screen walkthrough of the scheme.", "Simulated data only — nothing is claimed."],
     foot: "For briefings and induction sessions.",
   },
 ];
@@ -123,9 +120,7 @@ function QrPostersPage() {
                 {p.path}
               </p>
               <p className="mt-3 text-sm text-muted-foreground">{p.foot}</p>
-              <p className="mt-4 font-display text-lg font-black">
-                Café 1 · St Albans Crown Court
-              </p>
+              <p className="mt-4 font-display text-lg font-black">Café 1 · St Albans Crown Court</p>
             </div>
           </article>
         ))}

@@ -13,6 +13,7 @@ const RECEIPT =
 
 describe("parseDeliverooReceipt", () => {
   it("strips ESC/POS control bytes", () => {
+    // eslint-disable-next-line no-control-regex
     expect(stripEscPos(RECEIPT)).not.toMatch(/\x1b|\x1d/);
   });
 

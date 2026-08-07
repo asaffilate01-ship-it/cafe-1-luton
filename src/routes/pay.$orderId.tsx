@@ -113,6 +113,7 @@ function PayView() {
   );
   const [errorMsg, setErrorMsg] = useState<string>("");
   const [walletDetected, setWalletDetected] = useState(false);
+  const [walletConfigured, setWalletConfigured] = useState(false);
   const mountedRef = useRef(false);
 
   useEffect(() => {
@@ -154,6 +155,7 @@ function PayView() {
       } catch {
         googlePayMerchantId = null;
       }
+      setWalletConfigured(Boolean(googlePayMerchantId));
       if (cancelled || mountedRef.current || !window.SumUpCard) return;
       mountedRef.current = true;
       setStatus("ready");
@@ -177,6 +179,18 @@ function PayView() {
             }
           : {}),
         showSubmitButton: true,
+        onPaymentMethodsLoad: (methods) => {
+          const available = JSON.stringify(methods ?? "").toLowerCase();
+          if (
+            available.includes("google_pay") ||
+            available.includes("google-pay") ||
+            available.includes("googlepay") ||
+            available.includes("apple_pay") ||
+            available.includes("apple-pay")
+          ) {
+            setWalletDetected(true);
+          }
+        },
         onResponse: async (type, body) => {
           if (type === "sent") setStatus("processing");
           if (type === "success" || type === "auth-screen") {
@@ -272,13 +286,22 @@ function PayView() {
               />
             </>
           )}
-          {status !== "error" && !walletDetected && (
+          {status !== "error" && walletConfigured && !walletDetected && (
             <div className="mb-4 flex items-start gap-2 rounded-xl border border-border bg-muted/40 p-3 text-xs text-muted-foreground">
               <Smartphone className="mt-0.5 h-3.5 w-3.5 shrink-0" />
               <span>
                 On a phone? Pay in one tap with <strong>Apple&nbsp;Pay</strong> or{" "}
                 <strong>Google&nbsp;Pay</strong> — the wallet button appears above the card form
                 when your device supports it.
+              </span>
+            </div>
+          )}
+          {status !== "error" && !walletConfigured && !isGooglePayDemoMode() && (
+            <div className="mb-4 flex items-start gap-2 rounded-xl border border-amber-500/30 bg-amber-500/5 p-3 text-xs text-amber-800">
+              <Smartphone className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+              <span>
+                Google Pay is not configured for this domain yet. Card payment remains available; a
+                manager must add the approved Google merchant ID before release.
               </span>
             </div>
           )}
