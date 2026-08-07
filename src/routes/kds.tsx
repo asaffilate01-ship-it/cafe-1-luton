@@ -1046,7 +1046,7 @@ function KDS() {
           </div>
         </div>
       ) : (
-        <header className="sticky top-0 z-30 border-b border-border bg-primary text-primary-foreground lg:static">
+        <header className="sticky top-0 z-30 border-b border-border bg-primary text-primary-foreground min-[860px]:max-lg:static lg:static">
           <div className="mx-auto grid max-w-[110rem] grid-cols-[minmax(0,1fr)_auto] items-center gap-x-3 gap-y-2 px-3 py-2.5 sm:px-4 lg:py-3">
             <h1 className="min-w-0 truncate font-display text-base font-bold sm:text-lg lg:text-2xl">
               <span className="lg:hidden">
