@@ -761,22 +761,43 @@ function KDS() {
   const [bulking, setBulking] = useState(false);
   const [chromeHidden, setChromeHidden] = useState(false);
   // 10" Android tablet in landscape (e.g. 1280x800). Width alone can't tell it
-  // apart from a laptop, so match the short landscape viewport + touch input.
-  const [tabletKds, setTabletKds] = useState(false);
+  // apart from a laptop, so we look at a short landscape viewport plus touch
+  // input — and the kitchen can force it from Tools if detection is wrong.
+  const [tabletPref, setTabletPref] = useState<"auto" | "on" | "off">("auto");
+  const [tabletAuto, setTabletAuto] = useState(false);
   useEffect(() => {
-    if (typeof window === "undefined" || !window.matchMedia) return;
-    const mq = window.matchMedia(
-      "(min-width: 860px) and (max-width: 1400px) and (max-height: 900px) and (orientation: landscape) and (pointer: coarse)",
-    );
-    const apply = () => setTabletKds(mq.matches);
-    apply();
-    if (mq.addEventListener) mq.addEventListener("change", apply);
-    else mq.addListener(apply);
+    if (typeof window === "undefined") return;
+    const param = new URLSearchParams(window.location.search).get("layout");
+    const stored =
+      param === "tablet" ? "on" : param === "desktop" ? "off" : localStorage.getItem("kds-layout");
+    if (stored === "on" || stored === "off") setTabletPref(stored);
+    const detect = () => {
+      const w = window.innerWidth;
+      const h = window.innerHeight;
+      const touch =
+        (navigator.maxTouchPoints ?? 0) > 0 ||
+        (window.matchMedia ? window.matchMedia("(pointer: coarse)").matches : false) ||
+        "ontouchstart" in window;
+      setTabletAuto(touch && w > h && w >= 760 && w <= 1500 && h <= 900);
+    };
+    detect();
+    window.addEventListener("resize", detect);
+    window.addEventListener("orientationchange", detect);
     return () => {
-      if (mq.removeEventListener) mq.removeEventListener("change", apply);
-      else mq.removeListener(apply);
+      window.removeEventListener("resize", detect);
+      window.removeEventListener("orientationchange", detect);
     };
   }, []);
+  const tabletKds = tabletPref === "on" || (tabletPref === "auto" && tabletAuto);
+  const toggleTabletLayout = () => {
+    const next = tabletKds ? "off" : "on";
+    setTabletPref(next);
+    try {
+      localStorage.setItem("kds-layout", next);
+    } catch {
+      /* private mode */
+    }
+  };
   const [manualOpen, setManualOpen] = useState(false);
   // "Live" means the shop's Hub watcher checked in recently, so Deliveroo
   // orders land here on their own and nobody needs to key anything in.
