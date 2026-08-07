@@ -14,8 +14,9 @@ import {
   ShieldCheck,
 } from "lucide-react";
 import {
-  DISPLAY_CHANNEL,
+  announceDisplayPresence,
   postToDisplay,
+  subscribeToDisplay,
   type DisplayLine,
   type DisplayMessage,
 } from "@/lib/customer-display";
@@ -99,10 +100,7 @@ function DisplayPage() {
   }, [banners.length]);
 
   useEffect(() => {
-    if (typeof window === "undefined" || !("BroadcastChannel" in window)) return;
-    const ch = new BroadcastChannel(DISPLAY_CHANNEL);
-    ch.onmessage = (e: MessageEvent<DisplayMessage>) => {
-      const msg = e.data;
+    const unsubscribe = subscribeToDisplay((msg: DisplayMessage) => {
       if (msg.type === "juror") {
         setJurorUrl(msg.url);
         return;
@@ -133,10 +131,23 @@ function DisplayPage() {
         setVoucherCents(0);
         setDiscountCents(0);
       }
-    };
+    });
     return () => {
-      ch.close();
+      unsubscribe();
       if (paidTimer.current) clearTimeout(paidTimer.current);
+    };
+  }, []);
+
+  useEffect(() => {
+    announceDisplayPresence();
+    const heartbeat = window.setInterval(announceDisplayPresence, 5_000);
+    const onVisible = () => {
+      if (document.visibilityState === "visible") announceDisplayPresence();
+    };
+    document.addEventListener("visibilitychange", onVisible);
+    return () => {
+      window.clearInterval(heartbeat);
+      document.removeEventListener("visibilitychange", onVisible);
     };
   }, []);
 
@@ -364,7 +375,9 @@ function JurorKeypad() {
     try {
       const res = await lookup({ data: { code: c, pin } });
       if (!res.found) {
-        setError(("message" in res && res.message) || "Sorry, that code and PIN aren't recognised.");
+        setError(
+          ("message" in res && res.message) || "Sorry, that code and PIN aren't recognised.",
+        );
       } else if (!res.usable) {
         setError(res.message ?? "Sorry, that code can't be used today.");
       } else if (res.remaining_cents <= 0) {
@@ -429,7 +442,11 @@ function JurorKeypad() {
         onClick={() => setField("pin")}
         className={`mt-3 flex h-14 w-full items-center justify-center rounded-2xl border-2 font-mono text-2xl tracking-[0.5em] ${field === "pin" ? "border-primary bg-white" : "border-neutral-200 bg-white/60"}`}
       >
-        {pin ? "•".repeat(pin.length) : <span className="tracking-normal text-neutral-400">6-digit PIN</span>}
+        {pin ? (
+          "•".repeat(pin.length)
+        ) : (
+          <span className="tracking-normal text-neutral-400">6-digit PIN</span>
+        )}
       </button>
 
       <div className="mt-4 grid grid-cols-3 gap-2">

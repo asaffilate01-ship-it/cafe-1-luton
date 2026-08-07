@@ -24,13 +24,20 @@ export type ParsedPrintOrder = {
 
 /** Remove ESC/POS control sequences and non-printable bytes. */
 export function stripEscPos(raw: string): string {
-  return raw
-    // ESC @ , ESC ! n, ESC a n, GS ! n, GS V m ... — one- and two-arg escapes
-    .replace(/\x1b[@!ade=EGMRStV\-][\s\S]?/g, "")
-    .replace(/\x1d[!BVfhwr][\s\S]?/g, "")
-    .replace(/\x1b\x21[\s\S]/g, "")
-    .replace(/[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]/g, "")
-    .replace(/\r\n?/g, "\n");
+  return (
+    raw
+      // ESC @ , ESC ! n, ESC a n, GS ! n, GS V m ... — one- and two-arg escapes
+      // Raw ESC/POS bytes are intentionally matched here before receipt parsing.
+      // eslint-disable-next-line no-control-regex
+      .replace(/\x1b[@!ade=EGMRStV-][\s\S]?/g, "")
+      // eslint-disable-next-line no-control-regex
+      .replace(/\x1d[!BVfhwr][\s\S]?/g, "")
+      // eslint-disable-next-line no-control-regex
+      .replace(/\x1b\x21[\s\S]/g, "")
+      // eslint-disable-next-line no-control-regex
+      .replace(/[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]/g, "")
+      .replace(/\r\n?/g, "\n")
+  );
 }
 
 function toCents(value: string): number {
@@ -44,7 +51,8 @@ const ITEM_PATTERNS: RegExp[] = [
   /^(\d{1,2})\s+(?![x×]\s)(\D.*)$/i, // "2 Flat White"
 ];
 
-const SKIP_LINE = /^(deliveroo|order\s*(receipt|summary)|customer|thank|www\.|tel[:.]|vat|-{3,}|={3,}|\*{3,})/i;
+const SKIP_LINE =
+  /^(deliveroo|order\s*(receipt|summary)|customer|thank|www\.|tel[:.]|vat|-{3,}|={3,}|\*{3,})/i;
 const TOTAL_LINE = /^(order\s+)?total\b/i;
 const SUBTOTAL_LINE = /^(sub\s*total|subtotal|delivery|service|fees?|tip)\b/i;
 const NOTE_PREFIX = /^(\s*[-•*+]\s+|\s{2,}(?![-•*+]))/;
@@ -89,7 +97,9 @@ function detectTotal(lines: string[]): number {
 function detectNotes(lines: string[]): string | null {
   const collected: string[] = [];
   for (const line of lines) {
-    const match = line.match(/^\s*(?:note[s]?\s+to\s+restaurant|kitchen\s+note[s]?|note[s]?|allerg\w*|cutlery)\s*[:#]\s*(.+)$/i);
+    const match = line.match(
+      /^\s*(?:note[s]?\s+to\s+restaurant|kitchen\s+note[s]?|note[s]?|allerg\w*|cutlery)\s*[:#]\s*(.+)$/i,
+    );
     if (match?.[1]?.trim()) collected.push(match[1].trim());
   }
   return collected.length ? collected.join(" · ").slice(0, 500) : null;
@@ -106,7 +116,8 @@ export function parseDeliverooReceipt(raw: string): ParsedPrintOrder {
   const items: ParsedPrintLine[] = [];
   for (const line of lines) {
     const trimmed = line.trim();
-    if (SKIP_LINE.test(trimmed) || TOTAL_LINE.test(trimmed) || SUBTOTAL_LINE.test(trimmed)) continue;
+    if (SKIP_LINE.test(trimmed) || TOTAL_LINE.test(trimmed) || SUBTOTAL_LINE.test(trimmed))
+      continue;
 
     let matched = false;
     for (const pattern of ITEM_PATTERNS) {
@@ -125,7 +136,10 @@ export function parseDeliverooReceipt(raw: string): ParsedPrintOrder {
 
     // Indented or bulleted line directly under an item = a modifier for it.
     if (items.length && NOTE_PREFIX.test(line)) {
-      const note = trimmed.replace(/^[-•*+]\s*/, "").replace(/\s{2,}[£$€]?\d+[.,]\d{2}\s*$/, "").trim();
+      const note = trimmed
+        .replace(/^[-•*+]\s*/, "")
+        .replace(/\s{2,}[£$€]?\d+[.,]\d{2}\s*$/, "")
+        .trim();
       if (note) {
         const last = items[items.length - 1]!;
         last.notes = last.notes ? `${last.notes}, ${note}`.slice(0, 200) : note.slice(0, 200);

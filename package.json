@@ -112,7 +112,8 @@
     "vitest": "^3.2.4"
   },
   "overrides": {
-    "brace-expansion": "^1.1.17"
+    "brace-expansion": "^1.1.17",
+    "js-yaml": "^5.2.3"
   },
   "pnpm": {
     "overrides": {

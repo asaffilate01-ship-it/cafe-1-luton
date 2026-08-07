@@ -53,6 +53,7 @@ import {
   usefulLabel,
 } from "@/lib/cooking";
 import { useConnectionStatus } from "@/hooks/use-connection-status";
+import { askConfirm, askPrompt } from "@/lib/confirm";
 
 type Item = {
   id: string;
@@ -92,7 +93,6 @@ type Order = {
 };
 type Ticket = Order & { items: Item[]; needsCooking: boolean };
 
-
 const TYPE_LABEL: Record<string, string> = {
   dine_in: "DINE IN",
   collection: "PICKUP",
@@ -110,18 +110,8 @@ const TYPE_TONE: Record<string, string> = {
  * banner on top stays reserved for cooked vs not cooked.
  */
 type ChannelKey =
-  | "deliveroo"
-  | "just_eat"
-  | "uber_eats"
-  | "tgtg"
-  | "jury"
-  | "public"
-  | "judge"
-  | "web";
-const CHANNEL: Record<
-  ChannelKey,
-  { label: string; border: string; chip: string; ring: string }
-> = {
+  "deliveroo" | "just_eat" | "uber_eats" | "tgtg" | "jury" | "public" | "judge" | "web";
+const CHANNEL: Record<ChannelKey, { label: string; border: string; chip: string; ring: string }> = {
   deliveroo: {
     label: "Deliveroo",
     border: "border-green-600",
@@ -296,7 +286,11 @@ function inferStation(
   const code = (explicit ?? "").trim().toUpperCase();
   if ((STATIONS as readonly string[]).includes(code)) return code as Station;
   const hay = `${category ?? ""} ${name}`.toLowerCase();
-  if (/(drink|coffee|tea|juice|smoothie|latte|americano|cappuccino|mocha|water|can\b|bottle)/.test(hay))
+  if (
+    /(drink|coffee|tea|juice|smoothie|latte|americano|cappuccino|mocha|water|can\b|bottle)/.test(
+      hay,
+    )
+  )
     return "DRINKS";
   if (/(panini|sandwich|baguette|wrap|toastie|bagel|roll|sub)/.test(hay)) return "SANDWICH";
   if (cooked) return "HOT";
@@ -329,9 +323,7 @@ export const Route = createFileRoute("/kds")({
       { name: "description", content: "Live kitchen tickets for Cafe1." },
       { name: "robots", content: "noindex" },
     ],
-    links: [
-      { rel: "manifest", href: "/kds.webmanifest" },
-    ],
+    links: [{ rel: "manifest", href: "/kds.webmanifest" }],
   }),
   component: KdsPage,
 });
@@ -430,7 +422,14 @@ function KDS() {
           .from("orders")
           .select(COLUMNS)
           .gte("created_at", since.toISOString())
-          .in("status", ["paid", "preparing", "ready", "out_for_delivery", "delivered", "completed"])
+          .in("status", [
+            "paid",
+            "preparing",
+            "ready",
+            "out_for_delivery",
+            "delivered",
+            "completed",
+          ])
           .order("created_at", { ascending: false })
           .limit(15);
         const seen = new Set(rows.map((o) => o.id));
@@ -464,9 +463,7 @@ function KDS() {
       if (itemsRes.error) throw new Error(itemsRes.error.message);
       const items = itemsRes.data;
       const fresh =
-        menuCache.current && Date.now() - menuCache.current.at < 300_000
-          ? menuCache.current
-          : null;
+        menuCache.current && Date.now() - menuCache.current.at < 300_000 ? menuCache.current : null;
       let menu: unknown;
       let cats: unknown;
       if (fresh) {
@@ -620,7 +617,8 @@ function KDS() {
             o.status === "refunded" ||
             o.payment_status === "refunded" ||
             o.payment_status === "failed");
-        const goneId = payload.eventType === "DELETE" ? (removedRow?.id as string | undefined) : undefined;
+        const goneId =
+          payload.eventType === "DELETE" ? (removedRow?.id as string | undefined) : undefined;
         const dropId = voided ? (o?.id as string) : goneId;
         if (dropId && liveIds.current.has(dropId)) {
           liveIds.current.delete(dropId);
@@ -807,15 +805,20 @@ function KDS() {
   useEffect(() => {
     let cancelled = false;
     async function check() {
-      const { data } = await (supabase as unknown as {
-        from: (t: string) => {
-          select: (c: string) => {
-            eq: (c: string, v: string) => {
-              maybeSingle: () => Promise<{ data: { last_seen_at: string } | null }>;
+      const { data } = await (
+        supabase as unknown as {
+          from: (t: string) => {
+            select: (c: string) => {
+              eq: (
+                c: string,
+                v: string,
+              ) => {
+                maybeSingle: () => Promise<{ data: { last_seen_at: string } | null }>;
+              };
             };
           };
-        };
-      })
+        }
+      )
         .from("integration_status")
         .select("last_seen_at")
         .eq("key", "deliveroo_hub")
@@ -862,34 +865,50 @@ function KDS() {
           station === "PASS" ||
           t.items.some((i) => i.station_code === station)),
     );
-    const ids = candidates.filter((t) => Date.now() - new Date(t.created_at).getTime() >= FRESH_MS).map((t) => t.id);
+    const ids = candidates
+      .filter((t) => Date.now() - new Date(t.created_at).getTime() >= FRESH_MS)
+      .map((t) => t.id);
     const skipped = candidates.length - ids.length;
     if (!ids.length) {
       if (skipped) toast.info("Only just-arrived tickets are left — clear those individually.");
       return;
     }
     if (
-      !window.confirm(
-        `Mark ${ids.length} ticket${ids.length === 1 ? "" : "s"} as ${status}?` +
-          (skipped ? `\n\n${skipped} just arrived and will be left on the board.` : ""),
-      )
+      !(await askConfirm({
+        title: `Mark ${ids.length} ticket${ids.length === 1 ? "" : "s"} as ${status}?`,
+        description: skipped
+          ? `${skipped} just arrived and will be left on the board.`
+          : "Only the tickets currently visible in this station will be changed.",
+        confirmLabel: status === "completed" ? "Complete tickets" : "Mark ready",
+        destructive: false,
+      }))
     )
       return;
     setBulking(true);
-    const previous = tickets;
-    setTickets((prev) =>
-      status === "completed"
-        ? prev.filter((t) => !ids.includes(t.id))
-        : prev.map((t) => (ids.includes(t.id) ? { ...t, status } : t)),
-    );
-    if (status === "completed") for (const id of ids) clearedIds.current.set(id, Date.now());
     try {
-      await Promise.all(ids.map((id) => update({ data: { order_id: id, status } })));
-      toast.success(`${ids.length} marked ${status}`);
-    } catch (e) {
-      setTickets(previous);
-      for (const id of ids) clearedIds.current.delete(id);
-      toast.error(e instanceof Error ? e.message : "Failed");
+      const results = await Promise.allSettled(
+        ids.map((id) => update({ data: { order_id: id, status } })),
+      );
+      const succeeded = ids.filter((_, index) => results[index]?.status === "fulfilled");
+      const failed = ids.filter((_, index) => results[index]?.status === "rejected");
+      if (succeeded.length) {
+        const changed = new Set(succeeded);
+        setTickets((prev) =>
+          status === "completed"
+            ? prev.filter((ticket) => !changed.has(ticket.id))
+            : prev.map((ticket) => (changed.has(ticket.id) ? { ...ticket, status } : ticket)),
+        );
+        if (status === "completed") {
+          for (const id of succeeded) clearedIds.current.set(id, Date.now());
+        }
+      }
+      if (failed.length) {
+        toast.error(
+          `${succeeded.length} updated; ${failed.length} could not be changed and remain on the board.`,
+        );
+      } else {
+        toast.success(`${succeeded.length} marked ${status}`);
+      }
     } finally {
       setBulking(false);
     }
@@ -929,7 +948,15 @@ function KDS() {
         await setFulfil({ data: { order_id: id, type: "collection", table_number: null } });
         toast.success("Marked as pickup");
       } else {
-        const table = window.prompt("Table number (optional)") ?? "";
+        const table =
+          (await askPrompt({
+            title: "Mark order as dine in",
+            description: "Add the table number so the pass knows where to send it.",
+            label: "Table number (optional)",
+            placeholder: "e.g. 12",
+            inputMode: "text",
+            confirmLabel: "Mark dine in",
+          })) ?? "";
         await setFulfil({
           data: { order_id: id, type: "dine_in", table_number: table.trim() || null },
         });
@@ -1113,127 +1140,127 @@ function KDS() {
                 {linkDown ? "Offline" : "Online"}
               </span>
               <div className="kds-desktop-controls hidden flex-wrap items-center justify-end gap-2 lg:flex">
-              <span
-                className={`flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-bold ${
-                  deliverooLive
-                    ? "bg-[#00CCBC] text-black"
-                    : "bg-primary-foreground/15 text-primary-foreground"
-                }`}
-                title={
-                  deliverooLive
-                    ? "Deliveroo orders are arriving here automatically"
-                    : deliverooSeenAt
-                      ? `The shop's Deliveroo watcher last checked in ${Math.round((Date.now() - deliverooSeenAt) / 60000)} min ago. Being signed into Restaurant Hub is not enough — the watcher program must be running on this PC. Key tickets in manually until it is back.`
-                      : "The shop's Deliveroo watcher has never checked in. Being signed into Restaurant Hub is not enough — the watcher program must be running on this PC."
-                }
-              >
-                <Bike className="h-3.5 w-3.5" />
-                {deliverooLive === null
-                  ? "Deliveroo…"
-                  : deliverooLive
-                    ? "Deliveroo auto"
-                    : "Deliveroo offline"}
-              </span>
-              <SyncPill lastSync={lastSync} ok={syncOk} now={now} />
-              <AlertsToggle />
-              <WakeToggle />
-              <button
-                onClick={() => setManualOpen(true)}
-                disabled={!canCompleteOrders}
-                className="flex items-center gap-1 rounded-full bg-[#00CCBC] px-3 py-1.5 text-xs font-bold text-black hover:opacity-90 disabled:opacity-40"
-                title="Key in any order by hand — Deliveroo, Just Eat, Uber Eats, TGTG, jury, judge, counter or phone"
-              >
-                <Plus className="h-4 w-4" />
-                <span className="hidden sm:inline">Add order</span>
-                <span className="sm:hidden">Add</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => window.location.reload()}
-                className="flex items-center gap-1 rounded-full bg-primary-foreground/10 px-3 py-1.5 text-xs font-semibold hover:bg-primary-foreground/20"
-                title="Reload the kitchen display — use this if the internet dropped or the screen looks stuck"
-              >
-                <RefreshCw className="h-4 w-4" />
-                <span className="hidden sm:inline">Refresh</span>
-              </button>
-              <details className="relative">
-                <summary className="flex cursor-pointer list-none items-center gap-1 rounded-full bg-primary-foreground/10 px-3 py-1.5 text-xs font-semibold hover:bg-primary-foreground/20 [&::-webkit-details-marker]:hidden">
-                  <Settings2 className="h-4 w-4" />
-                  <span className="hidden sm:inline">Tools</span>
-                </summary>
-                <div className="absolute right-0 z-50 mt-2 w-64 rounded-2xl border border-border bg-card p-2 text-card-foreground shadow-xl">
-                  <button
-                    onClick={manualSync}
-                    disabled={syncing}
-                    className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left text-sm font-semibold hover:bg-muted disabled:opacity-50"
-                    title="Pull latest transactions from your SumUp terminal"
-                  >
-                    <RefreshCw className={`h-4 w-4 ${syncing ? "animate-spin" : ""}`} />
-                    {syncing ? "Syncing…" : "Sync SumUp POS"}
-                  </button>
-                  <a
-                    href={`/print/test?paper=${kdsPaper}&preview=1`}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-sm font-semibold hover:bg-muted"
-                    title="Print a sample ticket on this device — no order is created"
-                  >
-                    <Printer className="h-4 w-4" /> Test print
-                  </a>
-                  <div className="flex items-center justify-between gap-2 rounded-xl px-3 py-2 text-sm font-semibold">
-                    <span>Paper width</span>
-                    <span className="flex items-center gap-1 rounded-full bg-muted p-1">
-                      {([58, 80] as const).map((w) => (
-                        <button
-                          key={w}
-                          onClick={() => pickPaper(w)}
-                          className={`rounded-full px-2.5 py-1 text-xs font-bold ${kdsPaper === w ? "bg-primary text-primary-foreground" : "opacity-70"}`}
-                          title="Kitchen printer paper width"
-                        >
-                          {w}mm
-                        </button>
-                      ))}
-                    </span>
+                <span
+                  className={`flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-bold ${
+                    deliverooLive
+                      ? "bg-[#00CCBC] text-black"
+                      : "bg-primary-foreground/15 text-primary-foreground"
+                  }`}
+                  title={
+                    deliverooLive
+                      ? "Deliveroo orders are arriving here automatically"
+                      : deliverooSeenAt
+                        ? `The shop's Deliveroo watcher last checked in ${Math.round((Date.now() - deliverooSeenAt) / 60000)} min ago. Being signed into Restaurant Hub is not enough — the watcher program must be running on this PC. Key tickets in manually until it is back.`
+                        : "The shop's Deliveroo watcher has never checked in. Being signed into Restaurant Hub is not enough — the watcher program must be running on this PC."
+                  }
+                >
+                  <Bike className="h-3.5 w-3.5" />
+                  {deliverooLive === null
+                    ? "Deliveroo…"
+                    : deliverooLive
+                      ? "Deliveroo auto"
+                      : "Deliveroo offline"}
+                </span>
+                <SyncPill lastSync={lastSync} ok={syncOk} now={now} />
+                <AlertsToggle />
+                <WakeToggle />
+                <button
+                  onClick={() => setManualOpen(true)}
+                  disabled={!canCompleteOrders}
+                  className="flex items-center gap-1 rounded-full bg-[#00CCBC] px-3 py-1.5 text-xs font-bold text-black hover:opacity-90 disabled:opacity-40"
+                  title="Key in any order by hand — Deliveroo, Just Eat, Uber Eats, TGTG, jury, judge, counter or phone"
+                >
+                  <Plus className="h-4 w-4" />
+                  <span className="hidden sm:inline">Add order</span>
+                  <span className="sm:hidden">Add</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => window.location.reload()}
+                  className="flex items-center gap-1 rounded-full bg-primary-foreground/10 px-3 py-1.5 text-xs font-semibold hover:bg-primary-foreground/20"
+                  title="Reload the kitchen display — use this if the internet dropped or the screen looks stuck"
+                >
+                  <RefreshCw className="h-4 w-4" />
+                  <span className="hidden sm:inline">Refresh</span>
+                </button>
+                <details className="relative">
+                  <summary className="flex cursor-pointer list-none items-center gap-1 rounded-full bg-primary-foreground/10 px-3 py-1.5 text-xs font-semibold hover:bg-primary-foreground/20 [&::-webkit-details-marker]:hidden">
+                    <Settings2 className="h-4 w-4" />
+                    <span className="hidden sm:inline">Tools</span>
+                  </summary>
+                  <div className="absolute right-0 z-50 mt-2 w-64 rounded-2xl border border-border bg-card p-2 text-card-foreground shadow-xl">
+                    <button
+                      onClick={manualSync}
+                      disabled={syncing}
+                      className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left text-sm font-semibold hover:bg-muted disabled:opacity-50"
+                      title="Pull latest transactions from your SumUp terminal"
+                    >
+                      <RefreshCw className={`h-4 w-4 ${syncing ? "animate-spin" : ""}`} />
+                      {syncing ? "Syncing…" : "Sync SumUp POS"}
+                    </button>
+                    <a
+                      href={`/print/test?paper=${kdsPaper}&preview=1`}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-sm font-semibold hover:bg-muted"
+                      title="Print a sample ticket on this device — no order is created"
+                    >
+                      <Printer className="h-4 w-4" /> Test print
+                    </a>
+                    <div className="flex items-center justify-between gap-2 rounded-xl px-3 py-2 text-sm font-semibold">
+                      <span>Paper width</span>
+                      <span className="flex items-center gap-1 rounded-full bg-muted p-1">
+                        {([58, 80] as const).map((w) => (
+                          <button
+                            key={w}
+                            onClick={() => pickPaper(w)}
+                            className={`rounded-full px-2.5 py-1 text-xs font-bold ${kdsPaper === w ? "bg-primary text-primary-foreground" : "opacity-70"}`}
+                            title="Kitchen printer paper width"
+                          >
+                            {w}mm
+                          </button>
+                        ))}
+                      </span>
+                    </div>
+                    <div className="px-1 py-1">
+                      <InstallAppButton
+                        manifest="/kds.webmanifest"
+                        label="Install KDS app"
+                        className="flex w-full items-center gap-2 rounded-xl px-2 py-2 text-sm font-semibold hover:bg-muted"
+                      />
+                    </div>
+                    <button
+                      onClick={() => setManualOpen(true)}
+                      disabled={!canCompleteOrders}
+                      className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left text-sm font-semibold hover:bg-muted disabled:opacity-40"
+                      title="Add a manual order"
+                    >
+                      <Plus className="h-4 w-4" /> Add order
+                    </button>
+                    <button
+                      onClick={toggleChrome}
+                      className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left text-sm font-semibold hover:bg-muted"
+                      title="Hide toolbar for more screen space"
+                    >
+                      <ChevronsUp className="h-4 w-4" /> Hide toolbar
+                    </button>
+                    <button
+                      onClick={toggleTabletLayout}
+                      className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left text-sm font-semibold hover:bg-muted"
+                      title="Force the 10-inch tablet layout: no top menu, tabs on top, 4 cards across"
+                    >
+                      <Maximize2 className="h-4 w-4" />
+                      {tabletKds ? "Use desktop layout" : "Use tablet layout"}
+                    </button>
+                    <button
+                      onClick={() => void signOutAndRedirect()}
+                      className="mt-1 flex w-full items-center gap-2 rounded-xl bg-primary px-3 py-2 text-left text-sm font-bold text-primary-foreground hover:opacity-90"
+                      title="Sign out of this device"
+                    >
+                      Sign out
+                    </button>
                   </div>
-                  <div className="px-1 py-1">
-                    <InstallAppButton
-                      manifest="/kds.webmanifest"
-                      label="Install KDS app"
-                      className="flex w-full items-center gap-2 rounded-xl px-2 py-2 text-sm font-semibold hover:bg-muted"
-                    />
-                  </div>
-                  <button
-                    onClick={() => setManualOpen(true)}
-                    disabled={!canCompleteOrders}
-                    className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left text-sm font-semibold hover:bg-muted disabled:opacity-40"
-                    title="Add a manual order"
-                  >
-                    <Plus className="h-4 w-4" /> Add order
-                  </button>
-                  <button
-                    onClick={toggleChrome}
-                    className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left text-sm font-semibold hover:bg-muted"
-                    title="Hide toolbar for more screen space"
-                  >
-                    <ChevronsUp className="h-4 w-4" /> Hide toolbar
-                  </button>
-                  <button
-                    onClick={toggleTabletLayout}
-                    className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left text-sm font-semibold hover:bg-muted"
-                    title="Force the 10-inch tablet layout: no top menu, tabs on top, 4 cards across"
-                  >
-                    <Maximize2 className="h-4 w-4" />
-                    {tabletKds ? "Use desktop layout" : "Use tablet layout"}
-                  </button>
-                  <button
-                    onClick={() => void signOutAndRedirect()}
-                    className="mt-1 flex w-full items-center gap-2 rounded-xl bg-primary px-3 py-2 text-left text-sm font-bold text-primary-foreground hover:opacity-90"
-                    title="Sign out of this device"
-                  >
-                    Sign out
-                  </button>
-                </div>
-              </details>
+                </details>
               </div>
             </div>
             {/* Phone / tablet: compact pill row — Deliveroo health + key in an order */}
@@ -1567,23 +1594,23 @@ function KDS() {
                 className={`mt-1 rounded-lg px-2 py-1 ${TYPE_TONE[t.type] ?? "bg-slate-500 text-white"}`}
               >
                 <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
-                <p className="flex min-w-0 items-center gap-1 font-display text-xs font-black uppercase leading-none tracking-wide">
-                  {(() => {
-                    const Icon =
-                      t.type === "dine_in"
-                        ? HandPlatter
-                        : t.type === "delivery"
-                          ? Bike
-                          : ShoppingBag;
-                    return <Icon className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />;
-                  })()}
-                  {t.source === "sumup_pos" && t.type === "collection"
-                    ? "TAKEAWAY"
-                    : (TYPE_LABEL[t.type] ?? t.type.replace("_", " ").toUpperCase())}
-                </p>
-                <p className="text-[11px] font-black leading-none">
-                  {whenLabel(t) === "ASAP" ? "ASAP" : `FOR ${whenLabel(t)}`}
-                </p>
+                  <p className="flex min-w-0 items-center gap-1 font-display text-xs font-black uppercase leading-none tracking-wide">
+                    {(() => {
+                      const Icon =
+                        t.type === "dine_in"
+                          ? HandPlatter
+                          : t.type === "delivery"
+                            ? Bike
+                            : ShoppingBag;
+                      return <Icon className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />;
+                    })()}
+                    {t.source === "sumup_pos" && t.type === "collection"
+                      ? "TAKEAWAY"
+                      : (TYPE_LABEL[t.type] ?? t.type.replace("_", " ").toUpperCase())}
+                  </p>
+                  <p className="text-[11px] font-black leading-none">
+                    {whenLabel(t) === "ASAP" ? "ASAP" : `FOR ${whenLabel(t)}`}
+                  </p>
                 </div>
                 {t.type === "dine_in" && t.table_number && (
                   <p className="mt-0.5 text-[11px] font-bold">TABLE {t.table_number}</p>
@@ -1630,29 +1657,28 @@ function KDS() {
                 </div>
               )}
               {!t.jury_room &&
-                (t.type === "delivery" ||
-                t.postcode ||
-                t.address_line1 ||
-                t.company_name) && (
-                <div className="mt-1.5 rounded-lg border border-slate-900 bg-white p-1.5 text-xs">
-                  <p className="text-[9px] font-black uppercase tracking-widest text-slate-500">
-                    Deliver to
-                  </p>
-                  {t.postcode && (
-                    <p className="font-display text-base font-black uppercase leading-none">
-                      {t.postcode}
+                (t.type === "delivery" || t.postcode || t.address_line1 || t.company_name) && (
+                  <div className="mt-1.5 rounded-lg border border-slate-900 bg-white p-1.5 text-xs">
+                    <p className="text-[9px] font-black uppercase tracking-widest text-slate-500">
+                      Deliver to
                     </p>
-                  )}
-                  {t.company_name && <p className="mt-0.5 font-bold">{t.company_name}</p>}
-                  {t.address_line1 && <p className="font-semibold">{t.address_line1}</p>}
-                  {t.address_line2 && <p className="font-semibold">{t.address_line2}</p>}
-                  {t.city && <p className="text-muted-foreground">{t.city}</p>}
-                  {!t.postcode && !t.address_line1 && !t.company_name && (
-                    <p className="font-bold text-red-600">No address on this order — check the till</p>
-                  )}
-                  {t.customer_phone && <p className="mt-0.5 font-bold">☎ {t.customer_phone}</p>}
-                </div>
-              )}
+                    {t.postcode && (
+                      <p className="font-display text-base font-black uppercase leading-none">
+                        {t.postcode}
+                      </p>
+                    )}
+                    {t.company_name && <p className="mt-0.5 font-bold">{t.company_name}</p>}
+                    {t.address_line1 && <p className="font-semibold">{t.address_line1}</p>}
+                    {t.address_line2 && <p className="font-semibold">{t.address_line2}</p>}
+                    {t.city && <p className="text-muted-foreground">{t.city}</p>}
+                    {!t.postcode && !t.address_line1 && !t.company_name && (
+                      <p className="font-bold text-red-600">
+                        No address on this order — check the till
+                      </p>
+                    )}
+                    {t.customer_phone && <p className="mt-0.5 font-bold">☎ {t.customer_phone}</p>}
+                  </div>
+                )}
               {(t.delivery_notes || whenLabel(t) !== "ASAP") && (
                 <p className="mt-1.5 rounded-lg border-2 border-amber-400 bg-amber-100 px-2 py-1 text-[11px] font-black uppercase leading-tight text-amber-900">
                   NOTE: {noteText(t)}
@@ -1959,7 +1985,9 @@ function KDS() {
                 {count > 0 && (
                   <span
                     className={`absolute -right-2 -top-1.5 min-w-[15px] rounded-full px-1 text-[9px] font-black leading-[15px] ${
-                      on ? "bg-primary text-primary-foreground" : "bg-primary-foreground text-primary"
+                      on
+                        ? "bg-primary text-primary-foreground"
+                        : "bg-primary-foreground text-primary"
                     }`}
                   >
                     {count}

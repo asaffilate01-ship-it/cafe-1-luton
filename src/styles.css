@@ -431,11 +431,11 @@
   display: none !important;
 }
 .kds-tablet .kds-items {
-  font-size: 11px;
+  font-size: 12px;
   padding: 0.375rem;
 }
 .kds-tablet .kds-items li {
-  line-height: 1.15;
+  line-height: 1.25;
 }
 .kds-tablet .kds-iconbtn {
   height: 1.5rem;

@@ -1,30 +1,8 @@
-import { Bluetooth, Loader2, RefreshCw, Settings2, Wifi, WifiOff } from "lucide-react";
+import { Bluetooth, Loader2, RefreshCw, Settings2, Smartphone, Wifi, WifiOff } from "lucide-react";
 import { useState } from "react";
-
-type NavigatorWithBluetooth = Navigator & {
-  bluetooth?: {
-    requestDevice: (options: {
-      acceptAllDevices?: boolean;
-      optionalServices?: string[];
-    }) => Promise<{ name?: string | null }>;
-  };
-};
+import { isReaderOnline, readerStatusLabel } from "@/lib/reader-status";
 
 export type ReaderInfo = { id: string; name: string; status: string };
-
-/** SumUp reports paired/online devices with these labels; anything else means it is off Wi-Fi. */
-export function isReaderOnline(status: string | undefined | null): boolean {
-  const value = (status ?? "").toLowerCase();
-  return value === "paired" || value === "online" || value === "connected" || value === "ready";
-}
-
-export function readerStatusLabel(status: string | undefined | null): string {
-  const value = (status ?? "").toLowerCase();
-  if (isReaderOnline(value)) return "Online";
-  if (!value || value === "unknown") return "Checking";
-  if (value === "expired") return "Pairing expired";
-  return "Offline";
-}
 
 /** The official SumUp Cloud API pairing steps staff follow on the Solo itself. */
 export function WifiSetupSteps() {
@@ -39,8 +17,8 @@ export function WifiSetupSteps() {
         the status bar icon to show connected.
       </li>
       <li>
-        <span className="font-bold text-white/80">3.</span> Open Connections → API → Connect. An
-        8–9 character pairing code appears on the Solo.
+        <span className="font-bold text-white/80">3.</span> Open Connections → API → Connect. An 8–9
+        character pairing code appears on the Solo.
       </li>
       <li>
         <span className="font-bold text-white/80">4.</span> Enter that code below within 5 minutes,
@@ -50,68 +28,21 @@ export function WifiSetupSteps() {
   );
 }
 
-/** The Bluetooth steps staff follow when the café Wi-Fi is down or the Solo is used away from the counter. */
+/** Accurate guidance for Bluetooth readers: the web till cannot perform certified payments itself. */
 export function BluetoothSetupSteps() {
   return (
-    <ol className="mt-2 space-y-1.5 text-xs text-white/60">
-      <li>
-        <span className="font-bold text-white/80">1.</span> On the Solo: swipe down → Settings →
-        Connections → Bluetooth, and turn Bluetooth on so it is discoverable.
-      </li>
-      <li>
-        <span className="font-bold text-white/80">2.</span> On this till device, turn Bluetooth on
-        and press “Pair over Bluetooth” below, then choose the Solo in the list.
-      </li>
-      <li>
-        <span className="font-bold text-white/80">3.</span> Confirm the matching code on both
-        screens.
-      </li>
-      <li>
-        <span className="font-bold text-white/80">4.</span> Back on the Solo: Settings →
-        Connections → Pair device, then enter that code below to finish linking it to Cafe 1.
-      </li>
-    </ol>
-  );
-}
-
-/** Bluetooth pairing button — uses the device chooser when the browser supports it. */
-export function BluetoothPairButton() {
-  const [busy, setBusy] = useState(false);
-  const [result, setResult] = useState<string | null>(null);
-
-  async function pair() {
-    const bt = (navigator as NavigatorWithBluetooth).bluetooth;
-    if (!bt) {
-      setResult(
-        "This browser can't open the Bluetooth chooser — pair the Solo from the till device's own Bluetooth settings, then enter the pairing code below.",
-      );
-      return;
-    }
-    setBusy(true);
-    setResult(null);
-    try {
-      const device = await bt.requestDevice({ acceptAllDevices: true, optionalServices: [] });
-      setResult(
-        `Bluetooth link started with ${device.name || "the selected device"}. Now enter the Solo's pairing code below.`,
-      );
-    } catch (error) {
-      setResult(error instanceof Error ? error.message : "Bluetooth pairing was cancelled.");
-    } finally {
-      setBusy(false);
-    }
-  }
-
-  return (
-    <div className="mt-3">
-      <button
-        onClick={() => void pair()}
-        disabled={busy}
-        className="inline-flex h-10 w-full items-center justify-center gap-2 rounded-xl border border-sky-300/50 text-sm font-bold text-sky-100 disabled:opacity-60"
-      >
-        {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Bluetooth className="h-4 w-4" />}
-        Pair over Bluetooth
-      </button>
-      {result && <p className="mt-2 text-[11px] text-white/60">{result}</p>}
+    <div className="mt-2 rounded-xl border border-sky-300/25 bg-sky-400/10 p-3 text-xs text-sky-100/80">
+      <p className="flex items-center gap-2 font-bold text-sky-100">
+        <Smartphone className="h-4 w-4" /> Native app required
+      </p>
+      <p className="mt-1.5">
+        Bluetooth payment readers must be connected through Cafe 1&apos;s signed Android/iOS
+        companion app and the official payment-provider SDK. Browser Bluetooth is not used for card
+        payments because selecting a device alone cannot authorise or complete a transaction.
+      </p>
+      <p className="mt-1.5">
+        For the SumUp Solo, use Cloud pairing over Wi-Fi or mobile data in the Wi-Fi tab.
+      </p>
     </div>
   );
 }
@@ -142,14 +73,7 @@ export function ReaderLinkGuide({ defaultMode = "wifi" }: { defaultMode?: "wifi"
           </button>
         ))}
       </div>
-      {mode === "wifi" ? (
-        <WifiSetupSteps />
-      ) : (
-        <>
-          <BluetoothSetupSteps />
-          <BluetoothPairButton />
-        </>
-      )}
+      {mode === "wifi" ? <WifiSetupSteps /> : <BluetoothSetupSteps />}
     </div>
   );
 }

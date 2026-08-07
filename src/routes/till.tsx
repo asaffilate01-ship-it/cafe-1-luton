@@ -22,20 +22,35 @@ import {
   checkReaderPayment,
   cancelReaderPayment,
 } from "@/lib/till.functions";
-import { openCashDrawer, getDrawerBridge, setDrawerBridge } from "@/lib/drawer";
-import { iminPrintTickets, isIminDevice, openCustomerScreen } from "@/lib/imin";
-import { postToDisplay, DISPLAY_CHANNEL, type DisplayMessage } from "@/lib/customer-display";
+import { openCashDrawer } from "@/lib/drawer";
+import {
+  iminPrintTickets,
+  isIminDevice,
+  openCustomerScreen,
+  type Ticket as PrintTicket,
+} from "@/lib/imin";
+import { postToDisplay, subscribeToDisplay, type DisplayMessage } from "@/lib/customer-display";
+import {
+  checkDeviceBridge,
+  getDeviceBridgeConfig,
+  printViaDeviceBridge,
+  setDeviceBridgeConfig,
+} from "@/lib/device-bridge";
 import { lookupVoucher } from "@/lib/vouchers.functions";
 import { QrCode } from "@/components/qr-code";
 import {
   ReaderConnectionAlert,
   ReaderStatusPill,
   ReaderLinkGuide,
-  isReaderOnline,
 } from "@/components/reader-connection";
+import { isReaderOnline } from "@/lib/reader-status";
 import { JUROR_DAILY_ALLOWANCE_CENTS, JUROR_FOOD_DISCOUNT_PERCENT } from "@/lib/juror";
 import { money } from "@/lib/format";
 import { calculateCounterDue } from "@/lib/counter-pricing";
+import { askConfirm, askPrompt } from "@/lib/confirm";
+import { useCustomerDisplayStatus } from "@/hooks/use-customer-display-status";
+import { usePosDeviceStatus } from "@/hooks/use-pos-device-status";
+import { useTillFavourites } from "@/hooks/use-till-favourites";
 import { toast } from "sonner";
 import { getStaffMenuItems } from "@/lib/menu-operations.functions";
 import {
@@ -68,6 +83,7 @@ import {
   Pause,
   FolderOpen,
   CircleDollarSign,
+  Star,
 } from "lucide-react";
 
 export const Route = createFileRoute("/till")({
@@ -193,6 +209,7 @@ const SIDE_TONE: Record<Side, string> = {
   public: "bg-teal-600 text-white",
 };
 const SIDE_LABEL: Record<Side, string> = { jury: "Jury", judge: "Judge", public: "Public" };
+const FAVOURITES_CATEGORY = "__favourites__";
 const FULFIL: { id: Fulfilment; label: string; Icon: typeof ShoppingBag }[] = [
   { id: "dine_in", label: "Dine in", Icon: HandPlatter },
   { id: "collection", label: "Takeaway", Icon: ShoppingBag },
@@ -386,6 +403,12 @@ function Till() {
   const [heldOpen, setHeldOpen] = useState(false);
   const [readerSaleKey, setReaderSaleKey] = useState<string | null>(null);
   const [splitCash, setSplitCash] = useState(0);
+  const favourites = useTillFavourites();
+  const displayStatus = useCustomerDisplayStatus();
+  const deviceStatus = usePosDeviceStatus();
+  const selectedReader = readers.find((reader) => reader.id === readerId);
+  const readerReady =
+    online && !readerError && Boolean(selectedReader && isReaderOnline(selectedReader.status));
 
   useEffect(() => {
     window.localStorage.setItem("cafe1-pos-side", side);
@@ -434,7 +457,8 @@ function Till() {
       setItems((i ?? []).filter((item) => item.active) as Item[]);
       setModifiers((m ?? []) as Modifier[]);
       setCatId((current) =>
-        current && (c ?? []).some((category) => category.id === current)
+        current === FAVOURITES_CATEGORY ||
+        (current && (c ?? []).some((category) => category.id === current))
           ? current
           : ((c ?? [])[0]?.id ?? null),
       );
@@ -500,8 +524,14 @@ function Till() {
         )
         .slice(0, 80);
     }
+    if (catId === FAVOURITES_CATEGORY) {
+      const order = new Map(favourites.ids.map((id, index) => [id, index]));
+      return items
+        .filter((item) => order.has(item.id))
+        .sort((a, b) => (order.get(a.id) ?? 0) - (order.get(b.id) ?? 0));
+    }
     return items.filter((i) => i.category_id === catId);
-  }, [items, catId, q]);
+  }, [items, catId, q, favourites.ids]);
 
   function addBarcode(value: string) {
     const barcode = value.trim().toLowerCase();
@@ -622,8 +652,17 @@ function Till() {
     toast.success(`Parked ${order.label}`);
   }
 
-  function retrieveOrder(order: HeldOrder) {
-    if (lines.length && !window.confirm("Replace the current basket with this parked order?"))
+  async function retrieveOrder(order: HeldOrder) {
+    if (
+      lines.length &&
+      !(await askConfirm({
+        title: "Replace the current order?",
+        description:
+          "The items currently in the basket will be cleared and replaced with this parked order.",
+        confirmLabel: "Retrieve order",
+        destructive: false,
+      }))
+    )
       return;
     setLines(order.lines);
     setName(order.name);
@@ -656,26 +695,32 @@ function Till() {
         method: paymentMethod,
       });
       toast.success(`Order #${res.order_number} sent to the kitchen · ${money(res.total_cents)}`);
-      const printed = iminPrintTickets(
-        (["KITCHEN", "COUNTER"] as const).map((heading) => ({
-          heading,
-          order_number: res.order_number,
-          fulfilment: `${FULFIL.find((f) => f.id === type)?.label ?? type}${
-            laterIso
-              ? ` · FOR ${new Date(laterIso).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}`
-              : ""
-          }`,
-          terminal: SIDE_LABEL[side],
-          lines: lines.map((line) => ({
-            name: [line.name, ...line.modifier_names].join(" · "),
-            qty: line.qty,
-            price_cents: heading === "COUNTER" ? line.price_cents : undefined,
-          })),
-          total_cents: heading === "COUNTER" ? res.total_cents : undefined,
-          footer: heading === "COUNTER" ? "Thank you — cafe1stalbans.co.uk" : undefined,
+      const tickets: PrintTicket[] = (["KITCHEN", "COUNTER"] as const).map((heading) => ({
+        heading,
+        order_number: res.order_number,
+        fulfilment: `${FULFIL.find((f) => f.id === type)?.label ?? type}${
+          laterIso
+            ? ` · FOR ${new Date(laterIso).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}`
+            : ""
+        }`,
+        terminal: SIDE_LABEL[side],
+        lines: lines.map((line) => ({
+          name: [line.name, ...line.modifier_names].join(" · "),
+          qty: line.qty,
+          price_cents: heading === "COUNTER" ? line.price_cents : undefined,
         })),
-      );
-      if (!printed) window.open(`/print/${res.order_id}`, "_blank");
+        total_cents: heading === "COUNTER" ? res.total_cents : undefined,
+        footer: heading === "COUNTER" ? "Thank you — cafe1stalbans.co.uk" : undefined,
+      }));
+      let printed = iminPrintTickets(tickets);
+      if (!printed) {
+        const bridgePrint = await printViaDeviceBridge(tickets);
+        printed = bridgePrint.ok;
+        if (!printed) {
+          window.open(`/print/${res.order_id}`, "_blank");
+          toast.error(`Automatic printing failed: ${bridgePrint.message}. Print preview opened.`);
+        }
+      }
       if (paymentMethod === "cash" || paymentMethod === "split") {
         const drawer = await openCashDrawer();
         if (!drawer.ok) toast.error(drawer.message);
@@ -732,9 +777,16 @@ function Till() {
     [completeSale, create, lines, name, online, shift, side, table, type, voucher],
   );
 
-  function changeSide(next: Side) {
+  async function changeSide(next: Side) {
     if (next === side) return;
-    if (lines.length && !window.confirm("Changing terminal will clear this basket. Continue?"))
+    if (
+      lines.length &&
+      !(await askConfirm({
+        title: `Switch to the ${SIDE_LABEL[next]} till?`,
+        description: "Changing the till side clears the current basket and voucher.",
+        confirmLabel: "Switch and clear",
+      }))
+    )
       return;
     setLines([]);
     setVoucher(null);
@@ -745,7 +797,15 @@ function Till() {
 
   async function manualDrawer() {
     if (!shift) return toast.error("Open a shift before using the cash drawer");
-    const reason = window.prompt("Reason for opening the drawer:", "Make change")?.trim();
+    const reason = (
+      await askPrompt({
+        title: "Open cash drawer",
+        description: "A reason is required and will be added to the shift audit log.",
+        label: "Reason",
+        defaultValue: "Make change",
+        confirmLabel: "Record and open",
+      })
+    )?.trim();
     if (!reason) return;
     try {
       await cashEvent({
@@ -759,8 +819,15 @@ function Till() {
     }
   }
 
-  function startSplitPayment() {
-    const raw = window.prompt(`Cash portion of ${money(due)}:`, "");
+  async function startSplitPayment() {
+    const raw = await askPrompt({
+      title: "Split cash and card",
+      description: `The order total is ${money(due)}. Enter the amount being paid in cash; the remainder will be sent to the card reader.`,
+      label: "Cash amount (£)",
+      placeholder: "0.00",
+      inputMode: "decimal",
+      confirmLabel: "Continue to card",
+    });
     if (raw === null) return;
     const cents = poundsToCents(raw);
     if (cents === null || cents < 1 || cents >= due) {
@@ -793,11 +860,11 @@ function Till() {
         </div>
         <div className="ml-auto flex items-center gap-2 text-xs text-white/50">
           <span
-            className={`hidden items-center gap-1.5 rounded-full border px-2.5 py-1 sm:inline-flex ${readerId ? "border-emerald-500/40 text-emerald-300" : "border-white/15"}`}
+            className={`hidden items-center gap-1.5 rounded-full border px-2.5 py-1 sm:inline-flex ${readerReady ? "border-emerald-500/40 text-emerald-300" : "border-amber-500/40 text-amber-300"}`}
           >
             <Smartphone className="h-3.5 w-3.5" />
-            {readerId
-              ? (readers.find((r) => r.id === readerId)?.name ?? "Solo reader")
+            {selectedReader
+              ? `${selectedReader.name} · ${readerReady ? "online" : "offline"}`
               : "No reader"}
           </span>
           <button
@@ -813,7 +880,7 @@ function Till() {
               else toast.error(result.message);
             }}
             aria-label="Open the customer display on the second screen"
-            className="inline-flex items-center gap-1.5 rounded-lg border border-white/15 px-2.5 py-1.5 font-semibold text-white/80 hover:border-white/40"
+            className={`inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1.5 font-semibold hover:border-white/40 ${displayStatus.connected ? "border-emerald-500/40 text-emerald-300" : "border-white/15 text-white/80"}`}
           >
             <MonitorPlay className="h-4 w-4" /> <span className="hidden sm:inline">Screen</span>
           </button>
@@ -850,11 +917,14 @@ function Till() {
           {online ? <Wifi className="h-3.5 w-3.5" /> : <WifiOff className="h-3.5 w-3.5" />}
           {online ? "Online" : "Offline — payments blocked"}
         </span>
-        <span className={readerId ? "text-emerald-300" : "text-amber-300"}>
-          SumUp {readerId ? "ready" : "not paired"}
+        <span className={readerReady ? "text-emerald-300" : "text-amber-300"}>
+          SumUp {readerReady ? "online" : selectedReader ? "offline" : "not paired"}
         </span>
-        <span className={isIminDevice() ? "text-emerald-300" : "text-amber-300"}>
-          Printer {isIminDevice() ? "ready" : "browser"}
+        <span className={deviceStatus.printerReady ? "text-emerald-300" : "text-amber-300"}>
+          Printer {deviceStatus.printerReady ? "ready" : "preview only"}
+        </span>
+        <span className={displayStatus.connected ? "text-emerald-300" : "text-white/45"}>
+          Display {displayStatus.connected ? "connected" : "not open"}
         </span>
         <button
           onClick={() => setShiftPanel(shift ? "close" : "open")}
@@ -879,6 +949,19 @@ function Till() {
       <div className="grid min-h-0 flex-1 lg:grid-cols-[132px_minmax(0,1fr)_400px]">
         {/* category rail (desktop) */}
         <nav className="hidden min-h-0 flex-col gap-1 overflow-y-auto border-r border-white/10 bg-neutral-900/60 p-2 lg:flex">
+          <button
+            onClick={() => {
+              setCatId(FAVOURITES_CATEGORY);
+              setQ("");
+            }}
+            className={`flex shrink-0 items-center gap-2 rounded-xl px-3 py-3 text-left text-[11px] font-black uppercase leading-tight tracking-wide transition ${
+              catId === FAVOURITES_CATEGORY && !q
+                ? "bg-amber-400 text-neutral-950"
+                : "text-amber-200/80 hover:bg-amber-400/10 hover:text-amber-100"
+            }`}
+          >
+            <Star className="h-4 w-4 fill-current" /> Favourites
+          </button>
           {cats.map((c) => (
             <button
               key={c.id}
@@ -920,6 +1003,12 @@ function Till() {
             </div>
             {!q && (
               <div className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-1 lg:hidden">
+                <button
+                  onClick={() => setCatId(FAVOURITES_CATEGORY)}
+                  className={`inline-flex shrink-0 items-center gap-1.5 rounded-full px-3.5 py-2 text-xs font-bold uppercase tracking-wide transition ${catId === FAVOURITES_CATEGORY ? "bg-amber-400 text-neutral-950" : "border border-amber-300/20 bg-neutral-900 text-amber-200"}`}
+                >
+                  <Star className="h-3.5 w-3.5 fill-current" /> Favourites
+                </button>
                 {cats.map((c) => (
                   <button
                     key={c.id}
@@ -936,36 +1025,54 @@ function Till() {
           <div className="min-h-0 flex-1 overflow-y-auto p-3 pb-24 sm:p-4 lg:pb-4">
             <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
               {visible.map((i) => (
-                <button
+                <div
                   key={i.id}
-                  onClick={() => add(i)}
-                  className="group flex flex-col overflow-hidden rounded-2xl border border-white/10 bg-neutral-900 text-left transition hover:border-primary hover:bg-neutral-800 active:scale-[0.98]"
+                  className="group relative overflow-hidden rounded-2xl border border-white/10 bg-neutral-900 transition hover:border-primary hover:bg-neutral-800"
                 >
-                  <div className="relative aspect-[4/3] w-full overflow-hidden bg-neutral-800">
-                    {i.image_url ? (
-                      <img
-                        src={i.image_url}
-                        alt={i.name}
-                        loading="lazy"
-                        className="h-full w-full object-cover transition group-hover:scale-105"
-                      />
-                    ) : (
-                      <div className="grid h-full w-full place-items-center text-white/15">
-                        <UtensilsCrossed className="h-7 w-7" />
-                      </div>
-                    )}
-                  </div>
-                  <div className="flex min-h-[64px] flex-1 flex-col justify-between gap-1 p-2.5">
-                    <span className="line-clamp-2 text-[13px] font-semibold leading-snug">
-                      {i.name}
-                    </span>
-                    <span className="font-display text-base font-bold text-primary">
-                      {money(i.price_cents)}
-                    </span>
-                  </div>
-                </button>
+                  <button
+                    onClick={() => add(i)}
+                    className="flex h-full w-full flex-col text-left active:scale-[0.98]"
+                  >
+                    <div className="relative aspect-[4/3] w-full overflow-hidden bg-neutral-800">
+                      {i.image_url ? (
+                        <img
+                          src={i.image_url}
+                          alt={i.name}
+                          loading="lazy"
+                          className="h-full w-full object-cover transition group-hover:scale-105"
+                        />
+                      ) : (
+                        <div className="grid h-full w-full place-items-center text-white/15">
+                          <UtensilsCrossed className="h-7 w-7" />
+                        </div>
+                      )}
+                    </div>
+                    <div className="flex min-h-[64px] flex-1 flex-col justify-between gap-1 p-2.5 pr-10">
+                      <span className="line-clamp-2 text-[13px] font-semibold leading-snug">
+                        {i.name}
+                      </span>
+                      <span className="font-display text-base font-bold text-primary">
+                        {money(i.price_cents)}
+                      </span>
+                    </div>
+                  </button>
+                  <button
+                    onClick={() => favourites.toggle(i.id)}
+                    aria-label={`${favourites.has(i.id) ? "Remove" : "Add"} ${i.name} ${favourites.has(i.id) ? "from" : "to"} favourites`}
+                    aria-pressed={favourites.has(i.id)}
+                    className={`absolute bottom-2.5 right-2.5 grid h-9 w-9 place-items-center rounded-xl border shadow-lg transition active:scale-90 ${favourites.has(i.id) ? "border-amber-300 bg-amber-400 text-neutral-950" : "border-white/15 bg-neutral-950/80 text-white/55 hover:text-amber-300"}`}
+                  >
+                    <Star className={`h-4 w-4 ${favourites.has(i.id) ? "fill-current" : ""}`} />
+                  </button>
+                </div>
               ))}
-              {!visible.length && <p className="text-sm text-white/40">No items.</p>}
+              {!visible.length && (
+                <p className="col-span-full rounded-2xl border border-dashed border-white/10 p-8 text-center text-sm text-white/45">
+                  {catId === FAVOURITES_CATEGORY
+                    ? "No favourites yet — tap the star on your fastest-selling items to create quick keys for this till."
+                    : "No items in this category."}
+                </p>
+              )}
             </div>
           </div>
         </section>
@@ -2038,7 +2145,10 @@ function TillSettings({
   const unpairFn = useServerFn(unpairSumupReader);
   const [code, setCode] = useState("");
   const [name, setName] = useState("Counter Solo");
-  const [bridge, setBridge] = useState(getDrawerBridge());
+  const [bridgeUrl, setBridgeUrl] = useState(() => getDeviceBridgeConfig().baseUrl);
+  const [bridgeToken, setBridgeToken] = useState(() => getDeviceBridgeConfig().token);
+  const [bridgeMessage, setBridgeMessage] = useState<string | null>(null);
+  const [bridgeBusy, setBridgeBusy] = useState(false);
   const [busy, setBusy] = useState(false);
 
   async function pair() {
@@ -2069,6 +2179,24 @@ function TillSettings({
       await reload();
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Could not remove reader");
+    }
+  }
+
+  async function saveAndTestBridge() {
+    setBridgeBusy(true);
+    setBridgeMessage(null);
+    try {
+      setDeviceBridgeConfig({ baseUrl: bridgeUrl, token: bridgeToken });
+      const result = await checkDeviceBridge();
+      setBridgeMessage(result.message);
+      if (result.ok) toast.success(result.message);
+      else toast.error(result.message);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Could not save Device Bridge";
+      setBridgeMessage(message);
+      toast.error(message);
+    } finally {
+      setBridgeBusy(false);
     }
   }
 
@@ -2112,7 +2240,7 @@ function TillSettings({
       </div>
       <div className="mt-3 rounded-xl border border-white/10 p-3">
         <p className="text-xs font-bold uppercase tracking-widest text-white/40">
-          Connect the Solo (Wi-Fi or Bluetooth)
+          Connect the Solo through SumUp Cloud
         </p>
         <ReaderLinkGuide />
       </div>
@@ -2140,68 +2268,89 @@ function TillSettings({
       </div>
 
       <p className="mt-6 text-xs font-bold uppercase tracking-widest text-white/40">
-        Built-in printer (iMin D4-504)
+        Receipt printer and cash drawer
       </p>
       <p className="mt-1 text-xs text-white/40">
         {isIminDevice()
-          ? "Detected — kitchen and counter tickets print straight to this terminal."
-          : "Not detected on this device — tickets open in a print window instead."}
+          ? "iMin/Sunmi hardware detected — printing and drawer control are available natively."
+          : "For USB, Bluetooth or Wi-Fi ESC/POS printers, run Cafe 1 Device Bridge on this till and pair it below. The drawer connects through the receipt printer."}
       </p>
-      <button
-        onClick={() => {
-          const ok = iminPrintTickets([
-            {
-              heading: "TEST TICKET",
-              order_number: 0,
-              fulfilment: "Dine in",
-              terminal: "Counter",
-              lines: [{ name: "Test print", qty: 1, price_cents: 0 }],
-              total_cents: 0,
-            },
-          ]);
-          if (ok) toast.success("Test ticket sent to the printer");
-          else {
-            window.open("/print/test?paper=58", "_blank");
-            toast.message("No built-in printer — opened a print preview");
-          }
-        }}
-        className="mt-2 inline-flex h-10 w-full items-center justify-center gap-2 rounded-xl border border-white/15 text-sm font-bold hover:border-primary"
-      >
-        <Printer className="h-4 w-4" /> Test print
-      </button>
-
-      <p className="mt-6 text-xs font-bold uppercase tracking-widest text-white/40">Cash drawer</p>
-      <p className="mt-1 text-xs text-white/40">
-        On the iMin/Sunmi terminal the drawer opens through the built-in printer automatically. On
-        other devices, point the till at a local ESC/POS printer bridge.
-      </p>
-      <div className="mt-2 flex gap-2">
-        <input
-          value={bridge}
-          onChange={(e) => setBridge(e.target.value)}
-          placeholder="http://192.168.1.50:8080/kick"
-          className="h-10 flex-1 rounded-xl border border-white/10 bg-neutral-800 px-3 text-sm outline-none focus:border-primary"
-        />
+      {!isIminDevice() && (
+        <div className="mt-3 grid gap-2 rounded-xl border border-white/10 p-3">
+          <label className="text-[11px] font-bold uppercase tracking-wide text-white/45">
+            Device Bridge URL
+          </label>
+          <input
+            value={bridgeUrl}
+            onChange={(e) => setBridgeUrl(e.target.value)}
+            placeholder="http://127.0.0.1:4782"
+            inputMode="url"
+            className="h-10 rounded-xl border border-white/10 bg-neutral-800 px-3 text-sm outline-none focus:border-primary"
+          />
+          <label className="text-[11px] font-bold uppercase tracking-wide text-white/45">
+            Pairing token
+          </label>
+          <input
+            value={bridgeToken}
+            onChange={(e) => setBridgeToken(e.target.value)}
+            placeholder="Long token configured on the bridge"
+            type="password"
+            autoComplete="off"
+            className="h-10 rounded-xl border border-white/10 bg-neutral-800 px-3 text-sm outline-none focus:border-primary"
+          />
+          <button
+            disabled={bridgeBusy || !bridgeUrl.trim() || !bridgeToken.trim()}
+            onClick={() => void saveAndTestBridge()}
+            className="inline-flex h-10 items-center justify-center gap-2 rounded-xl border border-white/15 text-sm font-bold hover:border-primary disabled:opacity-40"
+          >
+            {bridgeBusy ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <Wifi className="h-4 w-4" />
+            )}
+            Save and test connection
+          </button>
+          {bridgeMessage && (
+            <p className="rounded-lg bg-white/5 px-3 py-2 text-xs text-white/60">{bridgeMessage}</p>
+          )}
+        </div>
+      )}
+      <div className="mt-3 grid grid-cols-2 gap-2">
         <button
           onClick={() => {
-            setDrawerBridge(bridge);
-            toast.success("Saved on this device");
+            void (async () => {
+              const ticket: PrintTicket = {
+                heading: "TEST TICKET",
+                order_number: 0,
+                fulfilment: "Dine in",
+                terminal: "Counter",
+                lines: [{ name: "Test print", qty: 1, price_cents: 0 }],
+                total_cents: 0,
+              };
+              if (iminPrintTickets([ticket])) return toast.success("Test ticket printed");
+              const result = await printViaDeviceBridge([ticket]);
+              if (result.ok) toast.success(result.message);
+              else {
+                window.open("/print/test?paper=58", "_blank");
+                toast.error(`${result.message}. Print preview opened.`);
+              }
+            })();
           }}
-          className="h-10 rounded-xl border border-white/15 px-4 text-sm font-bold hover:border-primary"
+          className="inline-flex h-11 items-center justify-center gap-2 rounded-xl border border-white/15 text-sm font-bold hover:border-primary"
         >
-          Save
+          <Printer className="h-4 w-4" /> Test print
+        </button>
+        <button
+          onClick={() =>
+            void openCashDrawer().then((r) =>
+              r.ok ? toast.success(r.message) : toast.error(r.message),
+            )
+          }
+          className="inline-flex h-11 items-center justify-center gap-2 rounded-xl border border-white/15 text-sm font-bold hover:border-primary"
+        >
+          <Inbox className="h-4 w-4" /> Test drawer
         </button>
       </div>
-      <button
-        onClick={() =>
-          void openCashDrawer().then((r) =>
-            r.ok ? toast.success(r.message) : toast.error(r.message),
-          )
-        }
-        className="mt-2 inline-flex h-10 w-full items-center justify-center gap-2 rounded-xl border border-white/15 text-sm font-bold hover:border-primary"
-      >
-        <Inbox className="h-4 w-4" /> Test drawer
-      </button>
     </Modal>
   );
 }
@@ -2282,21 +2431,20 @@ function VoucherModal({
 
   /* The juror can key their own code + PIN on the customer screen — staff never see it. */
   useEffect(() => {
-    if (typeof window === "undefined" || !("BroadcastChannel" in window)) return;
-    const ch = new BroadcastChannel(DISPLAY_CHANNEL);
-    ch.onmessage = (e: MessageEvent<DisplayMessage>) => {
-      const msg = e.data;
-      if (msg.type !== "juror_applied") return;
-      onApply({
-        code: msg.code,
-        pin: msg.pin,
-        remaining_cents: msg.remaining_cents,
-        allocated_cents: msg.allocated_cents,
-        opted_in: msg.opted_in,
-      });
-      toast.success(`${money(msg.remaining_cents)} allowance left today`);
-    };
-    return () => ch.close();
+    return subscribeToDisplay(
+      (msg: DisplayMessage) => {
+        if (msg.type !== "juror_applied") return;
+        onApply({
+          code: msg.code,
+          pin: msg.pin,
+          remaining_cents: msg.remaining_cents,
+          allocated_cents: msg.allocated_cents,
+          opted_in: msg.opted_in,
+        });
+        toast.success(`${money(msg.remaining_cents)} allowance left today`);
+      },
+      { replay: false },
+    );
   }, [onApply]);
 
   async function apply() {

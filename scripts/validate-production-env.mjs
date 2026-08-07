@@ -37,6 +37,7 @@ export function validateProductionEnvironment(env) {
     "PUBLIC_RELEASE_SHA",
     "SUMUP_API_KEY",
     "SUMUP_MERCHANT_CODE",
+    "GOOGLE_PAY_MERCHANT_ID",
     "CRON_SECRET",
     "REQUIRE_ADMIN_MFA",
   ];
