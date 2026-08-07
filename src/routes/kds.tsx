@@ -1203,6 +1203,14 @@ function KDS() {
                     />
                   </div>
                   <button
+                    onClick={() => setManualOpen(true)}
+                    disabled={!canCompleteOrders}
+                    className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left text-sm font-semibold hover:bg-muted disabled:opacity-40"
+                    title="Add a manual order"
+                  >
+                    <Plus className="h-4 w-4" /> Add order
+                  </button>
+                  <button
                     onClick={toggleChrome}
                     className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left text-sm font-semibold hover:bg-muted"
                     title="Hide toolbar for more screen space"
