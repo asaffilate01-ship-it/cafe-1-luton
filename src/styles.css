@@ -424,8 +424,6 @@
   padding-bottom: 0.5rem;
 }
 .kds-tablet .kds-card {
-  max-height: calc((100dvh - 11rem) / 2);
-  overflow-y: auto;
   padding: 0.5rem;
   font-size: 13px;
 }
