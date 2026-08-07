@@ -761,22 +761,43 @@ function KDS() {
   const [bulking, setBulking] = useState(false);
   const [chromeHidden, setChromeHidden] = useState(false);
   // 10" Android tablet in landscape (e.g. 1280x800). Width alone can't tell it
-  // apart from a laptop, so match the short landscape viewport + touch input.
-  const [tabletKds, setTabletKds] = useState(false);
+  // apart from a laptop, so we look at a short landscape viewport plus touch
+  // input — and the kitchen can force it from Tools if detection is wrong.
+  const [tabletPref, setTabletPref] = useState<"auto" | "on" | "off">("auto");
+  const [tabletAuto, setTabletAuto] = useState(false);
   useEffect(() => {
-    if (typeof window === "undefined" || !window.matchMedia) return;
-    const mq = window.matchMedia(
-      "(min-width: 860px) and (max-width: 1400px) and (max-height: 900px) and (orientation: landscape) and (pointer: coarse)",
-    );
-    const apply = () => setTabletKds(mq.matches);
-    apply();
-    if (mq.addEventListener) mq.addEventListener("change", apply);
-    else mq.addListener(apply);
+    if (typeof window === "undefined") return;
+    const param = new URLSearchParams(window.location.search).get("layout");
+    const stored =
+      param === "tablet" ? "on" : param === "desktop" ? "off" : localStorage.getItem("kds-layout");
+    if (stored === "on" || stored === "off") setTabletPref(stored);
+    const detect = () => {
+      const w = window.innerWidth;
+      const h = window.innerHeight;
+      const touch =
+        (navigator.maxTouchPoints ?? 0) > 0 ||
+        (window.matchMedia ? window.matchMedia("(pointer: coarse)").matches : false) ||
+        "ontouchstart" in window;
+      setTabletAuto(touch && w > h && w >= 760 && w <= 1500 && h <= 900);
+    };
+    detect();
+    window.addEventListener("resize", detect);
+    window.addEventListener("orientationchange", detect);
     return () => {
-      if (mq.removeEventListener) mq.removeEventListener("change", apply);
-      else mq.removeListener(apply);
+      window.removeEventListener("resize", detect);
+      window.removeEventListener("orientationchange", detect);
     };
   }, []);
+  const tabletKds = tabletPref === "on" || (tabletPref === "auto" && tabletAuto);
+  const toggleTabletLayout = () => {
+    const next = tabletKds ? "off" : "on";
+    setTabletPref(next);
+    try {
+      localStorage.setItem("kds-layout", next);
+    } catch {
+      /* private mode */
+    }
+  };
   const [manualOpen, setManualOpen] = useState(false);
   // "Live" means the shop's Hub watcher checked in recently, so Deliveroo
   // orders land here on their own and nobody needs to key anything in.
@@ -1068,11 +1089,11 @@ function KDS() {
         <header className="kds-header sticky top-0 z-30 border-b border-border bg-primary text-primary-foreground min-[860px]:max-lg:static lg:static">
           <div className="mx-auto grid max-w-[110rem] grid-cols-[minmax(0,1fr)_auto] items-center gap-x-3 gap-y-2 px-3 py-2.5 sm:px-4 lg:py-3">
             <h1 className="min-w-0 truncate font-display text-base font-bold sm:text-lg lg:text-2xl">
-              <span className="lg:hidden">
+              <span className="kds-title-mobile lg:hidden">
                 KDS · {visibleTickets.length} active
                 <span className="ml-1 text-xs font-semibold opacity-70">{station}</span>
               </span>
-              <span className="hidden lg:inline">Kitchen Display · Cafe1</span>
+              <span className="kds-title-desktop hidden lg:inline">Kitchen Display · Cafe1</span>
             </h1>
             <div className="flex min-w-0 flex-wrap items-center justify-end gap-2">
               <span className="hidden text-sm font-semibold opacity-80 sm:inline">
@@ -1091,7 +1112,7 @@ function KDS() {
                 {linkDown ? <WifiOff className="h-3.5 w-3.5" /> : <Wifi className="h-3.5 w-3.5" />}
                 {linkDown ? "Offline" : "Online"}
               </span>
-              <div className="hidden flex-wrap items-center justify-end gap-2 lg:flex">
+              <div className="kds-desktop-controls hidden flex-wrap items-center justify-end gap-2 lg:flex">
               <span
                 className={`flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-bold ${
                   deliverooLive
@@ -1189,6 +1210,14 @@ function KDS() {
                     <ChevronsUp className="h-4 w-4" /> Hide toolbar
                   </button>
                   <button
+                    onClick={toggleTabletLayout}
+                    className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left text-sm font-semibold hover:bg-muted"
+                    title="Force the 10-inch tablet layout: no top menu, tabs on top, 4 cards across"
+                  >
+                    <Maximize2 className="h-4 w-4" />
+                    {tabletKds ? "Use desktop layout" : "Use tablet layout"}
+                  </button>
+                  <button
                     onClick={() => void signOutAndRedirect()}
                     className="mt-1 flex w-full items-center gap-2 rounded-xl bg-primary px-3 py-2 text-left text-sm font-bold text-primary-foreground hover:opacity-90"
                     title="Sign out of this device"
@@ -1211,6 +1240,14 @@ function KDS() {
                 <Plus className="h-4 w-4" /> Add order
               </button>
               <FullscreenToggle />
+              <button
+                type="button"
+                onClick={toggleTabletLayout}
+                className="flex shrink-0 items-center gap-1.5 rounded-full bg-primary-foreground/15 px-3 py-2 text-xs font-bold text-primary-foreground active:scale-[0.97]"
+                title="Switch between the tablet layout and the full desktop layout"
+              >
+                {tabletKds ? "Desktop layout" : "Tablet layout"}
+              </button>
               <span
                 role="status"
                 aria-live="polite"

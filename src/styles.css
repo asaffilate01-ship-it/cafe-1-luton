@@ -429,3 +429,12 @@
   padding: 0.5rem;
   font-size: 13px;
 }
+.kds-tablet .kds-desktop-controls {
+  display: none;
+}
+.kds-tablet .kds-title-desktop {
+  display: none;
+}
+.kds-tablet .kds-title-mobile {
+  display: inline;
+}
