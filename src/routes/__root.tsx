@@ -17,6 +17,7 @@ import { BackToTop } from "../components/back-to-top";
 import { ConfirmHost } from "../components/confirm-dialog";
 import { Toaster } from "../components/ui/sonner";
 import { registerServiceWorker } from "../lib/register-sw";
+import { LegacyBrowserNotice } from "../components/legacy-browser-notice";
 
 function NotFoundComponent() {
   return (
@@ -183,6 +184,8 @@ function RootComponent() {
       <BackToTop />
       <ConfirmHost />
       <MobileTabBar />
+      {/* Warns staff on very old tablet browsers (Android 8 Chrome, Opera Mini). */}
+      <LegacyBrowserNotice />
       {/* Toast host — without this every toast.success/error in the app is silent. */}
       <Toaster position="top-center" richColors closeButton />
     </QueryClientProvider>

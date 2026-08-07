@@ -7,6 +7,22 @@
 import { defineConfig } from "@lovable.dev/vite-tanstack-config";
 import { loadEnv } from "vite";
 import path from "node:path";
+import browserslist from "browserslist";
+import { browserslistToTargets } from "lightningcss";
+
+// The kitchen runs on an Android 8 tablet whose Chrome predates oklch(),
+// color-mix() and modern JS syntax. Compiling CSS through Lightning CSS with
+// these targets emits sRGB fallbacks automatically, and the lower JS target
+// keeps the client bundle parseable there.
+const LEGACY_BROWSERS = [
+  "chrome >= 71",
+  "edge >= 79",
+  "firefox >= 68",
+  "safari >= 13",
+  "ios_saf >= 13",
+];
+const legacyCssTargets = browserslistToTargets(browserslist(LEGACY_BROWSERS));
+const legacyJsTarget = ["chrome71", "edge79", "firefox68", "safari13"];
 
 // Load all env vars (including non-VITE_ server-only ones) into process.env
 // so server routes such as the email webhook can read LOVABLE_API_KEY.
@@ -28,6 +44,19 @@ export default defineConfig({
     server: { entry: "server" },
   },
   vite: {
+    css: {
+      transformer: "lightningcss",
+      lightningcss: { targets: legacyCssTargets },
+    },
+    environments: {
+      client: {
+        build: {
+          target: legacyJsTarget,
+          cssTarget: legacyJsTarget,
+          cssMinify: "lightningcss",
+        },
+      },
+    },
     resolve: {
       alias: {
         "entities/lib/decode.js": path.resolve(
