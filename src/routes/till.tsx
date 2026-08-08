@@ -1698,10 +1698,8 @@ function Till() {
         <JudgeTabModal
           total={due}
           busy={busy}
-          loadAccounts={loadAccounts}
-          addAccount={addAccount}
           onClose={() => setTabOpen(false)}
-          onConfirm={(account) => void chargeJudgeTab(account)}
+          onConfirm={(account: { id: string; name: string }) => void chargeJudgeTab(account)}
         />
       )}
       {(pay === "reader" || pay === "split") && shift && readerSaleKey && (
@@ -1819,6 +1817,7 @@ function Till() {
 
 /** One payment method row in the charge sheet. */
 function PayChoice({
+  icon: Icon,
   icon: Icon,
   label,
   hint,
