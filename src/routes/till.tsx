@@ -891,113 +891,133 @@ function Till() {
 
   return (
     <div className="flex h-screen flex-col overflow-hidden bg-[radial-gradient(120%_100%_at_50%_0%,#16181d_0%,#0a0a0b_60%)] text-white">
-      {/* top bar */}
-      <header className="flex shrink-0 flex-wrap items-center gap-2 border-b border-white/10 bg-neutral-900/80 px-3 py-2 shadow-[0_1px_0_0_rgba(255,255,255,0.04)] backdrop-blur sm:gap-3 sm:px-4 sm:py-2.5">
-        <span className="rounded-xl bg-primary px-3 py-1.5 text-xs font-black uppercase tracking-[0.2em] text-primary-foreground shadow-lg shadow-primary/25">
+      {/* top bar — one row: who you are, shift state, everything else in one menu */}
+      <header className="relative flex shrink-0 items-center gap-2 border-b border-white/10 bg-neutral-900/80 px-3 py-2 backdrop-blur sm:gap-3 sm:px-4">
+        <span className="hidden rounded-xl bg-primary px-3 py-1.5 text-xs font-black uppercase tracking-[0.2em] text-primary-foreground shadow-lg shadow-primary/25 sm:inline">
           Cafe 1 Till
         </span>
-        <div className="flex gap-1 rounded-xl border border-white/10 bg-neutral-950/60 p-1">
+        <div className="flex shrink-0 gap-1 rounded-xl border border-white/10 bg-neutral-950/60 p-1">
           {(["jury", "judge", "public"] as const).map((s) => (
             <button
               key={s}
               onClick={() => changeSide(s)}
-              className={`rounded-lg px-3.5 py-1.5 text-xs font-black uppercase tracking-wide transition active:scale-95 ${side === s ? `${SIDE_TONE[s]} shadow-md` : "text-white/50 hover:bg-white/5 hover:text-white"}`}
+              className={`rounded-lg px-3 py-1.5 text-xs font-black uppercase tracking-wide transition active:scale-95 ${side === s ? `${SIDE_TONE[s]} shadow-md` : "text-white/50 hover:bg-white/5 hover:text-white"}`}
             >
               {SIDE_LABEL[s]}
             </button>
           ))}
         </div>
-        <div className="ml-auto flex items-center gap-2 text-xs text-white/50">
-          <span
-            className={`hidden items-center gap-1.5 rounded-full border px-3 py-1.5 font-semibold sm:inline-flex ${readerReady ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-300" : "border-amber-500/30 bg-amber-500/10 text-amber-300"}`}
-          >
-            <Smartphone className="h-3.5 w-3.5" />
-            {selectedReader
-              ? `${selectedReader.name} · ${readerReady ? "online" : "offline"}`
-              : "No reader"}
-          </span>
-          <button
-            onClick={() => void manualDrawer()}
-            className="inline-flex h-9 items-center gap-1.5 rounded-xl border border-white/10 bg-white/5 px-3 font-semibold text-white/80 transition hover:bg-white/10 active:scale-95"
-          >
-            <Inbox className="h-4 w-4" /> <span className="hidden sm:inline">Drawer</span>
-          </button>
-          <button
-            onClick={() => {
-              const result = openCustomerScreen("/display");
-              if (result.ok) toast.success(result.message);
-              else toast.error(result.message);
-            }}
-            aria-label="Open the customer display on the second screen"
-            className={`inline-flex h-9 items-center gap-1.5 rounded-xl border px-3 font-semibold transition active:scale-95 ${displayStatus.connected ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-300" : "border-white/10 bg-white/5 text-white/80 hover:bg-white/10"}`}
-          >
-            <MonitorPlay className="h-4 w-4" /> <span className="hidden sm:inline">Screen</span>
-          </button>
-          {has("admin") && (
-            <button
-              onClick={() => setSettings(true)}
-              aria-label="Till settings"
-              className="grid h-9 w-9 place-items-center rounded-xl border border-white/10 bg-white/5 transition hover:bg-white/10 active:scale-95"
-            >
-              <Settings2 className="h-4 w-4" />
-            </button>
-          )}
-          <button
-            onClick={() => setLocked(true)}
-            aria-label="Lock till"
-            className="grid h-9 w-9 place-items-center rounded-xl border border-white/10 bg-white/5 transition hover:bg-white/10 active:scale-95"
-          >
-            <Lock className="h-4 w-4" />
-          </button>
-          <button
-            onClick={() => supabase.auth.signOut()}
-            aria-label="Sign out of the till"
-            className="grid h-9 w-9 place-items-center rounded-xl border border-white/10 bg-white/5 transition hover:bg-white/10 active:scale-95"
-          >
-            <LogOut className="h-4 w-4" />
-          </button>
-        </div>
-      </header>
-
-      <div className="flex h-10 shrink-0 items-center gap-2 overflow-x-auto border-b border-white/10 bg-neutral-950/60 px-3 text-[11px] font-semibold uppercase tracking-wide text-white/55 sm:px-4">
-        <span
-          className={`inline-flex shrink-0 items-center gap-1.5 rounded-full px-2.5 py-1 ${online ? "bg-emerald-500/10 text-emerald-300" : "bg-red-500/10 text-red-300"}`}
-        >
-          {online ? <Wifi className="h-3.5 w-3.5" /> : <WifiOff className="h-3.5 w-3.5" />}
-          {online ? "Online" : "Offline — payments blocked"}
-        </span>
-        <StatusDot
-          ok={readerReady}
-          label={`SumUp ${readerReady ? "online" : selectedReader ? "offline" : "not paired"}`}
-        />
-        <StatusDot
-          ok={deviceStatus.printerReady}
-          label={`Printer ${deviceStatus.printerReady ? "ready" : "preview only"}`}
-        />
-        <StatusDot
-          ok={displayStatus.connected}
-          muted={!displayStatus.connected}
-          label={`Display ${displayStatus.connected ? "connected" : "not open"}`}
-        />
         <button
           onClick={() => setShiftPanel(shift ? "close" : "open")}
-          className={`ml-auto shrink-0 rounded-full px-3 py-1 transition hover:brightness-125 ${shift ? "bg-emerald-500/15 text-emerald-300" : "bg-amber-500/15 text-amber-300"}`}
+          className={`shrink-0 rounded-full px-3 py-1.5 text-[11px] font-bold uppercase tracking-wide transition hover:brightness-125 ${shift ? "bg-emerald-500/15 text-emerald-300" : "bg-amber-500/15 text-amber-300"}`}
         >
-          {shiftLoading
-            ? "Loading shift…"
-            : shift
-              ? `Shift open · ${SIDE_LABEL[side]}`
-              : "Open shift required"}
+          {shiftLoading ? "Loading shift…" : shift ? "Shift open" : "Open shift"}
         </button>
-        {shift && (
+        <div className="ml-auto flex items-center gap-2">
+          <span className="hidden items-center gap-2 rounded-full border border-white/10 bg-neutral-950/60 px-2.5 py-1.5 text-[11px] font-semibold uppercase tracking-wide sm:inline-flex">
+            <StatusDot ok={online} label={online ? "Online" : "Offline"} />
+            <StatusDot ok={readerReady} label="Card" />
+            <StatusDot ok={deviceStatus.printerReady} label="Printer" />
+          </span>
           <button
-            onClick={() => setShiftPanel("cash")}
-            className="shrink-0 rounded-full border border-white/10 bg-white/5 px-3 py-1 transition hover:bg-white/10"
+            onClick={() => setMenuOpen((v) => !v)}
+            aria-label="Till menu"
+            aria-expanded={menuOpen}
+            className="grid h-10 w-10 place-items-center rounded-xl border border-white/10 bg-white/5 transition hover:bg-white/10 active:scale-95"
           >
-            Cash in/out
+            <MoreHorizontal className="h-5 w-5" />
           </button>
+        </div>
+        {menuOpen && (
+          <>
+            <button
+              aria-label="Close menu"
+              onClick={() => setMenuOpen(false)}
+              className="fixed inset-0 z-40 cursor-default"
+            />
+            <div className="absolute right-3 top-full z-50 mt-2 w-64 overflow-hidden rounded-2xl border border-white/10 bg-neutral-900 p-1.5 shadow-2xl shadow-black/60">
+              <TillMenuItem
+                icon={Inbox}
+                label="Open cash drawer"
+                onClick={() => {
+                  setMenuOpen(false);
+                  void manualDrawer();
+                }}
+              />
+              <TillMenuItem
+                icon={FolderOpen}
+                label={`Held orders${held.length ? ` (${held.length})` : ""}`}
+                onClick={() => {
+                  setMenuOpen(false);
+                  setHeldOpen(true);
+                }}
+              />
+              <TillMenuItem
+                icon={MonitorPlay}
+                label={displayStatus.connected ? "Customer screen · on" : "Open customer screen"}
+                onClick={() => {
+                  setMenuOpen(false);
+                  const result = openCustomerScreen("/display");
+                  if (result.ok) toast.success(result.message);
+                  else toast.error(result.message);
+                }}
+              />
+              {shift && (
+                <TillMenuItem
+                  icon={Banknote}
+                  label="Cash in / out"
+                  onClick={() => {
+                    setMenuOpen(false);
+                    setShiftPanel("cash");
+                  }}
+                />
+              )}
+              {lastOrder && (
+                <TillMenuItem
+                  icon={Printer}
+                  label={`Reprint #${lastOrder.n}`}
+                  onClick={() => {
+                    setMenuOpen(false);
+                    window.open(`/print/${lastOrder.id}`, "_blank");
+                  }}
+                />
+              )}
+              {has("admin") && (
+                <TillMenuItem
+                  icon={Settings2}
+                  label="Till settings"
+                  onClick={() => {
+                    setMenuOpen(false);
+                    setSettings(true);
+                  }}
+                />
+              )}
+              <div className="my-1 h-px bg-white/10" />
+              <TillMenuItem
+                icon={Lock}
+                label="Lock till"
+                onClick={() => {
+                  setMenuOpen(false);
+                  setLocked(true);
+                }}
+              />
+              <TillMenuItem
+                icon={LogOut}
+                label="Sign out"
+                onClick={() => {
+                  setMenuOpen(false);
+                  void supabase.auth.signOut();
+                }}
+              />
+            </div>
+          </>
         )}
-      </div>
+      </header>
+      {!online && (
+        <p className="shrink-0 bg-red-500/15 px-4 py-1.5 text-center text-[11px] font-bold uppercase tracking-wide text-red-200">
+          Offline — payments are blocked until the connection returns
+        </p>
+      )}
 
       <div className="grid min-h-0 flex-1 lg:grid-cols-[148px_minmax(0,1fr)_408px]">
         {/* category rail (desktop) */}
