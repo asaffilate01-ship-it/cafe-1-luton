@@ -386,6 +386,8 @@ function Till() {
   );
   const [pay, setPay] = useState<null | "cash" | "reader" | "manual" | "split">(null);
   const [settings, setSettings] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [payOpen, setPayOpen] = useState(false);
   const [locked, setLocked] = useState(false);
   const [busy, setBusy] = useState(false);
   const [lastOrder, setLastOrder] = useState<{ n: number; total: number; id: string } | null>(null);
