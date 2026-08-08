@@ -49,6 +49,7 @@ export function ManualOrderDialog({
   const create = useServerFn(createManualOrder);
   const loadAccounts = useServerFn(listAccounts);
   const addAccount = useServerFn(quickAddAccount);
+  const findSimilar = useServerFn(findSimilarAccountOrder);
   const [accounts, setAccounts] = useState<{ id: string; name: string }[]>([]);
   const [accountId, setAccountId] = useState("");
   const [newAccountName, setNewAccountName] = useState("");
