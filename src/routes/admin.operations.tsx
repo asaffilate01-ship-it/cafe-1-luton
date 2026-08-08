@@ -12,6 +12,7 @@ import {
   type OperationsDashboard,
 } from "@/lib/operations.functions";
 import { money } from "@/lib/format";
+import { askPrompt } from "@/lib/confirm";
 import { toast } from "sonner";
 import {
   AlertTriangle,
@@ -77,7 +78,13 @@ function OperationsPage() {
   const completeCount = (data?.checklists ?? []).filter((item) => item.completed).length;
 
   async function tick(id: string) {
-    const note = window.prompt("Optional completion note:", "") ?? "";
+    const note =
+      (await askPrompt({
+        title: "Complete operational control",
+        description: "Add an optional note to the immutable audit trail.",
+        label: "Completion note",
+        confirmLabel: "Mark complete",
+      })) ?? "";
     setBusy(id);
     try {
       await complete({ data: { checklist_id: id, business_date: date, note } });

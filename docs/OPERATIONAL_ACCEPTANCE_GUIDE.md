@@ -13,6 +13,11 @@ For every gate:
 
 Run `npm run operational:status` while gathering evidence. The command reports progress without pretending pending gates are complete. `npm run operational:check` is strict and blocks production promotion until all 27 gates, approvals and evidence references are complete.
 
+The final promotion also runs `npm run release:check` against the retained
+production-smoke JSON. That strict decision additionally requires the exact
+deployed commit and every item in `docs/GO_LIVE_CHECKLIST.md`; passing software
+tests alone can never produce a go-live approval.
+
 Record one completed gate without hand-editing JSON:
 
 ```bash

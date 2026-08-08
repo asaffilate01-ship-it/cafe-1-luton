@@ -6,6 +6,7 @@ import { RequireRole } from "@/components/require-role";
 import { SiteSwitcher } from "@/components/site-switcher";
 import { useSites } from "@/hooks/use-sites";
 import { clockStaff, getStaffDashboard, type StaffDashboard } from "@/lib/staff-ops.functions";
+import { askPrompt } from "@/lib/confirm";
 import { toast } from "sonner";
 import { Clock3, Coffee, Loader2, LogIn, LogOut, RefreshCw, Users } from "lucide-react";
 
@@ -55,10 +56,29 @@ function StaffOpsPage() {
   );
 
   async function run(action: "in" | "out") {
-    const breakMinutes =
-      action === "out" ? Number(window.prompt("Unpaid break minutes:", "0") ?? "0") : 0;
-    const note =
-      window.prompt(action === "in" ? "Optional shift note:" : "Optional handover note:", "") ?? "";
+    const breakValue =
+      action === "out"
+        ? await askPrompt({
+            title: "Clock out",
+            description: "Record any unpaid break taken during this shift.",
+            label: "Unpaid break minutes",
+            defaultValue: "0",
+            inputMode: "numeric",
+            confirmLabel: "Continue",
+          })
+        : "0";
+    if (breakValue === null) return;
+    const breakMinutes = Math.max(0, Math.round(Number(breakValue) || 0));
+    const note = await askPrompt({
+      title: action === "in" ? "Clock in" : "Add handover note",
+      description:
+        action === "in"
+          ? "Add an optional note for the start of this shift."
+          : "Add an optional note for the next team member.",
+      label: action === "in" ? "Shift note" : "Handover note",
+      confirmLabel: action === "in" ? "Clock in" : "Clock out",
+    });
+    if (note === null) return;
     setBusy(true);
     try {
       await clock({ data: { site_id: sites.siteId, action, break_minutes: breakMinutes, note } });

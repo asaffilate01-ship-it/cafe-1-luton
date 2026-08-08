@@ -17,6 +17,7 @@ import {
   type InventoryItem,
 } from "@/lib/inventory.functions";
 import { money } from "@/lib/format";
+import { askPrompt } from "@/lib/confirm";
 import { toast } from "sonner";
 import {
   AlertTriangle,
@@ -776,14 +777,17 @@ function StocktakePanel({
         {!stocktake && (
           <button
             onClick={async () => {
-              const title = window.prompt(
-                "Stocktake title:",
-                `Month-end stocktake ${new Date().toLocaleDateString()}`,
-              );
-              if (!title) return;
+              const title = await askPrompt({
+                title: "Start a controlled stocktake",
+                description: "Give this count a clear title for the audit trail.",
+                label: "Stocktake title",
+                defaultValue: `Month-end stocktake ${new Date().toLocaleDateString()}`,
+                confirmLabel: "Start stocktake",
+              });
+              if (!title?.trim()) return;
               setBusy(true);
               try {
-                await begin({ data: { site_id: siteId, title } });
+                await begin({ data: { site_id: siteId, title: title.trim() } });
                 toast.success("Stocktake opened");
                 await reload();
               } catch (e) {

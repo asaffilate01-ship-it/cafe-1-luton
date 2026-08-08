@@ -165,10 +165,7 @@
         },
         {
           "path": "src/lib/order-cleanup.server.ts",
-          "includes": [
-            "if (decision === \"hold\")",
-            "Provider uncertainty always fails closed"
-          ]
+          "includes": ["if (decision === \"hold\")", "Provider uncertainty always fails closed"]
         },
         {
           "path": "src/lib/__tests__/order-cleanup-policy.test.ts",
@@ -190,6 +187,51 @@
         {
           "path": "scripts/verify-production.mjs",
           "includes": ["EXPECTED_RELEASE_SHA", "40-character"]
+        }
+      ]
+    },
+    {
+      "id": "strict_go_live_decision",
+      "name": "Production promotion requires exact-SHA smoke, checklist and operational evidence",
+      "evidence": [
+        {
+          "path": "scripts/release-readiness.mjs",
+          "includes": [
+            "evaluateProductionSmoke",
+            "expected_release",
+            "operational acceptance is incomplete",
+            "go-live checklist is incomplete"
+          ]
+        },
+        {
+          "path": ".github/workflows/production-promotion.yml",
+          "includes": [
+            "Require complete exact-release decision",
+            "release:check",
+            "release-evidence/production-smoke.json"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "accessible_admin_dialogs",
+      "name": "Administrative confirmations and one-time PIN notices are accessible and focus trapped",
+      "evidence": [
+        {
+          "path": "src/lib/confirm.ts",
+          "includes": ["askPrompt", "askConfirm", "askAlert", "ALERT_EVENT"]
+        },
+        {
+          "path": "src/components/confirm-dialog.tsx",
+          "includes": ["type PendingAlert", "AlertDialogContent", "whitespace-pre-line"]
+        },
+        {
+          "path": "src/routes/admin.vouchers.tsx",
+          "includes": ["Replacement PIN — shown once", "I have recorded it"]
+        },
+        {
+          "path": "scripts/release-guard.mjs",
+          "includes": ["native blocking browser dialog remains in application UI"]
         }
       ]
     }

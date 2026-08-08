@@ -56,6 +56,7 @@ for (const required of [
   "docs/OPERATIONAL_ACCEPTANCE_GUIDE.md",
   "docs/GO_LIVE_PHASE_14.md",
   "docs/GO_LIVE_PHASE_15.md",
+  "docs/GO_LIVE_PHASE_16.md",
   "docs/POS_HARDWARE_SETUP.md",
   "e2e/go-live.spec.ts",
   "nitro.config.ts",
@@ -72,6 +73,8 @@ for (const required of [
   "scripts/verify-release-capabilities.mjs",
   "scripts/verify-release-capabilities.test.mjs",
   "scripts/release-status.mjs",
+  "scripts/release-readiness.mjs",
+  "scripts/release-readiness.test.mjs",
   "scripts/verify-build-output.mjs",
   "scripts/verify-build-output.test.mjs",
   "scripts/verify-routes.mjs",
@@ -136,6 +139,16 @@ for (const path of activeTextFiles) {
   const extension = extname(path);
   if (![".md", ".ts", ".tsx", ".js", ".jsx", ".json"].includes(extension)) continue;
   if (read(path).includes("AL1 3JW")) fail(`legacy postcode remains in active file: ${path}`);
+}
+
+for (const path of releaseFiles.filter(
+  (candidate) =>
+    (candidate.startsWith("src/routes/") || candidate.startsWith("src/components/")) &&
+    candidate.endsWith(".tsx"),
+)) {
+  if (/window\.(?:alert|prompt|confirm)\s*\(|(?<![\w.])(?:prompt|confirm)\s*\(/.test(read(path))) {
+    fail(`native blocking browser dialog remains in application UI: ${path}`);
+  }
 }
 
 const secretPatterns = [
