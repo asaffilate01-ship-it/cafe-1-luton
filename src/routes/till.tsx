@@ -588,6 +588,40 @@ function Till() {
     );
   }, [due, jurorDiscount, lines, total, type, voucherApplied]);
 
+  // Keep the grid at the top whenever the operator switches category or searches.
+  useEffect(() => {
+    gridRef.current?.scrollTo({ top: 0 });
+  }, [catId, q]);
+
+  // Briefly highlight the basket line that just changed and bring it into view.
+  useEffect(() => {
+    if (!flashKey) return;
+    basketRef.current
+      ?.querySelector(`[data-line="${flashKey}"]`)
+      ?.scrollIntoView({ block: "nearest", behavior: "smooth" });
+    const timer = window.setTimeout(() => setFlashKey(null), 700);
+    return () => window.clearTimeout(timer);
+  }, [flashKey]);
+
+  // "/" jumps to search from anywhere on the till; Escape clears it.
+  useEffect(() => {
+    const onKey = (event: KeyboardEvent) => {
+      const target = event.target as HTMLElement | null;
+      const typing =
+        !!target && (/^(INPUT|TEXTAREA|SELECT)$/.test(target.tagName) || target.isContentEditable);
+      if (event.key === "/" && !typing) {
+        event.preventDefault();
+        searchRef.current?.focus();
+        searchRef.current?.select();
+      } else if (event.key === "Escape" && target === searchRef.current) {
+        setQ("");
+        searchRef.current?.blur();
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
+
   function add(i: Item) {
     const available = modifiers.filter(
       (modifier) =>
