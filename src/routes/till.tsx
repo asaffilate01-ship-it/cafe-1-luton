@@ -1664,6 +1664,17 @@ function Till() {
                   }}
                 />
               )}
+              {side === "judge" && (
+                <PayChoice
+                  icon={ReceiptText}
+                  label="Put on a judge's tab"
+                  hint="Billed to the judge's account, not paid now"
+                  onClick={() => {
+                    setPayOpen(false);
+                    setTabOpen(true);
+                  }}
+                />
+              )}
             </div>
             <button
               onClick={() => setPayOpen(false)}
