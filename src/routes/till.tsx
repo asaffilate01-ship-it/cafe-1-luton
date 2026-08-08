@@ -411,6 +411,10 @@ function Till() {
   const favourites = useTillFavourites();
   const displayStatus = useCustomerDisplayStatus();
   const deviceStatus = usePosDeviceStatus();
+  const searchRef = useRef<HTMLInputElement | null>(null);
+  const gridRef = useRef<HTMLDivElement | null>(null);
+  const basketRef = useRef<HTMLUListElement | null>(null);
+  const [flashKey, setFlashKey] = useState<string | null>(null);
   const selectedReader = readers.find((reader) => reader.id === readerId);
   const readerReady =
     online && !readerError && Boolean(selectedReader && isReaderOnline(selectedReader.status));
@@ -584,6 +588,40 @@ function Till() {
     );
   }, [due, jurorDiscount, lines, total, type, voucherApplied]);
 
+  // Keep the grid at the top whenever the operator switches category or searches.
+  useEffect(() => {
+    gridRef.current?.scrollTo({ top: 0 });
+  }, [catId, q]);
+
+  // Briefly highlight the basket line that just changed and bring it into view.
+  useEffect(() => {
+    if (!flashKey) return;
+    basketRef.current
+      ?.querySelector(`[data-line="${flashKey}"]`)
+      ?.scrollIntoView({ block: "nearest", behavior: "smooth" });
+    const timer = window.setTimeout(() => setFlashKey(null), 700);
+    return () => window.clearTimeout(timer);
+  }, [flashKey]);
+
+  // "/" jumps to search from anywhere on the till; Escape clears it.
+  useEffect(() => {
+    const onKey = (event: KeyboardEvent) => {
+      const target = event.target as HTMLElement | null;
+      const typing =
+        !!target && (/^(INPUT|TEXTAREA|SELECT)$/.test(target.tagName) || target.isContentEditable);
+      if (event.key === "/" && !typing) {
+        event.preventDefault();
+        searchRef.current?.focus();
+        searchRef.current?.select();
+      } else if (event.key === "Escape" && target === searchRef.current) {
+        setQ("");
+        searchRef.current?.blur();
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
+
   function add(i: Item) {
     const available = modifiers.filter(
       (modifier) =>
@@ -593,6 +631,7 @@ function Till() {
       setCustomize(i);
       return;
     }
+    let touched = "";
     setLines((prev) => {
       const at = prev.findIndex(
         (line) => line.id === i.id && !line.modifier_ids.length && !line.notes,
@@ -600,12 +639,15 @@ function Till() {
       if (at >= 0) {
         const next = [...prev];
         next[at] = { ...next[at], qty: next[at].qty + 1 };
+        touched = next[at].key;
         return next;
       }
+      const key = crypto.randomUUID();
+      touched = key;
       return [
         ...prev,
         {
-          key: crypto.randomUUID(),
+          key,
           id: i.id,
           name: i.name,
           price_cents: i.price_cents,
@@ -617,6 +659,7 @@ function Till() {
         },
       ];
     });
+    setFlashKey(touched);
   }
   function bump(key: string, d: number) {
     setLines((prev) =>
@@ -624,6 +667,7 @@ function Till() {
         l.key === key ? (l.qty + d <= 0 ? [] : [{ ...l, qty: l.qty + d }]) : [l],
       ),
     );
+    if (d > 0) setFlashKey(key);
   }
 
   function parkOrder() {
@@ -995,6 +1039,7 @@ function Till() {
             <div className="flex items-center gap-2 rounded-2xl border border-white/10 bg-neutral-900/80 px-4 shadow-inner shadow-black/40 focus-within:border-primary/60">
               <Search className="h-4 w-4 shrink-0 text-white/40" />
               <input
+                ref={searchRef}
                 value={q}
                 onChange={(e) => setQ(e.target.value)}
                 onKeyDown={(event) => {
@@ -1009,6 +1054,9 @@ function Till() {
                   <X className="h-4 w-4 text-white/40" />
                 </button>
               )}
+              <kbd className="hidden shrink-0 rounded border border-white/15 px-1.5 py-0.5 text-[10px] font-bold text-white/35 lg:block">
+                /
+              </kbd>
             </div>
             {!q && (
               <div className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-1 lg:hidden">
@@ -1031,7 +1079,7 @@ function Till() {
             )}
           </div>
 
-          <div className="min-h-0 flex-1 overflow-y-auto p-3 pb-24 sm:p-4 lg:pb-4">
+          <div ref={gridRef} className="min-h-0 flex-1 overflow-y-auto p-3 pb-24 sm:p-4 lg:pb-4">
             <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
               {visible.map((i) => (
                 <div
@@ -1162,11 +1210,16 @@ function Till() {
           </div>
 
           <div className="min-h-0 flex-1 overflow-y-auto p-4">
-            <ul className="space-y-2">
+            <ul ref={basketRef} className="space-y-2">
               {lines.map((l) => (
                 <li
                   key={l.key}
-                  className="flex items-center gap-2 rounded-2xl border border-white/5 bg-neutral-800/60 p-2 text-sm transition hover:border-white/15"
+                  data-line={l.key}
+                  className={`group flex items-center gap-2 rounded-2xl border p-2 text-sm transition duration-200 ${
+                    flashKey === l.key
+                      ? "border-primary/70 bg-primary/15"
+                      : "border-white/5 bg-neutral-800/60 hover:border-white/15"
+                  }`}
                 >
                   <div className="flex items-center gap-1">
                     <button
@@ -1194,6 +1247,13 @@ function Till() {
                     )}
                   </span>
                   <span className="font-semibold tabular-nums">{money(l.price_cents * l.qty)}</span>
+                  <button
+                    onClick={() => bump(l.key, -l.qty)}
+                    aria-label={`Remove ${l.name} from the order`}
+                    className="grid h-8 w-8 shrink-0 place-items-center rounded-xl text-white/30 transition hover:bg-red-500/15 hover:text-red-300 active:scale-90"
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </button>
                 </li>
               ))}
               {!lines.length && (
