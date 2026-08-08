@@ -1711,6 +1711,42 @@ function Till() {
 /** Small status chip with a coloured dot for the till's hardware strip. */
 
 /** One row in the till's overflow menu. */
+
+/** One payment method row in the charge sheet. */
+function PayChoice({
+  icon: Icon,
+  label,
+  hint,
+  tone,
+  disabled,
+  onClick,
+}: {
+  icon: typeof Banknote;
+  label: string;
+  hint?: string;
+  tone?: "primary";
+  disabled?: boolean;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      disabled={disabled}
+      onClick={onClick}
+      className={`flex h-16 w-full items-center gap-3 rounded-2xl border px-4 text-left transition active:scale-[0.99] disabled:opacity-40 ${
+        tone === "primary"
+          ? "border-primary/50 bg-primary/15 hover:bg-primary/25"
+          : "border-white/10 bg-white/5 hover:bg-white/10"
+      }`}
+    >
+      <Icon className="h-5 w-5 shrink-0" />
+      <span className="min-w-0 flex-1">
+        <span className="block truncate text-sm font-bold">{label}</span>
+        {hint && <span className="block truncate text-[11px] text-white/45">{hint}</span>}
+      </span>
+    </button>
+  );
+}
+
 function TillMenuItem({
   icon: Icon,
   label,
