@@ -1210,11 +1210,16 @@ function Till() {
           </div>
 
           <div className="min-h-0 flex-1 overflow-y-auto p-4">
-            <ul className="space-y-2">
+            <ul ref={basketRef} className="space-y-2">
               {lines.map((l) => (
                 <li
                   key={l.key}
-                  className="flex items-center gap-2 rounded-2xl border border-white/5 bg-neutral-800/60 p-2 text-sm transition hover:border-white/15"
+                  data-line={l.key}
+                  className={`group flex items-center gap-2 rounded-2xl border p-2 text-sm transition duration-200 ${
+                    flashKey === l.key
+                      ? "border-primary/70 bg-primary/15"
+                      : "border-white/5 bg-neutral-800/60 hover:border-white/15"
+                  }`}
                 >
                   <div className="flex items-center gap-1">
                     <button
@@ -1242,6 +1247,13 @@ function Till() {
                     )}
                   </span>
                   <span className="font-semibold tabular-nums">{money(l.price_cents * l.qty)}</span>
+                  <button
+                    onClick={() => bump(l.key, -l.qty)}
+                    aria-label={`Remove ${l.name} from the order`}
+                    className="grid h-8 w-8 shrink-0 place-items-center rounded-xl text-white/30 transition hover:bg-red-500/15 hover:text-red-300 active:scale-90"
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </button>
                 </li>
               ))}
               {!lines.length && (
