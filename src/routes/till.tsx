@@ -846,18 +846,18 @@ function Till() {
   if (locked) return <LockScreen onUnlock={() => setLocked(false)} />;
 
   return (
-    <div className="flex h-screen flex-col overflow-hidden bg-neutral-950 text-white">
+    <div className="flex h-screen flex-col overflow-hidden bg-[radial-gradient(120%_100%_at_50%_0%,#16181d_0%,#0a0a0b_60%)] text-white">
       {/* top bar */}
-      <header className="flex shrink-0 flex-wrap items-center gap-2 border-b border-white/10 bg-neutral-900 px-3 py-2 sm:gap-3 sm:px-4 sm:py-2.5">
-        <span className="rounded-lg bg-primary px-3 py-1 text-xs font-black uppercase tracking-widest text-primary-foreground">
+      <header className="flex shrink-0 flex-wrap items-center gap-2 border-b border-white/10 bg-neutral-900/80 px-3 py-2 shadow-[0_1px_0_0_rgba(255,255,255,0.04)] backdrop-blur sm:gap-3 sm:px-4 sm:py-2.5">
+        <span className="rounded-xl bg-primary px-3 py-1.5 text-xs font-black uppercase tracking-[0.2em] text-primary-foreground shadow-lg shadow-primary/25">
           Cafe 1 Till
         </span>
-        <div className="flex gap-1.5">
+        <div className="flex gap-1 rounded-xl border border-white/10 bg-neutral-950/60 p-1">
           {(["jury", "judge", "public"] as const).map((s) => (
             <button
               key={s}
               onClick={() => changeSide(s)}
-              className={`rounded-lg px-3 py-1.5 text-xs font-black uppercase tracking-wide transition ${side === s ? SIDE_TONE[s] : "border border-white/15 text-white/60 hover:border-white/40"}`}
+              className={`rounded-lg px-3.5 py-1.5 text-xs font-black uppercase tracking-wide transition active:scale-95 ${side === s ? `${SIDE_TONE[s]} shadow-md` : "text-white/50 hover:bg-white/5 hover:text-white"}`}
             >
               {SIDE_LABEL[s]}
             </button>
@@ -865,7 +865,7 @@ function Till() {
         </div>
         <div className="ml-auto flex items-center gap-2 text-xs text-white/50">
           <span
-            className={`hidden items-center gap-1.5 rounded-full border px-2.5 py-1 sm:inline-flex ${readerReady ? "border-emerald-500/40 text-emerald-300" : "border-amber-500/40 text-amber-300"}`}
+            className={`hidden items-center gap-1.5 rounded-full border px-3 py-1.5 font-semibold sm:inline-flex ${readerReady ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-300" : "border-amber-500/30 bg-amber-500/10 text-amber-300"}`}
           >
             <Smartphone className="h-3.5 w-3.5" />
             {selectedReader
@@ -874,7 +874,7 @@ function Till() {
           </span>
           <button
             onClick={() => void manualDrawer()}
-            className="inline-flex items-center gap-1.5 rounded-lg border border-white/15 px-2.5 py-1.5 font-semibold text-white/80 hover:border-white/40"
+            className="inline-flex h-9 items-center gap-1.5 rounded-xl border border-white/10 bg-white/5 px-3 font-semibold text-white/80 transition hover:bg-white/10 active:scale-95"
           >
             <Inbox className="h-4 w-4" /> <span className="hidden sm:inline">Drawer</span>
           </button>
@@ -885,7 +885,7 @@ function Till() {
               else toast.error(result.message);
             }}
             aria-label="Open the customer display on the second screen"
-            className={`inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1.5 font-semibold hover:border-white/40 ${displayStatus.connected ? "border-emerald-500/40 text-emerald-300" : "border-white/15 text-white/80"}`}
+            className={`inline-flex h-9 items-center gap-1.5 rounded-xl border px-3 font-semibold transition active:scale-95 ${displayStatus.connected ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-300" : "border-white/10 bg-white/5 text-white/80 hover:bg-white/10"}`}
           >
             <MonitorPlay className="h-4 w-4" /> <span className="hidden sm:inline">Screen</span>
           </button>
@@ -893,7 +893,7 @@ function Till() {
             <button
               onClick={() => setSettings(true)}
               aria-label="Till settings"
-              className="grid h-8 w-8 place-items-center rounded-lg border border-white/15 hover:border-white/40"
+              className="grid h-9 w-9 place-items-center rounded-xl border border-white/10 bg-white/5 transition hover:bg-white/10 active:scale-95"
             >
               <Settings2 className="h-4 w-4" />
             </button>
@@ -901,39 +901,43 @@ function Till() {
           <button
             onClick={() => setLocked(true)}
             aria-label="Lock till"
-            className="grid h-8 w-8 place-items-center rounded-lg border border-white/15 hover:border-white/40"
+            className="grid h-9 w-9 place-items-center rounded-xl border border-white/10 bg-white/5 transition hover:bg-white/10 active:scale-95"
           >
             <Lock className="h-4 w-4" />
           </button>
           <button
             onClick={() => supabase.auth.signOut()}
             aria-label="Sign out of the till"
-            className="grid h-8 w-8 place-items-center rounded-lg border border-white/15 hover:border-white/40"
+            className="grid h-9 w-9 place-items-center rounded-xl border border-white/10 bg-white/5 transition hover:bg-white/10 active:scale-95"
           >
             <LogOut className="h-4 w-4" />
           </button>
         </div>
       </header>
 
-      <div className="flex h-9 shrink-0 items-center gap-3 border-b border-white/10 bg-neutral-950 px-4 text-[11px] font-semibold uppercase tracking-wide text-white/55">
+      <div className="flex h-10 shrink-0 items-center gap-2 overflow-x-auto border-b border-white/10 bg-neutral-950/60 px-3 text-[11px] font-semibold uppercase tracking-wide text-white/55 sm:px-4">
         <span
-          className={`inline-flex items-center gap-1.5 ${online ? "text-emerald-300" : "text-red-300"}`}
+          className={`inline-flex shrink-0 items-center gap-1.5 rounded-full px-2.5 py-1 ${online ? "bg-emerald-500/10 text-emerald-300" : "bg-red-500/10 text-red-300"}`}
         >
           {online ? <Wifi className="h-3.5 w-3.5" /> : <WifiOff className="h-3.5 w-3.5" />}
           {online ? "Online" : "Offline — payments blocked"}
         </span>
-        <span className={readerReady ? "text-emerald-300" : "text-amber-300"}>
-          SumUp {readerReady ? "online" : selectedReader ? "offline" : "not paired"}
-        </span>
-        <span className={deviceStatus.printerReady ? "text-emerald-300" : "text-amber-300"}>
-          Printer {deviceStatus.printerReady ? "ready" : "preview only"}
-        </span>
-        <span className={displayStatus.connected ? "text-emerald-300" : "text-white/45"}>
-          Display {displayStatus.connected ? "connected" : "not open"}
-        </span>
+        <StatusDot
+          ok={readerReady}
+          label={`SumUp ${readerReady ? "online" : selectedReader ? "offline" : "not paired"}`}
+        />
+        <StatusDot
+          ok={deviceStatus.printerReady}
+          label={`Printer ${deviceStatus.printerReady ? "ready" : "preview only"}`}
+        />
+        <StatusDot
+          ok={displayStatus.connected}
+          muted={!displayStatus.connected}
+          label={`Display ${displayStatus.connected ? "connected" : "not open"}`}
+        />
         <button
           onClick={() => setShiftPanel(shift ? "close" : "open")}
-          className={`ml-auto rounded-full px-2.5 py-1 ${shift ? "bg-emerald-500/15 text-emerald-300" : "bg-amber-500/15 text-amber-300"}`}
+          className={`ml-auto shrink-0 rounded-full px-3 py-1 transition hover:brightness-125 ${shift ? "bg-emerald-500/15 text-emerald-300" : "bg-amber-500/15 text-amber-300"}`}
         >
           {shiftLoading
             ? "Loading shift…"
@@ -944,24 +948,24 @@ function Till() {
         {shift && (
           <button
             onClick={() => setShiftPanel("cash")}
-            className="rounded-full border border-white/15 px-2.5 py-1 hover:border-white/40"
+            className="shrink-0 rounded-full border border-white/10 bg-white/5 px-3 py-1 transition hover:bg-white/10"
           >
             Cash in/out
           </button>
         )}
       </div>
 
-      <div className="grid min-h-0 flex-1 lg:grid-cols-[132px_minmax(0,1fr)_400px]">
+      <div className="grid min-h-0 flex-1 lg:grid-cols-[148px_minmax(0,1fr)_408px]">
         {/* category rail (desktop) */}
-        <nav className="hidden min-h-0 flex-col gap-1 overflow-y-auto border-r border-white/10 bg-neutral-900/60 p-2 lg:flex">
+        <nav className="hidden min-h-0 flex-col gap-1 overflow-y-auto border-r border-white/10 bg-neutral-900/40 p-2 lg:flex">
           <button
             onClick={() => {
               setCatId(FAVOURITES_CATEGORY);
               setQ("");
             }}
-            className={`flex shrink-0 items-center gap-2 rounded-xl px-3 py-3 text-left text-[11px] font-black uppercase leading-tight tracking-wide transition ${
+            className={`flex shrink-0 items-center gap-2 rounded-xl px-3 py-3 text-left text-[11px] font-black uppercase leading-tight tracking-wide transition active:scale-[0.98] ${
               catId === FAVOURITES_CATEGORY && !q
-                ? "bg-amber-400 text-neutral-950"
+                ? "bg-amber-400 text-neutral-950 shadow-lg shadow-amber-400/20"
                 : "text-amber-200/80 hover:bg-amber-400/10 hover:text-amber-100"
             }`}
           >
@@ -974,9 +978,9 @@ function Till() {
                 setCatId(c.id);
                 setQ("");
               }}
-              className={`shrink-0 rounded-xl px-3 py-3 text-left text-[11px] font-black uppercase leading-tight tracking-wide transition ${
+              className={`shrink-0 rounded-xl px-3 py-3 text-left text-[11px] font-black uppercase leading-tight tracking-wide transition active:scale-[0.98] ${
                 catId === c.id && !q
-                  ? "bg-primary text-primary-foreground"
+                  ? "bg-primary text-primary-foreground shadow-lg shadow-primary/25"
                   : "text-white/60 hover:bg-white/5 hover:text-white"
               }`}
             >
@@ -988,7 +992,7 @@ function Till() {
         {/* products */}
         <section className="flex min-h-0 flex-col">
           <div className="shrink-0 space-y-3 border-b border-white/10 p-3 sm:p-4">
-            <div className="flex items-center gap-2 rounded-xl border border-white/10 bg-neutral-900 px-4">
+            <div className="flex items-center gap-2 rounded-2xl border border-white/10 bg-neutral-900/80 px-4 shadow-inner shadow-black/40 focus-within:border-primary/60">
               <Search className="h-4 w-4 shrink-0 text-white/40" />
               <input
                 value={q}
@@ -997,7 +1001,7 @@ function Till() {
                   if (event.key === "Enter" && addBarcode(q)) event.preventDefault();
                 }}
                 placeholder="Search or scan a barcode…"
-                className="h-11 min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-white/30"
+                className="h-12 min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-white/30"
                 autoComplete="off"
               />
               {q && (
@@ -1010,7 +1014,7 @@ function Till() {
               <div className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-1 lg:hidden">
                 <button
                   onClick={() => setCatId(FAVOURITES_CATEGORY)}
-                  className={`inline-flex shrink-0 items-center gap-1.5 rounded-full px-3.5 py-2 text-xs font-bold uppercase tracking-wide transition ${catId === FAVOURITES_CATEGORY ? "bg-amber-400 text-neutral-950" : "border border-amber-300/20 bg-neutral-900 text-amber-200"}`}
+                  className={`inline-flex shrink-0 items-center gap-1.5 rounded-full px-3.5 py-2 text-xs font-bold uppercase tracking-wide transition active:scale-95 ${catId === FAVOURITES_CATEGORY ? "bg-amber-400 text-neutral-950 shadow-lg shadow-amber-400/20" : "border border-amber-300/20 bg-neutral-900 text-amber-200"}`}
                 >
                   <Star className="h-3.5 w-3.5 fill-current" /> Favourites
                 </button>
@@ -1018,7 +1022,7 @@ function Till() {
                   <button
                     key={c.id}
                     onClick={() => setCatId(c.id)}
-                    className={`shrink-0 rounded-full px-3.5 py-2 text-xs font-bold uppercase tracking-wide transition ${catId === c.id ? "bg-white text-neutral-950" : "border border-white/10 bg-neutral-900 text-white/70"}`}
+                    className={`shrink-0 rounded-full px-3.5 py-2 text-xs font-bold uppercase tracking-wide transition active:scale-95 ${catId === c.id ? "bg-white text-neutral-950 shadow-lg shadow-black/40" : "border border-white/10 bg-neutral-900 text-white/70"}`}
                   >
                     {c.name}
                   </button>
@@ -1032,22 +1036,25 @@ function Till() {
               {visible.map((i) => (
                 <div
                   key={i.id}
-                  className="group relative overflow-hidden rounded-2xl border border-white/10 bg-neutral-900 transition hover:border-primary hover:bg-neutral-800"
+                  className="group relative overflow-hidden rounded-2xl border border-white/10 bg-neutral-900/80 shadow-lg shadow-black/30 transition duration-150 hover:-translate-y-0.5 hover:border-primary/70 hover:bg-neutral-800 hover:shadow-xl hover:shadow-primary/10"
                 >
                   <button
                     onClick={() => add(i)}
-                    className="flex h-full w-full flex-col text-left active:scale-[0.98]"
+                    className="flex h-full w-full flex-col text-left transition active:scale-[0.97]"
                   >
                     <div className="relative aspect-[4/3] w-full overflow-hidden bg-neutral-800">
                       {i.image_url ? (
-                        <img
-                          src={i.image_url}
-                          alt={i.name}
-                          loading="lazy"
-                          className="h-full w-full object-cover transition group-hover:scale-105"
-                        />
+                        <>
+                          <img
+                            src={i.image_url}
+                            alt={i.name}
+                            loading="lazy"
+                            className="h-full w-full object-cover transition duration-300 group-hover:scale-105"
+                          />
+                          <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-neutral-950/70 to-transparent" />
+                        </>
                       ) : (
-                        <div className="grid h-full w-full place-items-center text-white/15">
+                        <div className="grid h-full w-full place-items-center bg-[radial-gradient(80%_80%_at_50%_20%,rgba(255,255,255,0.06),transparent)] text-white/15">
                           <UtensilsCrossed className="h-7 w-7" />
                         </div>
                       )}
@@ -1056,7 +1063,7 @@ function Till() {
                       <span className="line-clamp-2 text-[13px] font-semibold leading-snug">
                         {i.name}
                       </span>
-                      <span className="font-display text-base font-bold text-primary">
+                      <span className="font-display text-base font-black tabular-nums text-primary">
                         {money(i.price_cents)}
                       </span>
                     </div>
@@ -1084,7 +1091,7 @@ function Till() {
 
         {/* order panel */}
         <aside
-          className={`fixed inset-0 z-40 min-h-0 flex-col bg-neutral-900 lg:static lg:z-auto lg:flex lg:border-l lg:border-white/10 ${showOrder ? "flex" : "hidden"}`}
+          className={`fixed inset-0 z-40 min-h-0 flex-col bg-neutral-900 shadow-[-12px_0_40px_-24px_rgba(0,0,0,0.9)] lg:static lg:z-auto lg:flex lg:border-l lg:border-white/10 ${showOrder ? "flex" : "hidden"}`}
         >
           <div className="flex shrink-0 items-center justify-between border-b border-white/10 px-4 py-3 lg:hidden">
             <span className="font-display text-lg font-bold">Current order</span>
@@ -1097,21 +1104,21 @@ function Till() {
             </button>
           </div>
           <div className="shrink-0 space-y-2 border-b border-white/10 p-4">
-            <div className="grid grid-cols-2 gap-1.5">
+            <div className="grid grid-cols-2 gap-1.5 rounded-2xl border border-white/10 bg-neutral-950/50 p-1.5">
               {FULFIL.map(({ id, label, Icon }) => (
                 <button
                   key={id}
                   onClick={() => setType(id)}
-                  className={`flex flex-col items-center gap-1 rounded-xl py-2.5 text-[11px] font-bold uppercase tracking-wide transition ${type === id ? "bg-primary text-primary-foreground" : "border border-white/10 text-white/60 hover:border-white/40"}`}
+                  className={`flex flex-col items-center gap-1 rounded-xl py-2.5 text-[11px] font-bold uppercase tracking-wide transition active:scale-95 ${type === id ? "bg-primary text-primary-foreground shadow-md shadow-primary/25" : "text-white/55 hover:bg-white/5 hover:text-white"}`}
                 >
                   <Icon className="h-4 w-4" /> {label}
                 </button>
               ))}
             </div>
-            <div className="flex items-center gap-1.5 rounded-xl border border-white/10 bg-neutral-800 p-1.5">
+            <div className="flex items-center gap-1.5 rounded-2xl border border-white/10 bg-neutral-950/50 p-1.5">
               <button
                 onClick={() => setLaterTime("")}
-                className={`h-9 flex-1 rounded-lg text-[11px] font-bold uppercase tracking-wide transition ${laterTime ? "text-white/60 hover:text-white" : "bg-primary text-primary-foreground"}`}
+                className={`h-9 flex-1 rounded-xl text-[11px] font-bold uppercase tracking-wide transition active:scale-95 ${laterTime ? "text-white/55 hover:bg-white/5 hover:text-white" : "bg-primary text-primary-foreground shadow-md shadow-primary/25"}`}
               >
                 ASAP
               </button>
@@ -1159,38 +1166,38 @@ function Till() {
               {lines.map((l) => (
                 <li
                   key={l.key}
-                  className="flex items-center gap-2 rounded-xl bg-neutral-800/60 p-2 text-sm"
+                  className="flex items-center gap-2 rounded-2xl border border-white/5 bg-neutral-800/60 p-2 text-sm transition hover:border-white/15"
                 >
                   <div className="flex items-center gap-1">
                     <button
                       onClick={() => bump(l.key, -1)}
                       aria-label={`Remove one ${l.name}`}
-                      className="grid h-8 w-8 place-items-center rounded-lg border border-white/15 hover:border-primary"
+                      className="grid h-8 w-8 place-items-center rounded-xl border border-white/10 bg-white/5 transition hover:border-primary active:scale-90"
                     >
                       <Minus className="h-3.5 w-3.5" />
                     </button>
-                    <span className="w-6 text-center font-bold">{l.qty}</span>
+                    <span className="w-6 text-center font-bold tabular-nums">{l.qty}</span>
                     <button
                       onClick={() => bump(l.key, 1)}
                       aria-label={`Add one ${l.name}`}
-                      className="grid h-8 w-8 place-items-center rounded-lg border border-white/15 hover:border-primary"
+                      className="grid h-8 w-8 place-items-center rounded-xl border border-white/10 bg-white/5 transition hover:border-primary active:scale-90"
                     >
                       <Plus className="h-3.5 w-3.5" />
                     </button>
                   </div>
                   <span className="min-w-0 flex-1">
-                    <span className="block truncate">{l.name}</span>
+                    <span className="block truncate font-medium">{l.name}</span>
                     {(l.modifier_names.length > 0 || l.notes) && (
                       <span className="block truncate text-[11px] text-white/45">
                         {[...l.modifier_names, l.notes].filter(Boolean).join(" · ")}
                       </span>
                     )}
                   </span>
-                  <span className="font-semibold">{money(l.price_cents * l.qty)}</span>
+                  <span className="font-semibold tabular-nums">{money(l.price_cents * l.qty)}</span>
                 </li>
               ))}
               {!lines.length && (
-                <li className="rounded-xl border border-dashed border-white/10 p-6 text-center text-sm text-white/40">
+                <li className="rounded-2xl border border-dashed border-white/10 p-8 text-center text-sm text-white/40">
                   Tap items to start an order
                   {lastOrder && (
                     <span className="mt-3 block text-xs text-white/50">
@@ -1210,7 +1217,7 @@ function Till() {
 
           {pay === "cash" && (
             <div className="shrink-0 border-t border-white/10 p-3">
-              <div className="mb-2 grid grid-cols-3 items-end gap-2 rounded-2xl bg-neutral-800/70 px-3 py-2">
+            <div className="mb-2 grid grid-cols-3 items-end gap-2 rounded-2xl border border-white/5 bg-neutral-800/70 px-3 py-2.5">
                 <div>
                   <p className="text-[10px] font-bold uppercase tracking-widest text-white/40">
                     Tendered
@@ -1241,33 +1248,33 @@ function Till() {
                   <button
                     key={n}
                     onClick={() => setTendered((t) => Math.min(t * 10 + n * 100, 5_000_00))}
-                    className="h-11 rounded-xl border border-white/10 bg-neutral-800/50 text-lg font-bold hover:border-white/40 active:scale-95"
+                    className="h-12 rounded-xl border border-white/10 bg-neutral-800/60 text-lg font-bold tabular-nums transition hover:bg-neutral-700/60 active:scale-95"
                   >
                     {n}
                   </button>
                 ))}
                 <button
                   onClick={() => setTendered(due)}
-                  className="h-11 rounded-xl border border-emerald-500/40 text-xs font-black uppercase tracking-wide text-emerald-300 hover:border-emerald-400"
+                  className="h-12 rounded-xl border border-emerald-500/40 bg-emerald-500/10 text-xs font-black uppercase tracking-wide text-emerald-300 transition hover:bg-emerald-500/20 active:scale-95"
                 >
                   Exact
                 </button>
                 <button
                   onClick={() => setTendered((t) => Math.min(t * 10, 5_000_00))}
-                  className="h-11 rounded-xl border border-white/10 bg-neutral-800/50 text-lg font-bold hover:border-white/40 active:scale-95"
+                  className="h-12 rounded-xl border border-white/10 bg-neutral-800/60 text-lg font-bold tabular-nums transition hover:bg-neutral-700/60 active:scale-95"
                 >
                   0
                 </button>
                 <button
                   onClick={() => setTendered((t) => Math.floor(t / 10 / 100) * 100)}
                   aria-label="Delete last digit"
-                  className="grid h-11 place-items-center rounded-xl border border-white/10 bg-neutral-800/50 hover:border-white/40 active:scale-95"
+                  className="grid h-12 place-items-center rounded-xl border border-white/10 bg-neutral-800/60 transition hover:bg-neutral-700/60 active:scale-95"
                 >
                   <Delete className="h-4 w-4" />
                 </button>
                 <button
                   onClick={() => setTendered(0)}
-                  className="h-11 rounded-xl border border-white/10 text-xs font-black uppercase tracking-wide text-white/50 hover:border-white/40"
+                  className="h-12 rounded-xl border border-white/10 text-xs font-black uppercase tracking-wide text-white/50 transition hover:bg-white/5 active:scale-95"
                 >
                   Clear
                 </button>
@@ -1277,7 +1284,7 @@ function Till() {
                   <button
                     key={v}
                     onClick={() => setTendered(v)}
-                    className="h-9 rounded-xl border border-white/10 text-xs font-bold text-white/70 hover:border-white/40"
+                    className="h-9 rounded-xl border border-white/10 text-xs font-bold tabular-nums text-white/70 transition hover:bg-white/5 active:scale-95"
                   >
                     {money(v)}
                   </button>
@@ -1327,7 +1334,17 @@ function Till() {
             </div>
           )}
 
-          <div className="shrink-0 space-y-2 border-t border-white/10 p-3">
+          <div className="shrink-0 space-y-2 border-t border-white/10 bg-neutral-950/40 p-3">
+            {lines.length > 0 && pay !== "cash" && (
+              <div className="flex items-baseline justify-between rounded-2xl bg-white/5 px-4 py-2.5">
+                <span className="text-[10px] font-black uppercase tracking-[0.2em] text-white/40">
+                  Due · {count} item{count === 1 ? "" : "s"}
+                </span>
+                <span className="font-display text-2xl font-black tabular-nums text-primary">
+                  {money(due)}
+                </span>
+              </div>
+            )}
             {due > 0 ? (
               <button
                 disabled={!lines.length || busy || !shift || !online}
@@ -1335,7 +1352,7 @@ function Till() {
                   setReaderSaleKey(crypto.randomUUID());
                   setPay("reader");
                 }}
-                className="inline-flex h-14 w-full items-center justify-between gap-2 rounded-xl bg-primary px-5 text-base font-bold text-primary-foreground disabled:opacity-40"
+                className="inline-flex h-14 w-full items-center justify-between gap-2 rounded-2xl bg-primary px-5 text-base font-bold text-primary-foreground shadow-lg shadow-primary/25 transition active:scale-[0.99] disabled:opacity-40 disabled:shadow-none"
               >
                 <span className="inline-flex items-center gap-2">
                   <Smartphone className="h-5 w-5" /> Charge SumUp Solo
@@ -1346,7 +1363,7 @@ function Till() {
               <button
                 disabled={!lines.length || busy || !shift || !online}
                 onClick={() => void finish("cash")}
-                className="inline-flex h-14 w-full items-center justify-between gap-2 rounded-xl bg-indigo-500 px-5 text-base font-bold text-white disabled:opacity-40"
+                className="inline-flex h-14 w-full items-center justify-between gap-2 rounded-2xl bg-indigo-500 px-5 text-base font-bold text-white shadow-lg shadow-indigo-500/25 transition active:scale-[0.99] disabled:opacity-40 disabled:shadow-none"
               >
                 <span className="inline-flex items-center gap-2">
                   <Ticket className="h-5 w-5" /> Complete voucher sale
@@ -1366,27 +1383,27 @@ function Till() {
                   if (tendered < due) return toast.error("Tendered is less than the amount due");
                   void finish("cash");
                 }}
-                className="inline-flex h-12 items-center justify-center gap-2 rounded-xl bg-emerald-600 text-sm font-bold text-white disabled:opacity-40"
+                className="inline-flex h-12 items-center justify-center gap-1.5 rounded-xl bg-emerald-600 text-sm font-bold text-white shadow-md shadow-emerald-600/20 transition active:scale-95 disabled:opacity-40 disabled:shadow-none"
               >
                 <Banknote className="h-4 w-4" /> {pay === "cash" ? "Take cash" : "Cash"}
               </button>
               <button
                 onClick={() => void manualDrawer()}
-                className="inline-flex h-12 items-center justify-center gap-2 rounded-xl border border-white/15 text-sm font-bold text-white/80 hover:border-white/40"
+                className="inline-flex h-12 items-center justify-center gap-1.5 rounded-xl border border-white/10 bg-white/5 text-sm font-bold text-white/80 transition hover:bg-white/10 active:scale-95"
               >
                 <Inbox className="h-4 w-4" /> Drawer
               </button>
               <button
                 disabled={!lines.length || busy || !shift || !online || due < 2}
                 onClick={startSplitPayment}
-                className="inline-flex h-12 items-center justify-center gap-1 rounded-xl border border-white/15 text-sm font-bold text-white/80 disabled:opacity-40"
+                className="inline-flex h-12 items-center justify-center gap-1.5 rounded-xl border border-white/10 bg-white/5 text-sm font-bold text-white/80 transition hover:bg-white/10 active:scale-95 disabled:opacity-40"
               >
                 <CircleDollarSign className="h-4 w-4" /> Split
               </button>
               <button
                 disabled={!lines.length || busy || !shift || !online || due === 0 || !has("admin")}
                 onClick={() => setPay("manual")}
-                className="inline-flex h-12 items-center justify-center gap-2 rounded-xl border border-white/15 text-sm font-bold text-white/80 disabled:opacity-40"
+                className="inline-flex h-12 items-center justify-center gap-1.5 rounded-xl border border-white/10 bg-white/5 text-sm font-bold text-white/80 transition hover:bg-white/10 active:scale-95 disabled:opacity-40"
               >
                 <CreditCard className="h-4 w-4" /> Manual
               </button>
@@ -1432,7 +1449,7 @@ function Till() {
       {!showOrder && (
         <button
           onClick={() => setShowOrder(true)}
-          className="fixed inset-x-3 bottom-3 z-30 flex h-14 items-center justify-between rounded-2xl bg-primary px-5 text-primary-foreground shadow-2xl lg:hidden"
+          className="fixed inset-x-3 bottom-3 z-30 flex h-14 items-center justify-between rounded-2xl bg-primary px-5 text-primary-foreground shadow-2xl shadow-primary/30 transition active:scale-[0.99] lg:hidden"
         >
           <span className="inline-flex items-center gap-2 text-sm font-bold uppercase tracking-wide">
             <ReceiptText className="h-5 w-5" /> {count} item{count === 1 ? "" : "s"}
@@ -1557,6 +1574,22 @@ function Till() {
 }
 
 /* -------------------------------------------------------------- widgets */
+
+/** Small status chip with a coloured dot for the till's hardware strip. */
+function StatusDot({ ok, label, muted }: { ok: boolean; label: string; muted?: boolean }) {
+  return (
+    <span
+      className={`inline-flex shrink-0 items-center gap-1.5 rounded-full px-2.5 py-1 ${
+        ok ? "bg-emerald-500/10 text-emerald-300" : muted ? "text-white/45" : "bg-amber-500/10 text-amber-300"
+      }`}
+    >
+      <span
+        className={`h-1.5 w-1.5 rounded-full ${ok ? "bg-emerald-400" : muted ? "bg-white/30" : "bg-amber-400"}`}
+      />
+      {label}
+    </span>
+  );
+}
 
 function Modal({
   title,
