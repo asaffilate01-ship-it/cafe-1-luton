@@ -20,7 +20,7 @@ export type DisplayMessage =
       type: "paid";
       order_number: number;
       total: number;
-      method: "cash" | "card" | "split" | "voucher";
+      method: "cash" | "card" | "split" | "voucher" | "account";
     }
   | { type: "juror"; url: string }
   | {
