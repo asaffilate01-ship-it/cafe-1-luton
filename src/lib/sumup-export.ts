@@ -174,13 +174,6 @@ export const SUMUP_ITEMS_HEADER = [
   "Variant id (Do not change)",
 ] as const;
 
-/** Modifier group label SumUp shows, including price deltas in the name. */
-function optionLabel(modifier: ExportModifier): string {
-  if (!modifier.price_cents) return modifier.name;
-  const sign = modifier.price_cents > 0 ? "+" : "-";
-  return `${modifier.name} (${sign}£${(Math.abs(modifier.price_cents) / 100).toFixed(2)})`;
-}
-
 /**
  * Full catalogue in SumUp's native items-export layout: one row per item,
  * modifier groups joined in the Modifiers column, plus a variation row per
@@ -273,18 +266,6 @@ export function buildSumUpNativeItemsCsv(
     } else {
       rows.push(base("", "", "", item.price_cents, sku));
     }
-  }
-
-  // Modifier sets themselves, listed as zero-priced reference rows so the
-  // option names and prices travel with the file.
-  const seen = new Set<string>();
-  for (const modifier of active.sort(
-    (a, b) => a.sort_order - b.sort_order || a.name.localeCompare(b.name),
-  )) {
-    const group = modifier.group_name?.trim() || "Extras";
-    const key = `${group}::${modifier.name}::${modifier.price_cents}`;
-    if (seen.has(key)) continue;
-    seen.add(key);
   }
 
   return toCsv(rows);
