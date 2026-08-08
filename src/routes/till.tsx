@@ -1256,22 +1256,22 @@ function Till() {
               <ChevronDown className="h-4 w-4" />
             </button>
           </div>
-          <div className="shrink-0 space-y-2 border-b border-white/10 p-4">
-            <div className="grid grid-cols-2 gap-1.5 rounded-2xl border border-white/10 bg-neutral-950/50 p-1.5">
+          <div className="shrink-0 space-y-2 border-b border-white/10 p-4 lg:space-y-1.5 lg:p-2.5">
+            <div className="grid grid-cols-2 gap-1.5 rounded-2xl border border-white/10 bg-neutral-950/50 p-1.5 lg:grid-cols-4 lg:gap-1 lg:p-1">
               {FULFIL.map(({ id, label, Icon }) => (
                 <button
                   key={id}
                   onClick={() => setType(id)}
-                  className={`flex flex-col items-center gap-1 rounded-xl py-2.5 text-[11px] font-bold uppercase tracking-wide transition active:scale-95 ${type === id ? "bg-primary text-primary-foreground shadow-md shadow-primary/25" : "text-white/55 hover:bg-white/5 hover:text-white"}`}
+                  className={`flex flex-col items-center gap-1 rounded-xl py-2.5 text-[11px] font-bold uppercase tracking-wide transition active:scale-95 lg:gap-0.5 lg:py-1.5 lg:text-[10px] ${type === id ? "bg-primary text-primary-foreground shadow-md shadow-primary/25" : "text-white/55 hover:bg-white/5 hover:text-white"}`}
                 >
-                  <Icon className="h-4 w-4" /> {label}
+                  <Icon className="h-4 w-4 lg:h-3.5 lg:w-3.5" /> {label}
                 </button>
               ))}
             </div>
-            <div className="flex items-center gap-1.5 rounded-2xl border border-white/10 bg-neutral-950/50 p-1.5">
+            <div className="flex items-center gap-1.5 rounded-2xl border border-white/10 bg-neutral-950/50 p-1.5 lg:p-1">
               <button
                 onClick={() => setLaterTime("")}
-                className={`h-9 flex-1 rounded-xl text-[11px] font-bold uppercase tracking-wide transition active:scale-95 ${laterTime ? "text-white/55 hover:bg-white/5 hover:text-white" : "bg-primary text-primary-foreground shadow-md shadow-primary/25"}`}
+                className={`h-9 flex-1 rounded-xl text-[11px] font-bold uppercase tracking-wide transition active:scale-95 lg:h-8 ${laterTime ? "text-white/55 hover:bg-white/5 hover:text-white" : "bg-primary text-primary-foreground shadow-md shadow-primary/25"}`}
               >
                 ASAP
               </button>
@@ -1285,7 +1285,7 @@ function Till() {
                   value={laterTime}
                   onChange={(e) => setLaterTime(e.target.value)}
                   aria-label="Time this order is wanted for"
-                  className="h-9 w-full rounded-lg border border-white/10 bg-neutral-900 px-2 text-sm tabular-nums outline-none focus:border-primary"
+                  className="h-9 w-full rounded-lg border border-white/10 bg-neutral-900 px-2 text-sm tabular-nums outline-none focus:border-primary lg:h-8"
                 />
               </label>
             </div>
@@ -1294,19 +1294,19 @@ function Till() {
                 Pre-order · kitchen will hold this until {laterTime}
               </p>
             )}
-            <div className="grid gap-2 sm:grid-cols-2">
+            <div className="grid gap-2 sm:grid-cols-2 lg:gap-1.5">
               <input
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 placeholder="Customer name (optional)"
-                className="h-10 rounded-xl border border-white/10 bg-neutral-800 px-3 text-sm outline-none placeholder:text-white/30 focus:border-primary"
+                className="h-10 rounded-xl border border-white/10 bg-neutral-800 px-3 text-sm outline-none placeholder:text-white/30 focus:border-primary lg:h-9"
               />
               {type === "dine_in" ? (
                 <input
                   value={table}
                   onChange={(e) => setTable(e.target.value)}
                   placeholder="Table number"
-                  className="h-10 rounded-xl border border-white/10 bg-neutral-800 px-3 text-sm outline-none placeholder:text-white/30 focus:border-primary"
+                  className="h-10 rounded-xl border border-white/10 bg-neutral-800 px-3 text-sm outline-none placeholder:text-white/30 focus:border-primary lg:h-9"
                 />
               ) : (
                 <div className="hidden sm:block" />
@@ -1314,8 +1314,8 @@ function Till() {
             </div>
           </div>
 
-          <div className="min-h-0 flex-1 overflow-y-auto p-4">
-            <ul ref={basketRef} className="space-y-2">
+          <div className="min-h-0 flex-1 overflow-y-auto p-4 lg:p-2.5">
+            <ul ref={basketRef} className="space-y-2 lg:space-y-1.5">
               {lines.map((l) => (
                 <li
                   key={l.key}
