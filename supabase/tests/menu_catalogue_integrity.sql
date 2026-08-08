@@ -1,0 +1,69 @@
+begin;
+
+select plan(7);
+
+select ok(
+  not exists (
+    select 1
+    from public.menu_categories
+    group by site_id, lower(btrim(name))
+    having count(*) > 1
+  ),
+  'menu category names are unique within a site'
+);
+
+select ok(
+  not exists (
+    select 1
+    from public.menu_items
+    group by site_id, category_id, lower(btrim(name))
+    having count(*) > 1
+  ),
+  'menu item names are unique within a category and site'
+);
+
+select ok(
+  not exists (
+    select 1
+    from public.menu_modifiers
+    group by category_id, item_id, lower(btrim(coalesce(group_name, 'Extras'))), lower(btrim(name))
+    having count(*) > 1
+  ),
+  'modifier choices are unique within their scope and group'
+);
+
+select ok(
+  not exists (
+    select 1 from public.menu_modifiers
+    where num_nonnulls(category_id, item_id) <> 1
+  ),
+  'every modifier has exactly one category or item scope'
+);
+
+select ok(
+  not exists (
+    select 1 from public.menu_modifiers
+    where min_selections < 0
+       or (max_selections is not null and max_selections < min_selections)
+  ),
+  'modifier selection ranges are valid'
+);
+
+select ok(
+  not exists (
+    select 1 from public.menu_modifiers
+    where group_type = 'single' and coalesce(max_selections, 1) > 1
+  ),
+  'single-choice modifier groups cannot select more than one option'
+);
+
+select ok(
+  not exists (
+    select 1 from public.menu_modifiers
+    where required and min_selections < 1
+  ),
+  'required modifier groups require at least one selection'
+);
+
+select * from finish();
+rollback;

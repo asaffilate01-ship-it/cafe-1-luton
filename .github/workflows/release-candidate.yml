@@ -66,7 +66,12 @@ jobs:
 
       - name: Record repository status
         if: always()
-        run: npm run release:status -- --output release-evidence/release-status.json
+        run: |
+          npm run verify:dependencies -- --output release-evidence/dependency-contract.json
+          npm run verify:migrations -- --output release-evidence/migration-integrity.json
+          npm run verify:capabilities -- --output release-evidence/software-capabilities.json
+          npm run verify:bundle-budget -- --output release-evidence/bundle-budget.json
+          npm run release:status -- --output release-evidence/release-status.json
 
       - name: Write evidence manifest
         if: always()

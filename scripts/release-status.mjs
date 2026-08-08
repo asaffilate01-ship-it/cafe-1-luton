@@ -4,6 +4,9 @@ import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 import { getTrackedEnvironmentFiles } from "./repository-hygiene.mjs";
+import { verifyDependencyContract } from "./verify-dependency-contract.mjs";
+import { verifyMigrationDirectory } from "./verify-migration-integrity.mjs";
+import { verifyReleaseCapabilities } from "./verify-release-capabilities.mjs";
 import { getRouteCoverageReport } from "./verify-routes.mjs";
 import { validateOperationalAcceptance } from "./verify-operational-acceptance.mjs";
 
@@ -20,6 +23,9 @@ const trackedEnvironmentFiles = getTrackedEnvironmentFiles(root);
 const operationalAcceptance = validateOperationalAcceptance(
   JSON.parse(readFileSync(resolve(root, "release/operational-acceptance.json"), "utf8")),
 );
+const dependencyContract = verifyDependencyContract(root);
+const migrationIntegrity = verifyMigrationDirectory(root);
+const releaseCapabilities = verifyReleaseCapabilities(root);
 let routeCoverage;
 try {
   routeCoverage = getRouteCoverageReport(root);
@@ -45,7 +51,7 @@ const requiredWorkflows = [
 ];
 
 const report = {
-  schema_version: 4,
+  schema_version: 5,
   generated_at: new Date().toISOString(),
   commit: git(["rev-parse", "HEAD"]),
   branch: git(["branch", "--show-current"]) || null,
@@ -57,6 +63,18 @@ const report = {
     failed: operationalAcceptance.failed,
     total: operationalAcceptance.total,
     schema_valid: operationalAcceptance.schema_valid,
+  },
+  software_controls: {
+    ready:
+      dependencyContract.valid && migrationIntegrity.valid && releaseCapabilities.valid,
+    dependency_contract_valid: dependencyContract.valid,
+    dependency_security_resolutions: dependencyContract.security_resolutions,
+    migration_integrity_valid: migrationIntegrity.valid,
+    migration_count: migrationIntegrity.migration_count,
+    immutable_equivalent_migration_set_count:
+      migrationIntegrity.known_equivalent_sets.length,
+    release_capabilities_passed: releaseCapabilities.passed,
+    release_capabilities_total: releaseCapabilities.total,
   },
   release_tree: {
     tracked_environment_file_count: trackedEnvironmentFiles.length,
