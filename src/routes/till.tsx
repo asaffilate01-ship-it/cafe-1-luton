@@ -1091,7 +1091,7 @@ function Till() {
 
         {/* order panel */}
         <aside
-          className={`fixed inset-0 z-40 min-h-0 flex-col bg-neutral-900 lg:static lg:z-auto lg:flex lg:border-l lg:border-white/10 ${showOrder ? "flex" : "hidden"}`}
+          className={`fixed inset-0 z-40 min-h-0 flex-col bg-neutral-900 shadow-[-12px_0_40px_-24px_rgba(0,0,0,0.9)] lg:static lg:z-auto lg:flex lg:border-l lg:border-white/10 ${showOrder ? "flex" : "hidden"}`}
         >
           <div className="flex shrink-0 items-center justify-between border-b border-white/10 px-4 py-3 lg:hidden">
             <span className="font-display text-lg font-bold">Current order</span>
@@ -1104,21 +1104,21 @@ function Till() {
             </button>
           </div>
           <div className="shrink-0 space-y-2 border-b border-white/10 p-4">
-            <div className="grid grid-cols-2 gap-1.5">
+            <div className="grid grid-cols-2 gap-1.5 rounded-2xl border border-white/10 bg-neutral-950/50 p-1.5">
               {FULFIL.map(({ id, label, Icon }) => (
                 <button
                   key={id}
                   onClick={() => setType(id)}
-                  className={`flex flex-col items-center gap-1 rounded-xl py-2.5 text-[11px] font-bold uppercase tracking-wide transition ${type === id ? "bg-primary text-primary-foreground" : "border border-white/10 text-white/60 hover:border-white/40"}`}
+                  className={`flex flex-col items-center gap-1 rounded-xl py-2.5 text-[11px] font-bold uppercase tracking-wide transition active:scale-95 ${type === id ? "bg-primary text-primary-foreground shadow-md shadow-primary/25" : "text-white/55 hover:bg-white/5 hover:text-white"}`}
                 >
                   <Icon className="h-4 w-4" /> {label}
                 </button>
               ))}
             </div>
-            <div className="flex items-center gap-1.5 rounded-xl border border-white/10 bg-neutral-800 p-1.5">
+            <div className="flex items-center gap-1.5 rounded-2xl border border-white/10 bg-neutral-950/50 p-1.5">
               <button
                 onClick={() => setLaterTime("")}
-                className={`h-9 flex-1 rounded-lg text-[11px] font-bold uppercase tracking-wide transition ${laterTime ? "text-white/60 hover:text-white" : "bg-primary text-primary-foreground"}`}
+                className={`h-9 flex-1 rounded-xl text-[11px] font-bold uppercase tracking-wide transition active:scale-95 ${laterTime ? "text-white/55 hover:bg-white/5 hover:text-white" : "bg-primary text-primary-foreground shadow-md shadow-primary/25"}`}
               >
                 ASAP
               </button>
@@ -1166,38 +1166,38 @@ function Till() {
               {lines.map((l) => (
                 <li
                   key={l.key}
-                  className="flex items-center gap-2 rounded-xl bg-neutral-800/60 p-2 text-sm"
+                  className="flex items-center gap-2 rounded-2xl border border-white/5 bg-neutral-800/60 p-2 text-sm transition hover:border-white/15"
                 >
                   <div className="flex items-center gap-1">
                     <button
                       onClick={() => bump(l.key, -1)}
                       aria-label={`Remove one ${l.name}`}
-                      className="grid h-8 w-8 place-items-center rounded-lg border border-white/15 hover:border-primary"
+                      className="grid h-8 w-8 place-items-center rounded-xl border border-white/10 bg-white/5 transition hover:border-primary active:scale-90"
                     >
                       <Minus className="h-3.5 w-3.5" />
                     </button>
-                    <span className="w-6 text-center font-bold">{l.qty}</span>
+                    <span className="w-6 text-center font-bold tabular-nums">{l.qty}</span>
                     <button
                       onClick={() => bump(l.key, 1)}
                       aria-label={`Add one ${l.name}`}
-                      className="grid h-8 w-8 place-items-center rounded-lg border border-white/15 hover:border-primary"
+                      className="grid h-8 w-8 place-items-center rounded-xl border border-white/10 bg-white/5 transition hover:border-primary active:scale-90"
                     >
                       <Plus className="h-3.5 w-3.5" />
                     </button>
                   </div>
                   <span className="min-w-0 flex-1">
-                    <span className="block truncate">{l.name}</span>
+                    <span className="block truncate font-medium">{l.name}</span>
                     {(l.modifier_names.length > 0 || l.notes) && (
                       <span className="block truncate text-[11px] text-white/45">
                         {[...l.modifier_names, l.notes].filter(Boolean).join(" · ")}
                       </span>
                     )}
                   </span>
-                  <span className="font-semibold">{money(l.price_cents * l.qty)}</span>
+                  <span className="font-semibold tabular-nums">{money(l.price_cents * l.qty)}</span>
                 </li>
               ))}
               {!lines.length && (
-                <li className="rounded-xl border border-dashed border-white/10 p-6 text-center text-sm text-white/40">
+                <li className="rounded-2xl border border-dashed border-white/10 p-8 text-center text-sm text-white/40">
                   Tap items to start an order
                   {lastOrder && (
                     <span className="mt-3 block text-xs text-white/50">
