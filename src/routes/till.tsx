@@ -1816,8 +1816,108 @@ function Till() {
 /** One row in the till's overflow menu. */
 
 /** One payment method row in the charge sheet. */
+/** Judge tab picker — same house accounts the KDS manual judge ticket uses. */
+function JudgeTabModal({
+  total,
+  busy,
+  onClose,
+  onConfirm,
+}: {
+  total: number;
+  busy: boolean;
+  onClose: () => void;
+  onConfirm: (account: { id: string; name: string }) => void;
+}) {
+  const load = useServerFn(listAccounts);
+  const add = useServerFn(quickAddAccount);
+  const [accounts, setAccounts] = useState<{ id: string; name: string }[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [query, setQuery] = useState("");
+  const [adding, setAdding] = useState(false);
+
+  useEffect(() => {
+    let live = true;
+    void load()
+      .then((rows) => {
+        if (live) setAccounts(rows.map((r) => ({ id: r.id, name: r.name })));
+      })
+      .catch(() => toast.error("Could not load the judge tabs"))
+      .finally(() => live && setLoading(false));
+    return () => {
+      live = false;
+    };
+  }, [load]);
+
+  const term = query.trim().toLowerCase();
+  const shown = accounts.filter((a) => !term || a.name.toLowerCase().includes(term));
+  const exact = accounts.some((a) => a.name.toLowerCase() === term);
+
+  async function createAndCharge() {
+    const name = query.trim();
+    if (name.length < 2) return toast.error("Enter the judge's name");
+    setAdding(true);
+    try {
+      const account = await add({ data: { name } });
+      setAccounts((current) =>
+        current.some((a) => a.id === account.id)
+          ? current
+          : [{ id: account.id, name: account.name }, ...current],
+      );
+      onConfirm({ id: account.id, name: account.name });
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Could not add that judge");
+    } finally {
+      setAdding(false);
+    }
+  }
+
+  return (
+    <Modal title="Put on a judge's tab" onClose={onClose}>
+      <div className="space-y-3">
+        <p className="text-sm text-white/60">
+          {money(total)} will be billed to the judge's account. Nothing is taken now.
+        </p>
+        <input
+          autoFocus
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          placeholder="Search or type a judge's name"
+          className="h-12 w-full rounded-2xl border border-white/10 bg-white/5 px-4 text-base font-semibold outline-none focus:border-primary"
+        />
+        <div className="max-h-64 space-y-1.5 overflow-y-auto">
+          {loading && <p className="text-sm text-white/40">Loading tabs…</p>}
+          {!loading && !shown.length && (
+            <p className="text-sm text-white/40">No matching tab — add the judge below.</p>
+          )}
+          {shown.map((account) => (
+            <button
+              key={account.id}
+              disabled={busy}
+              onClick={() => onConfirm(account)}
+              className="flex h-12 w-full items-center justify-between rounded-2xl border border-white/10 bg-white/5 px-4 text-left text-sm font-bold transition hover:bg-white/10 disabled:opacity-40"
+            >
+              <span className="truncate">{account.name}</span>
+              <span className="text-[11px] font-semibold uppercase tracking-wide text-white/40">
+                Charge tab
+              </span>
+            </button>
+          ))}
+        </div>
+        {term.length >= 2 && !exact && (
+          <button
+            disabled={adding || busy}
+            onClick={() => void createAndCharge()}
+            className="h-12 w-full rounded-2xl bg-primary text-sm font-bold text-primary-foreground disabled:opacity-40"
+          >
+            Add “{query.trim()}” and charge tab
+          </button>
+        )}
+      </div>
+    </Modal>
+  );
+}
+
 function PayChoice({
-  icon: Icon,
   icon: Icon,
   label,
   hint,
