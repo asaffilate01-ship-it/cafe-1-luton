@@ -846,18 +846,18 @@ function Till() {
   if (locked) return <LockScreen onUnlock={() => setLocked(false)} />;
 
   return (
-    <div className="flex h-screen flex-col overflow-hidden bg-neutral-950 text-white">
+    <div className="flex h-screen flex-col overflow-hidden bg-[radial-gradient(120%_100%_at_50%_0%,#16181d_0%,#0a0a0b_60%)] text-white">
       {/* top bar */}
-      <header className="flex shrink-0 flex-wrap items-center gap-2 border-b border-white/10 bg-neutral-900 px-3 py-2 sm:gap-3 sm:px-4 sm:py-2.5">
-        <span className="rounded-lg bg-primary px-3 py-1 text-xs font-black uppercase tracking-widest text-primary-foreground">
+      <header className="flex shrink-0 flex-wrap items-center gap-2 border-b border-white/10 bg-neutral-900/80 px-3 py-2 shadow-[0_1px_0_0_rgba(255,255,255,0.04)] backdrop-blur sm:gap-3 sm:px-4 sm:py-2.5">
+        <span className="rounded-xl bg-primary px-3 py-1.5 text-xs font-black uppercase tracking-[0.2em] text-primary-foreground shadow-lg shadow-primary/25">
           Cafe 1 Till
         </span>
-        <div className="flex gap-1.5">
+        <div className="flex gap-1 rounded-xl border border-white/10 bg-neutral-950/60 p-1">
           {(["jury", "judge", "public"] as const).map((s) => (
             <button
               key={s}
               onClick={() => changeSide(s)}
-              className={`rounded-lg px-3 py-1.5 text-xs font-black uppercase tracking-wide transition ${side === s ? SIDE_TONE[s] : "border border-white/15 text-white/60 hover:border-white/40"}`}
+              className={`rounded-lg px-3.5 py-1.5 text-xs font-black uppercase tracking-wide transition active:scale-95 ${side === s ? `${SIDE_TONE[s]} shadow-md` : "text-white/50 hover:bg-white/5 hover:text-white"}`}
             >
               {SIDE_LABEL[s]}
             </button>
@@ -865,7 +865,7 @@ function Till() {
         </div>
         <div className="ml-auto flex items-center gap-2 text-xs text-white/50">
           <span
-            className={`hidden items-center gap-1.5 rounded-full border px-2.5 py-1 sm:inline-flex ${readerReady ? "border-emerald-500/40 text-emerald-300" : "border-amber-500/40 text-amber-300"}`}
+            className={`hidden items-center gap-1.5 rounded-full border px-3 py-1.5 font-semibold sm:inline-flex ${readerReady ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-300" : "border-amber-500/30 bg-amber-500/10 text-amber-300"}`}
           >
             <Smartphone className="h-3.5 w-3.5" />
             {selectedReader
@@ -874,7 +874,7 @@ function Till() {
           </span>
           <button
             onClick={() => void manualDrawer()}
-            className="inline-flex items-center gap-1.5 rounded-lg border border-white/15 px-2.5 py-1.5 font-semibold text-white/80 hover:border-white/40"
+            className="inline-flex h-9 items-center gap-1.5 rounded-xl border border-white/10 bg-white/5 px-3 font-semibold text-white/80 transition hover:bg-white/10 active:scale-95"
           >
             <Inbox className="h-4 w-4" /> <span className="hidden sm:inline">Drawer</span>
           </button>
@@ -885,7 +885,7 @@ function Till() {
               else toast.error(result.message);
             }}
             aria-label="Open the customer display on the second screen"
-            className={`inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1.5 font-semibold hover:border-white/40 ${displayStatus.connected ? "border-emerald-500/40 text-emerald-300" : "border-white/15 text-white/80"}`}
+            className={`inline-flex h-9 items-center gap-1.5 rounded-xl border px-3 font-semibold transition active:scale-95 ${displayStatus.connected ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-300" : "border-white/10 bg-white/5 text-white/80 hover:bg-white/10"}`}
           >
             <MonitorPlay className="h-4 w-4" /> <span className="hidden sm:inline">Screen</span>
           </button>
@@ -893,7 +893,7 @@ function Till() {
             <button
               onClick={() => setSettings(true)}
               aria-label="Till settings"
-              className="grid h-8 w-8 place-items-center rounded-lg border border-white/15 hover:border-white/40"
+              className="grid h-9 w-9 place-items-center rounded-xl border border-white/10 bg-white/5 transition hover:bg-white/10 active:scale-95"
             >
               <Settings2 className="h-4 w-4" />
             </button>
@@ -901,39 +901,43 @@ function Till() {
           <button
             onClick={() => setLocked(true)}
             aria-label="Lock till"
-            className="grid h-8 w-8 place-items-center rounded-lg border border-white/15 hover:border-white/40"
+            className="grid h-9 w-9 place-items-center rounded-xl border border-white/10 bg-white/5 transition hover:bg-white/10 active:scale-95"
           >
             <Lock className="h-4 w-4" />
           </button>
           <button
             onClick={() => supabase.auth.signOut()}
             aria-label="Sign out of the till"
-            className="grid h-8 w-8 place-items-center rounded-lg border border-white/15 hover:border-white/40"
+            className="grid h-9 w-9 place-items-center rounded-xl border border-white/10 bg-white/5 transition hover:bg-white/10 active:scale-95"
           >
             <LogOut className="h-4 w-4" />
           </button>
         </div>
       </header>
 
-      <div className="flex h-9 shrink-0 items-center gap-3 border-b border-white/10 bg-neutral-950 px-4 text-[11px] font-semibold uppercase tracking-wide text-white/55">
+      <div className="flex h-10 shrink-0 items-center gap-2 overflow-x-auto border-b border-white/10 bg-neutral-950/60 px-3 text-[11px] font-semibold uppercase tracking-wide text-white/55 sm:px-4">
         <span
-          className={`inline-flex items-center gap-1.5 ${online ? "text-emerald-300" : "text-red-300"}`}
+          className={`inline-flex shrink-0 items-center gap-1.5 rounded-full px-2.5 py-1 ${online ? "bg-emerald-500/10 text-emerald-300" : "bg-red-500/10 text-red-300"}`}
         >
           {online ? <Wifi className="h-3.5 w-3.5" /> : <WifiOff className="h-3.5 w-3.5" />}
           {online ? "Online" : "Offline — payments blocked"}
         </span>
-        <span className={readerReady ? "text-emerald-300" : "text-amber-300"}>
-          SumUp {readerReady ? "online" : selectedReader ? "offline" : "not paired"}
-        </span>
-        <span className={deviceStatus.printerReady ? "text-emerald-300" : "text-amber-300"}>
-          Printer {deviceStatus.printerReady ? "ready" : "preview only"}
-        </span>
-        <span className={displayStatus.connected ? "text-emerald-300" : "text-white/45"}>
-          Display {displayStatus.connected ? "connected" : "not open"}
-        </span>
+        <StatusDot
+          ok={readerReady}
+          label={`SumUp ${readerReady ? "online" : selectedReader ? "offline" : "not paired"}`}
+        />
+        <StatusDot
+          ok={deviceStatus.printerReady}
+          label={`Printer ${deviceStatus.printerReady ? "ready" : "preview only"}`}
+        />
+        <StatusDot
+          ok={displayStatus.connected}
+          muted={!displayStatus.connected}
+          label={`Display ${displayStatus.connected ? "connected" : "not open"}`}
+        />
         <button
           onClick={() => setShiftPanel(shift ? "close" : "open")}
-          className={`ml-auto rounded-full px-2.5 py-1 ${shift ? "bg-emerald-500/15 text-emerald-300" : "bg-amber-500/15 text-amber-300"}`}
+          className={`ml-auto shrink-0 rounded-full px-3 py-1 transition hover:brightness-125 ${shift ? "bg-emerald-500/15 text-emerald-300" : "bg-amber-500/15 text-amber-300"}`}
         >
           {shiftLoading
             ? "Loading shift…"
@@ -944,24 +948,24 @@ function Till() {
         {shift && (
           <button
             onClick={() => setShiftPanel("cash")}
-            className="rounded-full border border-white/15 px-2.5 py-1 hover:border-white/40"
+            className="shrink-0 rounded-full border border-white/10 bg-white/5 px-3 py-1 transition hover:bg-white/10"
           >
             Cash in/out
           </button>
         )}
       </div>
 
-      <div className="grid min-h-0 flex-1 lg:grid-cols-[132px_minmax(0,1fr)_400px]">
+      <div className="grid min-h-0 flex-1 lg:grid-cols-[148px_minmax(0,1fr)_408px]">
         {/* category rail (desktop) */}
-        <nav className="hidden min-h-0 flex-col gap-1 overflow-y-auto border-r border-white/10 bg-neutral-900/60 p-2 lg:flex">
+        <nav className="hidden min-h-0 flex-col gap-1 overflow-y-auto border-r border-white/10 bg-neutral-900/40 p-2 lg:flex">
           <button
             onClick={() => {
               setCatId(FAVOURITES_CATEGORY);
               setQ("");
             }}
-            className={`flex shrink-0 items-center gap-2 rounded-xl px-3 py-3 text-left text-[11px] font-black uppercase leading-tight tracking-wide transition ${
+            className={`flex shrink-0 items-center gap-2 rounded-xl px-3 py-3 text-left text-[11px] font-black uppercase leading-tight tracking-wide transition active:scale-[0.98] ${
               catId === FAVOURITES_CATEGORY && !q
-                ? "bg-amber-400 text-neutral-950"
+                ? "bg-amber-400 text-neutral-950 shadow-lg shadow-amber-400/20"
                 : "text-amber-200/80 hover:bg-amber-400/10 hover:text-amber-100"
             }`}
           >
@@ -974,9 +978,9 @@ function Till() {
                 setCatId(c.id);
                 setQ("");
               }}
-              className={`shrink-0 rounded-xl px-3 py-3 text-left text-[11px] font-black uppercase leading-tight tracking-wide transition ${
+              className={`shrink-0 rounded-xl px-3 py-3 text-left text-[11px] font-black uppercase leading-tight tracking-wide transition active:scale-[0.98] ${
                 catId === c.id && !q
-                  ? "bg-primary text-primary-foreground"
+                  ? "bg-primary text-primary-foreground shadow-lg shadow-primary/25"
                   : "text-white/60 hover:bg-white/5 hover:text-white"
               }`}
             >
