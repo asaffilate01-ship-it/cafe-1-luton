@@ -1688,7 +1688,7 @@ function Till() {
 
       {pay === "manual" && (
         <ManualCardModal
-*** unused
+          total={due}
           total={due}
           busy={busy}
           onClose={() => setPay(null)}
