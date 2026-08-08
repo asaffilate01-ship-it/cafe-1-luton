@@ -977,7 +977,7 @@ function Till() {
   return (
     <div className="flex h-screen flex-col overflow-hidden bg-[radial-gradient(120%_100%_at_50%_0%,#16181d_0%,#0a0a0b_60%)] text-white">
       {/* top bar — one row: who you are, shift state, everything else in one menu */}
-      <header className="relative flex shrink-0 items-center gap-2 border-b border-white/10 bg-neutral-900/80 px-3 py-2 backdrop-blur sm:gap-3 sm:px-4">
+      <header className="relative flex shrink-0 items-center gap-2 border-b border-white/10 bg-neutral-900/80 px-3 py-2 backdrop-blur sm:gap-3 sm:px-4 lg:py-1.5">
         <span className="hidden rounded-xl bg-primary px-3 py-1.5 text-xs font-black uppercase tracking-[0.2em] text-primary-foreground shadow-lg shadow-primary/25 sm:inline">
           Cafe 1 Till
         </span>
@@ -1008,7 +1008,7 @@ function Till() {
             onClick={() => setMenuOpen((v) => !v)}
             aria-label="Till menu"
             aria-expanded={menuOpen}
-            className="grid h-10 w-10 place-items-center rounded-xl border border-white/10 bg-white/5 transition hover:bg-white/10 active:scale-95"
+            className="grid h-10 w-10 place-items-center rounded-xl border border-white/10 bg-white/5 transition hover:bg-white/10 active:scale-95 lg:h-9 lg:w-9"
           >
             <MoreHorizontal className="h-5 w-5" />
           </button>
@@ -1140,7 +1140,7 @@ function Till() {
 
         {/* products */}
         <section className="flex min-h-0 flex-col">
-          <div className="shrink-0 space-y-3 border-b border-white/10 p-3 sm:p-4">
+          <div className="shrink-0 space-y-3 border-b border-white/10 p-3 sm:p-4 lg:space-y-0 lg:px-4 lg:py-2.5">
             <div className="flex items-center gap-2 rounded-2xl border border-white/10 bg-neutral-900/80 px-4 shadow-inner shadow-black/40 focus-within:border-primary/60">
               <Search className="h-4 w-4 shrink-0 text-white/40" />
               <input
@@ -1151,7 +1151,7 @@ function Till() {
                   if (event.key === "Enter" && addBarcode(q)) event.preventDefault();
                 }}
                 placeholder="Search or scan a barcode…"
-                className="h-12 min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-white/30"
+                className="h-12 min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-white/30 lg:h-10"
                 autoComplete="off"
               />
               {q && (
@@ -1184,8 +1184,8 @@ function Till() {
             )}
           </div>
 
-          <div ref={gridRef} className="min-h-0 flex-1 overflow-y-auto p-3 pb-24 sm:p-4 lg:pb-4">
-            <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
+          <div ref={gridRef} className="min-h-0 flex-1 overflow-y-auto p-3 pb-24 sm:p-4 lg:p-3">
+            <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 lg:gap-2 xl:grid-cols-5 2xl:grid-cols-6">
               {visible.map((i) => (
                 <div
                   key={i.id}
@@ -1195,7 +1195,7 @@ function Till() {
                     onClick={() => add(i)}
                     className="flex h-full w-full flex-col text-left transition active:scale-[0.97]"
                   >
-                    <div className="relative aspect-[4/3] w-full overflow-hidden bg-neutral-800">
+                    <div className="relative aspect-[4/3] w-full overflow-hidden bg-neutral-800 lg:aspect-[16/9]">
                       {i.image_url ? (
                         <>
                           <img
@@ -1212,11 +1212,11 @@ function Till() {
                         </div>
                       )}
                     </div>
-                    <div className="flex min-h-[64px] flex-1 flex-col justify-between gap-1 p-2.5 pr-10">
-                      <span className="line-clamp-2 text-[13px] font-semibold leading-snug">
+                    <div className="flex min-h-[64px] flex-1 flex-col justify-between gap-1 p-2.5 pr-10 lg:min-h-[54px] lg:p-2 lg:pr-9">
+                      <span className="line-clamp-2 text-[13px] font-semibold leading-snug lg:text-xs">
                         {i.name}
                       </span>
-                      <span className="font-display text-base font-black tabular-nums text-primary">
+                      <span className="font-display text-base font-black tabular-nums text-primary lg:text-sm">
                         {money(i.price_cents)}
                       </span>
                     </div>
@@ -1225,9 +1225,9 @@ function Till() {
                     onClick={() => favourites.toggle(i.id)}
                     aria-label={`${favourites.has(i.id) ? "Remove" : "Add"} ${i.name} ${favourites.has(i.id) ? "from" : "to"} favourites`}
                     aria-pressed={favourites.has(i.id)}
-                    className={`absolute bottom-2.5 right-2.5 grid h-9 w-9 place-items-center rounded-xl border shadow-lg transition active:scale-90 ${favourites.has(i.id) ? "border-amber-300 bg-amber-400 text-neutral-950" : "border-white/15 bg-neutral-950/80 text-white/55 hover:text-amber-300"}`}
+                    className={`absolute bottom-2.5 right-2.5 grid h-9 w-9 place-items-center rounded-xl border shadow-lg transition active:scale-90 lg:bottom-2 lg:right-2 lg:h-7 lg:w-7 ${favourites.has(i.id) ? "border-amber-300 bg-amber-400 text-neutral-950" : "border-white/15 bg-neutral-950/80 text-white/55 hover:text-amber-300"}`}
                   >
-                    <Star className={`h-4 w-4 ${favourites.has(i.id) ? "fill-current" : ""}`} />
+                    <Star className={`h-4 w-4 lg:h-3.5 lg:w-3.5 ${favourites.has(i.id) ? "fill-current" : ""}`} />
                   </button>
                 </div>
               ))}
@@ -1256,22 +1256,22 @@ function Till() {
               <ChevronDown className="h-4 w-4" />
             </button>
           </div>
-          <div className="shrink-0 space-y-2 border-b border-white/10 p-4">
-            <div className="grid grid-cols-2 gap-1.5 rounded-2xl border border-white/10 bg-neutral-950/50 p-1.5">
+          <div className="shrink-0 space-y-2 border-b border-white/10 p-4 lg:space-y-1.5 lg:p-2.5">
+            <div className="grid grid-cols-2 gap-1.5 rounded-2xl border border-white/10 bg-neutral-950/50 p-1.5 lg:grid-cols-4 lg:gap-1 lg:p-1">
               {FULFIL.map(({ id, label, Icon }) => (
                 <button
                   key={id}
                   onClick={() => setType(id)}
-                  className={`flex flex-col items-center gap-1 rounded-xl py-2.5 text-[11px] font-bold uppercase tracking-wide transition active:scale-95 ${type === id ? "bg-primary text-primary-foreground shadow-md shadow-primary/25" : "text-white/55 hover:bg-white/5 hover:text-white"}`}
+                  className={`flex flex-col items-center gap-1 rounded-xl py-2.5 text-[11px] font-bold uppercase tracking-wide transition active:scale-95 lg:gap-0.5 lg:py-1.5 lg:text-[10px] ${type === id ? "bg-primary text-primary-foreground shadow-md shadow-primary/25" : "text-white/55 hover:bg-white/5 hover:text-white"}`}
                 >
-                  <Icon className="h-4 w-4" /> {label}
+                  <Icon className="h-4 w-4 lg:h-3.5 lg:w-3.5" /> {label}
                 </button>
               ))}
             </div>
-            <div className="flex items-center gap-1.5 rounded-2xl border border-white/10 bg-neutral-950/50 p-1.5">
+            <div className="flex items-center gap-1.5 rounded-2xl border border-white/10 bg-neutral-950/50 p-1.5 lg:p-1">
               <button
                 onClick={() => setLaterTime("")}
-                className={`h-9 flex-1 rounded-xl text-[11px] font-bold uppercase tracking-wide transition active:scale-95 ${laterTime ? "text-white/55 hover:bg-white/5 hover:text-white" : "bg-primary text-primary-foreground shadow-md shadow-primary/25"}`}
+                className={`h-9 flex-1 rounded-xl text-[11px] font-bold uppercase tracking-wide transition active:scale-95 lg:h-8 ${laterTime ? "text-white/55 hover:bg-white/5 hover:text-white" : "bg-primary text-primary-foreground shadow-md shadow-primary/25"}`}
               >
                 ASAP
               </button>
@@ -1285,7 +1285,7 @@ function Till() {
                   value={laterTime}
                   onChange={(e) => setLaterTime(e.target.value)}
                   aria-label="Time this order is wanted for"
-                  className="h-9 w-full rounded-lg border border-white/10 bg-neutral-900 px-2 text-sm tabular-nums outline-none focus:border-primary"
+                  className="h-9 w-full rounded-lg border border-white/10 bg-neutral-900 px-2 text-sm tabular-nums outline-none focus:border-primary lg:h-8"
                 />
               </label>
             </div>
@@ -1294,19 +1294,19 @@ function Till() {
                 Pre-order · kitchen will hold this until {laterTime}
               </p>
             )}
-            <div className="grid gap-2 sm:grid-cols-2">
+            <div className="grid gap-2 sm:grid-cols-2 lg:gap-1.5">
               <input
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 placeholder="Customer name (optional)"
-                className="h-10 rounded-xl border border-white/10 bg-neutral-800 px-3 text-sm outline-none placeholder:text-white/30 focus:border-primary"
+                className="h-10 rounded-xl border border-white/10 bg-neutral-800 px-3 text-sm outline-none placeholder:text-white/30 focus:border-primary lg:h-9"
               />
               {type === "dine_in" ? (
                 <input
                   value={table}
                   onChange={(e) => setTable(e.target.value)}
                   placeholder="Table number"
-                  className="h-10 rounded-xl border border-white/10 bg-neutral-800 px-3 text-sm outline-none placeholder:text-white/30 focus:border-primary"
+                  className="h-10 rounded-xl border border-white/10 bg-neutral-800 px-3 text-sm outline-none placeholder:text-white/30 focus:border-primary lg:h-9"
                 />
               ) : (
                 <div className="hidden sm:block" />
@@ -1314,8 +1314,8 @@ function Till() {
             </div>
           </div>
 
-          <div className="min-h-0 flex-1 overflow-y-auto p-4">
-            <ul ref={basketRef} className="space-y-2">
+          <div className="min-h-0 flex-1 overflow-y-auto p-4 lg:p-2.5">
+            <ul ref={basketRef} className="space-y-2 lg:space-y-1.5">
               {lines.map((l) => (
                 <li
                   key={l.key}
@@ -1381,8 +1381,8 @@ function Till() {
           </div>
 
           {pay === "cash" && (
-            <div className="shrink-0 border-t border-white/10 p-3">
-            <div className="mb-2 grid grid-cols-3 items-end gap-2 rounded-2xl border border-white/5 bg-neutral-800/70 px-3 py-2.5">
+            <div className="shrink-0 border-t border-white/10 p-3 lg:p-2.5">
+            <div className="mb-2 grid grid-cols-3 items-end gap-2 rounded-2xl border border-white/5 bg-neutral-800/70 px-3 py-2.5 lg:mb-1.5 lg:py-2">
                 <div>
                   <p className="text-[10px] font-bold uppercase tracking-widest text-white/40">
                     Tendered
@@ -1413,33 +1413,33 @@ function Till() {
                   <button
                     key={n}
                     onClick={() => setTendered((t) => Math.min(t * 10 + n * 100, 5_000_00))}
-                    className="h-12 rounded-xl border border-white/10 bg-neutral-800/60 text-lg font-bold tabular-nums transition hover:bg-neutral-700/60 active:scale-95"
+                    className="h-12 rounded-xl border border-white/10 bg-neutral-800/60 text-lg font-bold tabular-nums transition hover:bg-neutral-700/60 active:scale-95 lg:h-10"
                   >
                     {n}
                   </button>
                 ))}
                 <button
                   onClick={() => setTendered(due)}
-                  className="h-12 rounded-xl border border-emerald-500/40 bg-emerald-500/10 text-xs font-black uppercase tracking-wide text-emerald-300 transition hover:bg-emerald-500/20 active:scale-95"
+                  className="h-12 rounded-xl border border-emerald-500/40 bg-emerald-500/10 text-xs font-black uppercase tracking-wide text-emerald-300 transition hover:bg-emerald-500/20 active:scale-95 lg:h-10"
                 >
                   Exact
                 </button>
                 <button
                   onClick={() => setTendered((t) => Math.min(t * 10, 5_000_00))}
-                  className="h-12 rounded-xl border border-white/10 bg-neutral-800/60 text-lg font-bold tabular-nums transition hover:bg-neutral-700/60 active:scale-95"
+                  className="h-12 rounded-xl border border-white/10 bg-neutral-800/60 text-lg font-bold tabular-nums transition hover:bg-neutral-700/60 active:scale-95 lg:h-10"
                 >
                   0
                 </button>
                 <button
                   onClick={() => setTendered((t) => Math.floor(t / 10 / 100) * 100)}
                   aria-label="Delete last digit"
-                  className="grid h-12 place-items-center rounded-xl border border-white/10 bg-neutral-800/60 transition hover:bg-neutral-700/60 active:scale-95"
+                  className="grid h-12 place-items-center rounded-xl border border-white/10 bg-neutral-800/60 transition hover:bg-neutral-700/60 active:scale-95 lg:h-10"
                 >
                   <Delete className="h-4 w-4" />
                 </button>
                 <button
                   onClick={() => setTendered(0)}
-                  className="h-12 rounded-xl border border-white/10 text-xs font-black uppercase tracking-wide text-white/50 transition hover:bg-white/5 active:scale-95"
+                  className="h-12 rounded-xl border border-white/10 text-xs font-black uppercase tracking-wide text-white/50 transition hover:bg-white/5 active:scale-95 lg:h-10"
                 >
                   Clear
                 </button>
@@ -1449,7 +1449,7 @@ function Till() {
                   <button
                     key={v}
                     onClick={() => setTendered(v)}
-                    className="h-9 rounded-xl border border-white/10 text-xs font-bold tabular-nums text-white/70 transition hover:bg-white/5 active:scale-95"
+                    className="h-9 rounded-xl border border-white/10 text-xs font-bold tabular-nums text-white/70 transition hover:bg-white/5 active:scale-95 lg:h-8"
                   >
                     {money(v)}
                   </button>
@@ -1491,7 +1491,7 @@ function Till() {
               ) : (
                 <button
                   onClick={() => setVoucherOpen(true)}
-                  className="inline-flex h-10 w-full items-center justify-center gap-2 rounded-xl border border-indigo-500/40 text-xs font-bold uppercase tracking-wide text-indigo-300 hover:border-indigo-400"
+                  className="inline-flex h-10 w-full items-center justify-center gap-2 rounded-xl border border-indigo-500/40 text-xs font-bold uppercase tracking-wide text-indigo-300 hover:border-indigo-400 lg:h-9"
                 >
                   <Ticket className="h-4 w-4" /> Juror voucher
                 </button>
@@ -1499,9 +1499,9 @@ function Till() {
             </div>
           )}
 
-          <div className="shrink-0 space-y-2 border-t border-white/10 bg-neutral-950/40 p-3">
+          <div className="shrink-0 space-y-2 border-t border-white/10 bg-neutral-950/40 p-3 lg:space-y-1.5 lg:p-2.5">
             {lines.length > 0 && pay !== "cash" && (
-              <div className="flex items-baseline justify-between rounded-2xl bg-white/5 px-4 py-2.5">
+              <div className="flex items-baseline justify-between rounded-2xl bg-white/5 px-4 py-2.5 lg:py-2">
                 <span className="text-[10px] font-black uppercase tracking-[0.2em] text-white/40">
                   Due · {count} item{count === 1 ? "" : "s"}
                 </span>
@@ -1518,7 +1518,7 @@ function Till() {
                     if (tendered < due) return toast.error("Tendered is less than the amount due");
                     void finish("cash");
                   }}
-                  className="inline-flex h-14 items-center justify-between gap-2 rounded-2xl bg-emerald-600 px-5 text-base font-bold text-white shadow-lg shadow-emerald-600/25 transition active:scale-[0.99] disabled:opacity-40"
+                  className="inline-flex h-14 items-center justify-between gap-2 rounded-2xl bg-emerald-600 px-5 text-base font-bold text-white shadow-lg shadow-emerald-600/25 transition active:scale-[0.99] disabled:opacity-40 lg:h-12"
                 >
                   <span className="inline-flex items-center gap-2">
                     <Banknote className="h-5 w-5" /> Take cash
@@ -1530,7 +1530,7 @@ function Till() {
                     setPay(null);
                     setTendered(0);
                   }}
-                  className="h-14 rounded-2xl border border-white/10 px-4 text-sm font-bold text-white/60 transition hover:bg-white/5 active:scale-95"
+                  className="h-14 rounded-2xl border border-white/10 px-4 text-sm font-bold text-white/60 transition hover:bg-white/5 active:scale-95 lg:h-12"
                 >
                   Back
                 </button>
@@ -1539,7 +1539,7 @@ function Till() {
               <button
                 disabled={!lines.length || busy || !shift || !online}
                 onClick={() => setPayOpen(true)}
-                className="inline-flex h-14 w-full items-center justify-between gap-2 rounded-2xl bg-primary px-5 text-base font-bold text-primary-foreground shadow-lg shadow-primary/25 transition active:scale-[0.99] disabled:opacity-40 disabled:shadow-none"
+                className="inline-flex h-14 w-full items-center justify-between gap-2 rounded-2xl bg-primary px-5 text-base font-bold text-primary-foreground shadow-lg shadow-primary/25 transition active:scale-[0.99] disabled:opacity-40 disabled:shadow-none lg:h-12"
               >
                 <span className="inline-flex items-center gap-2">
                   <CreditCard className="h-5 w-5" /> Charge
@@ -1550,7 +1550,7 @@ function Till() {
               <button
                 disabled={!lines.length || busy || !shift || !online}
                 onClick={() => void finish("cash")}
-                className="inline-flex h-14 w-full items-center justify-between gap-2 rounded-2xl bg-indigo-500 px-5 text-base font-bold text-white shadow-lg shadow-indigo-500/25 transition active:scale-[0.99] disabled:opacity-40 disabled:shadow-none"
+                className="inline-flex h-14 w-full items-center justify-between gap-2 rounded-2xl bg-indigo-500 px-5 text-base font-bold text-white shadow-lg shadow-indigo-500/25 transition active:scale-[0.99] disabled:opacity-40 disabled:shadow-none lg:h-12"
               >
                 <span className="inline-flex items-center gap-2">
                   <Ticket className="h-5 w-5" /> Complete voucher sale
