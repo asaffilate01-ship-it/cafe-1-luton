@@ -66,7 +66,7 @@ export async function purgeStaleUnpaidOrders(): Promise<number> {
   const { data: stale } = await supabaseAdmin
     .from("orders")
     .select(
-      "id, source, created_at, total_cents, sumup_reference, promo_code, sumup_checkout_id, voucher_holder_id, voucher_cents, customer_id, loyalty_free_drinks_used",
+      "id, source, created_at, total_cents, sumup_reference, promo_code, sumup_checkout_id, voucher_holder_id, voucher_cents, customer_id, loyalty_free_drinks_used, account_id, payment_method",
     )
     .eq("status", "pending_payment")
     .eq("payment_status", "pending")
@@ -75,6 +75,8 @@ export async function purgeStaleUnpaidOrders(): Promise<number> {
 
   let abandoned = 0;
   for (const order of stale ?? []) {
+    // Tab / house-account orders are settled weekly — never auto-abandon them.
+    if (order.account_id || order.payment_method === "on_account") continue;
     // Counter orders keep the longer grace period.
     if (
       order.source !== "web" &&
