@@ -23,6 +23,7 @@ import {
   buildSumUpItemsCsv,
   buildSumUpModifiersCsv,
   buildSumUpFullMenuCsv,
+  buildSumUpNativeItemsCsv,
 } from "@/lib/sumup-export";
 
 export const Route = createFileRoute("/admin/menu")({
@@ -223,6 +224,10 @@ function MenuManagerInner() {
               onClick={() => {
                 const stamp = new Date().toISOString().slice(0, 10);
                 const files: [string, string][] = [
+                  [
+                    `sumup-items-import-${stamp}.csv`,
+                    buildSumUpNativeItemsCsv(cats, items, mods),
+                  ],
                   [`cafe1-full-menu-${stamp}.csv`, buildSumUpFullMenuCsv(cats, items, mods)],
                   [`sumup-categories-${stamp}.csv`, buildSumUpCategoriesCsv(cats)],
                   [`sumup-items-${stamp}.csv`, buildSumUpItemsCsv(cats, items)],
