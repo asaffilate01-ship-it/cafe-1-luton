@@ -4,6 +4,9 @@ import { toast } from "sonner";
 import { Plus, Trash2, X } from "lucide-react";
 import { createManualOrder, type ManualChannel } from "@/lib/manual-order.functions";
 import { listAccounts, quickAddAccount } from "@/lib/accounts.functions";
+import { findSimilarAccountOrder } from "@/lib/judge-tab.functions";
+import { askConfirm } from "@/lib/confirm";
+import { money } from "@/lib/format";
 import { JURY_DELIVERY_ROOMS } from "@/components/order-setup-gate";
 
 type Line = { name: string; qty: number; notes: string };
@@ -156,13 +159,50 @@ export function ManualOrderDialog({
     if (isMarketplace && !reference.trim()) return toast.error("Enter the order reference");
     if (!items.length) return toast.error("Add at least one item");
 
+    // A judge often re-orders the same lunch — warn before a second unpaid
+    // charge lands on the same tab.
+    if (paymentMethod === "account" && accountId) {
+      try {
+        const { match } = await findSimilar({
+          data: {
+            account_id: accountId,
+            item_names: items.flatMap((line) => Array(line.qty).fill(line.name) as string[]),
+          },
+        });
+        if (match) {
+          const when = new Date(match.created_at).toLocaleString([], {
+            weekday: "short",
+            day: "numeric",
+            month: "short",
+            hour: "2-digit",
+            minute: "2-digit",
+          });
+          const ok = await askConfirm({
+            title: `Possible duplicate for ${match.account_name}`,
+            description: `${match.account_name} had a ${match.identical ? "matching" : "similar"} order on ${when} (#${match.order_number}, ${money(match.total_cents)}) which is still unpaid. Is this a different order?`,
+            confirmLabel: "Yes — different order",
+            cancelLabel: "No — cancel",
+            destructive: false,
+          });
+          if (!ok) return;
+        }
+      } catch {
+        // A failed duplicate check must never block a real order.
+      }
+    }
+
     setSaving(true);
     try {
       const result = await create({
         data: {
           channel,
           reference: reference.trim() || undefined,
-          customer_name: customerName.trim() || undefined,
+          customer_name:
+            customerName.trim() ||
+            (paymentMethod === "account"
+              ? accounts.find((a) => a.id === accountId)?.name
+              : undefined) ||
+            undefined,
           // "Judges' room" is a dine-in ticket served to a specific room.
           type: type === "dine_in_judges" ? "dine_in" : type,
           total_cents: Math.round((Number(total) || 0) * 100),
