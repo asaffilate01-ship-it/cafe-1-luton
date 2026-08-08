@@ -1334,7 +1334,17 @@ function Till() {
             </div>
           )}
 
-          <div className="shrink-0 space-y-2 border-t border-white/10 p-3">
+          <div className="shrink-0 space-y-2 border-t border-white/10 bg-neutral-950/40 p-3">
+            {lines.length > 0 && pay !== "cash" && (
+              <div className="flex items-baseline justify-between rounded-2xl bg-white/5 px-4 py-2.5">
+                <span className="text-[10px] font-black uppercase tracking-[0.2em] text-white/40">
+                  Due · {count} item{count === 1 ? "" : "s"}
+                </span>
+                <span className="font-display text-2xl font-black tabular-nums text-primary">
+                  {money(due)}
+                </span>
+              </div>
+            )}
             {due > 0 ? (
               <button
                 disabled={!lines.length || busy || !shift || !online}
@@ -1342,7 +1352,7 @@ function Till() {
                   setReaderSaleKey(crypto.randomUUID());
                   setPay("reader");
                 }}
-                className="inline-flex h-14 w-full items-center justify-between gap-2 rounded-xl bg-primary px-5 text-base font-bold text-primary-foreground disabled:opacity-40"
+                className="inline-flex h-14 w-full items-center justify-between gap-2 rounded-2xl bg-primary px-5 text-base font-bold text-primary-foreground shadow-lg shadow-primary/25 transition active:scale-[0.99] disabled:opacity-40 disabled:shadow-none"
               >
                 <span className="inline-flex items-center gap-2">
                   <Smartphone className="h-5 w-5" /> Charge SumUp Solo
@@ -1353,7 +1363,7 @@ function Till() {
               <button
                 disabled={!lines.length || busy || !shift || !online}
                 onClick={() => void finish("cash")}
-                className="inline-flex h-14 w-full items-center justify-between gap-2 rounded-xl bg-indigo-500 px-5 text-base font-bold text-white disabled:opacity-40"
+                className="inline-flex h-14 w-full items-center justify-between gap-2 rounded-2xl bg-indigo-500 px-5 text-base font-bold text-white shadow-lg shadow-indigo-500/25 transition active:scale-[0.99] disabled:opacity-40 disabled:shadow-none"
               >
                 <span className="inline-flex items-center gap-2">
                   <Ticket className="h-5 w-5" /> Complete voucher sale
@@ -1373,27 +1383,27 @@ function Till() {
                   if (tendered < due) return toast.error("Tendered is less than the amount due");
                   void finish("cash");
                 }}
-                className="inline-flex h-12 items-center justify-center gap-2 rounded-xl bg-emerald-600 text-sm font-bold text-white disabled:opacity-40"
+                className="inline-flex h-12 items-center justify-center gap-1.5 rounded-xl bg-emerald-600 text-sm font-bold text-white shadow-md shadow-emerald-600/20 transition active:scale-95 disabled:opacity-40 disabled:shadow-none"
               >
                 <Banknote className="h-4 w-4" /> {pay === "cash" ? "Take cash" : "Cash"}
               </button>
               <button
                 onClick={() => void manualDrawer()}
-                className="inline-flex h-12 items-center justify-center gap-2 rounded-xl border border-white/15 text-sm font-bold text-white/80 hover:border-white/40"
+                className="inline-flex h-12 items-center justify-center gap-1.5 rounded-xl border border-white/10 bg-white/5 text-sm font-bold text-white/80 transition hover:bg-white/10 active:scale-95"
               >
                 <Inbox className="h-4 w-4" /> Drawer
               </button>
               <button
                 disabled={!lines.length || busy || !shift || !online || due < 2}
                 onClick={startSplitPayment}
-                className="inline-flex h-12 items-center justify-center gap-1 rounded-xl border border-white/15 text-sm font-bold text-white/80 disabled:opacity-40"
+                className="inline-flex h-12 items-center justify-center gap-1.5 rounded-xl border border-white/10 bg-white/5 text-sm font-bold text-white/80 transition hover:bg-white/10 active:scale-95 disabled:opacity-40"
               >
                 <CircleDollarSign className="h-4 w-4" /> Split
               </button>
               <button
                 disabled={!lines.length || busy || !shift || !online || due === 0 || !has("admin")}
                 onClick={() => setPay("manual")}
-                className="inline-flex h-12 items-center justify-center gap-2 rounded-xl border border-white/15 text-sm font-bold text-white/80 disabled:opacity-40"
+                className="inline-flex h-12 items-center justify-center gap-1.5 rounded-xl border border-white/10 bg-white/5 text-sm font-bold text-white/80 transition hover:bg-white/10 active:scale-95 disabled:opacity-40"
               >
                 <CreditCard className="h-4 w-4" /> Manual
               </button>
