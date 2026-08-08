@@ -223,22 +223,13 @@ function MenuManagerInner() {
               type="button"
               onClick={() => {
                 const stamp = new Date().toISOString().slice(0, 10);
-                const files: [string, string][] = [
-                  [
-                    `sumup-items-import-${stamp}.csv`,
-                    buildSumUpNativeItemsCsv(cats, items, mods),
-                  ],
-                  [`cafe1-full-menu-${stamp}.csv`, buildSumUpFullMenuCsv(cats, items, mods)],
-                  [`sumup-categories-${stamp}.csv`, buildSumUpCategoriesCsv(cats)],
-                  [`sumup-items-${stamp}.csv`, buildSumUpItemsCsv(cats, items)],
-                  [`sumup-modifiers-${stamp}.csv`, buildSumUpModifiersCsv(cats, items, mods)],
-                ];
-                // Browsers drop downloads fired in the same tick — space them out.
-                files.forEach(([name, csv], index) => {
-                  window.setTimeout(() => downloadCsv(name, csv), index * 600);
-                });
+                // Exactly one file, in SumUp's own items-export layout.
+                downloadCsv(
+                  `items-export-cafe1-${stamp}.csv`,
+                  buildSumUpNativeItemsCsv(cats, items, mods),
+                );
                 toast.success(
-                  `Exporting ${cats.length} categories, ${items.length} items and ${mods.length} modifiers`,
+                  `SumUp import file ready — ${items.length} items, ${mods.length} modifiers`,
                 );
               }}
               className="inline-flex h-10 items-center gap-2 rounded-xl border border-border px-3 text-sm font-semibold hover:border-primary"
