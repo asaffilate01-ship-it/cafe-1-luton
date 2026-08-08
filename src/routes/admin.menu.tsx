@@ -22,6 +22,7 @@ import {
   buildSumUpCategoriesCsv,
   buildSumUpItemsCsv,
   buildSumUpModifiersCsv,
+  buildSumUpFullMenuCsv,
 } from "@/lib/sumup-export";
 
 export const Route = createFileRoute("/admin/menu")({
@@ -221,13 +222,19 @@ function MenuManagerInner() {
               type="button"
               onClick={() => {
                 const stamp = new Date().toISOString().slice(0, 10);
-                downloadCsv(`sumup-categories-${stamp}.csv`, buildSumUpCategoriesCsv(cats));
-                downloadCsv(`sumup-items-${stamp}.csv`, buildSumUpItemsCsv(cats, items));
-                downloadCsv(
-                  `sumup-modifiers-${stamp}.csv`,
-                  buildSumUpModifiersCsv(cats, items, mods),
+                const files: [string, string][] = [
+                  [`cafe1-full-menu-${stamp}.csv`, buildSumUpFullMenuCsv(cats, items, mods)],
+                  [`sumup-categories-${stamp}.csv`, buildSumUpCategoriesCsv(cats)],
+                  [`sumup-items-${stamp}.csv`, buildSumUpItemsCsv(cats, items)],
+                  [`sumup-modifiers-${stamp}.csv`, buildSumUpModifiersCsv(cats, items, mods)],
+                ];
+                // Browsers drop downloads fired in the same tick — space them out.
+                files.forEach(([name, csv], index) => {
+                  window.setTimeout(() => downloadCsv(name, csv), index * 600);
+                });
+                toast.success(
+                  `Exporting ${cats.length} categories, ${items.length} items and ${mods.length} modifiers`,
                 );
-                toast.success("SumUp CSVs downloaded — import them in the SumUp dashboard");
               }}
               className="inline-flex h-10 items-center gap-2 rounded-xl border border-border px-3 text-sm font-semibold hover:border-primary"
             >
