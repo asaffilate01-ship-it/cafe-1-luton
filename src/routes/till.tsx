@@ -37,6 +37,8 @@ import {
   setDeviceBridgeConfig,
 } from "@/lib/device-bridge";
 import { lookupVoucher } from "@/lib/vouchers.functions";
+import { listAccounts, quickAddAccount } from "@/lib/accounts.functions";
+import { chargeOrderToAccount, findSimilarAccountOrder } from "@/lib/judge-tab.functions";
 import { QrCode } from "@/components/qr-code";
 import {
   ReaderConnectionAlert,
@@ -362,6 +364,9 @@ function Till() {
   const cashEvent = useServerFn(recordTillCashEvent);
   const getMenuItems = useServerFn(getStaffMenuItems);
   const scheduleOrder = useServerFn(setCounterOrderSchedule);
+  const prepareOrder = useServerFn(prepareCounterOrder);
+  const chargeToAccount = useServerFn(chargeOrderToAccount);
+  const findSimilar = useServerFn(findSimilarAccountOrder);
 
   const [cats, setCats] = useState<Cat[]>([]);
   const [items, setItems] = useState<Item[]>([]);
@@ -388,6 +393,7 @@ function Till() {
   const [settings, setSettings] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [payOpen, setPayOpen] = useState(false);
+  const [tabOpen, setTabOpen] = useState(false);
   const [locked, setLocked] = useState(false);
   const [busy, setBusy] = useState(false);
   const [lastOrder, setLastOrder] = useState<{ n: number; total: number; id: string } | null>(null);
@@ -727,7 +733,7 @@ function Till() {
   }
 
   const completeSale = useCallback(
-    async (res: CounterResult, paymentMethod: "cash" | "card" | "split") => {
+    async (res: CounterResult, paymentMethod: "cash" | "card" | "split" | "account") => {
       setLastOrder({ n: res.order_number, total: res.total_cents, id: res.order_id });
       const laterIso = laterTime ? laterTimeToIso(laterTime) : null;
       if (laterIso) {
@@ -827,6 +833,82 @@ function Till() {
       }
     },
     [completeSale, create, lines, name, online, shift, side, table, type, voucher],
+  );
+
+  /**
+   * Judge orders may go on that judge's tab. The judge list is the same house
+   * account list the KDS manual ticket uses, so both routes bill one judge.
+   */
+  const chargeJudgeTab = useCallback(
+    async (account: { id: string; name: string }) => {
+      if (!shift) return toast.error("Open a till shift first");
+      if (!online) return toast.error("The till is offline — reconnect before charging a tab");
+      setBusy(true);
+      try {
+        const { match } = await findSimilar({
+          data: {
+            account_id: account.id,
+            item_names: lines.flatMap((line) => Array(line.qty).fill(line.name) as string[]),
+          },
+        });
+        if (match) {
+          const when = new Date(match.created_at).toLocaleString([], {
+            weekday: "short",
+            day: "numeric",
+            month: "short",
+            hour: "2-digit",
+            minute: "2-digit",
+          });
+          const ok = await askConfirm({
+            title: `Possible duplicate for ${match.account_name}`,
+            description: `${match.account_name} had a ${match.identical ? "matching" : "similar"} order on ${when} (#${match.order_number}, ${money(match.total_cents)}) which is still unpaid. Is this a different order?`,
+            confirmLabel: "Yes — different order",
+            cancelLabel: "No — cancel",
+            destructive: false,
+          });
+          if (!ok) return;
+        }
+        const res = await prepareOrder({
+          data: {
+            idempotency_key: crypto.randomUUID(),
+            shift_id: shift.id,
+            customer_name: account.name,
+            type,
+            table_number: table.trim() || undefined,
+            pos_terminal: side,
+            voucher_code: voucher?.code,
+            voucher_pin: voucher?.pin,
+            items: lines.map((line) => ({
+              menu_item_id: line.id,
+              qty: line.qty,
+              notes: line.notes || undefined,
+              modifier_ids: line.modifier_ids,
+            })),
+          },
+        });
+        await chargeToAccount({ data: { order_id: res.order_id, account_id: account.id } });
+        setTabOpen(false);
+        await completeSale(res, "account");
+        toast.success(`Charged to ${account.name}'s tab`);
+      } catch (e) {
+        toast.error(e instanceof Error ? e.message : "Could not put that order on the tab");
+      } finally {
+        setBusy(false);
+      }
+    },
+    [
+      chargeToAccount,
+      completeSale,
+      findSimilar,
+      lines,
+      online,
+      prepareOrder,
+      shift,
+      side,
+      table,
+      type,
+      voucher,
+    ],
   );
 
   async function changeSide(next: Side) {
@@ -1580,6 +1662,17 @@ function Till() {
                   }}
                 />
               )}
+              {side === "judge" && (
+                <PayChoice
+                  icon={ReceiptText}
+                  label="Put on a judge's tab"
+                  hint="Billed to the judge's account, not paid now"
+                  onClick={() => {
+                    setPayOpen(false);
+                    setTabOpen(true);
+                  }}
+                />
+              )}
             </div>
             <button
               onClick={() => setPayOpen(false)}
@@ -1597,6 +1690,14 @@ function Till() {
           busy={busy}
           onClose={() => setPay(null)}
           onConfirm={(reference) => void finish("card", reference)}
+        />
+      )}
+      {tabOpen && (
+        <JudgeTabModal
+          total={due}
+          busy={busy}
+          onClose={() => setTabOpen(false)}
+          onConfirm={(account: { id: string; name: string }) => void chargeJudgeTab(account)}
         />
       )}
       {(pay === "reader" || pay === "split") && shift && readerSaleKey && (
@@ -1713,6 +1814,107 @@ function Till() {
 /** One row in the till's overflow menu. */
 
 /** One payment method row in the charge sheet. */
+/** Judge tab picker — same house accounts the KDS manual judge ticket uses. */
+function JudgeTabModal({
+  total,
+  busy,
+  onClose,
+  onConfirm,
+}: {
+  total: number;
+  busy: boolean;
+  onClose: () => void;
+  onConfirm: (account: { id: string; name: string }) => void;
+}) {
+  const load = useServerFn(listAccounts);
+  const add = useServerFn(quickAddAccount);
+  const [accounts, setAccounts] = useState<{ id: string; name: string }[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [query, setQuery] = useState("");
+  const [adding, setAdding] = useState(false);
+
+  useEffect(() => {
+    let live = true;
+    void load()
+      .then((rows) => {
+        if (live) setAccounts(rows.map((r) => ({ id: r.id, name: r.name })));
+      })
+      .catch(() => toast.error("Could not load the judge tabs"))
+      .finally(() => live && setLoading(false));
+    return () => {
+      live = false;
+    };
+  }, [load]);
+
+  const term = query.trim().toLowerCase();
+  const shown = accounts.filter((a) => !term || a.name.toLowerCase().includes(term));
+  const exact = accounts.some((a) => a.name.toLowerCase() === term);
+
+  async function createAndCharge() {
+    const name = query.trim();
+    if (name.length < 2) return toast.error("Enter the judge's name");
+    setAdding(true);
+    try {
+      const account = await add({ data: { name } });
+      setAccounts((current) =>
+        current.some((a) => a.id === account.id)
+          ? current
+          : [{ id: account.id, name: account.name }, ...current],
+      );
+      onConfirm({ id: account.id, name: account.name });
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Could not add that judge");
+    } finally {
+      setAdding(false);
+    }
+  }
+
+  return (
+    <Modal title="Put on a judge's tab" onClose={onClose}>
+      <div className="space-y-3">
+        <p className="text-sm text-white/60">
+          {money(total)} will be billed to the judge's account. Nothing is taken now.
+        </p>
+        <input
+          autoFocus
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          placeholder="Search or type a judge's name"
+          className="h-12 w-full rounded-2xl border border-white/10 bg-white/5 px-4 text-base font-semibold outline-none focus:border-primary"
+        />
+        <div className="max-h-64 space-y-1.5 overflow-y-auto">
+          {loading && <p className="text-sm text-white/40">Loading tabs…</p>}
+          {!loading && !shown.length && (
+            <p className="text-sm text-white/40">No matching tab — add the judge below.</p>
+          )}
+          {shown.map((account) => (
+            <button
+              key={account.id}
+              disabled={busy}
+              onClick={() => onConfirm(account)}
+              className="flex h-12 w-full items-center justify-between rounded-2xl border border-white/10 bg-white/5 px-4 text-left text-sm font-bold transition hover:bg-white/10 disabled:opacity-40"
+            >
+              <span className="truncate">{account.name}</span>
+              <span className="text-[11px] font-semibold uppercase tracking-wide text-white/40">
+                Charge tab
+              </span>
+            </button>
+          ))}
+        </div>
+        {term.length >= 2 && !exact && (
+          <button
+            disabled={adding || busy}
+            onClick={() => void createAndCharge()}
+            className="h-12 w-full rounded-2xl bg-primary text-sm font-bold text-primary-foreground disabled:opacity-40"
+          >
+            Add “{query.trim()}” and charge tab
+          </button>
+        )}
+      </div>
+    </Modal>
+  );
+}
+
 function PayChoice({
   icon: Icon,
   label,
