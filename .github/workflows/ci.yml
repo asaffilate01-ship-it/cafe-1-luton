@@ -42,7 +42,13 @@ jobs:
 
       - name: Record application evidence
         if: always()
-        run: npm run release:status -- --output release-evidence/release-status.json
+        run: |
+          mkdir -p release-evidence
+          npm run verify:dependencies -- --output release-evidence/dependency-contract.json
+          npm run verify:migrations -- --output release-evidence/migration-integrity.json
+          npm run verify:capabilities -- --output release-evidence/software-capabilities.json
+          npm run verify:bundle-budget -- --output release-evidence/bundle-budget.json
+          npm run release:status -- --output release-evidence/release-status.json
 
       - name: Upload application evidence
         if: always()
@@ -65,6 +71,9 @@ jobs:
         uses: supabase/setup-cli@v3
         with:
           version: 2.111.0
+
+      - name: Verify immutable migration history
+        run: node scripts/verify-migration-integrity.mjs
 
       - name: Start local database and apply every migration
         run: supabase db start

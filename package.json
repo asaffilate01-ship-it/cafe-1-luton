@@ -14,11 +14,15 @@
     "test:e2e": "playwright test",
     "test:watch": "vitest",
     "format": "prettier --write .",
-    "check": "npm run typecheck && npm run lint && npm run test && npm run build && npm run verify:build-output && npm run verify:routes",
+    "check": "npm run verify:dependencies && npm run verify:migrations && npm run verify:capabilities && npm run typecheck && npm run lint && npm run test && npm run build && npm run verify:bundle-budget && npm run verify:build-output && npm run verify:routes",
     "release:guard": "node scripts/release-guard.mjs",
     "release:status": "node scripts/release-status.mjs",
     "repository:hygiene": "node scripts/repository-hygiene.mjs",
     "validate:production-env": "node scripts/validate-production-env.mjs",
+    "verify:dependencies": "node scripts/verify-dependency-contract.mjs",
+    "verify:migrations": "node scripts/verify-migration-integrity.mjs",
+    "verify:capabilities": "node scripts/verify-release-capabilities.mjs",
+    "verify:bundle-budget": "node scripts/verify-bundle-budget.mjs",
     "verify:build-output": "node scripts/verify-build-output.mjs",
     "verify:routes": "node scripts/verify-routes.mjs",
     "smoke:production": "node scripts/verify-production.mjs",
@@ -113,7 +117,9 @@
   },
   "overrides": {
     "brace-expansion": "^1.1.17",
-    "js-yaml": "^5.2.3"
+    "dompurify": "3.4.13",
+    "js-yaml": "^5.2.3",
+    "nanoid": "3.3.17"
   },
   "pnpm": {
     "overrides": {

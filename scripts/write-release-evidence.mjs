@@ -16,6 +16,10 @@ const candidateFiles = [
   "release-evidence/production-smoke.log",
   "release-evidence/release-status.json",
   "release-evidence/operational-acceptance.json",
+  "release-evidence/dependency-contract.json",
+  "release-evidence/migration-integrity.json",
+  "release-evidence/software-capabilities.json",
+  "release-evidence/bundle-budget.json",
 ];
 const files = candidateFiles
   .filter((path) => existsSync(resolve(root, path)))

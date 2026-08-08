@@ -1,0 +1,169 @@
+{
+  "schema_version": 1,
+  "capabilities": [
+    {
+      "id": "server_priced_pos",
+      "name": "Server-priced counter orders and modifier enforcement",
+      "evidence": [
+        {
+          "path": "src/lib/pos.functions.ts",
+          "includes": [
+            "validateModifierSelection",
+            "export const prepareCounterOrder",
+            "modifier_ids"
+          ]
+        },
+        {
+          "path": "src/routes/till.tsx",
+          "includes": ["useServerFn(prepareCounterOrder)", "validateModifierSelection"]
+        }
+      ]
+    },
+    {
+      "id": "pos_hardware_bridge",
+      "name": "Authenticated Wi-Fi, USB or Bluetooth printer and cash-drawer bridge",
+      "evidence": [
+        {
+          "path": "device-bridge/src/server.mjs",
+          "includes": [
+            "timingSafeEqual",
+            "CAFE1_ALLOWED_ORIGINS",
+            "network-escpos",
+            "system-queue",
+            "\"/v1/drawer/open\""
+          ]
+        },
+        {
+          "path": "src/lib/device-bridge.ts",
+          "includes": [
+            "export async function checkDeviceBridge",
+            "export async function printViaDeviceBridge",
+            "export async function openDrawerViaDeviceBridge"
+          ]
+        },
+        {
+          "path": "src/routes/till.tsx",
+          "includes": ["checkDeviceBridge", "printViaDeviceBridge"]
+        }
+      ]
+    },
+    {
+      "id": "customer_display",
+      "name": "Recoverable customer display with live presence heartbeat",
+      "evidence": [
+        {
+          "path": "src/lib/customer-display.ts",
+          "includes": [
+            "DISPLAY_STATE_KEY",
+            "Voucher credentials are deliberately never persisted",
+            "announceDisplayPresence",
+            "subscribeToDisplayPresence"
+          ]
+        },
+        {
+          "path": "src/routes/display.tsx",
+          "includes": ["window.setInterval(announceDisplayPresence, 5_000)"]
+        }
+      ]
+    },
+    {
+      "id": "sumup_google_pay",
+      "name": "SumUp-hosted Google Pay configuration and verified payment confirmation",
+      "evidence": [
+        {
+          "path": "src/lib/payments.functions.ts",
+          "includes": ["export const getWalletConfig", "GOOGLE_PAY_MERCHANT_ID"]
+        },
+        {
+          "path": "src/routes/pay.$orderId.tsx",
+          "includes": ["googlePayMerchantId", "googlePay: {", "confirmPayment"]
+        },
+        {
+          "path": ".env.example",
+          "includes": ["GOOGLE_PAY_MERCHANT_ID="]
+        }
+      ]
+    },
+    {
+      "id": "kds_safe_bulk_updates",
+      "name": "KDS bulk actions retain failed and newly arrived tickets",
+      "evidence": [
+        {
+          "path": "src/routes/kds.tsx",
+          "includes": [
+            "const FRESH_MS = 60_000",
+            "Promise.allSettled",
+            "could not be changed and remain on the board"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "juror_voucher_security",
+      "name": "Hashed-PIN juror allowance, reservation and claim controls",
+      "evidence": [
+        {
+          "path": "supabase/migrations/20260803173601_151b24cb-7c10-4f4a-9692-f6e96d2fe478.sql",
+          "includes": [
+            "cafe1_issue_juror_batch",
+            "verify_juror_voucher_credentials",
+            "reserve_juror_voucher",
+            "prepare_counter_order_secure",
+            "get_juror_claim_rows"
+          ]
+        },
+        {
+          "path": "supabase/tests/juror_voucher_security_v2.sql",
+          "includes": ["select plan(24)", "code and PIN verification exists"]
+        }
+      ]
+    },
+    {
+      "id": "judge_tabs",
+      "name": "Named judge tabs use server-side account charging",
+      "evidence": [
+        {
+          "path": "src/lib/judge-tab.functions.ts",
+          "includes": ["export const chargeOrderToAccount", "createServerFn"]
+        },
+        {
+          "path": "src/routes/till.tsx",
+          "includes": ["useServerFn(chargeOrderToAccount)", "Put on a judge's tab"]
+        }
+      ]
+    },
+    {
+      "id": "private_cache_policy",
+      "name": "Authenticated, basket and checkout routes are private and no-store",
+      "evidence": [
+        {
+          "path": "src/lib/private-cache.ts",
+          "includes": [
+            "\"/checkout\"",
+            "\"/cart\"",
+            "private, no-store",
+            "Cloudflare-CDN-Cache-Control"
+          ]
+        },
+        {
+          "path": "src/server.ts",
+          "includes": ["isPrivatePath(pathname)", "PRIVATE_CACHE_HEADERS"]
+        }
+      ]
+    },
+    {
+      "id": "release_identity",
+      "name": "Production health exposes and smoke-checks the exact deployed commit",
+      "evidence": [
+        {
+          "path": "src/lib/release-health.server.ts",
+          "includes": ["PUBLIC_RELEASE_SHA", "unconfigured"]
+        },
+        {
+          "path": "scripts/verify-production.mjs",
+          "includes": ["EXPECTED_RELEASE_SHA", "40-character"]
+        }
+      ]
+    }
+  ]
+}
