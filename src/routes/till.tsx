@@ -1562,6 +1562,22 @@ function Till() {
 
 /* -------------------------------------------------------------- widgets */
 
+/** Small status chip with a coloured dot for the till's hardware strip. */
+function StatusDot({ ok, label, muted }: { ok: boolean; label: string; muted?: boolean }) {
+  return (
+    <span
+      className={`inline-flex shrink-0 items-center gap-1.5 rounded-full px-2.5 py-1 ${
+        ok ? "bg-emerald-500/10 text-emerald-300" : muted ? "text-white/45" : "bg-amber-500/10 text-amber-300"
+      }`}
+    >
+      <span
+        className={`h-1.5 w-1.5 rounded-full ${ok ? "bg-emerald-400" : muted ? "bg-white/30" : "bg-amber-400"}`}
+      />
+      {label}
+    </span>
+  );
+}
+
 function Modal({
   title,
   children,
