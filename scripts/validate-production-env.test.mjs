@@ -65,3 +65,17 @@ test("requires an exact deployed release commit", () => {
 
   assert.ok(result.errors.some((message) => message.includes("40-character deployed Git commit")));
 });
+
+test("rejects a valid-looking release SHA that does not match the release candidate", () => {
+  const expectedRelease = "a".repeat(40);
+  const result = validateProductionEnvironment(validEnvironment(), { expectedRelease });
+
+  assert.ok(result.errors.some((message) => message.includes(expectedRelease)));
+  assert.deepEqual(
+    validateProductionEnvironment(
+      validEnvironment({ PUBLIC_RELEASE_SHA: expectedRelease }),
+      { expectedRelease },
+    ).errors,
+    [],
+  );
+});

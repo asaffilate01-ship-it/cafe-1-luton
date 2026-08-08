@@ -13,6 +13,21 @@ For every gate:
 
 Run `npm run operational:status` while gathering evidence. The command reports progress without pretending pending gates are complete. `npm run operational:check` is strict and blocks production promotion until all 27 gates, approvals and evidence references are complete.
 
+Record one completed gate without hand-editing JSON:
+
+```bash
+npm run operational:record -- \
+  --gate application_ci \
+  --status pass \
+  --evidence "https://github.com/asaffilate01-ship-it/cafe1-connect-dash/actions/runs/123456" \
+  --checked-by "Amer Saleem"
+```
+
+The recorder validates the gate name, evidence, operator and timestamp, writes
+the JSON atomically and refuses evidence that resembles an API key, bearer
+token, private key or JWT. Store only a workflow URL, provider reference,
+signed-record location or another non-secret audit reference in Git.
+
 The **Promote verified production** workflow additionally requires:
 
 - a successful Production checks run from the same commit;
