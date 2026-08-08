@@ -992,7 +992,7 @@ function Till() {
         {/* products */}
         <section className="flex min-h-0 flex-col">
           <div className="shrink-0 space-y-3 border-b border-white/10 p-3 sm:p-4">
-            <div className="flex items-center gap-2 rounded-xl border border-white/10 bg-neutral-900 px-4">
+            <div className="flex items-center gap-2 rounded-2xl border border-white/10 bg-neutral-900/80 px-4 shadow-inner shadow-black/40 focus-within:border-primary/60">
               <Search className="h-4 w-4 shrink-0 text-white/40" />
               <input
                 value={q}
@@ -1001,7 +1001,7 @@ function Till() {
                   if (event.key === "Enter" && addBarcode(q)) event.preventDefault();
                 }}
                 placeholder="Search or scan a barcode…"
-                className="h-11 min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-white/30"
+                className="h-12 min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-white/30"
                 autoComplete="off"
               />
               {q && (
@@ -1014,7 +1014,7 @@ function Till() {
               <div className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-1 lg:hidden">
                 <button
                   onClick={() => setCatId(FAVOURITES_CATEGORY)}
-                  className={`inline-flex shrink-0 items-center gap-1.5 rounded-full px-3.5 py-2 text-xs font-bold uppercase tracking-wide transition ${catId === FAVOURITES_CATEGORY ? "bg-amber-400 text-neutral-950" : "border border-amber-300/20 bg-neutral-900 text-amber-200"}`}
+                  className={`inline-flex shrink-0 items-center gap-1.5 rounded-full px-3.5 py-2 text-xs font-bold uppercase tracking-wide transition active:scale-95 ${catId === FAVOURITES_CATEGORY ? "bg-amber-400 text-neutral-950 shadow-lg shadow-amber-400/20" : "border border-amber-300/20 bg-neutral-900 text-amber-200"}`}
                 >
                   <Star className="h-3.5 w-3.5 fill-current" /> Favourites
                 </button>
@@ -1022,7 +1022,7 @@ function Till() {
                   <button
                     key={c.id}
                     onClick={() => setCatId(c.id)}
-                    className={`shrink-0 rounded-full px-3.5 py-2 text-xs font-bold uppercase tracking-wide transition ${catId === c.id ? "bg-white text-neutral-950" : "border border-white/10 bg-neutral-900 text-white/70"}`}
+                    className={`shrink-0 rounded-full px-3.5 py-2 text-xs font-bold uppercase tracking-wide transition active:scale-95 ${catId === c.id ? "bg-white text-neutral-950 shadow-lg shadow-black/40" : "border border-white/10 bg-neutral-900 text-white/70"}`}
                   >
                     {c.name}
                   </button>
@@ -1036,22 +1036,25 @@ function Till() {
               {visible.map((i) => (
                 <div
                   key={i.id}
-                  className="group relative overflow-hidden rounded-2xl border border-white/10 bg-neutral-900 transition hover:border-primary hover:bg-neutral-800"
+                  className="group relative overflow-hidden rounded-2xl border border-white/10 bg-neutral-900/80 shadow-lg shadow-black/30 transition duration-150 hover:-translate-y-0.5 hover:border-primary/70 hover:bg-neutral-800 hover:shadow-xl hover:shadow-primary/10"
                 >
                   <button
                     onClick={() => add(i)}
-                    className="flex h-full w-full flex-col text-left active:scale-[0.98]"
+                    className="flex h-full w-full flex-col text-left transition active:scale-[0.97]"
                   >
                     <div className="relative aspect-[4/3] w-full overflow-hidden bg-neutral-800">
                       {i.image_url ? (
-                        <img
-                          src={i.image_url}
-                          alt={i.name}
-                          loading="lazy"
-                          className="h-full w-full object-cover transition group-hover:scale-105"
-                        />
+                        <>
+                          <img
+                            src={i.image_url}
+                            alt={i.name}
+                            loading="lazy"
+                            className="h-full w-full object-cover transition duration-300 group-hover:scale-105"
+                          />
+                          <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-neutral-950/70 to-transparent" />
+                        </>
                       ) : (
-                        <div className="grid h-full w-full place-items-center text-white/15">
+                        <div className="grid h-full w-full place-items-center bg-[radial-gradient(80%_80%_at_50%_20%,rgba(255,255,255,0.06),transparent)] text-white/15">
                           <UtensilsCrossed className="h-7 w-7" />
                         </div>
                       )}
@@ -1060,7 +1063,7 @@ function Till() {
                       <span className="line-clamp-2 text-[13px] font-semibold leading-snug">
                         {i.name}
                       </span>
-                      <span className="font-display text-base font-bold text-primary">
+                      <span className="font-display text-base font-black tabular-nums text-primary">
                         {money(i.price_cents)}
                       </span>
                     </div>
