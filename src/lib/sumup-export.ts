@@ -120,6 +120,157 @@ export function buildSumUpModifiersCsv(
 }
 
 /** Categories file, kept separate so SumUp category order matches the app. */
+/**
+ * SumUp's own "items-export" column order. The dashboard importer only accepts
+ * a file with this exact header, so it is reproduced verbatim.
+ */
+export const SUMUP_ITEMS_HEADER = [
+  "Item name",
+  "Variations",
+  "Option set 1",
+  "Option 1",
+  "Option set 2",
+  "Option 2",
+  "Option set 3",
+  "Option 3",
+  "Option set 4",
+  "Option 4",
+  "Is variation visible? (Yes/No)",
+  "Price",
+  "Cost price",
+  "Variable price? (Yes/No)",
+  "Tax rate (%)",
+  "On sale in Online Store?",
+  "Regular price (before sale)",
+  "Set up different prices and VAT for takeaway",
+  "Takeaway price",
+  "Takeaway tax rate",
+  "Unit",
+  "Track inventory? (Yes/No)",
+  "Quantity",
+  "Low stock threshold",
+  "SKU",
+  "Barcode",
+  "Modifiers",
+  "Description (Online Store and Invoices only)",
+  "Category",
+  "Display item at Checkout? (Yes/No)",
+  "Display colour in POS checkout",
+  "Image 1",
+  "Image 2",
+  "Image 3",
+  "Image 4",
+  "Image 5",
+  "Image 6",
+  "Image 7",
+  "Display item in Online Store? (Yes/No)",
+  "SEO title (Online Store only)",
+  "SEO description (Online Store only)",
+  "Shipping weight [kg] (Online Store only)",
+  "Display service in Bookings? (Yes/No)",
+  "Duration [minutes] (Bookings only)",
+  "Location [business/customer] (Bookings only)",
+  "Item id (Do not change)",
+  "Variant id (Do not change)",
+] as const;
+
+/**
+ * Full catalogue in SumUp's native items-export layout: one row per item,
+ * modifier groups joined in the Modifiers column, plus a variation row per
+ * option of the item's first required single-choice group.
+ */
+export function buildSumUpNativeItemsCsv(
+  categories: ExportCategory[],
+  items: ExportItem[],
+  modifiers: ExportModifier[],
+): string {
+  const catName = new Map(categories.map((c) => [c.id, c.name]));
+  const active = modifiers.filter((m) => m.active);
+
+  const rows: (string | number | null)[][] = [[...SUMUP_ITEMS_HEADER]];
+
+  const sortedItems = items
+    .filter((i) => i.active)
+    .sort((a, b) => a.sort_order - b.sort_order || a.name.localeCompare(b.name));
+
+  for (const item of sortedItems) {
+    const applicable = active
+      .filter((m) => m.item_id === item.id || (!m.item_id && m.category_id === item.category_id))
+      .sort((a, b) => a.sort_order - b.sort_order || a.name.localeCompare(b.name));
+
+    // Group options by their option-set name.
+    const groups = new Map<string, ExportModifier[]>();
+    for (const modifier of applicable) {
+      const group = modifier.group_name?.trim() || "Extras";
+      const list = groups.get(group);
+      if (list) list.push(modifier);
+      else groups.set(group, [modifier]);
+    }
+
+    // The first required single-choice group becomes SumUp variations so the
+    // till forces the choice; everything else stays a modifier set.
+    let variationGroup: string | null = null;
+    for (const [group, options] of groups) {
+      const required = options.some((o) => o.required || o.min_selections > 0);
+      const single = options.every((o) => o.group_type === "single" || o.max_selections === 1);
+      if (required && single && options.length > 1) {
+        variationGroup = group;
+        break;
+      }
+    }
+
+    const modifierNames = [SERVICE_TYPE_GROUP, ...[...groups.keys()].filter((g) => g !== variationGroup)];
+    const category = (item.category_id && catName.get(item.category_id)) || "Uncategorised";
+    const sku = item.id.slice(0, 8).toUpperCase();
+
+    const base = (
+      variationName: string,
+      optionSet: string,
+      option: string,
+      priceCents: number,
+      variantSku: string,
+    ): (string | number | null)[] => {
+      const row: (string | number | null)[] = new Array(SUMUP_ITEMS_HEADER.length).fill("");
+      row[0] = item.name;
+      row[1] = variationName;
+      row[2] = optionSet;
+      row[3] = option;
+      row[10] = variationName ? "Yes" : "";
+      row[11] = price(priceCents);
+      row[13] = "No";
+      row[14] = "0";
+      row[21] = "No";
+      row[24] = variantSku;
+      row[25] = item.barcode ?? "";
+      row[26] = modifierNames.join(";");
+      row[27] = item.description ?? "";
+      row[28] = category;
+      row[29] = "Yes";
+      row[38] = "Yes";
+      return row;
+    };
+
+    if (variationGroup) {
+      const options = groups.get(variationGroup) ?? [];
+      options.forEach((option, index) => {
+        rows.push(
+          base(
+            option.name,
+            variationGroup as string,
+            option.name,
+            item.price_cents + option.price_cents,
+            `${sku}-${index + 1}`,
+          ),
+        );
+      });
+    } else {
+      rows.push(base("", "", "", item.price_cents, sku));
+    }
+  }
+
+  return toCsv(rows);
+}
+
 export function buildSumUpCategoriesCsv(categories: ExportCategory[]): string {
   const rows: (string | number | null)[][] = [["Category name", "Sort order"]];
   for (const category of categories
