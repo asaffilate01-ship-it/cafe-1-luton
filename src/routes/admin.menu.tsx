@@ -15,8 +15,14 @@ import {
   GripVertical,
   ChevronUp,
   ChevronDown,
+  Download,
 } from "lucide-react";
 import { getStaffMenuItems } from "@/lib/menu-operations.functions";
+import {
+  buildSumUpCategoriesCsv,
+  buildSumUpItemsCsv,
+  buildSumUpModifiersCsv,
+} from "@/lib/sumup-export";
 
 export const Route = createFileRoute("/admin/menu")({
   head: () => ({
@@ -188,13 +194,32 @@ function MenuManager() {
               Menu manager
             </h1>
           </div>
-          <p className="shrink-0 text-right text-xs text-muted-foreground sm:text-sm">
-            {cats.length} categories
-            <span className="hidden sm:inline">
-              {" "}
-              · {items.length} items · {mods.length} modifiers
-            </span>
-          </p>
+          <div className="flex shrink-0 items-center gap-3">
+            <p className="text-right text-xs text-muted-foreground sm:text-sm">
+              {cats.length} categories
+              <span className="hidden sm:inline">
+                {" "}
+                · {items.length} items · {mods.length} modifiers
+              </span>
+            </p>
+            <button
+              type="button"
+              onClick={() => {
+                const stamp = new Date().toISOString().slice(0, 10);
+                downloadCsv(`sumup-categories-${stamp}.csv`, buildSumUpCategoriesCsv(cats));
+                downloadCsv(`sumup-items-${stamp}.csv`, buildSumUpItemsCsv(cats, items));
+                downloadCsv(
+                  `sumup-modifiers-${stamp}.csv`,
+                  buildSumUpModifiersCsv(cats, items, mods),
+                );
+                toast.success("SumUp CSVs downloaded — import them in the SumUp dashboard");
+              }}
+              className="inline-flex h-10 items-center gap-2 rounded-xl border border-border px-3 text-sm font-semibold hover:border-primary"
+            >
+              <Download className="h-4 w-4" />
+              <span className="hidden sm:inline">Export for SumUp</span>
+            </button>
+          </div>
         </div>
       </div>
 
