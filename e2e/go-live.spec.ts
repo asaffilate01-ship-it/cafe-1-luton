@@ -29,14 +29,16 @@ test("menu and empty basket remain usable without a signed-in session", async ({
   await expect(page.getByText(/basket is empty/i)).toBeVisible();
 });
 
-test("legal and privacy information is publicly reachable", async ({ page }) => {
-  for (const [path, heading] of [
-    ["/privacy", /privacy/i],
-    ["/terms", /terms/i],
-    ["/complaints", /complaints/i],
+test.describe("public legal information", () => {
+  for (const [name, path, heading] of [
+    ["privacy", "/privacy", /privacy/i],
+    ["terms", "/terms", /terms/i],
+    ["complaints", "/complaints", /complaints/i],
   ] as const) {
-    await openHealthy(page, path);
-    await expect(page.getByRole("heading", { name: heading, level: 1 })).toBeVisible();
+    test(`${name} page is publicly reachable`, async ({ page }) => {
+      await openHealthy(page, path);
+      await expect(page.getByRole("heading", { name: heading, level: 1 })).toBeVisible();
+    });
   }
 });
 
@@ -44,7 +46,8 @@ test("manager security route cannot expose its dashboard anonymously", async ({ 
   await openHealthy(page, "/admin/security");
 
   await expect(page).toHaveURL(/\/admin\/login(?:\?|$)/);
-  await expect(page.getByRole("heading", { name: /staff sign in/i, level: 1 })).toBeVisible();
+  await expect(page.getByRole("heading", { name: /cafe1 admin sign in/i, level: 1 })).toBeVisible();
+  await expect(page.getByLabel(/admin email/i)).toBeVisible();
   await expect(page.getByText(/immutable audit trail/i)).toHaveCount(0);
 });
 

@@ -17,6 +17,7 @@
     "check": "npm run verify:dependencies && npm run verify:migrations && npm run verify:capabilities && npm run typecheck && npm run lint && npm run test && npm run build && npm run verify:bundle-budget && npm run verify:build-output && npm run verify:routes",
     "release:guard": "node scripts/release-guard.mjs",
     "release:status": "node scripts/release-status.mjs",
+    "release:check": "node scripts/release-status.mjs --strict",
     "repository:hygiene": "node scripts/repository-hygiene.mjs",
     "validate:production-env": "node scripts/validate-production-env.mjs",
     "verify:dependencies": "node scripts/verify-dependency-contract.mjs",

@@ -5,6 +5,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useSession, useRoles } from "@/hooks/use-auth";
 import { money } from "@/lib/format";
+import { askConfirm, askPrompt } from "@/lib/confirm";
 import { toast } from "sonner";
 import {
   Plus,
@@ -87,9 +88,7 @@ function MenuManager() {
 
 function downloadCsv(filename: string, csv: string) {
   // BOM keeps £ signs and accents intact when SumUp/Excel reads the file.
-  const url = URL.createObjectURL(
-    new Blob(["\uFEFF", csv], { type: "text/csv;charset=utf-8" }),
-  );
+  const url = URL.createObjectURL(new Blob(["\uFEFF", csv], { type: "text/csv;charset=utf-8" }));
   const link = document.createElement("a");
   link.href = url;
   link.download = filename;
@@ -245,12 +244,18 @@ function MenuManagerInner() {
             <h2 className="font-semibold">Categories</h2>
             <button
               onClick={async () => {
-                const name = prompt("New category name");
-                if (!name) return;
+                const name = await askPrompt({
+                  title: "Add menu category",
+                  description:
+                    "Create a category for grouping items on the customer and till menus.",
+                  label: "Category name",
+                  confirmLabel: "Add category",
+                });
+                if (!name?.trim()) return;
                 const sort = (cats.at(-1)?.sort_order ?? 0) + 10;
                 const { data, error } = await supabase
                   .from("menu_categories")
-                  .insert({ name, sort_order: sort, active: true })
+                  .insert({ name: name.trim(), sort_order: sort, active: true })
                   .select()
                   .single();
                 if (error) return toast.error(error.message);
@@ -484,7 +489,14 @@ function CategoryEditor({
         </button>
         <button
           onClick={async () => {
-            if (!confirm(`Delete category "${cat.name}" and all its items?`)) return;
+            if (
+              !(await askConfirm({
+                title: `Delete ${cat.name}?`,
+                description: "This permanently removes the category and all of its menu items.",
+                confirmLabel: "Delete category",
+              }))
+            )
+              return;
             const { error } = await supabase.from("menu_categories").delete().eq("id", cat.id);
             if (error) return toast.error(error.message);
             toast.success("Deleted");
@@ -812,7 +824,14 @@ function ItemRow({ it, onChanged }: { it: Item; onChanged: () => void }) {
       <div className="col-span-2 flex items-start justify-end md:col-span-1">
         <button
           onClick={async () => {
-            if (!confirm(`Delete "${it.name}"?`)) return;
+            if (
+              !(await askConfirm({
+                title: `Delete ${it.name}?`,
+                description: "This permanently removes the item from every menu.",
+                confirmLabel: "Delete item",
+              }))
+            )
+              return;
             const { error } = await supabase.from("menu_items").delete().eq("id", it.id);
             if (error) return toast.error(error.message);
             onChanged();
@@ -922,7 +941,14 @@ function ModRow({ m, onChanged }: { m: Mod; onChanged: () => void }) {
       </label>
       <button
         onClick={async () => {
-          if (!confirm(`Delete modifier "${m.name}"?`)) return;
+          if (
+            !(await askConfirm({
+              title: `Delete ${m.name}?`,
+              description: "This permanently removes the modifier from linked menu items.",
+              confirmLabel: "Delete modifier",
+            }))
+          )
+            return;
           const { error } = await supabase.from("menu_modifiers").delete().eq("id", m.id);
           if (error) return toast.error(error.message);
           onChanged();

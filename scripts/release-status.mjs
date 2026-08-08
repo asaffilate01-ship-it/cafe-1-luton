@@ -9,8 +9,11 @@ import { verifyMigrationDirectory } from "./verify-migration-integrity.mjs";
 import { verifyReleaseCapabilities } from "./verify-release-capabilities.mjs";
 import { getRouteCoverageReport } from "./verify-routes.mjs";
 import { validateOperationalAcceptance } from "./verify-operational-acceptance.mjs";
+import { PRODUCTION_CHECKS } from "./verify-production.mjs";
+import { buildGoLiveDecision, evaluateProductionSmoke } from "./release-readiness.mjs";
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
+const canonicalOrigin = "https://cafe1stalbans.co.uk";
 
 function git(args) {
   return execFileSync("git", args, { cwd: root, encoding: "utf8" }).trim();
@@ -50,12 +53,72 @@ const requiredWorkflows = [
   ".github/workflows/production-promotion.yml",
 ];
 
+function parseArguments(argv) {
+  const args = [...argv];
+  let output;
+  let productionSmoke;
+  let strict = false;
+  while (args.length) {
+    const argument = args.shift();
+    if (argument === "--output") output = args.shift();
+    else if (argument === "--production-smoke") productionSmoke = args.shift();
+    else if (argument === "--strict") strict = true;
+    else throw new Error(`Unexpected argument: ${argument}`);
+  }
+  if (argv.includes("--output") && !output) throw new Error("--output requires a file path");
+  if (argv.includes("--production-smoke") && !productionSmoke) {
+    throw new Error("--production-smoke requires a file path");
+  }
+  return { output, productionSmoke, strict };
+}
+
+const options = parseArguments(process.argv.slice(2));
+const commit = git(["rev-parse", "HEAD"]);
+const checklistStatus = { completed, unchecked, total: completed + unchecked };
+const softwareReady =
+  dependencyContract.valid && migrationIntegrity.valid && releaseCapabilities.valid;
+const releaseTreeReady =
+  trackedEnvironmentFiles.length === 0 &&
+  routeCoverage.valid &&
+  requiredWorkflows.every((path) => existsSync(resolve(root, path))) &&
+  existsSync(resolve(root, "playwright.config.ts")) &&
+  existsSync(resolve(root, "e2e/go-live.spec.ts")) &&
+  existsSync(resolve(root, "scripts/verify-production.test.mjs")) &&
+  existsSync(resolve(root, "src/routes/api/public/health.ts")) &&
+  existsSync(resolve(root, "src/lib/release-health.server.ts")) &&
+  existsSync(resolve(root, ".github/workflows/production-promotion.yml"));
+let smokePayload;
+let smokeReadError;
+if (options.productionSmoke) {
+  try {
+    smokePayload = JSON.parse(readFileSync(resolve(root, options.productionSmoke), "utf8"));
+  } catch (error) {
+    smokeReadError = error instanceof Error ? error.message : "unknown read error";
+  }
+}
+const productionSmoke = evaluateProductionSmoke(smokePayload, {
+  expectedCommit: commit,
+  expectedOrigin: canonicalOrigin,
+  expectedCheckCount: PRODUCTION_CHECKS.length,
+});
+if (smokeReadError) {
+  productionSmoke.supplied = true;
+  productionSmoke.errors = [`production smoke evidence could not be read: ${smokeReadError}`];
+}
+const goLive = buildGoLiveDecision({
+  softwareReady,
+  releaseTreeReady,
+  operationalAcceptance,
+  checklist: checklistStatus,
+  productionSmoke,
+});
+
 const report = {
-  schema_version: 5,
+  schema_version: 6,
   generated_at: new Date().toISOString(),
-  commit: git(["rev-parse", "HEAD"]),
+  commit,
   branch: git(["branch", "--show-current"]) || null,
-  checklist: { completed, unchecked, total: completed + unchecked },
+  checklist: checklistStatus,
   operational_acceptance: {
     ready: operationalAcceptance.ready,
     passed: operationalAcceptance.passed,
@@ -65,18 +128,17 @@ const report = {
     schema_valid: operationalAcceptance.schema_valid,
   },
   software_controls: {
-    ready:
-      dependencyContract.valid && migrationIntegrity.valid && releaseCapabilities.valid,
+    ready: softwareReady,
     dependency_contract_valid: dependencyContract.valid,
     dependency_security_resolutions: dependencyContract.security_resolutions,
     migration_integrity_valid: migrationIntegrity.valid,
     migration_count: migrationIntegrity.migration_count,
-    immutable_equivalent_migration_set_count:
-      migrationIntegrity.known_equivalent_sets.length,
+    immutable_equivalent_migration_set_count: migrationIntegrity.known_equivalent_sets.length,
     release_capabilities_passed: releaseCapabilities.passed,
     release_capabilities_total: releaseCapabilities.total,
   },
   release_tree: {
+    ready: releaseTreeReady,
     tracked_environment_file_count: trackedEnvironmentFiles.length,
     tracked_environment_files: trackedEnvironmentFiles,
     generated_routes_semantically_valid: routeCoverage.valid,
@@ -100,15 +162,20 @@ const report = {
       resolve(root, ".github/workflows/production-promotion.yml"),
     ),
   },
+  production_smoke: productionSmoke,
+  go_live: goLive,
 };
 
-const outputIndex = process.argv.indexOf("--output");
-if (outputIndex >= 0) {
-  const output = process.argv[outputIndex + 1];
-  if (!output) throw new Error("--output requires a file path");
-  const target = resolve(root, output);
+if (options.output) {
+  const target = resolve(root, options.output);
   mkdirSync(dirname(target), { recursive: true });
   writeFileSync(target, `${JSON.stringify(report, null, 2)}\n`);
 }
 
 console.log(JSON.stringify(report, null, 2));
+if (options.strict && !goLive.ready) {
+  console.error(
+    `Go-live remains blocked:\n${goLive.blockers.map((item) => `- ${item}`).join("\n")}`,
+  );
+  process.exitCode = 1;
+}

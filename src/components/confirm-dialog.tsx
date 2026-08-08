@@ -10,8 +10,10 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import {
+  ALERT_EVENT,
   CONFIRM_EVENT,
   PROMPT_EVENT,
+  type PendingAlert,
   type PendingConfirm,
   type PendingPrompt,
 } from "@/lib/confirm";
@@ -19,6 +21,7 @@ import {
 export function ConfirmHost() {
   const [pending, setPending] = useState<PendingConfirm | null>(null);
   const [prompt, setPrompt] = useState<PendingPrompt | null>(null);
+  const [alert, setAlert] = useState<PendingAlert | null>(null);
   const [value, setValue] = useState("");
 
   useEffect(() => {
@@ -28,11 +31,14 @@ export function ConfirmHost() {
       setValue(detail.defaultValue ?? "");
       setPrompt(detail);
     };
+    const onAlert = (e: Event) => setAlert((e as CustomEvent<PendingAlert>).detail);
     window.addEventListener(CONFIRM_EVENT, onAsk);
     window.addEventListener(PROMPT_EVENT, onPrompt);
+    window.addEventListener(ALERT_EVENT, onAlert);
     return () => {
       window.removeEventListener(CONFIRM_EVENT, onAsk);
       window.removeEventListener(PROMPT_EVENT, onPrompt);
+      window.removeEventListener(ALERT_EVENT, onAlert);
     };
   }, []);
 
@@ -44,6 +50,11 @@ export function ConfirmHost() {
   const closePrompt = (result: string | null) => {
     prompt?.resolve(result);
     setPrompt(null);
+  };
+
+  const closeAlert = () => {
+    alert?.resolve();
+    setAlert(null);
   };
 
   return (
@@ -126,6 +137,26 @@ export function ConfirmHost() {
             </AlertDialogCancel>
             <AlertDialogAction onClick={() => closePrompt(value)}>
               {prompt?.confirmLabel ?? "Continue"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+      <AlertDialog
+        open={!!alert}
+        onOpenChange={(open) => {
+          if (!open) closeAlert();
+        }}
+      >
+        <AlertDialogContent className="print:hidden">
+          <AlertDialogHeader>
+            <AlertDialogTitle>{alert?.title ?? "Notice"}</AlertDialogTitle>
+            <AlertDialogDescription className="whitespace-pre-line">
+              {alert?.description ?? "Review this information before continuing."}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogAction onClick={closeAlert}>
+              {alert?.confirmLabel ?? "OK"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

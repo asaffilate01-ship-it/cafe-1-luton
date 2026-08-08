@@ -78,6 +78,14 @@ test("passes the full production contract and records structured checks", async 
   );
 });
 
+test("covers every live POS and operational surface with private caching checks", () => {
+  for (const path of ["/till", "/kds", "/display", "/driver", "/staff", "/account", "/tab"]) {
+    const check = PRODUCTION_CHECKS.find((candidate) => candidate.path === path);
+    assert.ok(check, `${path} is missing from production smoke`);
+    assert.equal(check.protectedRoute, true, `${path} must be treated as private`);
+  }
+});
+
 test("rejects an unversioned or mismatched deployment", async () => {
   const report = await verifyProduction({
     baseUrl: "https://cafe1stalbans.co.uk",

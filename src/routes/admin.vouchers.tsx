@@ -7,6 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { money } from "@/lib/format";
+import { askAlert, askPrompt } from "@/lib/confirm";
 import {
   Ticket,
   Download,
@@ -258,16 +259,21 @@ function AdminVouchers() {
   }
 
   async function issueReplacementPin(h: Holder) {
-    const reason = window.prompt(
-      `Reason for issuing a replacement PIN for ${h.code}:`,
-      "Juror mislaid their PIN",
-    );
+    const reason = await askPrompt({
+      title: "Issue replacement PIN",
+      description: `Record why a replacement is required for ${h.code}. This action is added to the audit trail.`,
+      label: "Reason",
+      defaultValue: "Juror mislaid their PIN",
+      confirmLabel: "Issue replacement",
+    });
     if (!reason?.trim()) return;
     try {
       const result = await resetPin({ data: { holder_id: h.id, reason } });
-      window.alert(
-        `Replacement PIN for ${result.code}: ${result.pin}\n\nRead it to the juror now — it is shown once and stored only as a hash.`,
-      );
+      await askAlert({
+        title: "Replacement PIN — shown once",
+        description: `${result.code}: ${result.pin}\n\nRead it to the juror now. It is stored only as a hash and cannot be displayed again.`,
+        confirmLabel: "I have recorded it",
+      });
       qc.invalidateQueries({ queryKey: ["voucher-events"] });
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Could not reset that PIN");
@@ -339,7 +345,13 @@ function AdminVouchers() {
 
   /* ---------------- lifecycle ---------------- */
   async function extend(h: Holder, days: number) {
-    const reason = window.prompt("Reason for extending this juror's service:", "Trial continuing");
+    const reason = await askPrompt({
+      title: "Extend juror service",
+      description: `Extend ${h.code} by ${days} working days and record the reason in the audit trail.`,
+      label: "Reason",
+      defaultValue: "Trial continuing",
+      confirmLabel: "Extend service",
+    });
     if (!reason?.trim()) return;
     try {
       const result = await manageSecureVoucher({
@@ -355,10 +367,13 @@ function AdminVouchers() {
 
   async function toggleActive(h: Holder) {
     const action = h.active ? "deactivate" : "reactivate";
-    const reason = window.prompt(
-      h.active ? "Reason for deactivating this code:" : "Reason for reactivating this code:",
-      h.active ? "Jury service ended" : "Juror still in attendance",
-    );
+    const reason = await askPrompt({
+      title: h.active ? "Deactivate juror code" : "Reactivate juror code",
+      description: `${h.code} will be ${h.active ? "blocked immediately" : "reactivated for five working days"}.`,
+      label: "Reason",
+      defaultValue: h.active ? "Jury service ended" : "Juror still in attendance",
+      confirmLabel: h.active ? "Deactivate" : "Reactivate",
+    });
     if (!reason?.trim()) return;
     try {
       await manageSecureVoucher({
@@ -378,10 +393,13 @@ function AdminVouchers() {
   }
 
   async function approveLongDay(h: Holder) {
-    const reason = window.prompt(
-      `Reason for raising ${h.code} to ${money(JUROR_EXTENDED_DAY_ALLOWANCE_CENTS)} on ${date}:`,
-      "Jury Officer confirmed attendance exceeded 10 hours",
-    );
+    const reason = await askPrompt({
+      title: "Approve extended-day allowance",
+      description: `Raise ${h.code} to ${money(JUROR_EXTENDED_DAY_ALLOWANCE_CENTS)} for ${date}.`,
+      label: "Authorisation reason",
+      defaultValue: "Jury Officer confirmed attendance exceeded 10 hours",
+      confirmLabel: "Approve allowance",
+    });
     if (!reason?.trim()) return;
     try {
       await setSecureAllowance({
