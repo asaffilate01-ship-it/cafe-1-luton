@@ -152,6 +152,34 @@
       ]
     },
     {
+      "id": "sumup_cleanup_fail_closed",
+      "name": "Stale SumUp cleanup retains reservations until provider outcome is safe",
+      "evidence": [
+        {
+          "path": "src/lib/order-cleanup-policy.ts",
+          "includes": [
+            "export function decideSumUpCleanup",
+            "TERMINAL_UNPAID_STATUSES",
+            "return exactMatch ? \"recover_paid\" : \"hold\""
+          ]
+        },
+        {
+          "path": "src/lib/order-cleanup.server.ts",
+          "includes": [
+            "if (decision === \"hold\")",
+            "Provider uncertainty always fails closed"
+          ]
+        },
+        {
+          "path": "src/lib/__tests__/order-cleanup-policy.test.ts",
+          "includes": [
+            "requires an exact paid identity before recovery",
+            "keeps pending and unknown provider states on hold"
+          ]
+        }
+      ]
+    },
+    {
       "id": "release_identity",
       "name": "Production health exposes and smoke-checks the exact deployed commit",
       "evidence": [

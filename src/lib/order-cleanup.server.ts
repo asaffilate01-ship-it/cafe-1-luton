@@ -3,14 +3,11 @@
  * SumUp checkout is recovered first; only authoritatively unpaid/expired rows
  * are marked abandoned and have their reserved benefits released.
  */
-// Website/online checkouts are abandoned quickly; counter (reader) payments
-// get longer to reconcile because a terminal can take minutes to respond.
-const WEB_UNPAID_TTL_MS = 5 * 60 * 1000;
-const COUNTER_UNPAID_TTL_MS = 30 * 60 * 1000;
-// A SumUp checkout sits at PENDING until the customer pays or it expires, so
-// "still pending" must not block cleanup forever. Past this age we treat an
-// unpaid checkout as abandoned regardless of what the provider still reports.
-const PROVIDER_GRACE_MS = 30 * 60 * 1000;
+import {
+  decideSumUpCleanup,
+  isPastCleanupThreshold,
+  WEB_UNPAID_TTL_MS,
+} from "./order-cleanup-policy";
 
 async function reconcileReaderPayments(): Promise<number> {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
@@ -79,29 +76,22 @@ export async function purgeStaleUnpaidOrders(): Promise<number> {
 
   let abandoned = 0;
   for (const order of stale ?? []) {
-    const ageMs = Date.now() - new Date(order.created_at).getTime();
-    const withinGrace = ageMs < PROVIDER_GRACE_MS;
-    // Tab / house-account orders are settled weekly — never auto-abandon them.
-    if (order.account_id || order.payment_method === "on_account") continue;
-    // Counter orders keep the longer grace period.
-    if (order.source !== "web" && ageMs < COUNTER_UNPAID_TTL_MS) {
-      continue;
-    }
+    if (!isPastCleanupThreshold(order)) continue;
+
     if (order.sumup_checkout_id) {
       try {
         const { getSumUpCheckout } = await import("./sumup.server");
         const checkout = await getSumUpCheckout(order.sumup_checkout_id);
-        if (checkout.status === "PAID") {
-          const matches =
-            checkout.id === order.sumup_checkout_id &&
-            checkout.checkout_reference === order.sumup_reference &&
-            checkout.currency === "GBP" &&
-            Math.round(Number(checkout.amount) * 100) === order.total_cents &&
-            Boolean(checkout.transaction_id);
-          if (!matches) {
-            console.error("[order-cleanup] paid checkout mismatch", order.id);
-            continue;
-          }
+        const decision = decideSumUpCleanup(
+          {
+            checkoutId: order.sumup_checkout_id,
+            checkoutReference: order.sumup_reference,
+            totalCents: order.total_cents,
+          },
+          checkout,
+        );
+
+        if (decision === "recover_paid") {
           const { error } = await supabaseAdmin
             .from("orders")
             .update({
@@ -117,13 +107,18 @@ export async function purgeStaleUnpaidOrders(): Promise<number> {
           }
           continue;
         }
-        // Only wait on a still-open checkout inside the grace window.
-        if (["PENDING", "PROCESSING"].includes(checkout.status) && withinGrace) continue;
+
+        if (decision === "hold") {
+          if (checkout.status.trim().toUpperCase() === "PAID") {
+            console.error("[order-cleanup] paid checkout mismatch", order.id);
+          }
+          continue;
+        }
       } catch (error) {
         console.error("[order-cleanup] SumUp reconciliation failed", order.id, error);
-        // Keep retrying while fresh; an old order whose checkout can no longer
-        // be read (expired/deleted) must still be cleared off the boards.
-        if (withinGrace) continue;
+        // Provider uncertainty always fails closed. The scheduler retries; it
+        // never releases a voucher, promotion or loyalty reservation on error.
+        continue;
       }
     }
 

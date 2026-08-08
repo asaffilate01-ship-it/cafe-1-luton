@@ -1,5 +1,6 @@
+import { execFileSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
-import { resolve } from "node:path";
+import { dirname, resolve } from "node:path";
 
 const CANONICAL_ORIGIN = "https://cafe1stalbans.co.uk";
 const PLACEHOLDER = /(?:replace(?:[_ -]?me)?|your[_ -]?project|example|changeme|placeholder)/i;
@@ -24,7 +25,7 @@ function validHttpsOrigin(raw) {
   }
 }
 
-export function validateProductionEnvironment(env) {
+export function validateProductionEnvironment(env, { expectedRelease } = {}) {
   const errors = [];
   const warnings = [];
   const required = [
@@ -60,6 +61,15 @@ export function validateProductionEnvironment(env) {
   }
   if (!/^[0-9a-f]{40}$/i.test(value(env, "PUBLIC_RELEASE_SHA"))) {
     errors.push("PUBLIC_RELEASE_SHA must be the exact 40-character deployed Git commit");
+  }
+  if (expectedRelease) {
+    if (!/^[0-9a-f]{40}$/i.test(expectedRelease)) {
+      errors.push("Expected release must be a 40-character Git commit");
+    } else if (value(env, "PUBLIC_RELEASE_SHA").toLowerCase() !== expectedRelease.toLowerCase()) {
+      errors.push(
+        `PUBLIC_RELEASE_SHA must match the release being validated (${expectedRelease})`,
+      );
+    }
   }
   if (
     value(env, "VITE_SUPABASE_URL").replace(/\/$/, "") !==
@@ -130,7 +140,19 @@ export function validateProductionEnvironment(env) {
 }
 
 function run() {
-  const result = validateProductionEnvironment(process.env);
+  let repositoryRelease;
+  try {
+    repositoryRelease = execFileSync("git", ["rev-parse", "HEAD"], {
+      cwd: resolve(dirname(fileURLToPath(import.meta.url)), ".."),
+      encoding: "utf8",
+      stdio: ["ignore", "pipe", "ignore"],
+    }).trim();
+  } catch {
+    // Production images may not contain .git; EXPECTED_RELEASE_SHA remains the
+    // explicit comparison mechanism in that environment.
+  }
+  const expectedRelease = value(process.env, "EXPECTED_RELEASE_SHA") || repositoryRelease;
+  const result = validateProductionEnvironment(process.env, { expectedRelease });
   for (const warning of result.warnings) console.warn(`Warning: ${warning}`);
   if (result.errors.length) {
     console.error(
