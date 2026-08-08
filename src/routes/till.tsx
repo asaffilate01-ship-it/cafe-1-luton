@@ -837,6 +837,82 @@ function Till() {
     [completeSale, create, lines, name, online, shift, side, table, type, voucher],
   );
 
+  /**
+   * Judge orders may go on that judge's tab. The judge list is the same house
+   * account list the KDS manual ticket uses, so both routes bill one judge.
+   */
+  const chargeJudgeTab = useCallback(
+    async (account: { id: string; name: string }) => {
+      if (!shift) return toast.error("Open a till shift first");
+      if (!online) return toast.error("The till is offline — reconnect before charging a tab");
+      setBusy(true);
+      try {
+        const { match } = await findSimilar({
+          data: {
+            account_id: account.id,
+            item_names: lines.flatMap((line) => Array(line.qty).fill(line.name) as string[]),
+          },
+        });
+        if (match) {
+          const when = new Date(match.created_at).toLocaleString([], {
+            weekday: "short",
+            day: "numeric",
+            month: "short",
+            hour: "2-digit",
+            minute: "2-digit",
+          });
+          const ok = await askConfirm({
+            title: `Possible duplicate for ${match.account_name}`,
+            description: `${match.account_name} had a ${match.identical ? "matching" : "similar"} order on ${when} (#${match.order_number}, ${money(match.total_cents)}) which is still unpaid. Is this a different order?`,
+            confirmLabel: "Yes — different order",
+            cancelLabel: "No — cancel",
+            destructive: false,
+          });
+          if (!ok) return;
+        }
+        const res = await prepareOrder({
+          data: {
+            idempotency_key: crypto.randomUUID(),
+            shift_id: shift.id,
+            customer_name: account.name,
+            type,
+            table_number: table.trim() || undefined,
+            pos_terminal: side,
+            voucher_code: voucher?.code,
+            voucher_pin: voucher?.pin,
+            items: lines.map((line) => ({
+              menu_item_id: line.id,
+              qty: line.qty,
+              notes: line.notes || undefined,
+              modifier_ids: line.modifier_ids,
+            })),
+          },
+        });
+        await chargeToAccount({ data: { order_id: res.order_id, account_id: account.id } });
+        setTabOpen(false);
+        await completeSale(res, "account");
+        toast.success(`Charged to ${account.name}'s tab`);
+      } catch (e) {
+        toast.error(e instanceof Error ? e.message : "Could not put that order on the tab");
+      } finally {
+        setBusy(false);
+      }
+    },
+    [
+      chargeToAccount,
+      completeSale,
+      findSimilar,
+      lines,
+      online,
+      prepareOrder,
+      shift,
+      side,
+      table,
+      type,
+      voucher,
+    ],
+  );
+
   async function changeSide(next: Side) {
     if (next === side) return;
     if (
