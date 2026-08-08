@@ -129,3 +129,122 @@ export function buildSumUpCategoriesCsv(categories: ExportCategory[]): string {
   }
   return toCsv(rows);
 }
+
+/**
+ * One combined workbook-style CSV holding every category, item and modifier
+ * with prices — browsers block several downloads fired back to back, so this
+ * single file is what the Export button hands over.
+ */
+export function buildSumUpFullMenuCsv(
+  categories: ExportCategory[],
+  items: ExportItem[],
+  modifiers: ExportModifier[],
+): string {
+  const catName = new Map(categories.map((c) => [c.id, c.name]));
+  const itemName = new Map(items.map((i) => [i.id, i.name]));
+  const rows: (string | number | null)[][] = [
+    [
+      "Type",
+      "Category",
+      "Item",
+      "Option group",
+      "Name",
+      "Description",
+      "Price",
+      "Tax rate",
+      "Required",
+      "Min selections",
+      "Max selections",
+      "Barcode",
+      "SKU",
+      "Sort order",
+    ],
+  ];
+
+  for (const category of categories
+    .filter((c) => c.active)
+    .sort((a, b) => a.sort_order - b.sort_order)) {
+    rows.push([
+      "Category",
+      category.name,
+      "",
+      "",
+      category.name,
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      category.sort_order,
+    ]);
+  }
+
+  for (const item of items
+    .filter((i) => i.active)
+    .sort((a, b) => a.sort_order - b.sort_order || a.name.localeCompare(b.name))) {
+    const category = (item.category_id && catName.get(item.category_id)) || "Uncategorised";
+    rows.push([
+      "Item",
+      category,
+      item.name,
+      "",
+      item.name,
+      item.description ?? "",
+      price(item.price_cents),
+      "0",
+      "",
+      "",
+      "",
+      item.barcode ?? "",
+      item.id.slice(0, 8).toUpperCase(),
+      item.sort_order,
+    ]);
+  }
+
+  for (const option of SERVICE_TYPE_OPTIONS) {
+    rows.push([
+      "Modifier",
+      "All",
+      "",
+      SERVICE_TYPE_GROUP,
+      option,
+      "",
+      "0.00",
+      "0",
+      "Yes",
+      1,
+      1,
+      "",
+      "",
+      0,
+    ]);
+  }
+
+  for (const modifier of modifiers
+    .filter((m) => m.active)
+    .sort((a, b) => a.sort_order - b.sort_order || a.name.localeCompare(b.name))) {
+    const min = Math.max(modifier.required ? 1 : 0, modifier.min_selections ?? 0);
+    const max = modifier.max_selections ?? (modifier.group_type === "single" ? 1 : "");
+    rows.push([
+      "Modifier",
+      (modifier.category_id && catName.get(modifier.category_id)) || "",
+      (modifier.item_id && itemName.get(modifier.item_id)) || "",
+      modifier.group_name?.trim() || "Extras",
+      modifier.name,
+      "",
+      price(modifier.price_cents),
+      "0",
+      min > 0 ? "Yes" : "No",
+      min,
+      max,
+      "",
+      "",
+      modifier.sort_order,
+    ]);
+  }
+
+  return toCsv(rows);
+}
