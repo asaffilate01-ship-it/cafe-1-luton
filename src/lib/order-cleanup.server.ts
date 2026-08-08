@@ -79,13 +79,12 @@ export async function purgeStaleUnpaidOrders(): Promise<number> {
 
   let abandoned = 0;
   for (const order of stale ?? []) {
+    const ageMs = Date.now() - new Date(order.created_at).getTime();
+    const withinGrace = ageMs < PROVIDER_GRACE_MS;
     // Tab / house-account orders are settled weekly — never auto-abandon them.
     if (order.account_id || order.payment_method === "on_account") continue;
     // Counter orders keep the longer grace period.
-    if (
-      order.source !== "web" &&
-      Date.now() - new Date(order.created_at).getTime() < COUNTER_UNPAID_TTL_MS
-    ) {
+    if (order.source !== "web" && ageMs < COUNTER_UNPAID_TTL_MS) {
       continue;
     }
     if (order.sumup_checkout_id) {
@@ -118,10 +117,13 @@ export async function purgeStaleUnpaidOrders(): Promise<number> {
           }
           continue;
         }
-        if (["PENDING", "PROCESSING"].includes(checkout.status)) continue;
+        // Only wait on a still-open checkout inside the grace window.
+        if (["PENDING", "PROCESSING"].includes(checkout.status) && withinGrace) continue;
       } catch (error) {
         console.error("[order-cleanup] SumUp reconciliation failed", order.id, error);
-        continue;
+        // Keep retrying while fresh; an old order whose checkout can no longer
+        // be read (expired/deleted) must still be cleared off the boards.
+        if (withinGrace) continue;
       }
     }
 
