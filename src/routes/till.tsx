@@ -63,6 +63,7 @@ import {
 import {
   Banknote,
   CreditCard,
+  MoreHorizontal,
   Minus,
   Plus,
   Search,
@@ -385,6 +386,8 @@ function Till() {
   );
   const [pay, setPay] = useState<null | "cash" | "reader" | "manual" | "split">(null);
   const [settings, setSettings] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [payOpen, setPayOpen] = useState(false);
   const [locked, setLocked] = useState(false);
   const [busy, setBusy] = useState(false);
   const [lastOrder, setLastOrder] = useState<{ n: number; total: number; id: string } | null>(null);
@@ -891,113 +894,133 @@ function Till() {
 
   return (
     <div className="flex h-screen flex-col overflow-hidden bg-[radial-gradient(120%_100%_at_50%_0%,#16181d_0%,#0a0a0b_60%)] text-white">
-      {/* top bar */}
-      <header className="flex shrink-0 flex-wrap items-center gap-2 border-b border-white/10 bg-neutral-900/80 px-3 py-2 shadow-[0_1px_0_0_rgba(255,255,255,0.04)] backdrop-blur sm:gap-3 sm:px-4 sm:py-2.5">
-        <span className="rounded-xl bg-primary px-3 py-1.5 text-xs font-black uppercase tracking-[0.2em] text-primary-foreground shadow-lg shadow-primary/25">
+      {/* top bar — one row: who you are, shift state, everything else in one menu */}
+      <header className="relative flex shrink-0 items-center gap-2 border-b border-white/10 bg-neutral-900/80 px-3 py-2 backdrop-blur sm:gap-3 sm:px-4">
+        <span className="hidden rounded-xl bg-primary px-3 py-1.5 text-xs font-black uppercase tracking-[0.2em] text-primary-foreground shadow-lg shadow-primary/25 sm:inline">
           Cafe 1 Till
         </span>
-        <div className="flex gap-1 rounded-xl border border-white/10 bg-neutral-950/60 p-1">
+        <div className="flex shrink-0 gap-1 rounded-xl border border-white/10 bg-neutral-950/60 p-1">
           {(["jury", "judge", "public"] as const).map((s) => (
             <button
               key={s}
               onClick={() => changeSide(s)}
-              className={`rounded-lg px-3.5 py-1.5 text-xs font-black uppercase tracking-wide transition active:scale-95 ${side === s ? `${SIDE_TONE[s]} shadow-md` : "text-white/50 hover:bg-white/5 hover:text-white"}`}
+              className={`rounded-lg px-3 py-1.5 text-xs font-black uppercase tracking-wide transition active:scale-95 ${side === s ? `${SIDE_TONE[s]} shadow-md` : "text-white/50 hover:bg-white/5 hover:text-white"}`}
             >
               {SIDE_LABEL[s]}
             </button>
           ))}
         </div>
-        <div className="ml-auto flex items-center gap-2 text-xs text-white/50">
-          <span
-            className={`hidden items-center gap-1.5 rounded-full border px-3 py-1.5 font-semibold sm:inline-flex ${readerReady ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-300" : "border-amber-500/30 bg-amber-500/10 text-amber-300"}`}
-          >
-            <Smartphone className="h-3.5 w-3.5" />
-            {selectedReader
-              ? `${selectedReader.name} · ${readerReady ? "online" : "offline"}`
-              : "No reader"}
-          </span>
-          <button
-            onClick={() => void manualDrawer()}
-            className="inline-flex h-9 items-center gap-1.5 rounded-xl border border-white/10 bg-white/5 px-3 font-semibold text-white/80 transition hover:bg-white/10 active:scale-95"
-          >
-            <Inbox className="h-4 w-4" /> <span className="hidden sm:inline">Drawer</span>
-          </button>
-          <button
-            onClick={() => {
-              const result = openCustomerScreen("/display");
-              if (result.ok) toast.success(result.message);
-              else toast.error(result.message);
-            }}
-            aria-label="Open the customer display on the second screen"
-            className={`inline-flex h-9 items-center gap-1.5 rounded-xl border px-3 font-semibold transition active:scale-95 ${displayStatus.connected ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-300" : "border-white/10 bg-white/5 text-white/80 hover:bg-white/10"}`}
-          >
-            <MonitorPlay className="h-4 w-4" /> <span className="hidden sm:inline">Screen</span>
-          </button>
-          {has("admin") && (
-            <button
-              onClick={() => setSettings(true)}
-              aria-label="Till settings"
-              className="grid h-9 w-9 place-items-center rounded-xl border border-white/10 bg-white/5 transition hover:bg-white/10 active:scale-95"
-            >
-              <Settings2 className="h-4 w-4" />
-            </button>
-          )}
-          <button
-            onClick={() => setLocked(true)}
-            aria-label="Lock till"
-            className="grid h-9 w-9 place-items-center rounded-xl border border-white/10 bg-white/5 transition hover:bg-white/10 active:scale-95"
-          >
-            <Lock className="h-4 w-4" />
-          </button>
-          <button
-            onClick={() => supabase.auth.signOut()}
-            aria-label="Sign out of the till"
-            className="grid h-9 w-9 place-items-center rounded-xl border border-white/10 bg-white/5 transition hover:bg-white/10 active:scale-95"
-          >
-            <LogOut className="h-4 w-4" />
-          </button>
-        </div>
-      </header>
-
-      <div className="flex h-10 shrink-0 items-center gap-2 overflow-x-auto border-b border-white/10 bg-neutral-950/60 px-3 text-[11px] font-semibold uppercase tracking-wide text-white/55 sm:px-4">
-        <span
-          className={`inline-flex shrink-0 items-center gap-1.5 rounded-full px-2.5 py-1 ${online ? "bg-emerald-500/10 text-emerald-300" : "bg-red-500/10 text-red-300"}`}
-        >
-          {online ? <Wifi className="h-3.5 w-3.5" /> : <WifiOff className="h-3.5 w-3.5" />}
-          {online ? "Online" : "Offline — payments blocked"}
-        </span>
-        <StatusDot
-          ok={readerReady}
-          label={`SumUp ${readerReady ? "online" : selectedReader ? "offline" : "not paired"}`}
-        />
-        <StatusDot
-          ok={deviceStatus.printerReady}
-          label={`Printer ${deviceStatus.printerReady ? "ready" : "preview only"}`}
-        />
-        <StatusDot
-          ok={displayStatus.connected}
-          muted={!displayStatus.connected}
-          label={`Display ${displayStatus.connected ? "connected" : "not open"}`}
-        />
         <button
           onClick={() => setShiftPanel(shift ? "close" : "open")}
-          className={`ml-auto shrink-0 rounded-full px-3 py-1 transition hover:brightness-125 ${shift ? "bg-emerald-500/15 text-emerald-300" : "bg-amber-500/15 text-amber-300"}`}
+          className={`shrink-0 rounded-full px-3 py-1.5 text-[11px] font-bold uppercase tracking-wide transition hover:brightness-125 ${shift ? "bg-emerald-500/15 text-emerald-300" : "bg-amber-500/15 text-amber-300"}`}
         >
-          {shiftLoading
-            ? "Loading shift…"
-            : shift
-              ? `Shift open · ${SIDE_LABEL[side]}`
-              : "Open shift required"}
+          {shiftLoading ? "Loading shift…" : shift ? "Shift open" : "Open shift"}
         </button>
-        {shift && (
+        <div className="ml-auto flex items-center gap-2">
+          <span className="hidden items-center gap-2 rounded-full border border-white/10 bg-neutral-950/60 px-2.5 py-1.5 text-[11px] font-semibold uppercase tracking-wide sm:inline-flex">
+            <StatusDot ok={online} label={online ? "Online" : "Offline"} />
+            <StatusDot ok={readerReady} label="Card" />
+            <StatusDot ok={deviceStatus.printerReady} label="Printer" />
+          </span>
           <button
-            onClick={() => setShiftPanel("cash")}
-            className="shrink-0 rounded-full border border-white/10 bg-white/5 px-3 py-1 transition hover:bg-white/10"
+            onClick={() => setMenuOpen((v) => !v)}
+            aria-label="Till menu"
+            aria-expanded={menuOpen}
+            className="grid h-10 w-10 place-items-center rounded-xl border border-white/10 bg-white/5 transition hover:bg-white/10 active:scale-95"
           >
-            Cash in/out
+            <MoreHorizontal className="h-5 w-5" />
           </button>
+        </div>
+        {menuOpen && (
+          <>
+            <button
+              aria-label="Close menu"
+              onClick={() => setMenuOpen(false)}
+              className="fixed inset-0 z-40 cursor-default"
+            />
+            <div className="absolute right-3 top-full z-50 mt-2 w-64 overflow-hidden rounded-2xl border border-white/10 bg-neutral-900 p-1.5 shadow-2xl shadow-black/60">
+              <TillMenuItem
+                icon={Inbox}
+                label="Open cash drawer"
+                onClick={() => {
+                  setMenuOpen(false);
+                  void manualDrawer();
+                }}
+              />
+              <TillMenuItem
+                icon={FolderOpen}
+                label={`Held orders${held.length ? ` (${held.length})` : ""}`}
+                onClick={() => {
+                  setMenuOpen(false);
+                  setHeldOpen(true);
+                }}
+              />
+              <TillMenuItem
+                icon={MonitorPlay}
+                label={displayStatus.connected ? "Customer screen · on" : "Open customer screen"}
+                onClick={() => {
+                  setMenuOpen(false);
+                  const result = openCustomerScreen("/display");
+                  if (result.ok) toast.success(result.message);
+                  else toast.error(result.message);
+                }}
+              />
+              {shift && (
+                <TillMenuItem
+                  icon={Banknote}
+                  label="Cash in / out"
+                  onClick={() => {
+                    setMenuOpen(false);
+                    setShiftPanel("cash");
+                  }}
+                />
+              )}
+              {lastOrder && (
+                <TillMenuItem
+                  icon={Printer}
+                  label={`Reprint #${lastOrder.n}`}
+                  onClick={() => {
+                    setMenuOpen(false);
+                    window.open(`/print/${lastOrder.id}`, "_blank");
+                  }}
+                />
+              )}
+              {has("admin") && (
+                <TillMenuItem
+                  icon={Settings2}
+                  label="Till settings"
+                  onClick={() => {
+                    setMenuOpen(false);
+                    setSettings(true);
+                  }}
+                />
+              )}
+              <div className="my-1 h-px bg-white/10" />
+              <TillMenuItem
+                icon={Lock}
+                label="Lock till"
+                onClick={() => {
+                  setMenuOpen(false);
+                  setLocked(true);
+                }}
+              />
+              <TillMenuItem
+                icon={LogOut}
+                label="Sign out"
+                onClick={() => {
+                  setMenuOpen(false);
+                  void supabase.auth.signOut();
+                }}
+              />
+            </div>
+          </>
         )}
-      </div>
+      </header>
+      {!online && (
+        <p className="shrink-0 bg-red-500/15 px-4 py-1.5 text-center text-[11px] font-bold uppercase tracking-wide text-red-200">
+          Offline — payments are blocked until the connection returns
+        </p>
+      )}
 
       <div className="grid min-h-0 flex-1 lg:grid-cols-[148px_minmax(0,1fr)_408px]">
         {/* category rail (desktop) */}
@@ -1405,17 +1428,39 @@ function Till() {
                 </span>
               </div>
             )}
-            {due > 0 ? (
+            {pay === "cash" ? (
+              <div className="grid grid-cols-[1fr_auto] gap-2">
+                <button
+                  disabled={!lines.length || busy || !shift || !online}
+                  onClick={() => {
+                    if (tendered < due) return toast.error("Tendered is less than the amount due");
+                    void finish("cash");
+                  }}
+                  className="inline-flex h-14 items-center justify-between gap-2 rounded-2xl bg-emerald-600 px-5 text-base font-bold text-white shadow-lg shadow-emerald-600/25 transition active:scale-[0.99] disabled:opacity-40"
+                >
+                  <span className="inline-flex items-center gap-2">
+                    <Banknote className="h-5 w-5" /> Take cash
+                  </span>
+                  <span className="font-display text-lg font-black tabular-nums">{money(due)}</span>
+                </button>
+                <button
+                  onClick={() => {
+                    setPay(null);
+                    setTendered(0);
+                  }}
+                  className="h-14 rounded-2xl border border-white/10 px-4 text-sm font-bold text-white/60 transition hover:bg-white/5 active:scale-95"
+                >
+                  Back
+                </button>
+              </div>
+            ) : due > 0 ? (
               <button
                 disabled={!lines.length || busy || !shift || !online}
-                onClick={() => {
-                  setReaderSaleKey(crypto.randomUUID());
-                  setPay("reader");
-                }}
+                onClick={() => setPayOpen(true)}
                 className="inline-flex h-14 w-full items-center justify-between gap-2 rounded-2xl bg-primary px-5 text-base font-bold text-primary-foreground shadow-lg shadow-primary/25 transition active:scale-[0.99] disabled:opacity-40 disabled:shadow-none"
               >
                 <span className="inline-flex items-center gap-2">
-                  <Smartphone className="h-5 w-5" /> Charge SumUp Solo
+                  <CreditCard className="h-5 w-5" /> Charge
                 </span>
                 <span className="font-display text-lg font-black tabular-nums">{money(due)}</span>
               </button>
@@ -1431,49 +1476,13 @@ function Till() {
                 <span className="font-display text-lg font-black tabular-nums">{money(0)}</span>
               </button>
             )}
-            <div className="grid grid-cols-4 gap-2">
-              <button
-                disabled={!lines.length || busy || !shift || !online || due === 0}
-                onClick={() => {
-                  if (pay !== "cash") {
-                    setPay("cash");
-                    setTendered(0);
-                    return;
-                  }
-                  if (tendered < due) return toast.error("Tendered is less than the amount due");
-                  void finish("cash");
-                }}
-                className="inline-flex h-12 items-center justify-center gap-1.5 rounded-xl bg-emerald-600 text-sm font-bold text-white shadow-md shadow-emerald-600/20 transition active:scale-95 disabled:opacity-40 disabled:shadow-none"
-              >
-                <Banknote className="h-4 w-4" /> {pay === "cash" ? "Take cash" : "Cash"}
-              </button>
-              <button
-                onClick={() => void manualDrawer()}
-                className="inline-flex h-12 items-center justify-center gap-1.5 rounded-xl border border-white/10 bg-white/5 text-sm font-bold text-white/80 transition hover:bg-white/10 active:scale-95"
-              >
-                <Inbox className="h-4 w-4" /> Drawer
-              </button>
-              <button
-                disabled={!lines.length || busy || !shift || !online || due < 2}
-                onClick={startSplitPayment}
-                className="inline-flex h-12 items-center justify-center gap-1.5 rounded-xl border border-white/10 bg-white/5 text-sm font-bold text-white/80 transition hover:bg-white/10 active:scale-95 disabled:opacity-40"
-              >
-                <CircleDollarSign className="h-4 w-4" /> Split
-              </button>
-              <button
-                disabled={!lines.length || busy || !shift || !online || due === 0 || !has("admin")}
-                onClick={() => setPay("manual")}
-                className="inline-flex h-12 items-center justify-center gap-1.5 rounded-xl border border-white/10 bg-white/5 text-sm font-bold text-white/80 transition hover:bg-white/10 active:scale-95 disabled:opacity-40"
-              >
-                <CreditCard className="h-4 w-4" /> Manual
-              </button>
-            </div>
             <div className="flex flex-wrap items-center justify-between gap-1 text-xs">
               <button
                 disabled={!lines.length}
                 onClick={() => {
                   setLines([]);
                   setTendered(0);
+                  setPay(null);
                 }}
                 className="inline-flex items-center gap-1.5 rounded-lg px-2 py-1.5 font-semibold text-white/40 hover:text-white disabled:opacity-40"
               >
@@ -1492,14 +1501,6 @@ function Till() {
               >
                 <FolderOpen className="h-3.5 w-3.5" /> Held {held.length ? `(${held.length})` : ""}
               </button>
-              {lastOrder && (
-                <button
-                  onClick={() => window.open(`/print/${lastOrder.id}`, "_blank")}
-                  className="inline-flex items-center gap-1.5 rounded-lg px-2 py-1.5 font-semibold text-white/40 hover:text-white"
-                >
-                  <Printer className="h-3.5 w-3.5" /> Reprint #{lastOrder.n}
-                </button>
-              )}
             </div>
           </div>
         </aside>
@@ -1516,6 +1517,78 @@ function Till() {
           </span>
           <span className="font-display text-xl font-black tabular-nums">{money(due)}</span>
         </button>
+      )}
+
+      {payOpen && (
+        <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/70 p-0 backdrop-blur-sm sm:items-center sm:p-4">
+          <div className="w-full max-w-md rounded-t-3xl border border-white/10 bg-neutral-900 p-4 shadow-2xl sm:rounded-3xl">
+            <div className="mb-4 flex items-baseline justify-between">
+              <h2 className="font-display text-lg font-black">How are they paying?</h2>
+              <span className="font-display text-2xl font-black tabular-nums text-primary">
+                {money(due)}
+              </span>
+            </div>
+            <div className="grid gap-2">
+              <PayChoice
+                icon={Smartphone}
+                label="Card — SumUp Solo"
+                hint={readerReady ? "Reader online" : "Reader offline"}
+                tone="primary"
+                onClick={() => {
+                  setPayOpen(false);
+                  setReaderSaleKey(crypto.randomUUID());
+                  setPay("reader");
+                }}
+              />
+              <PayChoice
+                icon={Banknote}
+                label="Cash"
+                hint="Opens the tender keypad"
+                onClick={() => {
+                  setPayOpen(false);
+                  setPay("cash");
+                  setTendered(0);
+                }}
+              />
+              <PayChoice
+                icon={CircleDollarSign}
+                label="Split cash and card"
+                disabled={due < 2}
+                onClick={() => {
+                  setPayOpen(false);
+                  void startSplitPayment();
+                }}
+              />
+              {has("admin") && (
+                <PayChoice
+                  icon={CreditCard}
+                  label="Manual card terminal"
+                  hint="Manager only — needs a receipt reference"
+                  onClick={() => {
+                    setPayOpen(false);
+                    setPay("manual");
+                  }}
+                />
+              )}
+              {!voucher && (
+                <PayChoice
+                  icon={Ticket}
+                  label="Apply juror voucher"
+                  onClick={() => {
+                    setPayOpen(false);
+                    setVoucherOpen(true);
+                  }}
+                />
+              )}
+            </div>
+            <button
+              onClick={() => setPayOpen(false)}
+              className="mt-3 h-12 w-full rounded-2xl border border-white/10 text-sm font-bold text-white/60 transition hover:bg-white/5 active:scale-[0.99]"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
       )}
 
       {pay === "manual" && (
@@ -1636,6 +1709,64 @@ function Till() {
 /* -------------------------------------------------------------- widgets */
 
 /** Small status chip with a coloured dot for the till's hardware strip. */
+
+/** One row in the till's overflow menu. */
+
+/** One payment method row in the charge sheet. */
+function PayChoice({
+  icon: Icon,
+  label,
+  hint,
+  tone,
+  disabled,
+  onClick,
+}: {
+  icon: typeof Banknote;
+  label: string;
+  hint?: string;
+  tone?: "primary";
+  disabled?: boolean;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      disabled={disabled}
+      onClick={onClick}
+      className={`flex h-16 w-full items-center gap-3 rounded-2xl border px-4 text-left transition active:scale-[0.99] disabled:opacity-40 ${
+        tone === "primary"
+          ? "border-primary/50 bg-primary/15 hover:bg-primary/25"
+          : "border-white/10 bg-white/5 hover:bg-white/10"
+      }`}
+    >
+      <Icon className="h-5 w-5 shrink-0" />
+      <span className="min-w-0 flex-1">
+        <span className="block truncate text-sm font-bold">{label}</span>
+        {hint && <span className="block truncate text-[11px] text-white/45">{hint}</span>}
+      </span>
+    </button>
+  );
+}
+
+function TillMenuItem({
+  icon: Icon,
+  label,
+  onClick,
+}: {
+  icon: typeof Inbox;
+  label: string;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      onClick={onClick}
+      className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm font-semibold text-white/80 transition hover:bg-white/10 hover:text-white active:scale-[0.99]"
+    >
+      <Icon className="h-4 w-4 shrink-0 text-white/50" />
+      {label}
+    </button>
+  );
+}
+
 function StatusDot({ ok, label, muted }: { ok: boolean; label: string; muted?: boolean }) {
   return (
     <span
