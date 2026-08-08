@@ -735,7 +735,7 @@ function Till() {
   }
 
   const completeSale = useCallback(
-    async (res: CounterResult, paymentMethod: "cash" | "card" | "split") => {
+    async (res: CounterResult, paymentMethod: "cash" | "card" | "split" | "account") => {
       setLastOrder({ n: res.order_number, total: res.total_cents, id: res.order_id });
       const laterIso = laterTime ? laterTimeToIso(laterTime) : null;
       if (laterIso) {
