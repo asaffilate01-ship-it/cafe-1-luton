@@ -1428,17 +1428,39 @@ function Till() {
                 </span>
               </div>
             )}
-            {due > 0 ? (
+            {pay === "cash" ? (
+              <div className="grid grid-cols-[1fr_auto] gap-2">
+                <button
+                  disabled={!lines.length || busy || !shift || !online}
+                  onClick={() => {
+                    if (tendered < due) return toast.error("Tendered is less than the amount due");
+                    void finish("cash");
+                  }}
+                  className="inline-flex h-14 items-center justify-between gap-2 rounded-2xl bg-emerald-600 px-5 text-base font-bold text-white shadow-lg shadow-emerald-600/25 transition active:scale-[0.99] disabled:opacity-40"
+                >
+                  <span className="inline-flex items-center gap-2">
+                    <Banknote className="h-5 w-5" /> Take cash
+                  </span>
+                  <span className="font-display text-lg font-black tabular-nums">{money(due)}</span>
+                </button>
+                <button
+                  onClick={() => {
+                    setPay(null);
+                    setTendered(0);
+                  }}
+                  className="h-14 rounded-2xl border border-white/10 px-4 text-sm font-bold text-white/60 transition hover:bg-white/5 active:scale-95"
+                >
+                  Back
+                </button>
+              </div>
+            ) : due > 0 ? (
               <button
                 disabled={!lines.length || busy || !shift || !online}
-                onClick={() => {
-                  setReaderSaleKey(crypto.randomUUID());
-                  setPay("reader");
-                }}
+                onClick={() => setPayOpen(true)}
                 className="inline-flex h-14 w-full items-center justify-between gap-2 rounded-2xl bg-primary px-5 text-base font-bold text-primary-foreground shadow-lg shadow-primary/25 transition active:scale-[0.99] disabled:opacity-40 disabled:shadow-none"
               >
                 <span className="inline-flex items-center gap-2">
-                  <Smartphone className="h-5 w-5" /> Charge SumUp Solo
+                  <CreditCard className="h-5 w-5" /> Charge
                 </span>
                 <span className="font-display text-lg font-black tabular-nums">{money(due)}</span>
               </button>
@@ -1454,49 +1476,13 @@ function Till() {
                 <span className="font-display text-lg font-black tabular-nums">{money(0)}</span>
               </button>
             )}
-            <div className="grid grid-cols-4 gap-2">
-              <button
-                disabled={!lines.length || busy || !shift || !online || due === 0}
-                onClick={() => {
-                  if (pay !== "cash") {
-                    setPay("cash");
-                    setTendered(0);
-                    return;
-                  }
-                  if (tendered < due) return toast.error("Tendered is less than the amount due");
-                  void finish("cash");
-                }}
-                className="inline-flex h-12 items-center justify-center gap-1.5 rounded-xl bg-emerald-600 text-sm font-bold text-white shadow-md shadow-emerald-600/20 transition active:scale-95 disabled:opacity-40 disabled:shadow-none"
-              >
-                <Banknote className="h-4 w-4" /> {pay === "cash" ? "Take cash" : "Cash"}
-              </button>
-              <button
-                onClick={() => void manualDrawer()}
-                className="inline-flex h-12 items-center justify-center gap-1.5 rounded-xl border border-white/10 bg-white/5 text-sm font-bold text-white/80 transition hover:bg-white/10 active:scale-95"
-              >
-                <Inbox className="h-4 w-4" /> Drawer
-              </button>
-              <button
-                disabled={!lines.length || busy || !shift || !online || due < 2}
-                onClick={startSplitPayment}
-                className="inline-flex h-12 items-center justify-center gap-1.5 rounded-xl border border-white/10 bg-white/5 text-sm font-bold text-white/80 transition hover:bg-white/10 active:scale-95 disabled:opacity-40"
-              >
-                <CircleDollarSign className="h-4 w-4" /> Split
-              </button>
-              <button
-                disabled={!lines.length || busy || !shift || !online || due === 0 || !has("admin")}
-                onClick={() => setPay("manual")}
-                className="inline-flex h-12 items-center justify-center gap-1.5 rounded-xl border border-white/10 bg-white/5 text-sm font-bold text-white/80 transition hover:bg-white/10 active:scale-95 disabled:opacity-40"
-              >
-                <CreditCard className="h-4 w-4" /> Manual
-              </button>
-            </div>
             <div className="flex flex-wrap items-center justify-between gap-1 text-xs">
               <button
                 disabled={!lines.length}
                 onClick={() => {
                   setLines([]);
                   setTendered(0);
+                  setPay(null);
                 }}
                 className="inline-flex items-center gap-1.5 rounded-lg px-2 py-1.5 font-semibold text-white/40 hover:text-white disabled:opacity-40"
               >
@@ -1515,14 +1501,6 @@ function Till() {
               >
                 <FolderOpen className="h-3.5 w-3.5" /> Held {held.length ? `(${held.length})` : ""}
               </button>
-              {lastOrder && (
-                <button
-                  onClick={() => window.open(`/print/${lastOrder.id}`, "_blank")}
-                  className="inline-flex items-center gap-1.5 rounded-lg px-2 py-1.5 font-semibold text-white/40 hover:text-white"
-                >
-                  <Printer className="h-3.5 w-3.5" /> Reprint #{lastOrder.n}
-                </button>
-              )}
             </div>
           </div>
         </aside>
