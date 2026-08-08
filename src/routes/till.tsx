@@ -597,6 +597,7 @@ function Till() {
       setCustomize(i);
       return;
     }
+    let touched = "";
     setLines((prev) => {
       const at = prev.findIndex(
         (line) => line.id === i.id && !line.modifier_ids.length && !line.notes,
@@ -604,12 +605,15 @@ function Till() {
       if (at >= 0) {
         const next = [...prev];
         next[at] = { ...next[at], qty: next[at].qty + 1 };
+        touched = next[at].key;
         return next;
       }
+      const key = crypto.randomUUID();
+      touched = key;
       return [
         ...prev,
         {
-          key: crypto.randomUUID(),
+          key,
           id: i.id,
           name: i.name,
           price_cents: i.price_cents,
@@ -621,6 +625,7 @@ function Till() {
         },
       ];
     });
+    setFlashKey(touched);
   }
   function bump(key: string, d: number) {
     setLines((prev) =>
@@ -628,6 +633,7 @@ function Till() {
         l.key === key ? (l.qty + d <= 0 ? [] : [{ ...l, qty: l.qty + d }]) : [l],
       ),
     );
+    if (d > 0) setFlashKey(key);
   }
 
   function parkOrder() {
