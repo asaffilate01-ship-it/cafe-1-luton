@@ -63,6 +63,7 @@ import {
 import {
   Banknote,
   CreditCard,
+  MoreHorizontal,
   Minus,
   Plus,
   Search,
