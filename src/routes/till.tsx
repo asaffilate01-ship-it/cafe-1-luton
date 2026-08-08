@@ -411,6 +411,10 @@ function Till() {
   const favourites = useTillFavourites();
   const displayStatus = useCustomerDisplayStatus();
   const deviceStatus = usePosDeviceStatus();
+  const searchRef = useRef<HTMLInputElement | null>(null);
+  const gridRef = useRef<HTMLDivElement | null>(null);
+  const basketRef = useRef<HTMLUListElement | null>(null);
+  const [flashKey, setFlashKey] = useState<string | null>(null);
   const selectedReader = readers.find((reader) => reader.id === readerId);
   const readerReady =
     online && !readerError && Boolean(selectedReader && isReaderOnline(selectedReader.status));
