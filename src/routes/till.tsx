@@ -1519,6 +1519,78 @@ function Till() {
         </button>
       )}
 
+      {payOpen && (
+        <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/70 p-0 backdrop-blur-sm sm:items-center sm:p-4">
+          <div className="w-full max-w-md rounded-t-3xl border border-white/10 bg-neutral-900 p-4 shadow-2xl sm:rounded-3xl">
+            <div className="mb-4 flex items-baseline justify-between">
+              <h2 className="font-display text-lg font-black">How are they paying?</h2>
+              <span className="font-display text-2xl font-black tabular-nums text-primary">
+                {money(due)}
+              </span>
+            </div>
+            <div className="grid gap-2">
+              <PayChoice
+                icon={Smartphone}
+                label="Card — SumUp Solo"
+                hint={readerReady ? "Reader online" : "Reader offline"}
+                tone="primary"
+                onClick={() => {
+                  setPayOpen(false);
+                  setReaderSaleKey(crypto.randomUUID());
+                  setPay("reader");
+                }}
+              />
+              <PayChoice
+                icon={Banknote}
+                label="Cash"
+                hint="Opens the tender keypad"
+                onClick={() => {
+                  setPayOpen(false);
+                  setPay("cash");
+                  setTendered(0);
+                }}
+              />
+              <PayChoice
+                icon={CircleDollarSign}
+                label="Split cash and card"
+                disabled={due < 2}
+                onClick={() => {
+                  setPayOpen(false);
+                  void startSplitPayment();
+                }}
+              />
+              {has("admin") && (
+                <PayChoice
+                  icon={CreditCard}
+                  label="Manual card terminal"
+                  hint="Manager only — needs a receipt reference"
+                  onClick={() => {
+                    setPayOpen(false);
+                    setPay("manual");
+                  }}
+                />
+              )}
+              {!voucher && (
+                <PayChoice
+                  icon={Ticket}
+                  label="Apply juror voucher"
+                  onClick={() => {
+                    setPayOpen(false);
+                    setVoucherOpen(true);
+                  }}
+                />
+              )}
+            </div>
+            <button
+              onClick={() => setPayOpen(false)}
+              className="mt-3 h-12 w-full rounded-2xl border border-white/10 text-sm font-bold text-white/60 transition hover:bg-white/5 active:scale-[0.99]"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
+
       {pay === "manual" && (
         <ManualCardModal
           total={due}
