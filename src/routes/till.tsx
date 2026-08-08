@@ -977,7 +977,7 @@ function Till() {
   return (
     <div className="flex h-screen flex-col overflow-hidden bg-[radial-gradient(120%_100%_at_50%_0%,#16181d_0%,#0a0a0b_60%)] text-white">
       {/* top bar — one row: who you are, shift state, everything else in one menu */}
-      <header className="relative flex shrink-0 items-center gap-2 border-b border-white/10 bg-neutral-900/80 px-3 py-2 backdrop-blur sm:gap-3 sm:px-4">
+      <header className="relative flex shrink-0 items-center gap-2 border-b border-white/10 bg-neutral-900/80 px-3 py-2 backdrop-blur sm:gap-3 sm:px-4 lg:py-1.5">
         <span className="hidden rounded-xl bg-primary px-3 py-1.5 text-xs font-black uppercase tracking-[0.2em] text-primary-foreground shadow-lg shadow-primary/25 sm:inline">
           Cafe 1 Till
         </span>
@@ -1008,7 +1008,7 @@ function Till() {
             onClick={() => setMenuOpen((v) => !v)}
             aria-label="Till menu"
             aria-expanded={menuOpen}
-            className="grid h-10 w-10 place-items-center rounded-xl border border-white/10 bg-white/5 transition hover:bg-white/10 active:scale-95"
+            className="grid h-10 w-10 place-items-center rounded-xl border border-white/10 bg-white/5 transition hover:bg-white/10 active:scale-95 lg:h-9 lg:w-9"
           >
             <MoreHorizontal className="h-5 w-5" />
           </button>
@@ -1491,7 +1491,7 @@ function Till() {
               ) : (
                 <button
                   onClick={() => setVoucherOpen(true)}
-                  className="inline-flex h-10 w-full items-center justify-center gap-2 rounded-xl border border-indigo-500/40 text-xs font-bold uppercase tracking-wide text-indigo-300 hover:border-indigo-400"
+                  className="inline-flex h-10 w-full items-center justify-center gap-2 rounded-xl border border-indigo-500/40 text-xs font-bold uppercase tracking-wide text-indigo-300 hover:border-indigo-400 lg:h-9"
                 >
                   <Ticket className="h-4 w-4" /> Juror voucher
                 </button>
