@@ -1140,7 +1140,7 @@ function Till() {
 
         {/* products */}
         <section className="flex min-h-0 flex-col">
-          <div className="shrink-0 space-y-3 border-b border-white/10 p-3 sm:p-4">
+          <div className="shrink-0 space-y-3 border-b border-white/10 p-3 sm:p-4 lg:space-y-0 lg:px-4 lg:py-2.5">
             <div className="flex items-center gap-2 rounded-2xl border border-white/10 bg-neutral-900/80 px-4 shadow-inner shadow-black/40 focus-within:border-primary/60">
               <Search className="h-4 w-4 shrink-0 text-white/40" />
               <input
@@ -1151,7 +1151,7 @@ function Till() {
                   if (event.key === "Enter" && addBarcode(q)) event.preventDefault();
                 }}
                 placeholder="Search or scan a barcode…"
-                className="h-12 min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-white/30"
+                className="h-12 min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-white/30 lg:h-10"
                 autoComplete="off"
               />
               {q && (
@@ -1184,8 +1184,8 @@ function Till() {
             )}
           </div>
 
-          <div ref={gridRef} className="min-h-0 flex-1 overflow-y-auto p-3 pb-24 sm:p-4 lg:pb-4">
-            <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
+          <div ref={gridRef} className="min-h-0 flex-1 overflow-y-auto p-3 pb-24 sm:p-4 lg:p-3">
+            <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 lg:gap-2 xl:grid-cols-5 2xl:grid-cols-6">
               {visible.map((i) => (
                 <div
                   key={i.id}
@@ -1195,7 +1195,7 @@ function Till() {
                     onClick={() => add(i)}
                     className="flex h-full w-full flex-col text-left transition active:scale-[0.97]"
                   >
-                    <div className="relative aspect-[4/3] w-full overflow-hidden bg-neutral-800">
+                    <div className="relative aspect-[4/3] w-full overflow-hidden bg-neutral-800 lg:aspect-[16/9]">
                       {i.image_url ? (
                         <>
                           <img
@@ -1212,11 +1212,11 @@ function Till() {
                         </div>
                       )}
                     </div>
-                    <div className="flex min-h-[64px] flex-1 flex-col justify-between gap-1 p-2.5 pr-10">
-                      <span className="line-clamp-2 text-[13px] font-semibold leading-snug">
+                    <div className="flex min-h-[64px] flex-1 flex-col justify-between gap-1 p-2.5 pr-10 lg:min-h-[54px] lg:p-2 lg:pr-9">
+                      <span className="line-clamp-2 text-[13px] font-semibold leading-snug lg:text-xs">
                         {i.name}
                       </span>
-                      <span className="font-display text-base font-black tabular-nums text-primary">
+                      <span className="font-display text-base font-black tabular-nums text-primary lg:text-sm">
                         {money(i.price_cents)}
                       </span>
                     </div>
@@ -1225,9 +1225,9 @@ function Till() {
                     onClick={() => favourites.toggle(i.id)}
                     aria-label={`${favourites.has(i.id) ? "Remove" : "Add"} ${i.name} ${favourites.has(i.id) ? "from" : "to"} favourites`}
                     aria-pressed={favourites.has(i.id)}
-                    className={`absolute bottom-2.5 right-2.5 grid h-9 w-9 place-items-center rounded-xl border shadow-lg transition active:scale-90 ${favourites.has(i.id) ? "border-amber-300 bg-amber-400 text-neutral-950" : "border-white/15 bg-neutral-950/80 text-white/55 hover:text-amber-300"}`}
+                    className={`absolute bottom-2.5 right-2.5 grid h-9 w-9 place-items-center rounded-xl border shadow-lg transition active:scale-90 lg:bottom-2 lg:right-2 lg:h-7 lg:w-7 ${favourites.has(i.id) ? "border-amber-300 bg-amber-400 text-neutral-950" : "border-white/15 bg-neutral-950/80 text-white/55 hover:text-amber-300"}`}
                   >
-                    <Star className={`h-4 w-4 ${favourites.has(i.id) ? "fill-current" : ""}`} />
+                    <Star className={`h-4 w-4 lg:h-3.5 lg:w-3.5 ${favourites.has(i.id) ? "fill-current" : ""}`} />
                   </button>
                 </div>
               ))}
