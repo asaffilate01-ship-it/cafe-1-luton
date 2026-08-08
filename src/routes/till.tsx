@@ -1039,6 +1039,7 @@ function Till() {
             <div className="flex items-center gap-2 rounded-2xl border border-white/10 bg-neutral-900/80 px-4 shadow-inner shadow-black/40 focus-within:border-primary/60">
               <Search className="h-4 w-4 shrink-0 text-white/40" />
               <input
+                ref={searchRef}
                 value={q}
                 onChange={(e) => setQ(e.target.value)}
                 onKeyDown={(event) => {
@@ -1053,6 +1054,9 @@ function Till() {
                   <X className="h-4 w-4 text-white/40" />
                 </button>
               )}
+              <kbd className="hidden shrink-0 rounded border border-white/15 px-1.5 py-0.5 text-[10px] font-bold text-white/35 lg:block">
+                /
+              </kbd>
             </div>
             {!q && (
               <div className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-1 lg:hidden">
@@ -1075,7 +1079,7 @@ function Till() {
             )}
           </div>
 
-          <div className="min-h-0 flex-1 overflow-y-auto p-3 pb-24 sm:p-4 lg:pb-4">
+          <div ref={gridRef} className="min-h-0 flex-1 overflow-y-auto p-3 pb-24 sm:p-4 lg:pb-4">
             <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
               {visible.map((i) => (
                 <div
