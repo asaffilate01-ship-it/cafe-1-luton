@@ -1659,6 +1659,28 @@ function Till() {
 /* -------------------------------------------------------------- widgets */
 
 /** Small status chip with a coloured dot for the till's hardware strip. */
+
+/** One row in the till's overflow menu. */
+function TillMenuItem({
+  icon: Icon,
+  label,
+  onClick,
+}: {
+  icon: typeof Inbox;
+  label: string;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      onClick={onClick}
+      className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm font-semibold text-white/80 transition hover:bg-white/10 hover:text-white active:scale-[0.99]"
+    >
+      <Icon className="h-4 w-4 shrink-0 text-white/50" />
+      {label}
+    </button>
+  );
+}
+
 function StatusDot({ ok, label, muted }: { ok: boolean; label: string; muted?: boolean }) {
   return (
     <span
