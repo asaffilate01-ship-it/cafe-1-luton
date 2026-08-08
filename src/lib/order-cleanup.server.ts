@@ -7,6 +7,10 @@
 // get longer to reconcile because a terminal can take minutes to respond.
 const WEB_UNPAID_TTL_MS = 5 * 60 * 1000;
 const COUNTER_UNPAID_TTL_MS = 30 * 60 * 1000;
+// A SumUp checkout sits at PENDING until the customer pays or it expires, so
+// "still pending" must not block cleanup forever. Past this age we treat an
+// unpaid checkout as abandoned regardless of what the provider still reports.
+const PROVIDER_GRACE_MS = 30 * 60 * 1000;
 
 async function reconcileReaderPayments(): Promise<number> {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
