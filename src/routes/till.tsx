@@ -364,6 +364,11 @@ function Till() {
   const cashEvent = useServerFn(recordTillCashEvent);
   const getMenuItems = useServerFn(getStaffMenuItems);
   const scheduleOrder = useServerFn(setCounterOrderSchedule);
+  const prepareOrder = useServerFn(prepareCounterOrder);
+  const loadAccounts = useServerFn(listAccounts);
+  const addAccount = useServerFn(quickAddAccount);
+  const chargeToAccount = useServerFn(chargeOrderToAccount);
+  const findSimilar = useServerFn(findSimilarAccountOrder);
 
   const [cats, setCats] = useState<Cat[]>([]);
   const [items, setItems] = useState<Item[]>([]);
