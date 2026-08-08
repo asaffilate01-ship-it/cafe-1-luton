@@ -1217,7 +1217,7 @@ function Till() {
 
           {pay === "cash" && (
             <div className="shrink-0 border-t border-white/10 p-3">
-              <div className="mb-2 grid grid-cols-3 items-end gap-2 rounded-2xl bg-neutral-800/70 px-3 py-2">
+            <div className="mb-2 grid grid-cols-3 items-end gap-2 rounded-2xl border border-white/5 bg-neutral-800/70 px-3 py-2.5">
                 <div>
                   <p className="text-[10px] font-bold uppercase tracking-widest text-white/40">
                     Tendered
@@ -1248,33 +1248,33 @@ function Till() {
                   <button
                     key={n}
                     onClick={() => setTendered((t) => Math.min(t * 10 + n * 100, 5_000_00))}
-                    className="h-11 rounded-xl border border-white/10 bg-neutral-800/50 text-lg font-bold hover:border-white/40 active:scale-95"
+                    className="h-12 rounded-xl border border-white/10 bg-neutral-800/60 text-lg font-bold tabular-nums transition hover:bg-neutral-700/60 active:scale-95"
                   >
                     {n}
                   </button>
                 ))}
                 <button
                   onClick={() => setTendered(due)}
-                  className="h-11 rounded-xl border border-emerald-500/40 text-xs font-black uppercase tracking-wide text-emerald-300 hover:border-emerald-400"
+                  className="h-12 rounded-xl border border-emerald-500/40 bg-emerald-500/10 text-xs font-black uppercase tracking-wide text-emerald-300 transition hover:bg-emerald-500/20 active:scale-95"
                 >
                   Exact
                 </button>
                 <button
                   onClick={() => setTendered((t) => Math.min(t * 10, 5_000_00))}
-                  className="h-11 rounded-xl border border-white/10 bg-neutral-800/50 text-lg font-bold hover:border-white/40 active:scale-95"
+                  className="h-12 rounded-xl border border-white/10 bg-neutral-800/60 text-lg font-bold tabular-nums transition hover:bg-neutral-700/60 active:scale-95"
                 >
                   0
                 </button>
                 <button
                   onClick={() => setTendered((t) => Math.floor(t / 10 / 100) * 100)}
                   aria-label="Delete last digit"
-                  className="grid h-11 place-items-center rounded-xl border border-white/10 bg-neutral-800/50 hover:border-white/40 active:scale-95"
+                  className="grid h-12 place-items-center rounded-xl border border-white/10 bg-neutral-800/60 transition hover:bg-neutral-700/60 active:scale-95"
                 >
                   <Delete className="h-4 w-4" />
                 </button>
                 <button
                   onClick={() => setTendered(0)}
-                  className="h-11 rounded-xl border border-white/10 text-xs font-black uppercase tracking-wide text-white/50 hover:border-white/40"
+                  className="h-12 rounded-xl border border-white/10 text-xs font-black uppercase tracking-wide text-white/50 transition hover:bg-white/5 active:scale-95"
                 >
                   Clear
                 </button>
@@ -1284,7 +1284,7 @@ function Till() {
                   <button
                     key={v}
                     onClick={() => setTendered(v)}
-                    className="h-9 rounded-xl border border-white/10 text-xs font-bold text-white/70 hover:border-white/40"
+                    className="h-9 rounded-xl border border-white/10 text-xs font-bold tabular-nums text-white/70 transition hover:bg-white/5 active:scale-95"
                   >
                     {money(v)}
                   </button>
@@ -1449,7 +1449,7 @@ function Till() {
       {!showOrder && (
         <button
           onClick={() => setShowOrder(true)}
-          className="fixed inset-x-3 bottom-3 z-30 flex h-14 items-center justify-between rounded-2xl bg-primary px-5 text-primary-foreground shadow-2xl lg:hidden"
+          className="fixed inset-x-3 bottom-3 z-30 flex h-14 items-center justify-between rounded-2xl bg-primary px-5 text-primary-foreground shadow-2xl shadow-primary/30 transition active:scale-[0.99] lg:hidden"
         >
           <span className="inline-flex items-center gap-2 text-sm font-bold uppercase tracking-wide">
             <ReceiptText className="h-5 w-5" /> {count} item{count === 1 ? "" : "s"}
