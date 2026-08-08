@@ -1381,8 +1381,8 @@ function Till() {
           </div>
 
           {pay === "cash" && (
-            <div className="shrink-0 border-t border-white/10 p-3">
-            <div className="mb-2 grid grid-cols-3 items-end gap-2 rounded-2xl border border-white/5 bg-neutral-800/70 px-3 py-2.5">
+            <div className="shrink-0 border-t border-white/10 p-3 lg:p-2.5">
+            <div className="mb-2 grid grid-cols-3 items-end gap-2 rounded-2xl border border-white/5 bg-neutral-800/70 px-3 py-2.5 lg:mb-1.5 lg:py-2">
                 <div>
                   <p className="text-[10px] font-bold uppercase tracking-widest text-white/40">
                     Tendered
@@ -1413,33 +1413,33 @@ function Till() {
                   <button
                     key={n}
                     onClick={() => setTendered((t) => Math.min(t * 10 + n * 100, 5_000_00))}
-                    className="h-12 rounded-xl border border-white/10 bg-neutral-800/60 text-lg font-bold tabular-nums transition hover:bg-neutral-700/60 active:scale-95"
+                    className="h-12 rounded-xl border border-white/10 bg-neutral-800/60 text-lg font-bold tabular-nums transition hover:bg-neutral-700/60 active:scale-95 lg:h-10"
                   >
                     {n}
                   </button>
                 ))}
                 <button
                   onClick={() => setTendered(due)}
-                  className="h-12 rounded-xl border border-emerald-500/40 bg-emerald-500/10 text-xs font-black uppercase tracking-wide text-emerald-300 transition hover:bg-emerald-500/20 active:scale-95"
+                  className="h-12 rounded-xl border border-emerald-500/40 bg-emerald-500/10 text-xs font-black uppercase tracking-wide text-emerald-300 transition hover:bg-emerald-500/20 active:scale-95 lg:h-10"
                 >
                   Exact
                 </button>
                 <button
                   onClick={() => setTendered((t) => Math.min(t * 10, 5_000_00))}
-                  className="h-12 rounded-xl border border-white/10 bg-neutral-800/60 text-lg font-bold tabular-nums transition hover:bg-neutral-700/60 active:scale-95"
+                  className="h-12 rounded-xl border border-white/10 bg-neutral-800/60 text-lg font-bold tabular-nums transition hover:bg-neutral-700/60 active:scale-95 lg:h-10"
                 >
                   0
                 </button>
                 <button
                   onClick={() => setTendered((t) => Math.floor(t / 10 / 100) * 100)}
                   aria-label="Delete last digit"
-                  className="grid h-12 place-items-center rounded-xl border border-white/10 bg-neutral-800/60 transition hover:bg-neutral-700/60 active:scale-95"
+                  className="grid h-12 place-items-center rounded-xl border border-white/10 bg-neutral-800/60 transition hover:bg-neutral-700/60 active:scale-95 lg:h-10"
                 >
                   <Delete className="h-4 w-4" />
                 </button>
                 <button
                   onClick={() => setTendered(0)}
-                  className="h-12 rounded-xl border border-white/10 text-xs font-black uppercase tracking-wide text-white/50 transition hover:bg-white/5 active:scale-95"
+                  className="h-12 rounded-xl border border-white/10 text-xs font-black uppercase tracking-wide text-white/50 transition hover:bg-white/5 active:scale-95 lg:h-10"
                 >
                   Clear
                 </button>
@@ -1449,7 +1449,7 @@ function Till() {
                   <button
                     key={v}
                     onClick={() => setTendered(v)}
-                    className="h-9 rounded-xl border border-white/10 text-xs font-bold tabular-nums text-white/70 transition hover:bg-white/5 active:scale-95"
+                    className="h-9 rounded-xl border border-white/10 text-xs font-bold tabular-nums text-white/70 transition hover:bg-white/5 active:scale-95 lg:h-8"
                   >
                     {money(v)}
                   </button>
@@ -1499,9 +1499,9 @@ function Till() {
             </div>
           )}
 
-          <div className="shrink-0 space-y-2 border-t border-white/10 bg-neutral-950/40 p-3">
+          <div className="shrink-0 space-y-2 border-t border-white/10 bg-neutral-950/40 p-3 lg:space-y-1.5 lg:p-2.5">
             {lines.length > 0 && pay !== "cash" && (
-              <div className="flex items-baseline justify-between rounded-2xl bg-white/5 px-4 py-2.5">
+              <div className="flex items-baseline justify-between rounded-2xl bg-white/5 px-4 py-2.5 lg:py-2">
                 <span className="text-[10px] font-black uppercase tracking-[0.2em] text-white/40">
                   Due · {count} item{count === 1 ? "" : "s"}
                 </span>
@@ -1518,7 +1518,7 @@ function Till() {
                     if (tendered < due) return toast.error("Tendered is less than the amount due");
                     void finish("cash");
                   }}
-                  className="inline-flex h-14 items-center justify-between gap-2 rounded-2xl bg-emerald-600 px-5 text-base font-bold text-white shadow-lg shadow-emerald-600/25 transition active:scale-[0.99] disabled:opacity-40"
+                  className="inline-flex h-14 items-center justify-between gap-2 rounded-2xl bg-emerald-600 px-5 text-base font-bold text-white shadow-lg shadow-emerald-600/25 transition active:scale-[0.99] disabled:opacity-40 lg:h-12"
                 >
                   <span className="inline-flex items-center gap-2">
                     <Banknote className="h-5 w-5" /> Take cash
@@ -1530,7 +1530,7 @@ function Till() {
                     setPay(null);
                     setTendered(0);
                   }}
-                  className="h-14 rounded-2xl border border-white/10 px-4 text-sm font-bold text-white/60 transition hover:bg-white/5 active:scale-95"
+                  className="h-14 rounded-2xl border border-white/10 px-4 text-sm font-bold text-white/60 transition hover:bg-white/5 active:scale-95 lg:h-12"
                 >
                   Back
                 </button>
@@ -1539,7 +1539,7 @@ function Till() {
               <button
                 disabled={!lines.length || busy || !shift || !online}
                 onClick={() => setPayOpen(true)}
-                className="inline-flex h-14 w-full items-center justify-between gap-2 rounded-2xl bg-primary px-5 text-base font-bold text-primary-foreground shadow-lg shadow-primary/25 transition active:scale-[0.99] disabled:opacity-40 disabled:shadow-none"
+                className="inline-flex h-14 w-full items-center justify-between gap-2 rounded-2xl bg-primary px-5 text-base font-bold text-primary-foreground shadow-lg shadow-primary/25 transition active:scale-[0.99] disabled:opacity-40 disabled:shadow-none lg:h-12"
               >
                 <span className="inline-flex items-center gap-2">
                   <CreditCard className="h-5 w-5" /> Charge
@@ -1550,7 +1550,7 @@ function Till() {
               <button
                 disabled={!lines.length || busy || !shift || !online}
                 onClick={() => void finish("cash")}
-                className="inline-flex h-14 w-full items-center justify-between gap-2 rounded-2xl bg-indigo-500 px-5 text-base font-bold text-white shadow-lg shadow-indigo-500/25 transition active:scale-[0.99] disabled:opacity-40 disabled:shadow-none"
+                className="inline-flex h-14 w-full items-center justify-between gap-2 rounded-2xl bg-indigo-500 px-5 text-base font-bold text-white shadow-lg shadow-indigo-500/25 transition active:scale-[0.99] disabled:opacity-40 disabled:shadow-none lg:h-12"
               >
                 <span className="inline-flex items-center gap-2">
                   <Ticket className="h-5 w-5" /> Complete voucher sale
