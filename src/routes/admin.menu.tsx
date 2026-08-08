@@ -18,13 +18,7 @@ import {
   Download,
 } from "lucide-react";
 import { getStaffMenuItems } from "@/lib/menu-operations.functions";
-import {
-  buildSumUpCategoriesCsv,
-  buildSumUpItemsCsv,
-  buildSumUpModifiersCsv,
-  buildSumUpFullMenuCsv,
-  buildSumUpNativeItemsCsv,
-} from "@/lib/sumup-export";
+import { buildSumUpNativeItemsCsv } from "@/lib/sumup-export";
 
 export const Route = createFileRoute("/admin/menu")({
   head: () => ({
@@ -92,7 +86,10 @@ function MenuManager() {
 }
 
 function downloadCsv(filename: string, csv: string) {
-  const url = URL.createObjectURL(new Blob([csv], { type: "text/csv;charset=utf-8" }));
+  // BOM keeps £ signs and accents intact when SumUp/Excel reads the file.
+  const url = URL.createObjectURL(
+    new Blob(["\uFEFF", csv], { type: "text/csv;charset=utf-8" }),
+  );
   const link = document.createElement("a");
   link.href = url;
   link.download = filename;
