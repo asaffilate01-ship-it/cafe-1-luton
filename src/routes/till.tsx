@@ -1689,10 +1689,19 @@ function Till() {
       {pay === "manual" && (
         <ManualCardModal
           total={due}
-          total={due}
           busy={busy}
           onClose={() => setPay(null)}
           onConfirm={(reference) => void finish("card", reference)}
+        />
+      )}
+      {tabOpen && (
+        <JudgeTabModal
+          total={due}
+          busy={busy}
+          loadAccounts={loadAccounts}
+          addAccount={addAccount}
+          onClose={() => setTabOpen(false)}
+          onConfirm={(account) => void chargeJudgeTab(account)}
         />
       )}
       {(pay === "reader" || pay === "split") && shift && readerSaleKey && (
