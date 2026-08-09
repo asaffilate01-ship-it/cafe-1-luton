@@ -51,6 +51,10 @@ import { money } from "@/lib/format";
 import { calculateCounterDue } from "@/lib/counter-pricing";
 import { askConfirm, askPrompt } from "@/lib/confirm";
 import { useCustomerDisplayStatus } from "@/hooks/use-customer-display-status";
+import {
+  useCustomerDisplayRelay,
+  type CustomerDisplayRelay,
+} from "@/hooks/use-customer-display-relay";
 import { usePosDeviceStatus } from "@/hooks/use-pos-device-status";
 import { useTillFavourites } from "@/hooks/use-till-favourites";
 import { toast } from "sonner";
@@ -94,6 +98,8 @@ import {
   FolderOpen,
   CircleDollarSign,
   Star,
+  Copy,
+  RotateCw,
 } from "lucide-react";
 
 export const Route = createFileRoute("/till")({
@@ -419,6 +425,7 @@ function Till() {
   const [splitCash, setSplitCash] = useState(0);
   const favourites = useTillFavourites();
   const displayStatus = useCustomerDisplayStatus();
+  const displayRelay = useCustomerDisplayRelay({ role: "till" });
   const deviceStatus = usePosDeviceStatus();
   const searchRef = useRef<HTMLInputElement | null>(null);
   const gridRef = useRef<HTMLDivElement | null>(null);
@@ -427,6 +434,7 @@ function Till() {
   const selectedReader = readers.find((reader) => reader.id === readerId);
   const readerReady =
     online && !readerError && Boolean(selectedReader && isReaderOnline(selectedReader.status));
+  const displayConnected = displayStatus.connected || displayRelay.connected;
 
   useEffect(() => {
     window.localStorage.setItem("cafe1-pos-side", side);
@@ -1003,6 +1011,7 @@ function Till() {
             <StatusDot ok={online} label={online ? "Online" : "Offline"} />
             <StatusDot ok={readerReady} label="Card" />
             <StatusDot ok={deviceStatus.printerReady} label="Printer" />
+            <StatusDot ok={displayConnected} label="Display" />
           </span>
           <button
             onClick={() => setMenuOpen((v) => !v)}
@@ -1039,10 +1048,10 @@ function Till() {
               />
               <TillMenuItem
                 icon={MonitorPlay}
-                label={displayStatus.connected ? "Customer screen · on" : "Open customer screen"}
+                label={displayConnected ? "Customer screen · on" : "Open customer screen"}
                 onClick={() => {
                   setMenuOpen(false);
-                  const result = openCustomerScreen("/display");
+                  const result = openCustomerScreen(displayRelay.displayUrl || "/display");
                   if (result.ok) toast.success(result.message);
                   else toast.error(result.message);
                 }}
@@ -1800,6 +1809,11 @@ function Till() {
           readers={readers}
           readerError={readerError}
           reload={loadReaders}
+          online={online}
+          readerReady={readerReady}
+          printerReady={deviceStatus.printerReady}
+          displayConnected={displayConnected}
+          displayRelay={displayRelay}
           onClose={() => setSettings(false)}
         />
       )}
@@ -2589,11 +2603,21 @@ function TillSettings({
   readers,
   readerError,
   reload,
+  online,
+  readerReady,
+  printerReady,
+  displayConnected,
+  displayRelay,
   onClose,
 }: {
   readers: { id: string; name: string; status: string }[];
   readerError?: string | null;
   reload: () => Promise<void>;
+  online: boolean;
+  readerReady: boolean;
+  printerReady: boolean;
+  displayConnected: boolean;
+  displayRelay: CustomerDisplayRelay;
   onClose: () => void;
 }) {
   const pairFn = useServerFn(pairSumupReader);
@@ -2605,6 +2629,13 @@ function TillSettings({
   const [bridgeMessage, setBridgeMessage] = useState<string | null>(null);
   const [bridgeBusy, setBridgeBusy] = useState(false);
   const [busy, setBusy] = useState(false);
+  const readiness = [
+    { label: "Internet", ok: online },
+    { label: "Card reader", ok: readerReady },
+    { label: "Printer", ok: printerReady },
+    { label: "Customer display", ok: displayConnected },
+  ];
+  const readyCount = readiness.filter((item) => item.ok).length;
 
   async function pair() {
     const clean = code.trim().replace(/[\s-]/g, "").toUpperCase();
@@ -2657,6 +2688,45 @@ function TillSettings({
 
   return (
     <Modal title="Till settings" onClose={onClose}>
+      <div className="mb-5 rounded-2xl border border-white/10 bg-white/5 p-3">
+        <div className="flex items-center justify-between gap-3">
+          <div>
+            <p className="text-xs font-black uppercase tracking-widest text-white/45">
+              Hardware readiness
+            </p>
+            <p className="mt-1 text-sm font-semibold text-white/80">
+              {readyCount}/4 devices responding now
+            </p>
+          </div>
+          <span
+            className={`rounded-full px-3 py-1 text-xs font-black ${
+              readyCount === readiness.length
+                ? "bg-emerald-500/20 text-emerald-300"
+                : "bg-amber-500/20 text-amber-200"
+            }`}
+          >
+            {readyCount === readiness.length ? "Ready" : "Check devices"}
+          </span>
+        </div>
+        <div className="mt-3 grid grid-cols-2 gap-2">
+          {readiness.map((item) => (
+            <div
+              key={item.label}
+              className="flex items-center gap-2 rounded-xl border border-white/10 bg-neutral-950/40 px-3 py-2 text-xs font-semibold"
+            >
+              <span
+                className={`h-2.5 w-2.5 rounded-full ${item.ok ? "bg-emerald-400" : "bg-amber-400"}`}
+              />
+              {item.label}
+            </div>
+          ))}
+        </div>
+        <p className="mt-2 text-[11px] text-white/35">
+          Live status helps setup; complete the physical payment, print, drawer and display tests
+          before recording operational acceptance.
+        </p>
+      </div>
+
       <div className="flex items-center justify-between gap-2">
         <p className="text-xs font-bold uppercase tracking-widest text-white/40">
           SumUp Solo readers
@@ -2805,6 +2875,86 @@ function TillSettings({
         >
           <Inbox className="h-4 w-4" /> Test drawer
         </button>
+      </div>
+
+      <div className="mt-6 rounded-2xl border border-white/10 p-3">
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <p className="text-xs font-bold uppercase tracking-widest text-white/40">
+              Customer display pairing
+            </p>
+            <p className="mt-1 text-xs text-white/45">
+              Scan this on a separate Wi-Fi tablet, or open it on the till&apos;s second screen.
+            </p>
+          </div>
+          <span
+            className={`shrink-0 rounded-full px-2.5 py-1 text-[10px] font-black uppercase ${
+              displayConnected
+                ? "bg-emerald-500/20 text-emerald-300"
+                : "bg-amber-500/20 text-amber-200"
+            }`}
+          >
+            {displayConnected ? "Display online" : "Waiting for display"}
+          </span>
+        </div>
+        {displayRelay.displayUrl && (
+          <div className="mt-3 grid gap-3 sm:grid-cols-[132px_1fr]">
+            <div className="w-fit rounded-2xl bg-white p-2">
+              <QrCode
+                value={displayRelay.displayUrl}
+                size={116}
+                alt="Pair a Cafe 1 customer display"
+              />
+            </div>
+            <div className="grid content-start gap-2">
+              <button
+                onClick={() => {
+                  const result = openCustomerScreen(displayRelay.displayUrl);
+                  if (result.ok) toast.success(result.message);
+                  else toast.error(result.message);
+                }}
+                className="inline-flex h-10 items-center justify-center gap-2 rounded-xl bg-primary px-3 text-sm font-bold text-primary-foreground"
+              >
+                <MonitorPlay className="h-4 w-4" /> Open second screen
+              </button>
+              <button
+                onClick={() =>
+                  void navigator.clipboard
+                    .writeText(displayRelay.displayUrl)
+                    .then(() => toast.success("Secure display link copied"))
+                    .catch(() => toast.error("Could not copy the display link"))
+                }
+                className="inline-flex h-10 items-center justify-center gap-2 rounded-xl border border-white/15 px-3 text-sm font-bold hover:border-primary"
+              >
+                <Copy className="h-4 w-4" /> Copy pairing link
+              </button>
+              <button
+                onClick={() =>
+                  void (async () => {
+                    const rotate = await askConfirm({
+                      title: "Replace the display pairing?",
+                      description:
+                        "The current Wi-Fi display will disconnect. Scan the new code on the approved customer screen.",
+                      confirmLabel: "Replace pairing",
+                      destructive: true,
+                    });
+                    if (!rotate) return;
+                    displayRelay.rotatePairing();
+                    toast.success("Old display pairing revoked");
+                  })()
+                }
+                className="inline-flex h-9 items-center justify-center gap-2 rounded-xl text-xs font-bold text-white/55 hover:bg-white/5 hover:text-white"
+              >
+                <RotateCw className="h-3.5 w-3.5" /> Replace pairing
+              </button>
+            </div>
+          </div>
+        )}
+        <p className="mt-3 rounded-xl bg-sky-400/10 px-3 py-2 text-[11px] text-sky-100/70">
+          The 256-bit link signs every relayed message and stays out of server request logs. Only
+          basket totals, payment confirmation and idle status can cross the relay; juror codes and
+          PINs are blocked.
+        </p>
       </div>
     </Modal>
   );
