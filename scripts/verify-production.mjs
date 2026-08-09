@@ -158,7 +158,8 @@ export async function verifyProduction({
           /max-age=0/i.test(cache) &&
           /^no-store$/i.test(cdnCache.trim()) &&
           /^no-store$/i.test(cloudflareCdnCache.trim()) &&
-          /^DYNAMIC$/i.test(cacheStatus.trim()) &&
+          // DYNAMIC, or absent entirely (the edge omits the header for uncached responses)
+          (cacheStatus.trim() === "" || /^DYNAMIC$/i.test(cacheStatus.trim())) &&
           ageIsZeroOrAbsent;
 
         if (!originPolicy && !edgeRewrittenPolicy) {
