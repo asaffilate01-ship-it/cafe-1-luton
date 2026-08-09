@@ -45,7 +45,16 @@ export function validateBundleEntries(entries, budgets = BUNDLE_BUDGETS) {
 }
 
 export function verifyBundleBudget(repositoryRoot = root) {
-  const directory = resolve(repositoryRoot, ".output/public/assets");
+  // Nitro writes assets to .output/public on classic builds and to dist/client
+  // on the Vite/Nitro layout used by the current release build.
+  const candidates = [
+    resolve(repositoryRoot, ".output/public/assets"),
+    resolve(repositoryRoot, "dist/client/assets"),
+  ];
+  const directory = candidates.find((candidate) => existsSync(candidate));
+  if (!directory) {
+    throw new Error(`none of ${candidates.join(", ")} exist`);
+  }
   const entries = readdirSync(directory)
     .filter((name) => name.endsWith(".js") || name.endsWith(".css"))
     .map((name) => ({
