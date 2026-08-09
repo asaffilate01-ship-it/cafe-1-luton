@@ -24,6 +24,10 @@ function validEnvironment(overrides = {}) {
     GOOGLE_MAPS_API_KEY: "maps-key",
     GOOGLE_PLACE_ID: "ChIJcafe1StAlbans12345",
     VITE_SOCIAL_EMBEDS_JSON: "[]",
+    YOUTUBE_API_KEY: "youtube-production-key-1234567890",
+    YOUTUBE_CHANNEL_HANDLE: "@Cafe1_Stalbans",
+    INSTAGRAM_ACCESS_TOKEN: "instagram-production-token-1234567890",
+    INSTAGRAM_GRAPH_VERSION: "v23.0",
     ...overrides,
   };
 }
@@ -97,4 +101,27 @@ test("rejects a valid-looking release SHA that does not match the release candid
     }).errors,
     [],
   );
+});
+
+test("rejects incomplete or malformed automatic social configurations", () => {
+  const partialYouTube = validateProductionEnvironment(
+    validEnvironment({
+      YOUTUBE_CHANNEL_HANDLE: "",
+      YOUTUBE_CHANNEL_ID: "bad-channel",
+    }),
+  );
+  assert.ok(partialYouTube.errors.some((message) => message.includes("CHANNEL_ID")));
+
+  const missingYouTubeKey = validateProductionEnvironment(
+    validEnvironment({
+      YOUTUBE_API_KEY: "",
+      YOUTUBE_CHANNEL_HANDLE: "@Cafe1_Stalbans",
+    }),
+  );
+  assert.ok(missingYouTubeKey.errors.some((message) => message.includes("YOUTUBE_API_KEY")));
+
+  const badInstagram = validateProductionEnvironment(
+    validEnvironment({ INSTAGRAM_GRAPH_VERSION: "latest" }),
+  );
+  assert.ok(badInstagram.errors.some((message) => message.includes("vNN.N")));
 });

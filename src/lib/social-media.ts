@@ -14,6 +14,20 @@ export type SocialProfile = {
   url: string;
 };
 
+export type AutomaticSocialProvider = "youtube" | "instagram";
+
+export type AutomaticSocialProviderFeed = {
+  provider: AutomaticSocialProvider;
+  configured: boolean;
+  available: boolean;
+  posts: SocialPost[];
+};
+
+export type AutomaticSocialFeed = {
+  providers: AutomaticSocialProviderFeed[];
+  posts: SocialPost[];
+};
+
 const PLATFORM_LABELS: Record<SocialPlatform, string> = {
   facebook: "Facebook",
   instagram: "Instagram",
@@ -149,6 +163,48 @@ export function createSocialProfiles(env: Record<string, unknown>): SocialProfil
     profile("tiktok", env.VITE_SOCIAL_TIKTOK_URL, "https://www.tiktok.com/@Cafe1_Stalbans"),
     profile("youtube", env.VITE_SOCIAL_YOUTUBE_URL),
   ].filter((item): item is SocialProfile => Boolean(item));
+}
+
+export function findSocialProfile(
+  profiles: SocialProfile[],
+  platform: SocialPlatform,
+): SocialProfile | null {
+  return profiles.find((profile) => profile.platform === platform) ?? null;
+}
+
+export function tiktokCreatorHandle(profileUrl: string): string | null {
+  const url = httpsUrl(profileUrl);
+  if (!url || !ALLOWED_PROFILE_HOSTS.tiktok.has(url.hostname)) return null;
+  const handle = url.pathname.split("/").filter(Boolean)[0];
+  if (!handle?.startsWith("@") || !/^@[A-Za-z0-9._]{2,30}$/.test(handle)) return null;
+  return handle.slice(1);
+}
+
+export function facebookPagePluginUrl(profileUrl: string): string | null {
+  const url = httpsUrl(profileUrl);
+  if (!url || !ALLOWED_PROFILE_HOSTS.facebook.has(url.hostname)) return null;
+  const plugin = new URL("https://www.facebook.com/plugins/page.php");
+  plugin.searchParams.set("href", url.toString());
+  plugin.searchParams.set("tabs", "timeline");
+  plugin.searchParams.set("width", "500");
+  plugin.searchParams.set("height", "620");
+  plugin.searchParams.set("small_header", "true");
+  plugin.searchParams.set("adapt_container_width", "true");
+  plugin.searchParams.set("hide_cover", "false");
+  plugin.searchParams.set("show_facepile", "false");
+  return plugin.toString();
+}
+
+export function mergeSocialPosts(...groups: SocialPost[][]): SocialPost[] {
+  const merged: SocialPost[] = [];
+  const seen = new Set<string>();
+  for (const post of groups.flat()) {
+    if (seen.has(post.embedUrl)) continue;
+    seen.add(post.embedUrl);
+    merged.push(post);
+    if (merged.length === 12) break;
+  }
+  return merged;
 }
 
 export const SOCIAL_POSTS = parseSocialPosts(import.meta.env.VITE_SOCIAL_EMBEDS_JSON);

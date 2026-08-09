@@ -29,8 +29,11 @@ type PlacesResponse = {
 };
 
 const GATEWAY_URL = "https://connector-gateway.lovable.dev/google_maps";
+const DIRECT_PLACES_URL = "https://places.googleapis.com/v1/places";
 const FALLBACK_URL = "https://www.google.com/search?q=Cafe+1+St+Albans+Crown+Court+AL1+3JU";
 const CACHE_MS = 15 * 60 * 1000;
+const FIELD_MASK =
+  "rating,userRatingCount,googleMapsUri,reviews.rating,reviews.text,reviews.publishTime,reviews.relativePublishTimeDescription,reviews.authorAttribution";
 
 let cache: { expires: number; value: GoogleReviewsResult } | undefined;
 
@@ -90,7 +93,7 @@ export async function loadGoogleReviews(
   const placeId = process.env.GOOGLE_PLACE_ID?.trim();
   const lovableKey = process.env.LOVABLE_API_KEY?.trim();
   const mapsKey = process.env.GOOGLE_MAPS_API_KEY?.trim();
-  if (!placeId || !lovableKey || !mapsKey || !/^[A-Za-z0-9_-]{10,255}$/.test(placeId)) {
+  if (!placeId || !mapsKey || !/^[A-Za-z0-9_-]{10,255}$/.test(placeId)) {
     return {
       configured: false,
       available: false,
@@ -102,15 +105,26 @@ export async function loadGoogleReviews(
   }
 
   try {
-    const response = await fetchImpl(`${GATEWAY_URL}/v1/places/${encodeURIComponent(placeId)}`, {
-      headers: {
-        Authorization: `Bearer ${lovableKey}`,
-        "X-Connection-Api-Key": mapsKey,
-        "X-Goog-FieldMask":
-          "rating,userRatingCount,googleMapsUri,reviews.rating,reviews.text,reviews.publishTime,reviews.relativePublishTimeDescription,reviews.authorAttribution",
-      },
-      signal: AbortSignal.timeout(8_000),
-    });
+    let response: Response | undefined;
+    if (lovableKey) {
+      response = await fetchImpl(`${GATEWAY_URL}/v1/places/${encodeURIComponent(placeId)}`, {
+        headers: {
+          Authorization: `Bearer ${lovableKey}`,
+          "X-Connection-Api-Key": mapsKey,
+          "X-Goog-FieldMask": FIELD_MASK,
+        },
+        signal: AbortSignal.timeout(8_000),
+      }).catch(() => undefined);
+    }
+    if (!response?.ok) {
+      response = await fetchImpl(`${DIRECT_PLACES_URL}/${encodeURIComponent(placeId)}`, {
+        headers: {
+          "X-Goog-Api-Key": mapsKey,
+          "X-Goog-FieldMask": FIELD_MASK,
+        },
+        signal: AbortSignal.timeout(8_000),
+      });
+    }
     if (!response.ok) throw new Error(`Google Places returned ${response.status}`);
     const details = normalisePlacesResponse((await response.json()) as PlacesResponse);
     const value = { configured: true, available: true, ...details };
@@ -127,4 +141,8 @@ export async function loadGoogleReviews(
       reviews: [],
     };
   }
+}
+
+export function resetGoogleReviewsCacheForTests(): void {
+  cache = undefined;
 }
