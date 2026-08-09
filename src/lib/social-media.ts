@@ -144,9 +144,9 @@ function profile(platform: SocialPlatform, raw: unknown, fallback = ""): SocialP
 
 export function createSocialProfiles(env: Record<string, unknown>): SocialProfile[] {
   return [
-    profile("facebook", env.VITE_SOCIAL_FACEBOOK_URL),
-    profile("instagram", env.VITE_SOCIAL_INSTAGRAM_URL),
-    profile("tiktok", env.VITE_SOCIAL_TIKTOK_URL, "https://www.tiktok.com/@cafe1_stalbans"),
+    profile("facebook", env.VITE_SOCIAL_FACEBOOK_URL, "https://www.facebook.com/cafe1stalbans"),
+    profile("instagram", env.VITE_SOCIAL_INSTAGRAM_URL, "https://www.instagram.com/cafe1stalbans/"),
+    profile("tiktok", env.VITE_SOCIAL_TIKTOK_URL, "https://www.tiktok.com/@Cafe1_Stalbans"),
     profile("youtube", env.VITE_SOCIAL_YOUTUBE_URL),
   ].filter((item): item is SocialProfile => Boolean(item));
 }
