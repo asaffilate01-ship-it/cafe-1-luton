@@ -181,7 +181,7 @@
           ]
         },
         {
-          "path": "supabase/migrations/20260809160000_go_live_phase21_trading_juror_security.sql",
+          "path": "supabase/migrations/20260809172920_99fc20f1-1cad-46bc-b172-6497a233eaba.sql",
           "includes": [
             "_weeks integer DEFAULT 12",
             "attendance_required = true",
@@ -200,7 +200,7 @@
       "name": "Confirmed weekday, delivery-radius, bank-holiday and VAT rules are enforced",
       "evidence": [
         {
-          "path": "supabase/migrations/20260809160000_go_live_phase21_trading_juror_security.sql",
+          "path": "supabase/migrations/20260809172920_99fc20f1-1cad-46bc-b172-6497a233eaba.sql",
           "includes": [
             "delivery_open_time = '08:30'",
             "delivery_close_time = '16:30'",
