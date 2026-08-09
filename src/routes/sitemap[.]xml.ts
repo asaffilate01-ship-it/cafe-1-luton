@@ -2,6 +2,44 @@ import { createFileRoute } from "@tanstack/react-router";
 import type {} from "@tanstack/react-start";
 
 const BASE_URL = "https://cafe1stalbans.co.uk";
+const STATIC_LAST_MODIFIED = "2026-08-09";
+
+const PUBLIC_ROUTES = [
+  "/",
+  "/menu",
+  "/breakfast-st-albans",
+  "/halal-food-st-albans",
+  "/lunch-st-albans",
+  "/blog",
+  "/socials",
+  "/about",
+  "/contact",
+  "/privacy",
+  "/terms",
+  "/cookies",
+  "/gdpr",
+  "/complaints",
+] as const;
+
+function xmlEscape(value: string): string {
+  return value
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&apos;");
+}
+
+function isoDate(value: string | null | undefined): string | null {
+  if (!value) return null;
+  const parsed = new Date(value);
+  return Number.isNaN(parsed.getTime()) ? null : parsed.toISOString().slice(0, 10);
+}
+
+function urlEntry(path: string, modified: string | null): string {
+  const lastmod = modified ? `<lastmod>${xmlEscape(modified)}</lastmod>` : "";
+  return `  <url><loc>${xmlEscape(`${BASE_URL}${path}`)}</loc>${lastmod}</url>`;
+}
 
 export const Route = createFileRoute("/sitemap.xml")({
   server: {
@@ -12,36 +50,30 @@ export const Route = createFileRoute("/sitemap.xml")({
           .from("blog_posts")
           .select("slug,updated_at,published_at")
           .eq("published", true);
-        const entries = [
-          { path: "/", changefreq: "weekly", priority: "1.0" },
-          { path: "/menu", changefreq: "weekly", priority: "0.9" },
-          { path: "/blog", changefreq: "weekly", priority: "0.7" },
-          { path: "/socials", changefreq: "daily", priority: "0.7" },
-          { path: "/about", changefreq: "monthly", priority: "0.6" },
-          { path: "/contact", changefreq: "monthly", priority: "0.6" },
-          { path: "/privacy", changefreq: "yearly", priority: "0.3" },
-          { path: "/terms", changefreq: "yearly", priority: "0.3" },
-          { path: "/cookies", changefreq: "yearly", priority: "0.3" },
-          { path: "/gdpr", changefreq: "yearly", priority: "0.3" },
-          { path: "/complaints", changefreq: "yearly", priority: "0.3" },
-        ];
-        const urls = entries.map(
-          (e) =>
-            `  <url><loc>${BASE_URL}${e.path}</loc><changefreq>${e.changefreq}</changefreq><priority>${e.priority}</priority></url>`,
-        );
-        for (const p of posts ?? []) {
+
+        const urls = PUBLIC_ROUTES.map((path) => urlEntry(path, STATIC_LAST_MODIFIED));
+        for (const post of posts ?? []) {
+          if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(post.slug)) continue;
           urls.push(
-            `  <url><loc>${BASE_URL}/blog/${p.slug}</loc><changefreq>monthly</changefreq><priority>0.6</priority></url>`,
+            urlEntry(
+              `/blog/${encodeURIComponent(post.slug)}`,
+              isoDate(post.updated_at) ?? isoDate(post.published_at),
+            ),
           );
         }
+
         const xml = [
           `<?xml version="1.0" encoding="UTF-8"?>`,
           `<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">`,
           ...urls,
           `</urlset>`,
         ].join("\n");
+
         return new Response(xml, {
-          headers: { "Content-Type": "application/xml", "Cache-Control": "public, max-age=3600" },
+          headers: {
+            "Content-Type": "application/xml; charset=utf-8",
+            "Cache-Control": "public, max-age=3600",
+          },
         });
       },
     },

@@ -26,25 +26,25 @@ import {
   SOCIAL_PROFILES,
   type SocialPlatform,
 } from "@/lib/social-media";
+import { breadcrumbJsonLd, canonicalLink, jsonLdScript, seoMeta, webPageJsonLd } from "@/lib/seo";
+
+const title = "Café 1 St Albans Videos, Social Posts & Google Reviews";
+const description =
+  "Watch Café 1 St Albans food videos and updates from our official Facebook, Instagram, TikTok and YouTube sources, plus attributed Google reviews.";
 
 export const Route = createFileRoute("/socials")({
   head: () => ({
-    meta: [
-      { title: "Socials & Reviews — Café 1 St Albans" },
-      {
-        name: "description",
-        content:
-          "Watch Café 1 St Albans videos from Facebook, Instagram, TikTok and YouTube, and read our latest Google reviews.",
-      },
-      { property: "og:title", content: "Socials & Reviews — Café 1 St Albans" },
-      {
-        property: "og:description",
-        content: "Fresh food clips, café updates and reviews from Café 1 St Albans.",
-      },
-      { property: "og:type", content: "website" },
-      { property: "og:url", content: "https://cafe1stalbans.co.uk/socials" },
+    meta: seoMeta({ title, description, path: "/socials" }),
+    links: [canonicalLink("/socials")],
+    scripts: [
+      jsonLdScript(webPageJsonLd({ name: title, description, path: "/socials" })),
+      jsonLdScript(
+        breadcrumbJsonLd([
+          { name: "Home", path: "/" },
+          { name: "Socials and reviews", path: "/socials" },
+        ]),
+      ),
     ],
-    links: [{ rel: "canonical", href: "https://cafe1stalbans.co.uk/socials" }],
   }),
   component: Socials,
 });

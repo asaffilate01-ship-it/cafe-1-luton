@@ -58,6 +58,7 @@ export function withProductionHeaders(request: Request, response: Response): Res
     for (const [name, value] of Object.entries(PRIVATE_CACHE_HEADERS)) {
       headers.set(name, value);
     }
+    headers.set("X-Robots-Tag", "noindex, nofollow, noarchive");
   }
 
   return new Response(response.body, {

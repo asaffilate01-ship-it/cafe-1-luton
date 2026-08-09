@@ -266,6 +266,15 @@ export function SiteFooter() {
           </div>
         </div>
         <nav aria-label="Footer" className="grid grid-cols-2 gap-x-8 gap-y-2 sm:grid-cols-2">
+          <a href="/breakfast-st-albans" className="hover:text-primary">
+            Breakfast in St Albans
+          </a>
+          <a href="/halal-food-st-albans" className="hover:text-primary">
+            Halal food in St Albans
+          </a>
+          <a href="/lunch-st-albans" className="hover:text-primary">
+            Lunch in St Albans
+          </a>
           <Link to="/menu" className="hover:text-primary">
             Menu
           </Link>

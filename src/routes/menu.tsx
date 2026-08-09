@@ -39,35 +39,62 @@ import {
   type ModifierRule,
 } from "@/lib/modifier-rules";
 import { formatCount, matchesMenuQuery } from "@/lib/menu-discovery";
+import { localBusinessJsonLd } from "@/lib/nap";
+import { breadcrumbJsonLd, canonicalLink, jsonLdScript, seoMeta, webPageJsonLd } from "@/lib/seo";
+
+const title = "Halal Breakfast, Lunch & Café Menu in St Albans | Café 1";
+const description =
+  "Browse Café 1's St Albans menu: halal breakfast, Desi dishes, omelettes, curries, sandwiches, paninis, jackets, coffee and more. Order online.";
+
+async function loadPublicMenu() {
+  const [cats, items, mods] = await Promise.all([
+    supabase
+      .from("menu_categories")
+      .select("id,name,description,sort_order")
+      .eq("active", true)
+      .order("sort_order"),
+    supabase
+      .from("menu_items")
+      .select(
+        "id,category_id,name,description,price_cents,image_url,is_veg,needs_cooking,juror_menu,group_label,allergens,dietary_tags,sort_order",
+      )
+      .eq("active", true)
+      .order("sort_order"),
+    supabase
+      .from("menu_modifiers")
+      .select(
+        "id,item_id,category_id,name,description,price_cents,is_veg,group_name,group_type,required,min_selections,max_selections,is_exclusive,sort_order",
+      )
+      .eq("active", true)
+      .order("sort_order"),
+  ]);
+  return { cats: cats.data ?? [], items: items.data ?? [], mods: mods.data ?? [] };
+}
 
 export const Route = createFileRoute("/menu")({
+  loader: loadPublicMenu,
   validateSearch: (s: { juror?: unknown }): { juror?: boolean } => ({
     juror: s.juror === true || s.juror === "true" ? true : undefined,
   }),
   head: () => ({
-    meta: [
-      { title: "Menu — Café 1 St Albans" },
-      {
-        name: "description",
-        content:
-          "Browse the full Café 1 St Albans menu: Italian coffee, halal breakfasts, hot food, sandwiches and sweet treats. Order for delivery, collection or dine-in.",
-      },
-      { property: "og:title", content: "Menu — Café 1 St Albans" },
-      {
-        property: "og:description",
-        content:
-          "Italian coffee, halal hot food, sandwiches and treats — order for delivery, collection or dine-in.",
-      },
-      { property: "og:type", content: "website" },
-      { property: "og:url", content: "https://cafe1stalbans.co.uk/menu" },
-      { name: "twitter:card", content: "summary_large_image" },
+    meta: seoMeta({ title, description, path: "/menu" }),
+    links: [canonicalLink("/menu")],
+    scripts: [
+      jsonLdScript(localBusinessJsonLd("https://cafe1stalbans.co.uk/icon-512.png")),
+      jsonLdScript(webPageJsonLd({ name: title, description, path: "/menu" })),
+      jsonLdScript(
+        breadcrumbJsonLd([
+          { name: "Home", path: "/" },
+          { name: "Menu", path: "/menu" },
+        ]),
+      ),
     ],
-    links: [{ rel: "canonical", href: "https://cafe1stalbans.co.uk/menu" }],
   }),
   component: MenuPage,
 });
 
 function MenuPage() {
+  const initialMenu = Route.useLoaderData();
   const { juror: jurorParam } = Route.useSearch();
   const ctx = useOrderContext();
   const [gateOpen, setGateOpen] = useState(false);
@@ -77,20 +104,8 @@ function MenuPage() {
   }, [ctx]);
   const { data, isLoading } = useQuery({
     queryKey: ["menu"],
-    queryFn: async () => {
-      const [cats, items, mods] = await Promise.all([
-        supabase.from("menu_categories").select("*").eq("active", true).order("sort_order"),
-        supabase
-          .from("menu_items")
-          .select(
-            "id, category_id, site_id, name, description, price_cents, image_url, active, is_veg, loyalty_drink, needs_cooking, juror_menu, is_beverage, group_label, allergens, dietary_tags, sort_order, created_at, updated_at",
-          )
-          .eq("active", true)
-          .order("sort_order"),
-        supabase.from("menu_modifiers").select("*").eq("active", true).order("sort_order"),
-      ]);
-      return { cats: cats.data ?? [], items: items.data ?? [], mods: mods.data ?? [] };
-    },
+    queryFn: loadPublicMenu,
+    initialData: initialMenu,
   });
 
   const [q, setQ] = useState("");

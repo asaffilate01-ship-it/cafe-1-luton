@@ -31,7 +31,12 @@ function successfulFetch(input) {
     contentType = "text/plain; charset=utf-8";
   }
   if (url.pathname === "/sitemap.xml") {
-    body = '<?xml version="1.0"?><urlset />';
+    body = `<?xml version="1.0"?><urlset>
+      <url><loc>https://cafe1stalbans.co.uk/breakfast-st-albans</loc></url>
+      <url><loc>https://cafe1stalbans.co.uk/halal-food-st-albans</loc></url>
+      <url><loc>https://cafe1stalbans.co.uk/lunch-st-albans</loc></url>
+      <url><loc>https://cafe1stalbans.co.uk/blog</loc></url>
+    </urlset>`;
     contentType = "application/xml";
   }
   if (url.pathname === "/api/public/health") {
@@ -47,6 +52,7 @@ function successfulFetch(input) {
   const headers = new Headers({ ...securityHeaders, "content-type": contentType });
   if (specification.protectedRoute) {
     headers.set("cache-control", "private, no-store, max-age=0");
+    headers.set("x-robots-tag", "noindex, nofollow, noarchive");
   }
   return Promise.resolve(new Response(body, { status, headers }));
 }

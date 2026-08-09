@@ -33,6 +33,7 @@ describe("production response security", () => {
     expect(response.headers.get("cdn-cache-control")).toBe("no-store");
     expect(response.headers.get("pragma")).toBe("no-cache");
     expect(response.headers.get("expires")).toBe("0");
+    expect(response.headers.get("x-robots-tag")).toBe("noindex, nofollow, noarchive");
   });
 
   it("keeps application and edge private-route matching aligned", () => {

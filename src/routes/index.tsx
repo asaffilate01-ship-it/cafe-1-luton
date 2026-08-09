@@ -1,5 +1,13 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { ArrowRight, Bike, Coffee, Croissant, MapPin, BadgeCheck, UtensilsCrossed } from "lucide-react";
+import {
+  ArrowRight,
+  Bike,
+  Coffee,
+  Croissant,
+  MapPin,
+  BadgeCheck,
+  UtensilsCrossed,
+} from "lucide-react";
 import { SiteHeader, SiteFooter } from "@/components/site-header";
 import { PromoBanner } from "@/components/promo-banner";
 import { PromoCarousel } from "@/components/promo-carousel";
@@ -8,31 +16,29 @@ import { StoreStatus } from "@/components/store-status";
 // thing on first paint.
 import heroImage from "@/assets/cafe1-hero.webp";
 import { localBusinessJsonLd } from "@/lib/nap";
+import { absoluteUrl, canonicalLink, jsonLdScript, seoMeta, webPageJsonLd } from "@/lib/seo";
+
+const title = "Halal Café in St Albans | Breakfast & Lunch | Café 1";
+const description =
+  "Visit Café 1 for halal breakfast and lunch in St Albans: all-day breakfast, Desi favourites, hot meals and coffee at Crown Court, AL1 3JU.";
 
 export const Route = createFileRoute("/")({
   head: () => ({
-    meta: [
-      { title: "Café 1 St Albans — Coffee & Food, Delivered" },
-      { name: "description", content: "Order coffee, breakfast and hot food from Café 1 at St Albans Crown Court. Open to the public, with free delivery within half a mile, collection or dine-in." },
-      { property: "og:title", content: "Café 1 St Albans — Coffee & Food, Delivered" },
-      { property: "og:description", content: "Order coffee, breakfast and hot food from Café 1 at St Albans Crown Court. Open to the public, with free delivery within half a mile, collection or dine-in." },
-      { property: "og:type", content: "website" },
-      { property: "og:url", content: "https://cafe1stalbans.co.uk/" },
-      { property: "og:image", content: `https://cafe1stalbans.co.uk${heroImage}` },
-      { name: "twitter:card", content: "summary_large_image" },
-      { name: "twitter:image", content: `https://cafe1stalbans.co.uk${heroImage}` },
-    ],
+    meta: seoMeta({ title, description, path: "/", image: heroImage }),
     links: [
-      { rel: "canonical", href: "https://cafe1stalbans.co.uk/" },
+      canonicalLink("/"),
       { rel: "preload", as: "image", href: heroImage, fetchPriority: "high" },
     ],
     scripts: [
-      {
-        type: "application/ld+json",
-        children: JSON.stringify(
-          localBusinessJsonLd(`https://cafe1stalbans.co.uk${heroImage}`),
-        ),
-      },
+      jsonLdScript(localBusinessJsonLd(absoluteUrl(heroImage))),
+      jsonLdScript(
+        webPageJsonLd({
+          name: title,
+          description,
+          path: "/",
+          about: ["Halal café in St Albans", "Breakfast in St Albans", "Lunch in St Albans"],
+        }),
+      ),
     ],
   }),
   component: Home,
@@ -56,21 +62,36 @@ function Home() {
               <span className="text-primary">One Great Menu.</span>
             </h1>
             <p className="mt-5 max-w-lg text-lg text-muted-foreground">
-              Enjoy all-day breakfasts, hot meals, paninis, parathas, cakes, coffees and more from Café 1 at St Albans Crown Court. Open to the public — everyone welcome.
+              Enjoy all-day breakfasts, hot meals, paninis, parathas, cakes, coffees and more from
+              Café 1 at St Albans Crown Court. Open to the public — everyone welcome.
             </p>
             <div className="mt-8 flex flex-wrap gap-3">
-              <Link to="/menu" className="inline-flex h-12 items-center gap-2 rounded-full bg-primary px-6 font-semibold text-primary-foreground shadow-brand transition hover:bg-primary-hover">
+              <Link
+                to="/menu"
+                className="inline-flex h-12 items-center gap-2 rounded-full bg-primary px-6 font-semibold text-primary-foreground shadow-brand transition hover:bg-primary-hover"
+              >
                 Order now <ArrowRight className="h-4 w-4" />
               </Link>
-              <Link to="/menu" className="inline-flex h-12 items-center rounded-full border border-border bg-card px-6 font-semibold hover:border-primary hover:text-primary">
+              <Link
+                to="/menu"
+                className="inline-flex h-12 items-center rounded-full border border-border bg-card px-6 font-semibold hover:border-primary hover:text-primary"
+              >
                 View menu
               </Link>
             </div>
             <div className="mt-8 flex flex-wrap gap-6 text-sm text-muted-foreground">
-              <div className="flex items-center gap-2"><BadgeCheck className="h-4 w-4 text-primary" /> All food is halal</div>
-              <div className="flex items-center gap-2"><BadgeCheck className="h-4 w-4 text-primary" /> Open to the public</div>
-              <div className="flex items-center gap-2"><Bike className="h-4 w-4 text-primary" /> Local delivery</div>
-              <div className="flex items-center gap-2"><MapPin className="h-4 w-4 text-primary" /> Cafe 1, St Albans Crown Court, AL1 3JU</div>
+              <div className="flex items-center gap-2">
+                <BadgeCheck className="h-4 w-4 text-primary" /> All food is halal
+              </div>
+              <div className="flex items-center gap-2">
+                <BadgeCheck className="h-4 w-4 text-primary" /> Open to the public
+              </div>
+              <div className="flex items-center gap-2">
+                <Bike className="h-4 w-4 text-primary" /> Local delivery
+              </div>
+              <div className="flex items-center gap-2">
+                <MapPin className="h-4 w-4 text-primary" /> Cafe 1, St Albans Crown Court, AL1 3JU
+              </div>
             </div>
           </div>
 
@@ -91,7 +112,9 @@ function Home() {
                   <UtensilsCrossed className="h-5 w-5" />
                 </span>
                 <div>
-                  <p className="text-xs uppercase tracking-wider text-muted-foreground">Customer favourite</p>
+                  <p className="text-xs uppercase tracking-wider text-muted-foreground">
+                    Customer favourite
+                  </p>
                   <p className="font-semibold">Full Desi Breakfast · £9.99</p>
                 </div>
               </div>
@@ -107,10 +130,22 @@ function Home() {
       <section className="border-y border-border bg-soft">
         <div className="mx-auto grid max-w-6xl gap-6 px-4 py-16 sm:grid-cols-2 lg:grid-cols-4">
           {[
-            { icon: Coffee, title: "Fresh Italian coffee", body: "Freshly ground Italian beans, silky milk and sharp espresso — honest prices." },
-            { icon: BadgeCheck, title: "100% halal", body: "All meat and food served at Café 1 is halal." },
-            { icon: Croissant, title: "Made fresh daily", body: "Fresh desi food cooked to order, alongside paninis, jackets and all-day breakfasts." },
-            { icon: Bike, title: "Fast delivery", body: "In-house drivers get your order to you hot — track it live from your phone." },
+            {
+              icon: Coffee,
+              title: "Freshly ground coffee",
+              body: "Lazy Cow coffee, ground for espresso drinks and served throughout the day.",
+            },
+            { icon: BadgeCheck, title: "100% halal", body: "All food served at Café 1 is halal." },
+            {
+              icon: Croissant,
+              title: "Made fresh daily",
+              body: "Fresh desi food cooked to order, alongside paninis, jackets and all-day breakfasts.",
+            },
+            {
+              icon: Bike,
+              title: "Local delivery",
+              body: "Eligible addresses within half a mile can order online and track delivery from a phone.",
+            },
           ].map((f) => (
             <div key={f.title} className="card-3d card-3d-hover p-6">
               <span className="icon-3d h-14 w-14">
@@ -123,10 +158,59 @@ function Home() {
         </div>
       </section>
 
-      <section className="mx-auto max-w-6xl px-4 py-20 text-center">
+      <section className="mx-auto max-w-6xl px-4 py-20" aria-labelledby="st-albans-food-guides">
+        <div className="max-w-3xl">
+          <p className="text-sm font-semibold uppercase tracking-[0.18em] text-primary">
+            Eat in St Albans
+          </p>
+          <h2 id="st-albans-food-guides" className="mt-2 font-display text-4xl font-bold">
+            Breakfast, halal food and lunch—made simple.
+          </h2>
+          <p className="mt-4 leading-relaxed text-muted-foreground">
+            Explore what we serve, how to order and what to know before visiting our café inside St
+            Albans Crown Court.
+          </p>
+        </div>
+        <div className="mt-8 grid gap-5 md:grid-cols-3">
+          {[
+            {
+              href: "/breakfast-st-albans",
+              title: "Breakfast in St Albans",
+              body: "Cooked breakfast, Desi breakfast, parathas and omelettes served all day.",
+            },
+            {
+              href: "/halal-food-st-albans",
+              title: "Halal food in St Albans",
+              body: "How our halal menu works across breakfast, sandwiches and hot meals.",
+            },
+            {
+              href: "/lunch-st-albans",
+              title: "Lunch in St Albans",
+              body: "Hot lunches, paninis, jackets, wraps and collection for a busy weekday.",
+            },
+          ].map((guide) => (
+            <a key={guide.href} href={guide.href} className="card-3d card-3d-hover group p-6">
+              <h3 className="font-display text-2xl font-bold group-hover:text-primary">
+                {guide.title}
+              </h3>
+              <p className="mt-3 text-sm leading-relaxed text-muted-foreground">{guide.body}</p>
+              <span className="mt-5 inline-flex items-center gap-2 text-sm font-semibold text-primary">
+                Read the guide <ArrowRight className="h-4 w-4" />
+              </span>
+            </a>
+          ))}
+        </div>
+      </section>
+
+      <section className="border-t border-border bg-soft px-4 py-20 text-center">
         <h2 className="font-display text-4xl font-bold">Hungry?</h2>
-        <p className="mx-auto mt-3 max-w-xl text-muted-foreground">Browse the menu, drop things in your basket, pay in a tap.</p>
-        <Link to="/menu" className="mt-8 inline-flex h-12 items-center gap-2 rounded-full bg-primary px-6 font-semibold text-primary-foreground shadow-brand transition hover:bg-primary-hover">
+        <p className="mx-auto mt-3 max-w-xl text-muted-foreground">
+          Browse the menu, drop things in your basket, pay in a tap.
+        </p>
+        <Link
+          to="/menu"
+          className="mt-8 inline-flex h-12 items-center gap-2 rounded-full bg-primary px-6 font-semibold text-primary-foreground shadow-brand transition hover:bg-primary-hover"
+        >
           Start your order <ArrowRight className="h-4 w-4" />
         </Link>
       </section>

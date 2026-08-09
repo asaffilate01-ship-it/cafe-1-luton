@@ -75,6 +75,16 @@ Do not enable live ordering or live SumUp charging until every mandatory box is 
 - [ ] Document the incident owner, SumUp escalation route, database restore owner and rollback procedure.
 - [ ] Complete a staff rehearsal, then run a monitored soft launch before public promotion.
 
+## 8. Local search and indexability
+
+- [ ] Apply `20260809234000_local_search_content_phase24.sql` and confirm all six published articles render.
+- [ ] Confirm `/menu` and `/blog` contain their catalogue/article links in server-rendered HTML.
+- [ ] Confirm `/breakfast-st-albans`, `/halal-food-st-albans` and `/lunch-st-albans` return 200 with self-referencing canonicals.
+- [ ] Submit the canonical sitemap in the verified Google Search Console property and inspect the six priority public URLs.
+- [ ] Validate Restaurant, Breadcrumb and Article data with Google's Rich Results Test.
+- [ ] Make Google Business Profile NAP, regular hours, public-holiday hours, menu URL and ordering links match production.
+- [ ] Record Search Console and Business Profile baseline metrics before assessing organic movement.
+
 Record payment, hardware, recovery and staff evidence in `docs/OPERATIONAL_ACCEPTANCE_RECORD.md`.
 
 Automated GitHub gates can be recorded without editing JSON by hand: after the
