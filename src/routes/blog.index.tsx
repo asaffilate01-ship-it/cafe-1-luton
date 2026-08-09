@@ -51,8 +51,8 @@ type Post = {
 };
 
 function BlogIndex() {
-  const initialPosts = Route.useLoaderData();
-  const { data: posts, isLoading } = useQuery({
+  const initialPosts = Route.useLoaderData() as Post[];
+  const { data: posts, isLoading } = useQuery<Post[]>({
     queryKey: ["blog-posts"],
     queryFn: loadPublishedPosts,
     initialData: initialPosts,
