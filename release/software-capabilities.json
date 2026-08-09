@@ -64,7 +64,7 @@
       "name": "Independent vegetarian classification and warnings for every modifier",
       "evidence": [
         {
-          "path": "supabase/migrations/20260809183000_modifier_vegetarian_classification.sql",
+          "path": "supabase/migrations/20260809181844_376052f3-7609-4fff-8c78-3f92a1d3e97f.sql",
           "includes": [
             "add column if not exists is_veg boolean not null default false",
             "independently verified as vegetarian"
@@ -206,7 +206,7 @@
           ]
         },
         {
-          "path": "supabase/migrations/20260809160000_go_live_phase21_trading_juror_security.sql",
+          "path": "supabase/migrations/20260809172920_99fc20f1-1cad-46bc-b172-6497a233eaba.sql",
           "includes": [
             "_weeks integer DEFAULT 12",
             "attendance_required = true",
@@ -225,7 +225,7 @@
       "name": "Confirmed weekday, delivery-radius, bank-holiday and VAT rules are enforced",
       "evidence": [
         {
-          "path": "supabase/migrations/20260809160000_go_live_phase21_trading_juror_security.sql",
+          "path": "supabase/migrations/20260809172920_99fc20f1-1cad-46bc-b172-6497a233eaba.sql",
           "includes": [
             "delivery_open_time = '08:30'",
             "delivery_close_time = '16:30'",
