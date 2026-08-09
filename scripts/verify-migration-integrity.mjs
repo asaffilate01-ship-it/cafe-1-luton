@@ -19,6 +19,10 @@ export const KNOWN_EQUIVALENT_MIGRATION_SETS = [
     "supabase/migrations/20260808105930_7ab96ea3-2618-4325-8a2d-fef083c1cf08.sql",
     "supabase/migrations/20260808123000_full_cafe1_menu_and_modifier_rules.sql",
   ],
+  [
+    "supabase/migrations/20260809220447_22b415e7-6b31-409b-bcfe-e10c31c819bf.sql",
+    "supabase/migrations/20260809234000_local_search_content_phase24.sql",
+  ],
 ];
 
 export function normaliseMigrationSql(sql) {
