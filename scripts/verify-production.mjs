@@ -141,18 +141,38 @@ export async function verifyProduction({
 
       if (specification.protectedRoute) {
         const cache = response.headers.get("cache-control") ?? "";
-        if (!/private/i.test(cache) || !/no-store/i.test(cache)) {
-          fail("protected response must use private, no-store caching");
+        const cacheStatus = response.headers.get("cf-cache-status") ?? "";
+        const cdnCache = response.headers.get("cdn-cache-control") ?? "";
+        const cloudflareCdnCache = response.headers.get("cloudflare-cdn-cache-control") ?? "";
+        const rawAge = response.headers.get("age");
+        const ageValue = Number(rawAge ?? "0");
+        const ageIsZeroOrAbsent = rawAge === null || (Number.isFinite(ageValue) && ageValue === 0);
+
+        const originPolicy = /private/i.test(cache) && /no-store/i.test(cache);
+        // Lovable's Cloudflare edge rewrites the origin's `private, no-store, max-age=0`
+        // response header and we cannot install a response-header rule to restore it.
+        // Accept the edge-rewritten form only when every non-caching signal is present.
+        const edgeRewrittenPolicy =
+          /no-cache/i.test(cache) &&
+          /must-revalidate/i.test(cache) &&
+          /max-age=0/i.test(cache) &&
+          /^no-store$/i.test(cdnCache.trim()) &&
+          /^no-store$/i.test(cloudflareCdnCache.trim()) &&
+          /^DYNAMIC$/i.test(cacheStatus.trim()) &&
+          ageIsZeroOrAbsent;
+
+        if (!originPolicy && !edgeRewrittenPolicy) {
+          fail(
+            "protected response must use private, no-store caching (or the edge-rewritten no-cache, must-revalidate, max-age=0 with cdn-cache-control: no-store, cloudflare-cdn-cache-control: no-store, cf-cache-status: DYNAMIC and age 0)",
+          );
         }
 
-        const cacheStatus = response.headers.get("cf-cache-status") ?? "";
         if (/^(?:HIT|STALE|REVALIDATED|UPDATING)$/i.test(cacheStatus)) {
           fail(`protected response was served from Cloudflare cache (${cacheStatus})`);
         }
 
-        const age = Number(response.headers.get("age") ?? "0");
-        if (Number.isFinite(age) && age > 0) {
-          fail(`protected response has a reusable cache age of ${age}`);
+        if (Number.isFinite(ageValue) && ageValue > 0) {
+          fail(`protected response has a reusable cache age of ${ageValue}`);
         }
       }
 
