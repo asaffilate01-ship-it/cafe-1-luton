@@ -20,6 +20,7 @@ import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as MenuRouteImport } from './routes/menu'
+import { Route as LunchStAlbansRouteImport } from './routes/lunch-st-albans'
 import { Route as KdsRouteImport } from './routes/kds'
 import { Route as JuryMenuRouteImport } from './routes/jury-menu'
 import { Route as JurorQrRouteImport } from './routes/juror-qr'
@@ -27,6 +28,7 @@ import { Route as JurorDemoRouteImport } from './routes/juror-demo'
 import { Route as JurorRouteImport } from './routes/juror'
 import { Route as JudgesMenuRouteImport } from './routes/judges-menu'
 import { Route as JudgesRouteImport } from './routes/judges'
+import { Route as HalalFoodStAlbansRouteImport } from './routes/halal-food-st-albans'
 import { Route as GdprRouteImport } from './routes/gdpr'
 import { Route as DriverRouteImport } from './routes/driver'
 import { Route as DisplayRouteImport } from './routes/display'
@@ -35,6 +37,7 @@ import { Route as ContactRouteImport } from './routes/contact'
 import { Route as ComplaintsRouteImport } from './routes/complaints'
 import { Route as CheckoutRouteImport } from './routes/checkout'
 import { Route as CartRouteImport } from './routes/cart'
+import { Route as BreakfastStAlbansRouteImport } from './routes/breakfast-st-albans'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AccountRouteImport } from './routes/account'
 import { Route as AboutRouteImport } from './routes/about'
@@ -130,6 +133,11 @@ const MenuRoute = MenuRouteImport.update({
   path: '/menu',
   getParentRoute: () => rootRouteImport,
 } as any)
+const LunchStAlbansRoute = LunchStAlbansRouteImport.update({
+  id: '/lunch-st-albans',
+  path: '/lunch-st-albans',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const KdsRoute = KdsRouteImport.update({
   id: '/kds',
   path: '/kds',
@@ -163,6 +171,11 @@ const JudgesMenuRoute = JudgesMenuRouteImport.update({
 const JudgesRoute = JudgesRouteImport.update({
   id: '/judges',
   path: '/judges',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const HalalFoodStAlbansRoute = HalalFoodStAlbansRouteImport.update({
+  id: '/halal-food-st-albans',
+  path: '/halal-food-st-albans',
   getParentRoute: () => rootRouteImport,
 } as any)
 const GdprRoute = GdprRouteImport.update({
@@ -203,6 +216,11 @@ const CheckoutRoute = CheckoutRouteImport.update({
 const CartRoute = CartRouteImport.update({
   id: '/cart',
   path: '/cart',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BreakfastStAlbansRoute = BreakfastStAlbansRouteImport.update({
+  id: '/breakfast-st-albans',
+  path: '/breakfast-st-albans',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthRoute = AuthRouteImport.update({
@@ -410,6 +428,7 @@ export interface FileRoutesByFullPath {
   '/about': typeof AboutRoute
   '/account': typeof AccountRoute
   '/auth': typeof AuthRoute
+  '/breakfast-st-albans': typeof BreakfastStAlbansRoute
   '/cart': typeof CartRoute
   '/checkout': typeof CheckoutRoute
   '/complaints': typeof ComplaintsRoute
@@ -418,6 +437,7 @@ export interface FileRoutesByFullPath {
   '/display': typeof DisplayRoute
   '/driver': typeof DriverRoute
   '/gdpr': typeof GdprRoute
+  '/halal-food-st-albans': typeof HalalFoodStAlbansRoute
   '/judges': typeof JudgesRoute
   '/judges-menu': typeof JudgesMenuRoute
   '/juror': typeof JurorRoute
@@ -425,6 +445,7 @@ export interface FileRoutesByFullPath {
   '/juror-qr': typeof JurorQrRoute
   '/jury-menu': typeof JuryMenuRoute
   '/kds': typeof KdsRoute
+  '/lunch-st-albans': typeof LunchStAlbansRoute
   '/menu': typeof MenuRoute
   '/privacy': typeof PrivacyRoute
   '/reset-password': typeof ResetPasswordRoute
@@ -477,6 +498,7 @@ export interface FileRoutesByTo {
   '/about': typeof AboutRoute
   '/account': typeof AccountRoute
   '/auth': typeof AuthRoute
+  '/breakfast-st-albans': typeof BreakfastStAlbansRoute
   '/cart': typeof CartRoute
   '/checkout': typeof CheckoutRoute
   '/complaints': typeof ComplaintsRoute
@@ -485,6 +507,7 @@ export interface FileRoutesByTo {
   '/display': typeof DisplayRoute
   '/driver': typeof DriverRoute
   '/gdpr': typeof GdprRoute
+  '/halal-food-st-albans': typeof HalalFoodStAlbansRoute
   '/judges': typeof JudgesRoute
   '/judges-menu': typeof JudgesMenuRoute
   '/juror': typeof JurorRoute
@@ -492,6 +515,7 @@ export interface FileRoutesByTo {
   '/juror-qr': typeof JurorQrRoute
   '/jury-menu': typeof JuryMenuRoute
   '/kds': typeof KdsRoute
+  '/lunch-st-albans': typeof LunchStAlbansRoute
   '/menu': typeof MenuRoute
   '/privacy': typeof PrivacyRoute
   '/reset-password': typeof ResetPasswordRoute
@@ -545,6 +569,7 @@ export interface FileRoutesById {
   '/about': typeof AboutRoute
   '/account': typeof AccountRoute
   '/auth': typeof AuthRoute
+  '/breakfast-st-albans': typeof BreakfastStAlbansRoute
   '/cart': typeof CartRoute
   '/checkout': typeof CheckoutRoute
   '/complaints': typeof ComplaintsRoute
@@ -553,6 +578,7 @@ export interface FileRoutesById {
   '/display': typeof DisplayRoute
   '/driver': typeof DriverRoute
   '/gdpr': typeof GdprRoute
+  '/halal-food-st-albans': typeof HalalFoodStAlbansRoute
   '/judges': typeof JudgesRoute
   '/judges-menu': typeof JudgesMenuRoute
   '/juror': typeof JurorRoute
@@ -560,6 +586,7 @@ export interface FileRoutesById {
   '/juror-qr': typeof JurorQrRoute
   '/jury-menu': typeof JuryMenuRoute
   '/kds': typeof KdsRoute
+  '/lunch-st-albans': typeof LunchStAlbansRoute
   '/menu': typeof MenuRoute
   '/privacy': typeof PrivacyRoute
   '/reset-password': typeof ResetPasswordRoute
@@ -614,6 +641,7 @@ export interface FileRouteTypes {
     | '/about'
     | '/account'
     | '/auth'
+    | '/breakfast-st-albans'
     | '/cart'
     | '/checkout'
     | '/complaints'
@@ -622,6 +650,7 @@ export interface FileRouteTypes {
     | '/display'
     | '/driver'
     | '/gdpr'
+    | '/halal-food-st-albans'
     | '/judges'
     | '/judges-menu'
     | '/juror'
@@ -629,6 +658,7 @@ export interface FileRouteTypes {
     | '/juror-qr'
     | '/jury-menu'
     | '/kds'
+    | '/lunch-st-albans'
     | '/menu'
     | '/privacy'
     | '/reset-password'
@@ -681,6 +711,7 @@ export interface FileRouteTypes {
     | '/about'
     | '/account'
     | '/auth'
+    | '/breakfast-st-albans'
     | '/cart'
     | '/checkout'
     | '/complaints'
@@ -689,6 +720,7 @@ export interface FileRouteTypes {
     | '/display'
     | '/driver'
     | '/gdpr'
+    | '/halal-food-st-albans'
     | '/judges'
     | '/judges-menu'
     | '/juror'
@@ -696,6 +728,7 @@ export interface FileRouteTypes {
     | '/juror-qr'
     | '/jury-menu'
     | '/kds'
+    | '/lunch-st-albans'
     | '/menu'
     | '/privacy'
     | '/reset-password'
@@ -748,6 +781,7 @@ export interface FileRouteTypes {
     | '/about'
     | '/account'
     | '/auth'
+    | '/breakfast-st-albans'
     | '/cart'
     | '/checkout'
     | '/complaints'
@@ -756,6 +790,7 @@ export interface FileRouteTypes {
     | '/display'
     | '/driver'
     | '/gdpr'
+    | '/halal-food-st-albans'
     | '/judges'
     | '/judges-menu'
     | '/juror'
@@ -763,6 +798,7 @@ export interface FileRouteTypes {
     | '/juror-qr'
     | '/jury-menu'
     | '/kds'
+    | '/lunch-st-albans'
     | '/menu'
     | '/privacy'
     | '/reset-password'
@@ -816,6 +852,7 @@ export interface RootRouteChildren {
   AboutRoute: typeof AboutRoute
   AccountRoute: typeof AccountRoute
   AuthRoute: typeof AuthRoute
+  BreakfastStAlbansRoute: typeof BreakfastStAlbansRoute
   CartRoute: typeof CartRoute
   CheckoutRoute: typeof CheckoutRoute
   ComplaintsRoute: typeof ComplaintsRoute
@@ -824,6 +861,7 @@ export interface RootRouteChildren {
   DisplayRoute: typeof DisplayRoute
   DriverRoute: typeof DriverRoute
   GdprRoute: typeof GdprRoute
+  HalalFoodStAlbansRoute: typeof HalalFoodStAlbansRoute
   JudgesRoute: typeof JudgesRoute
   JudgesMenuRoute: typeof JudgesMenuRoute
   JurorRoute: typeof JurorRoute
@@ -831,6 +869,7 @@ export interface RootRouteChildren {
   JurorQrRoute: typeof JurorQrRoute
   JuryMenuRoute: typeof JuryMenuRoute
   KdsRoute: typeof KdsRoute
+  LunchStAlbansRoute: typeof LunchStAlbansRoute
   MenuRoute: typeof MenuRoute
   PrivacyRoute: typeof PrivacyRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
@@ -958,6 +997,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof MenuRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/lunch-st-albans': {
+      id: '/lunch-st-albans'
+      path: '/lunch-st-albans'
+      fullPath: '/lunch-st-albans'
+      preLoaderRoute: typeof LunchStAlbansRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/kds': {
       id: '/kds'
       path: '/kds'
@@ -1005,6 +1051,13 @@ declare module '@tanstack/react-router' {
       path: '/judges'
       fullPath: '/judges'
       preLoaderRoute: typeof JudgesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/halal-food-st-albans': {
+      id: '/halal-food-st-albans'
+      path: '/halal-food-st-albans'
+      fullPath: '/halal-food-st-albans'
+      preLoaderRoute: typeof HalalFoodStAlbansRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/gdpr': {
@@ -1061,6 +1114,13 @@ declare module '@tanstack/react-router' {
       path: '/cart'
       fullPath: '/cart'
       preLoaderRoute: typeof CartRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/breakfast-st-albans': {
+      id: '/breakfast-st-albans'
+      path: '/breakfast-st-albans'
+      fullPath: '/breakfast-st-albans'
+      preLoaderRoute: typeof BreakfastStAlbansRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/auth': {
@@ -1344,6 +1404,7 @@ const rootRouteChildren: RootRouteChildren = {
   AboutRoute: AboutRoute,
   AccountRoute: AccountRoute,
   AuthRoute: AuthRoute,
+  BreakfastStAlbansRoute: BreakfastStAlbansRoute,
   CartRoute: CartRoute,
   CheckoutRoute: CheckoutRoute,
   ComplaintsRoute: ComplaintsRoute,
@@ -1352,6 +1413,7 @@ const rootRouteChildren: RootRouteChildren = {
   DisplayRoute: DisplayRoute,
   DriverRoute: DriverRoute,
   GdprRoute: GdprRoute,
+  HalalFoodStAlbansRoute: HalalFoodStAlbansRoute,
   JudgesRoute: JudgesRoute,
   JudgesMenuRoute: JudgesMenuRoute,
   JurorRoute: JurorRoute,
@@ -1359,6 +1421,7 @@ const rootRouteChildren: RootRouteChildren = {
   JurorQrRoute: JurorQrRoute,
   JuryMenuRoute: JuryMenuRoute,
   KdsRoute: KdsRoute,
+  LunchStAlbansRoute: LunchStAlbansRoute,
   MenuRoute: MenuRoute,
   PrivacyRoute: PrivacyRoute,
   ResetPasswordRoute: ResetPasswordRoute,
