@@ -71,6 +71,8 @@ async function loadPublicMenu() {
   return { cats: cats.data ?? [], items: items.data ?? [], mods: mods.data ?? [] };
 }
 
+type PublicMenu = Awaited<ReturnType<typeof loadPublicMenu>>;
+
 export const Route = createFileRoute("/menu")({
   loader: loadPublicMenu,
   validateSearch: (s: { juror?: unknown }): { juror?: boolean } => ({
@@ -94,7 +96,7 @@ export const Route = createFileRoute("/menu")({
 });
 
 function MenuPage() {
-  const initialMenu = Route.useLoaderData();
+  const initialMenu = Route.useLoaderData() as PublicMenu;
   const { juror: jurorParam } = Route.useSearch();
   const ctx = useOrderContext();
   const [gateOpen, setGateOpen] = useState(false);
@@ -102,7 +104,7 @@ function MenuPage() {
   useEffect(() => {
     if (!ctx) setGateOpen(true);
   }, [ctx]);
-  const { data, isLoading } = useQuery({
+  const { data, isLoading } = useQuery<PublicMenu>({
     queryKey: ["menu"],
     queryFn: loadPublicMenu,
     initialData: initialMenu,
