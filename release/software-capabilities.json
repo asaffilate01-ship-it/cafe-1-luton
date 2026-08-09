@@ -20,6 +20,46 @@
       ]
     },
     {
+      "id": "server_enforced_menu_modifiers",
+      "name": "Required, limited and exclusive menu modifiers enforced online and at the till",
+      "evidence": [
+        {
+          "path": "src/lib/modifier-rules.ts",
+          "includes": [
+            "groupModifierOptions",
+            "toggleModifierSelection",
+            "validateModifierSelection",
+            "an exclusive option cannot be combined"
+          ]
+        },
+        {
+          "path": "src/lib/orders.functions.ts",
+          "includes": [
+            "validateModifierSelection",
+            "The same add-on cannot be selected twice",
+            "An add-on you chose is no longer available"
+          ]
+        },
+        {
+          "path": "src/lib/modifier-rules.test.ts",
+          "includes": [
+            "enforces a maximum of two dips",
+            "makes No sauce exclusive",
+            "reports missing required choices"
+          ]
+        },
+        {
+          "path": "supabase/migrations/20260808123000_full_cafe1_menu_and_modifier_rules.sql",
+          "includes": [
+            "Includes a cup of cordial",
+            "min_selections",
+            "max_selections",
+            "is_exclusive"
+          ]
+        }
+      ]
+    },
+    {
       "id": "pos_hardware_bridge",
       "name": "Authenticated Wi-Fi, USB or Bluetooth printer and cash-drawer bridge",
       "evidence": [
@@ -219,6 +259,36 @@
         {
           "path": "scripts/verify-production.mjs",
           "includes": ["EXPECTED_RELEASE_SHA", "40-character"]
+        }
+      ]
+    },
+    {
+      "id": "verified_github_release_evidence",
+      "name": "Exact-SHA GitHub workflow evidence produces a reviewable acceptance update",
+      "evidence": [
+        {
+          "path": "scripts/record-github-release-evidence.mjs",
+          "includes": [
+            "verifyGitHubReleaseEvidence",
+            "application_ci",
+            "database_ci",
+            "production_smoke"
+          ]
+        },
+        {
+          "path": "scripts/record-github-release-evidence.test.mjs",
+          "includes": [
+            "records only exact-SHA automated gates",
+            "fails closed when a required production job is missing"
+          ]
+        },
+        {
+          "path": ".github/workflows/record-release-evidence.yml",
+          "includes": [
+            "RECORD-CAFE1",
+            "pull-requests: write",
+            "operational:record-github"
+          ]
         }
       ]
     },

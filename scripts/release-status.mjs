@@ -49,6 +49,7 @@ const requiredWorkflows = [
   ".github/workflows/codeql.yml",
   ".github/workflows/production-smoke.yml",
   ".github/workflows/release-candidate.yml",
+  ".github/workflows/record-release-evidence.yml",
   ".github/workflows/repository-hygiene.yml",
   ".github/workflows/production-promotion.yml",
 ];

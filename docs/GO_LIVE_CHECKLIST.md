@@ -72,3 +72,8 @@ Do not enable live ordering or live SumUp charging until every mandatory box is 
 - [ ] Complete a staff rehearsal, then run a monitored soft launch before public promotion.
 
 Record payment, hardware, recovery and staff evidence in `docs/OPERATIONAL_ACCEPTANCE_RECORD.md`.
+
+Automated GitHub gates can be recorded without editing JSON by hand: after the
+final candidate has green exact-SHA runs, start **Record verified release
+evidence** and review its draft evidence PR. The workflow never records real
+payment, hardware, legal, recovery or staff gates.

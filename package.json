@@ -29,7 +29,8 @@
     "smoke:production": "node scripts/verify-production.mjs",
     "operational:status": "node scripts/verify-operational-acceptance.mjs",
     "operational:record": "node scripts/record-operational-gate.mjs",
-    "operational:check": "node scripts/verify-operational-acceptance.mjs --strict"
+    "operational:check": "node scripts/verify-operational-acceptance.mjs --strict",
+    "operational:record-github": "node scripts/record-github-release-evidence.mjs"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",
