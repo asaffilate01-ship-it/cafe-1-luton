@@ -60,6 +60,31 @@
       ]
     },
     {
+      "id": "modifier_vegetarian_classification",
+      "name": "Independent vegetarian classification and warnings for every modifier",
+      "evidence": [
+        {
+          "path": "supabase/migrations/20260809183000_modifier_vegetarian_classification.sql",
+          "includes": [
+            "add column if not exists is_veg boolean not null default false",
+            "independently verified as vegetarian"
+          ]
+        },
+        {
+          "path": "src/routes/admin.menu.tsx",
+          "includes": ["save({ is_veg: e.target.checked })", "Veg"]
+        },
+        {
+          "path": "src/routes/menu.tsx",
+          "includes": ["changesVegetarianItem", "labelled vegetarian."]
+        },
+        {
+          "path": "src/routes/till.tsx",
+          "includes": ["changesVegetarianItem", "Selected add-on is not marked vegetarian"]
+        }
+      ]
+    },
+    {
       "id": "pos_hardware_bridge",
       "name": "Authenticated Wi-Fi, USB or Bluetooth printer and cash-drawer bridge",
       "evidence": [
@@ -181,7 +206,7 @@
           ]
         },
         {
-          "path": "supabase/migrations/20260809172920_99fc20f1-1cad-46bc-b172-6497a233eaba.sql",
+          "path": "supabase/migrations/20260809160000_go_live_phase21_trading_juror_security.sql",
           "includes": [
             "_weeks integer DEFAULT 12",
             "attendance_required = true",
@@ -200,7 +225,7 @@
       "name": "Confirmed weekday, delivery-radius, bank-holiday and VAT rules are enforced",
       "evidence": [
         {
-          "path": "supabase/migrations/20260809172920_99fc20f1-1cad-46bc-b172-6497a233eaba.sql",
+          "path": "supabase/migrations/20260809160000_go_live_phase21_trading_juror_security.sql",
           "includes": [
             "delivery_open_time = '08:30'",
             "delivery_close_time = '16:30'",
@@ -395,7 +420,7 @@
         {
           "path": "supabase/tests/menu_catalogue_integrity.sql",
           "includes": [
-            "select plan(10)",
+            "select plan(11)",
             "legacy item aliases and spelling errors are not offered for sale",
             "canonical catalogue labels remain available"
           ]

@@ -14,7 +14,7 @@ const securityHeaders = {
   "x-frame-options": "DENY",
   "permissions-policy": "camera=(self), microphone=()",
   "content-security-policy":
-    "base-uri 'self'; object-src 'none'; frame-ancestors 'none'; upgrade-insecure-requests",
+    "base-uri 'self'; object-src 'none'; frame-ancestors 'none'; frame-src 'self' https://www.youtube-nocookie.com https://www.tiktok.com; upgrade-insecure-requests",
 };
 
 function successfulFetch(input) {

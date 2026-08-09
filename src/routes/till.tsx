@@ -100,6 +100,7 @@ import {
   Star,
   Copy,
   RotateCw,
+  Leaf,
 } from "lucide-react";
 
 export const Route = createFileRoute("/till")({
@@ -132,6 +133,7 @@ type Item = {
   category_id: string | null;
   sort_order: number;
   image_url: string | null;
+  is_veg: boolean;
   is_beverage: boolean;
   barcode: string | null;
 };
@@ -139,6 +141,7 @@ type Modifier = ModifierRule & {
   price_cents: number;
   category_id: string | null;
   item_id: string | null;
+  is_veg: boolean;
 };
 
 type Line = {
@@ -475,7 +478,7 @@ function Till() {
         supabase
           .from("menu_modifiers")
           .select(
-            "id, name, price_cents, category_id, item_id, group_name, group_type, required, min_selections, max_selections, is_exclusive",
+            "id, name, price_cents, category_id, item_id, group_name, group_type, required, min_selections, max_selections, is_exclusive, is_veg",
           )
           .eq("active", true)
           .order("sort_order"),
@@ -2139,6 +2142,7 @@ function ItemCustomizeModal({
   );
   const unitPrice =
     item.price_cents + chosen.reduce((sum, modifier) => sum + modifier.price_cents, 0);
+  const changesVegetarianItem = item.is_veg && chosen.some((modifier) => !modifier.is_veg);
 
   return (
     <Modal title={`Customise ${item.name}`} onClose={onClose}>
@@ -2173,9 +2177,16 @@ function ItemCustomizeModal({
                     }}
                     className={`flex min-h-11 w-full items-center justify-between rounded-xl border px-3 py-2 text-left text-sm font-semibold ${active ? "border-primary bg-primary/15 text-primary" : "border-white/10 text-white/75"}`}
                   >
-                    <span>
-                      {active ? "✓ " : ""}
-                      {modifier.name}
+                    <span className="flex flex-wrap items-center gap-1.5">
+                      <span>
+                        {active ? "✓ " : ""}
+                        {modifier.name}
+                      </span>
+                      {modifier.is_veg && (
+                        <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/15 px-2 py-0.5 text-[10px] font-bold uppercase text-emerald-300">
+                          <Leaf className="h-3 w-3" /> Veg
+                        </span>
+                      )}
                     </span>
                     <span>
                       {modifier.price_cents ? `+${money(modifier.price_cents)}` : "Included"}
@@ -2187,6 +2198,12 @@ function ItemCustomizeModal({
           </section>
         ))}
       </div>
+      {changesVegetarianItem && (
+        <div className="mt-4 flex gap-2 rounded-xl border border-amber-400/30 bg-amber-400/10 p-3 text-sm font-semibold text-amber-200">
+          <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0" />
+          Selected add-on is not marked vegetarian.
+        </div>
+      )}
       <label className="mt-4 block text-xs font-bold uppercase tracking-widest text-white/50">
         Kitchen note / allergen alert
       </label>

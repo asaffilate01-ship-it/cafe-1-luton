@@ -14,6 +14,10 @@ describe("production response security", () => {
     expect(response.headers.get("x-frame-options")).toBe("DENY");
     expect(response.headers.get("permissions-policy")).toContain("payment=(self)");
     expect(response.headers.get("content-security-policy")).toContain("frame-ancestors 'none'");
+    expect(response.headers.get("content-security-policy")).toContain(
+      "frame-src 'self' https://www.youtube-nocookie.com",
+    );
+    expect(response.headers.get("content-security-policy")).toContain("https://www.tiktok.com");
     expect(response.headers.get("strict-transport-security")).toContain("max-age=31536000");
   });
 

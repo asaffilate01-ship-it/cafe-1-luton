@@ -21,6 +21,7 @@ Do not enable live ordering or live SumUp charging until every mandatory box is 
 - [ ] Confirm the St Albans site and delivery origin both use `AL1 3JU`.
 - [ ] Test anonymous, customer, staff, driver and manager RLS separately.
 - [ ] Confirm customers cannot query internal menu costs, barcodes or KDS routing fields.
+- [ ] Apply the modifier-classification migration, then mark each modifier **Veg** only after its ingredients have been checked; confirm no modifier has a null classification.
 
 ## 3. Identity and security
 
@@ -46,6 +47,7 @@ Do not enable live ordering or live SumUp charging until every mandatory box is 
 ## 5. Ordering and operations
 
 - [ ] Verify menu names, prices, the confirmed non-VAT-registered accounting treatment, allergens, dietary labels and availability.
+- [ ] Test a vegetarian item with both vegetarian and non-vegetarian modifiers on the customer menu and till; confirm the Veg labels and non-veg warning are correct through basket and checkout.
 - [ ] Verify Mon–Fri 08:00–17:00 dine-in/pickup/takeaway, 08:30–16:30 delivery, weekend/bank-holiday closure, the 805-metre radius and AL1 3JU map origin.
 - [ ] Test delivery, collection, dine-in and jury-room orders from phone and desktop.
 - [ ] Test barcode search, held/recovered baskets and every KDS station.
@@ -60,6 +62,7 @@ Do not enable live ordering or live SumUp charging until every mandatory box is 
 - [ ] Confirm GET calls return 405 and missing/incorrect bearer secrets return 401/503.
 - [ ] Confirm the scheduled **Production smoke** workflow has a recent successful run and retained JSON evidence.
 - [ ] Verify email delivery, bounce handling and the correct sender/domain records.
+- [ ] Configure official social profile/post URLs and `GOOGLE_PLACE_ID`; verify `/about` and `/socials`, the marketing-consent gate, source links and Google review attribution on phone and desktop.
 - [ ] If Deliveroo is enabled, verify webhook signature rejection, duplicate delivery handling and cancellation sync.
 
 ## 7. Compliance and launch operations

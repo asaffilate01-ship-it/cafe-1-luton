@@ -44,6 +44,7 @@ export function validateProductionEnvironment(env, { expectedRelease } = {}) {
     "LOVABLE_API_KEY",
     "RESEND_API_KEY",
     "GOOGLE_MAPS_API_KEY",
+    "GOOGLE_PLACE_ID",
   ];
 
   for (const name of required) {
@@ -69,9 +70,7 @@ export function validateProductionEnvironment(env, { expectedRelease } = {}) {
     if (!/^[0-9a-f]{40}$/i.test(expectedRelease)) {
       errors.push("Expected release must be a 40-character Git commit");
     } else if (value(env, "PUBLIC_RELEASE_SHA").toLowerCase() !== expectedRelease.toLowerCase()) {
-      errors.push(
-        `PUBLIC_RELEASE_SHA must match the release being validated (${expectedRelease})`,
-      );
+      errors.push(`PUBLIC_RELEASE_SHA must match the release being validated (${expectedRelease})`);
     }
   }
   if (
@@ -97,6 +96,12 @@ export function validateProductionEnvironment(env, { expectedRelease } = {}) {
   }
   if (value(env, "REQUIRE_ADMIN_MFA") !== "true") {
     errors.push("REQUIRE_ADMIN_MFA must be true for production");
+  }
+  if (
+    value(env, "GOOGLE_PLACE_ID") &&
+    !/^[A-Za-z0-9_-]{10,255}$/.test(value(env, "GOOGLE_PLACE_ID"))
+  ) {
+    errors.push("GOOGLE_PLACE_ID is not a valid Google Place ID");
   }
   if (value(env, "ENABLE_DEV_LOGIN") === "true") {
     errors.push("ENABLE_DEV_LOGIN must not be true in production");
@@ -126,6 +131,9 @@ export function validateProductionEnvironment(env, { expectedRelease } = {}) {
     warnings.push(
       "SUMUP_AFFILIATE_KEY is absent; confirm it is not required for the connected readers",
     );
+  }
+  if (!value(env, "VITE_SOCIAL_EMBEDS_JSON")) {
+    warnings.push("VITE_SOCIAL_EMBEDS_JSON is absent; /socials will show its safe empty state");
   }
 
   return { errors: [...new Set(errors)], warnings: [...new Set(warnings)] };

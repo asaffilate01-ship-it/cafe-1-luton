@@ -1,6 +1,6 @@
 begin;
 
-select plan(10);
+select plan(11);
 
 select ok(
   not exists (
@@ -32,6 +32,19 @@ select ok(
     having count(*) > 1
   ),
   'modifier choices are unique within their scope and group'
+);
+
+select ok(
+  exists (
+    select 1
+    from information_schema.columns
+    where table_schema = 'public'
+      and table_name = 'menu_modifiers'
+      and column_name = 'is_veg'
+      and data_type = 'boolean'
+      and is_nullable = 'NO'
+  ),
+  'every modifier has a required vegetarian classification'
 );
 
 select ok(

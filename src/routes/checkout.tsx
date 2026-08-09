@@ -793,7 +793,7 @@ function Checkout() {
                   {i.qty} × {i.name}
                   {i.modifiers?.length > 0 && (
                     <span className="block text-xs text-muted-foreground">
-                      {i.modifiers.map((m) => m.name).join(" · ")}
+                      {i.modifiers.map((m) => `${m.name}${m.is_veg ? " (Veg)" : ""}`).join(" · ")}
                     </span>
                   )}
                 </span>

@@ -14,11 +14,14 @@ const PAGE_SECURITY_HEADERS = [
   ["content-security-policy", /base-uri\s+'self'/i],
   ["content-security-policy", /object-src\s+'none'/i],
   ["content-security-policy", /frame-ancestors\s+'none'/i],
+  ["content-security-policy", /frame-src\s+'self'[^;]*youtube-nocookie\.com/i],
 ];
 
 export const PRODUCTION_CHECKS = [
   { path: "/", statuses: [200], contentType: /text\/html/i, inspectPostcode: true },
   { path: "/menu", statuses: [200], contentType: /text\/html/i },
+  { path: "/about", statuses: [200], contentType: /text\/html/i },
+  { path: "/socials", statuses: [200], contentType: /text\/html/i },
   { path: "/privacy", statuses: [200], contentType: /text\/html/i },
   { path: "/cart", statuses: [200], contentType: /text\/html/i, protectedRoute: true },
   { path: "/checkout", statuses: [200], contentType: /text\/html/i, protectedRoute: true },
