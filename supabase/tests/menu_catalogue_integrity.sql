@@ -1,11 +1,12 @@
 begin;
 
-select plan(7);
+select plan(10);
 
 select ok(
   not exists (
     select 1
     from public.menu_categories
+    where active = true
     group by site_id, lower(btrim(name))
     having count(*) > 1
   ),
@@ -16,6 +17,7 @@ select ok(
   not exists (
     select 1
     from public.menu_items
+    where active = true
     group by site_id, category_id, lower(btrim(name))
     having count(*) > 1
   ),
@@ -63,6 +65,47 @@ select ok(
     where required and min_selections < 1
   ),
   'required modifier groups require at least one selection'
+);
+
+select ok(
+  not exists (
+    select 1 from public.menu_categories
+    where active = true and lower(btrim(name)) in (
+      'cold past pot', 'small naan rolls', 'chicken nuggets', 'iced matche latte', 'omlettes'
+    )
+  ),
+  'legacy category aliases are not offered for sale'
+);
+
+select ok(
+  not exists (
+    select 1 from public.menu_items
+    where active = true and lower(btrim(name)) in (
+      'paratha and chickpeas', 'paratha omelette and chickpeas',
+      'paratha, omelette and chickpeas', 'paratha, desi omelette and chickpeas',
+      'plain omlette', 'cheese & onion omlette', 'cheese & tomato omlette',
+      'chicken & cheese omlette', 'desi omlette', 'iced matche latte', 'garlic mayom'
+    )
+  ),
+  'legacy item aliases and spelling errors are not offered for sale'
+);
+
+select ok(
+  exists (
+    select 1
+    from public.menu_categories category
+    join public.sites site on site.id = category.site_id
+    where site.code = 'STALBANS' and category.active = true
+      and category.name = 'Cold Pasta Pot'
+  ) and exists (
+    select 1
+    from public.menu_items item
+    join public.menu_categories category on category.id = item.category_id
+    join public.sites site on site.id = item.site_id
+    where site.code = 'STALBANS' and item.active = true
+      and category.name = 'Iced Matcha Latte' and item.name = 'Iced Matcha Latte'
+  ),
+  'canonical catalogue labels remain available'
 );
 
 select * from finish();

@@ -38,6 +38,7 @@ import {
   validateModifierSelection,
   type ModifierRule,
 } from "@/lib/modifier-rules";
+import { formatCount, matchesMenuQuery } from "@/lib/menu-discovery";
 
 export const Route = createFileRoute("/menu")({
   validateSearch: (s: { juror?: unknown }): { juror?: boolean } => ({
@@ -133,7 +134,7 @@ function MenuPage() {
 
   const filtered = useMemo(() => {
     if (!data) return null;
-    const ql = q.trim().toLowerCase();
+    const categoryNames = new Map(data.cats.map((category) => [category.id, category.name]));
     const items = data.items.filter((i) => {
       if (vegOnly && !i.is_veg) return false;
       // Juror Menu is only visible to verified jurors arriving from /juror.
@@ -152,8 +153,7 @@ function MenuPage() {
         !(i.dietary_tags ?? []).some((value) => value.toLowerCase() === dietaryTag.toLowerCase())
       )
         return false;
-      if (!ql) return true;
-      return i.name.toLowerCase().includes(ql) || (i.description ?? "").toLowerCase().includes(ql);
+      return matchesMenuQuery(i, q, i.category_id ? (categoryNames.get(i.category_id) ?? "") : "");
     });
     const cats = data.cats.filter((c) => items.some((i) => i.category_id === c.id));
     return { cats, items, mods: data.mods };
@@ -377,6 +377,14 @@ function MenuPage() {
                 </button>
               )}
             </label>
+            {filtered && (
+              <span
+                className="hidden shrink-0 text-xs font-medium text-muted-foreground sm:inline"
+                aria-live="polite"
+              >
+                {formatCount(filtered.items.length, "match", "matches")}
+              </span>
+            )}
           </div>
 
           {/* Dietary & quick filters */}
@@ -602,7 +610,9 @@ function MenuPage() {
               >
                 <div className="flex items-baseline justify-between gap-4">
                   <h2 className="font-display text-2xl font-bold sm:text-3xl">{cat.name}</h2>
-                  <span className="text-xs text-muted-foreground">{items.length} items</span>
+                  <span className="text-xs text-muted-foreground">
+                    {formatCount(items.length, "item")}
+                  </span>
                 </div>
                 {cat.description && (
                   <p className="mt-1 text-sm text-muted-foreground">{cat.description}</p>
@@ -794,7 +804,7 @@ function ItemCard({
           </p>
           {hasMods && (
             <p className="mt-1 inline-flex items-center gap-1 text-xs font-semibold text-primary/80">
-              <Settings2 className="h-3 w-3" /> Customise · {mods.length} add-ons
+              <Settings2 className="h-3 w-3" /> Customise · {formatCount(mods.length, "add-on")}
             </p>
           )}
         </button>
@@ -862,10 +872,7 @@ function CustomiseSheet({
   const [qty, setQty] = useState(1);
 
   const groups = useMemo(() => groupModifierOptions(mods), [mods]);
-  const selectedIds = useMemo(
-    () => Object.keys(chosen).filter((id) => chosen[id]),
-    [chosen],
-  );
+  const selectedIds = useMemo(() => Object.keys(chosen).filter((id) => chosen[id]), [chosen]);
   const selectionErrors = useMemo(
     () => validateModifierSelection(mods, selectedIds),
     [mods, selectedIds],
@@ -954,9 +961,7 @@ function CustomiseSheet({
                     {g.required ? "Required" : "Optional"}
                   </span>
                 </div>
-                <p className="mt-0.5 text-xs text-muted-foreground">
-                  {selectionInstruction(g)}
-                </p>
+                <p className="mt-0.5 text-xs text-muted-foreground">{selectionInstruction(g)}</p>
                 <ul className="mt-2 divide-y divide-border rounded-2xl border border-border">
                   {g.modifiers.map((m) => {
                     const on = !!chosen[m.id];
@@ -1038,9 +1043,7 @@ function CustomiseSheet({
                 : "bg-primary text-primary-foreground hover:bg-primary-hover"
             }`}
           >
-            {selectionErrors.length
-              ? selectionErrors[0]
-              : `Add to basket · ${money(unit * qty)}`}
+            {selectionErrors.length ? selectionErrors[0] : `Add to basket · ${money(unit * qty)}`}
           </button>
         </div>
       </div>
