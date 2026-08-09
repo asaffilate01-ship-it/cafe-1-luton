@@ -15,6 +15,7 @@ import { Route as TermsRouteImport } from './routes/terms'
 import { Route as TeamLoginRouteImport } from './routes/team-login'
 import { Route as TabRouteImport } from './routes/tab'
 import { Route as StaffRouteImport } from './routes/staff'
+import { Route as SocialsRouteImport } from './routes/socials'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as PrivacyRouteImport } from './routes/privacy'
@@ -102,6 +103,11 @@ const TabRoute = TabRouteImport.update({
 const StaffRoute = StaffRouteImport.update({
   id: '/staff',
   path: '/staff',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SocialsRoute = SocialsRouteImport.update({
+  id: '/socials',
+  path: '/socials',
   getParentRoute: () => rootRouteImport,
 } as any)
 const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
@@ -423,6 +429,7 @@ export interface FileRoutesByFullPath {
   '/privacy': typeof PrivacyRoute
   '/reset-password': typeof ResetPasswordRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/socials': typeof SocialsRoute
   '/staff': typeof StaffRoute
   '/tab': typeof TabRoute
   '/team-login': typeof TeamLoginRoute
@@ -489,6 +496,7 @@ export interface FileRoutesByTo {
   '/privacy': typeof PrivacyRoute
   '/reset-password': typeof ResetPasswordRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/socials': typeof SocialsRoute
   '/staff': typeof StaffRoute
   '/tab': typeof TabRoute
   '/team-login': typeof TeamLoginRoute
@@ -556,6 +564,7 @@ export interface FileRoutesById {
   '/privacy': typeof PrivacyRoute
   '/reset-password': typeof ResetPasswordRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/socials': typeof SocialsRoute
   '/staff': typeof StaffRoute
   '/tab': typeof TabRoute
   '/team-login': typeof TeamLoginRoute
@@ -624,6 +633,7 @@ export interface FileRouteTypes {
     | '/privacy'
     | '/reset-password'
     | '/sitemap.xml'
+    | '/socials'
     | '/staff'
     | '/tab'
     | '/team-login'
@@ -690,6 +700,7 @@ export interface FileRouteTypes {
     | '/privacy'
     | '/reset-password'
     | '/sitemap.xml'
+    | '/socials'
     | '/staff'
     | '/tab'
     | '/team-login'
@@ -756,6 +767,7 @@ export interface FileRouteTypes {
     | '/privacy'
     | '/reset-password'
     | '/sitemap.xml'
+    | '/socials'
     | '/staff'
     | '/tab'
     | '/team-login'
@@ -823,6 +835,7 @@ export interface RootRouteChildren {
   PrivacyRoute: typeof PrivacyRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
+  SocialsRoute: typeof SocialsRoute
   StaffRoute: typeof StaffRoute
   TabRoute: typeof TabRoute
   TeamLoginRoute: typeof TeamLoginRoute
@@ -908,6 +921,13 @@ declare module '@tanstack/react-router' {
       path: '/staff'
       fullPath: '/staff'
       preLoaderRoute: typeof StaffRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/socials': {
+      id: '/socials'
+      path: '/socials'
+      fullPath: '/socials'
+      preLoaderRoute: typeof SocialsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/sitemap.xml': {
@@ -1343,6 +1363,7 @@ const rootRouteChildren: RootRouteChildren = {
   PrivacyRoute: PrivacyRoute,
   ResetPasswordRoute: ResetPasswordRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
+  SocialsRoute: SocialsRoute,
   StaffRoute: StaffRoute,
   TabRoute: TabRoute,
   TeamLoginRoute: TeamLoginRoute,
@@ -1388,3 +1409,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}

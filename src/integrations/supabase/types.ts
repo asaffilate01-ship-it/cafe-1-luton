@@ -988,6 +988,7 @@ export type Database = {
           group_type: string
           id: string
           is_exclusive: boolean
+          is_veg: boolean
           item_id: string | null
           max_selections: number | null
           min_selections: number
@@ -1005,6 +1006,7 @@ export type Database = {
           group_type?: string
           id?: string
           is_exclusive?: boolean
+          is_veg?: boolean
           item_id?: string | null
           max_selections?: number | null
           min_selections?: number
@@ -1022,6 +1024,7 @@ export type Database = {
           group_type?: string
           id?: string
           is_exclusive?: boolean
+          is_veg?: boolean
           item_id?: string | null
           max_selections?: number | null
           min_selections?: number

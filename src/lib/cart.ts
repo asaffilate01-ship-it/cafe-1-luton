@@ -1,7 +1,13 @@
 import { useSyncExternalStore } from "react";
 import { orderContext } from "./order-context";
 
-export type CartModifier = { id: string; name: string; price_cents: number };
+export type CartModifier = {
+  id: string;
+  name: string;
+  price_cents: number;
+  /** Optional for carts saved before modifier dietary classification existed. */
+  is_veg?: boolean;
+};
 
 export type CartItem = {
   /** Unique per menu item + chosen modifier combination. */

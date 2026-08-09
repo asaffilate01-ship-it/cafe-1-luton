@@ -22,6 +22,8 @@ function validEnvironment(overrides = {}) {
     LOVABLE_API_KEY: "email-key",
     RESEND_API_KEY: "resend-key",
     GOOGLE_MAPS_API_KEY: "maps-key",
+    GOOGLE_PLACE_ID: "ChIJcafe1StAlbans12345",
+    VITE_SOCIAL_EMBEDS_JSON: "[]",
     ...overrides,
   };
 }
@@ -67,6 +69,7 @@ test("requires the server-side email and delivery integrations used by productio
       LOVABLE_API_KEY: "",
       RESEND_API_KEY: "",
       GOOGLE_MAPS_API_KEY: "",
+      GOOGLE_PLACE_ID: "",
       VITE_LOVABLE_CONNECTOR_GOOGLE_MAPS_BROWSER_KEY: "public-browser-key",
     }),
   );
@@ -74,6 +77,7 @@ test("requires the server-side email and delivery integrations used by productio
   assert.ok(result.errors.some((message) => message.includes("LOVABLE_API_KEY")));
   assert.ok(result.errors.some((message) => message.includes("RESEND_API_KEY")));
   assert.ok(result.errors.some((message) => message.includes("GOOGLE_MAPS_API_KEY")));
+  assert.ok(result.errors.some((message) => message.includes("GOOGLE_PLACE_ID")));
 });
 
 test("requires an exact deployed release commit", () => {
@@ -88,10 +92,9 @@ test("rejects a valid-looking release SHA that does not match the release candid
 
   assert.ok(result.errors.some((message) => message.includes(expectedRelease)));
   assert.deepEqual(
-    validateProductionEnvironment(
-      validEnvironment({ PUBLIC_RELEASE_SHA: expectedRelease }),
-      { expectedRelease },
-    ).errors,
+    validateProductionEnvironment(validEnvironment({ PUBLIC_RELEASE_SHA: expectedRelease }), {
+      expectedRelease,
+    }).errors,
     [],
   );
 });

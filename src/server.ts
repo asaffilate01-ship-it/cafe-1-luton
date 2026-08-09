@@ -45,6 +45,7 @@ export function withProductionHeaders(request: Request, response: Response): Res
       previewHost
         ? "frame-ancestors 'self' https://lovable.dev https://*.lovable.dev https://*.lovable.app https://*.lovableproject.com"
         : "frame-ancestors 'none'",
+      "frame-src 'self' https://www.youtube-nocookie.com https://www.youtube.com https://www.tiktok.com https://www.instagram.com https://www.facebook.com",
       "upgrade-insecure-requests",
     ].join("; "),
   );

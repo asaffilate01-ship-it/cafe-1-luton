@@ -80,6 +80,7 @@ type Mod = {
   min_selections: number;
   max_selections: number | null;
   is_exclusive: boolean;
+  is_veg: boolean;
 };
 
 function MenuManager() {
@@ -390,6 +391,7 @@ function MenuManagerInner() {
                       price_cents: 0,
                       sort_order: sort,
                       active: true,
+                      is_veg: false,
                     });
                     if (error) return toast.error(error.message);
                     refresh();
@@ -862,7 +864,7 @@ function ModRow({ m, onChanged }: { m: Mod; onChanged: () => void }) {
   }
 
   return (
-    <div className="grid items-center gap-2 rounded-lg border border-border bg-background p-2 md:grid-cols-[1fr_1fr_1fr_120px_auto_auto_auto]">
+    <div className="grid items-center gap-2 rounded-lg border border-border bg-background p-2 md:grid-cols-[minmax(9rem,1fr)_minmax(9rem,1fr)_minmax(9rem,1fr)_110px_auto_auto_auto_auto_auto]">
       <input
         value={form.name}
         onChange={(e) => setForm({ ...form, name: e.target.value })}
@@ -915,6 +917,20 @@ function ModRow({ m, onChanged }: { m: Mod; onChanged: () => void }) {
           }}
         />
         Active
+      </label>
+      <label
+        className="inline-flex items-center gap-1 text-sm font-medium text-emerald-700"
+        title="Tick only when this modifier option is vegetarian"
+      >
+        <input
+          type="checkbox"
+          checked={form.is_veg}
+          onChange={(e) => {
+            setForm({ ...form, is_veg: e.target.checked });
+            save({ is_veg: e.target.checked });
+          }}
+        />
+        Veg
       </label>
       <select
         value={form.group_type ?? "multi"}

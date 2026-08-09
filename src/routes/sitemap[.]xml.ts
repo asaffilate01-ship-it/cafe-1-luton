@@ -16,6 +16,7 @@ export const Route = createFileRoute("/sitemap.xml")({
           { path: "/", changefreq: "weekly", priority: "1.0" },
           { path: "/menu", changefreq: "weekly", priority: "0.9" },
           { path: "/blog", changefreq: "weekly", priority: "0.7" },
+          { path: "/socials", changefreq: "daily", priority: "0.7" },
           { path: "/about", changefreq: "monthly", priority: "0.6" },
           { path: "/contact", changefreq: "monthly", priority: "0.6" },
           { path: "/privacy", changefreq: "yearly", priority: "0.3" },
@@ -25,10 +26,13 @@ export const Route = createFileRoute("/sitemap.xml")({
           { path: "/complaints", changefreq: "yearly", priority: "0.3" },
         ];
         const urls = entries.map(
-          (e) => `  <url><loc>${BASE_URL}${e.path}</loc><changefreq>${e.changefreq}</changefreq><priority>${e.priority}</priority></url>`,
+          (e) =>
+            `  <url><loc>${BASE_URL}${e.path}</loc><changefreq>${e.changefreq}</changefreq><priority>${e.priority}</priority></url>`,
         );
         for (const p of posts ?? []) {
-          urls.push(`  <url><loc>${BASE_URL}/blog/${p.slug}</loc><changefreq>monthly</changefreq><priority>0.6</priority></url>`);
+          urls.push(
+            `  <url><loc>${BASE_URL}/blog/${p.slug}</loc><changefreq>monthly</changefreq><priority>0.6</priority></url>`,
+          );
         }
         const xml = [
           `<?xml version="1.0" encoding="UTF-8"?>`,

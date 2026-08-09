@@ -9,9 +9,17 @@ export const Route = createFileRoute("/cart")({
   head: () => ({
     meta: [
       { title: "Your basket — Café 1 St Albans" },
-      { name: "description", content: "Review your Café 1 St Albans basket, adjust quantities and add-ons, then head to checkout for delivery, collection or dine-in." },
+      {
+        name: "description",
+        content:
+          "Review your Café 1 St Albans basket, adjust quantities and add-ons, then head to checkout for delivery, collection or dine-in.",
+      },
       { property: "og:title", content: "Your basket — Café 1 St Albans" },
-      { property: "og:description", content: "Review your Café 1 St Albans basket, adjust quantities and add-ons, then head to checkout for delivery, collection or dine-in." },
+      {
+        property: "og:description",
+        content:
+          "Review your Café 1 St Albans basket, adjust quantities and add-ons, then head to checkout for delivery, collection or dine-in.",
+      },
       { property: "og:type", content: "website" },
       { name: "robots", content: "noindex" },
     ],
@@ -40,7 +48,12 @@ function CartPage() {
         {c.items.length === 0 ? (
           <div className="mt-8 rounded-2xl border border-border bg-card p-10 text-center">
             <p className="text-muted-foreground">Your basket is empty.</p>
-            <Link to="/menu" className="mt-4 inline-flex h-11 items-center rounded-full bg-primary px-5 font-semibold text-primary-foreground hover:bg-primary-hover">Browse the menu</Link>
+            <Link
+              to="/menu"
+              className="mt-4 inline-flex h-11 items-center rounded-full bg-primary px-5 font-semibold text-primary-foreground hover:bg-primary-hover"
+            >
+              Browse the menu
+            </Link>
           </div>
         ) : (
           <>
@@ -50,22 +63,47 @@ function CartPage() {
                   <div className="flex-1">
                     <p className="font-semibold">{i.name}</p>
                     {i.modifiers?.length > 0 && (
-                      <p className="text-sm text-primary">
-                        {i.modifiers
-                          .map((m) => `${m.name}${m.price_cents ? ` +${money(m.price_cents)}` : ""}`)
-                          .join(" · ")}
-                      </p>
+                      <div className="flex flex-wrap gap-1.5 pt-1 text-xs text-primary">
+                        {i.modifiers.map((m) => (
+                          <span key={m.id} className="rounded-full bg-primary/10 px-2 py-0.5">
+                            {m.name}
+                            {m.is_veg ? " · Veg" : ""}
+                            {m.price_cents ? ` · +${money(m.price_cents)}` : ""}
+                          </span>
+                        ))}
+                      </div>
                     )}
                     {i.notes && <p className="text-sm italic text-muted-foreground">“{i.notes}”</p>}
                     <p className="text-sm text-muted-foreground">{money(i.price_cents)} each</p>
                   </div>
                   <div className="flex items-center gap-1 rounded-full border border-border">
-                    <button type="button" aria-label={`Decrease quantity of ${i.name}`} onClick={() => cart.setQty(i.id, i.qty - 1)} className="grid h-8 w-8 place-items-center rounded-full hover:bg-primary-soft"><Minus className="h-4 w-4" /></button>
+                    <button
+                      type="button"
+                      aria-label={`Decrease quantity of ${i.name}`}
+                      onClick={() => cart.setQty(i.id, i.qty - 1)}
+                      className="grid h-8 w-8 place-items-center rounded-full hover:bg-primary-soft"
+                    >
+                      <Minus className="h-4 w-4" />
+                    </button>
                     <span className="w-6 text-center text-sm font-semibold">{i.qty}</span>
-                    <button type="button" aria-label={`Increase quantity of ${i.name}`} onClick={() => cart.setQty(i.id, i.qty + 1)} className="grid h-8 w-8 place-items-center rounded-full hover:bg-primary-soft"><Plus className="h-4 w-4" /></button>
+                    <button
+                      type="button"
+                      aria-label={`Increase quantity of ${i.name}`}
+                      onClick={() => cart.setQty(i.id, i.qty + 1)}
+                      className="grid h-8 w-8 place-items-center rounded-full hover:bg-primary-soft"
+                    >
+                      <Plus className="h-4 w-4" />
+                    </button>
                   </div>
                   <p className="w-20 text-right font-semibold">{money(i.price_cents * i.qty)}</p>
-                  <button type="button" aria-label={`Remove ${i.name} from basket`} onClick={() => cart.remove(i.id)} className="text-muted-foreground hover:text-primary"><Trash2 className="h-4 w-4" /></button>
+                  <button
+                    type="button"
+                    aria-label={`Remove ${i.name} from basket`}
+                    onClick={() => cart.remove(i.id)}
+                    className="text-muted-foreground hover:text-primary"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </button>
                 </li>
               ))}
             </ul>
@@ -73,7 +111,12 @@ function CartPage() {
               <span className="text-muted-foreground">Subtotal</span>
               <span className="font-display text-2xl font-bold">{money(subtotal)}</span>
             </div>
-            <Link to="/checkout" className="mt-4 flex h-12 w-full items-center justify-center rounded-full bg-primary font-semibold text-primary-foreground shadow-brand transition hover:bg-primary-hover">Checkout</Link>
+            <Link
+              to="/checkout"
+              className="mt-4 flex h-12 w-full items-center justify-center rounded-full bg-primary font-semibold text-primary-foreground shadow-brand transition hover:bg-primary-hover"
+            >
+              Checkout
+            </Link>
           </>
         )}
       </div>

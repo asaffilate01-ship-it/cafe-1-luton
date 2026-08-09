@@ -60,6 +60,31 @@
       ]
     },
     {
+      "id": "modifier_vegetarian_classification",
+      "name": "Independent vegetarian classification and warnings for every modifier",
+      "evidence": [
+        {
+          "path": "supabase/migrations/20260809181844_376052f3-7609-4fff-8c78-3f92a1d3e97f.sql",
+          "includes": [
+            "add column if not exists is_veg boolean not null default false",
+            "independently verified as vegetarian"
+          ]
+        },
+        {
+          "path": "src/routes/admin.menu.tsx",
+          "includes": ["save({ is_veg: e.target.checked })", "Veg"]
+        },
+        {
+          "path": "src/routes/menu.tsx",
+          "includes": ["changesVegetarianItem", "labelled vegetarian."]
+        },
+        {
+          "path": "src/routes/till.tsx",
+          "includes": ["changesVegetarianItem", "Selected add-on is not marked vegetarian"]
+        }
+      ]
+    },
+    {
       "id": "pos_hardware_bridge",
       "name": "Authenticated Wi-Fi, USB or Bluetooth printer and cash-drawer bridge",
       "evidence": [
@@ -395,7 +420,7 @@
         {
           "path": "supabase/tests/menu_catalogue_integrity.sql",
           "includes": [
-            "select plan(10)",
+            "select plan(11)",
             "legacy item aliases and spelling errors are not offered for sale",
             "canonical catalogue labels remain available"
           ]

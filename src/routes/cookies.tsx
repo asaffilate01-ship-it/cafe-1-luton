@@ -6,9 +6,16 @@ export const Route = createFileRoute("/cookies")({
   head: () => ({
     meta: [
       { title: "Cookie Policy — Café 1 St Albans" },
-      { name: "description", content: "Which cookies Café 1 uses for ordering, analytics and marketing, and how to change your cookie preferences." },
+      {
+        name: "description",
+        content:
+          "Which cookies Café 1 uses for ordering, analytics and marketing, and how to change your cookie preferences.",
+      },
       { property: "og:title", content: "Cookie Policy — Café 1" },
-      { property: "og:description", content: "Which cookies Café 1 uses and how to change your preferences." },
+      {
+        property: "og:description",
+        content: "Which cookies Café 1 uses and how to change your preferences.",
+      },
       { property: "og:type", content: "article" },
       { property: "og:url", content: "https://cafe1stalbans.co.uk/cookies" },
       { name: "twitter:card", content: "summary" },
@@ -27,22 +34,45 @@ function CookiePolicy() {
     >
       <Section heading="Strictly necessary (always on)">
         <ul className="list-disc space-y-1 pl-5">
-          <li><b>Basket</b> — remembers the items and add-ons you've chosen.</li>
-          <li><b>Sign-in session</b> — keeps you logged in to your customer, staff or driver account.</li>
-          <li><b>House account tab</b> — remembers the account you're ordering on.</li>
-          <li><b>Checkout &amp; payment</b> — links your order to the SumUp payment.</li>
-          <li><b>Cookie choice</b> — stores the preferences you set here.</li>
+          <li>
+            <b>Basket</b> — remembers the items and add-ons you've chosen.
+          </li>
+          <li>
+            <b>Sign-in session</b> — keeps you logged in to your customer, staff or driver account.
+          </li>
+          <li>
+            <b>House account tab</b> — remembers the account you're ordering on.
+          </li>
+          <li>
+            <b>Checkout &amp; payment</b> — links your order to the SumUp payment.
+          </li>
+          <li>
+            <b>Cookie choice</b> — stores the preferences you set here.
+          </li>
         </ul>
         <p>These cannot be switched off because the site cannot take orders without them.</p>
       </Section>
       <Section heading="Analytics (optional)">
-        <p>Used only if you allow them: aggregated statistics on which pages and menu items are viewed, so we can improve the menu and the ordering flow. No analytics storage is set until you consent.</p>
+        <p>
+          Used only if you allow them: aggregated statistics on which pages and menu items are
+          viewed, so we can improve the menu and the ordering flow. No analytics storage is set
+          until you consent.
+        </p>
       </Section>
       <Section heading="Marketing (optional)">
-        <p>Used only if you allow them: measuring promotions and showing offers that are relevant to you.</p>
+        <p>
+          Used only if you allow them: measuring promotions, showing offers that are relevant to
+          you, and loading social video players from Facebook, Instagram, TikTok or YouTube. Those
+          players stay blocked until you consent.
+        </p>
       </Section>
       <Section heading="Third parties">
-        <p>SumUp sets cookies on its own payment pages when you pay by card. Google Fonts is used to load our typefaces. Postcode lookups are made to postcodes.io when you enter a delivery postcode.</p>
+        <p>
+          SumUp sets cookies on its own payment pages when you pay by card. Google Fonts is used to
+          load our typefaces. Google Maps services check delivery locations and provide attributed
+          public review data. Facebook, Instagram, TikTok and YouTube receive browser data only when
+          you allow marketing cookies and load an embedded player.
+        </p>
       </Section>
       <Section heading="Your current choice">
         <p>
@@ -58,7 +88,10 @@ function CookiePolicy() {
         </button>
       </Section>
       <Section heading="Managing cookies in your browser">
-        <p>You can also block or delete cookies in your browser settings. Blocking strictly necessary cookies will stop the basket and checkout from working.</p>
+        <p>
+          You can also block or delete cookies in your browser settings. Blocking strictly necessary
+          cookies will stop the basket and checkout from working.
+        </p>
       </Section>
     </LegalPage>
   );

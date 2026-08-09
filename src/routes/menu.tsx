@@ -714,6 +714,7 @@ type MenuItem = {
 type Modifier = ModifierRule & {
   description: string | null;
   price_cents: number;
+  is_veg: boolean;
 };
 
 function ItemCard({
@@ -893,8 +894,14 @@ function CustomiseSheet({
 
   const selected: CartModifier[] = mods
     .filter((m) => chosen[m.id])
-    .map((m) => ({ id: m.id, name: m.name, price_cents: m.price_cents }));
+    .map((m) => ({
+      id: m.id,
+      name: m.name,
+      price_cents: m.price_cents,
+      is_veg: m.is_veg,
+    }));
   const unit = item.price_cents + selected.reduce((s, m) => s + m.price_cents, 0);
+  const changesVegetarianItem = item.is_veg && selected.some((modifier) => !modifier.is_veg);
 
   function add() {
     if (selectionErrors.length) {
@@ -980,7 +987,14 @@ function CustomiseSheet({
                             className="h-5 w-5 accent-[var(--color-primary,red)]"
                           />
                           <span className="min-w-0 flex-1">
-                            <span className="block font-medium">{m.name}</span>
+                            <span className="flex flex-wrap items-center gap-1.5 font-medium">
+                              {m.name}
+                              {m.is_veg && (
+                                <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-bold uppercase text-emerald-800">
+                                  <Leaf className="h-3 w-3" /> Veg
+                                </span>
+                              )}
+                            </span>
                             {m.description && (
                               <span className="block text-xs text-muted-foreground">
                                 {m.description}
@@ -998,6 +1012,16 @@ function CustomiseSheet({
               </section>
             );
           })}
+
+          {changesVegetarianItem && (
+            <div
+              role="status"
+              className="mb-4 flex gap-2 rounded-xl border border-amber-300 bg-amber-50 p-3 text-sm font-medium text-amber-950"
+            >
+              <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0" />A selected add-on is not marked
+              vegetarian, so this customised item will not be labelled vegetarian.
+            </div>
+          )}
 
           <label className="mt-4 block">
             <span className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
