@@ -62,7 +62,7 @@ Do not enable live ordering or live SumUp charging until every mandatory box is 
 - [ ] Confirm GET calls return 405 and missing/incorrect bearer secrets return 401/503.
 - [ ] Confirm the scheduled **Production smoke** workflow has a recent successful run and retained JSON evidence.
 - [ ] Verify email delivery, bounce handling and the correct sender/domain records.
-- [ ] Configure official social profile/post URLs and `GOOGLE_PLACE_ID`; verify `/about` and `/socials`, the marketing-consent gate, source links and Google review attribution on phone and desktop.
+- [ ] Configure official social profiles, automatic YouTube/Instagram feeds and `GOOGLE_PLACE_ID` using `docs/SOCIALS_AUTO_SETUP.md`; verify `/about` and `/socials`, the marketing-consent gate, source links and Google review attribution on phone and desktop.
 - [ ] If Deliveroo is enabled, verify webhook signature rejection, duplicate delivery handling and cancellation sync.
 
 ## 7. Compliance and launch operations

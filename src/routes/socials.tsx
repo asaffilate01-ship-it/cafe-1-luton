@@ -13,10 +13,15 @@ import {
 } from "lucide-react";
 
 import { SiteFooter, SiteHeader } from "@/components/site-header";
-import { SocialMediaEmbed } from "@/components/social-media-embed";
+import { FacebookPageFeed } from "@/components/facebook-page-feed";
+import { SocialFeedCarousel } from "@/components/social-feed-carousel";
+import { TikTokCreatorFeed } from "@/components/tiktok-creator-feed";
 import { getGoogleReviews } from "@/lib/google-reviews.functions";
+import { getAutomaticSocialFeed } from "@/lib/social-feed.functions";
 import {
+  findSocialProfile,
   GOOGLE_REVIEWS_URL,
+  mergeSocialPosts,
   SOCIAL_POSTS,
   SOCIAL_PROFILES,
   type SocialPlatform,
@@ -52,12 +57,21 @@ const ICONS: Record<SocialPlatform, typeof Facebook> = {
 };
 
 function Socials() {
+  const { data: automatic, isLoading: isSocialLoading } = useQuery({
+    queryKey: ["public-automatic-social-feed"],
+    queryFn: () => getAutomaticSocialFeed({ data: undefined as never }),
+    staleTime: 15 * 60 * 1000,
+    retry: 1,
+  });
   const { data: google, isLoading } = useQuery({
     queryKey: ["public-google-reviews"],
     queryFn: () => getGoogleReviews({ data: undefined as never }),
     staleTime: 15 * 60 * 1000,
     retry: 1,
   });
+  const posts = mergeSocialPosts(automatic?.posts ?? [], SOCIAL_POSTS);
+  const facebook = findSocialProfile(SOCIAL_PROFILES, "facebook");
+  const tiktok = findSocialProfile(SOCIAL_PROFILES, "tiktok");
 
   return (
     <div className="min-h-screen bg-background">
@@ -107,8 +121,8 @@ function Socials() {
                 One place for every Café 1 channel.
               </h2>
               <p className="mt-3 leading-relaxed text-muted-foreground">
-                Every player links back to the original post. No copied videos, no altered reviews
-                and no social tracking unless you choose to allow it.
+                New YouTube videos and Instagram Reels can appear automatically. Every player links
+                to its original source, and no social tracking loads unless you allow it.
               </p>
             </div>
           </div>
@@ -130,23 +144,29 @@ function Socials() {
             </p>
           </div>
 
-          {SOCIAL_POSTS.length ? (
-            <div className="mt-9 grid items-start gap-6 md:grid-cols-2">
-              {SOCIAL_POSTS.map((post) => (
-                <SocialMediaEmbed key={post.embedUrl} post={post} />
+          {isSocialLoading ? (
+            <div
+              className="mt-9 flex gap-6 overflow-hidden"
+              aria-label="Loading the latest social posts"
+            >
+              {[0, 1].map((item) => (
+                <div
+                  key={item}
+                  className="h-96 w-[88vw] max-w-[31rem] shrink-0 animate-pulse rounded-3xl bg-muted sm:w-[30rem]"
+                />
               ))}
             </div>
+          ) : posts.length ? (
+            <SocialFeedCarousel posts={posts} />
           ) : (
             <div className="mt-9 rounded-3xl border border-dashed border-primary/30 bg-primary-soft p-8 text-center sm:p-12">
               <span className="icon-3d mx-auto h-14 w-14">
                 <Play className="h-6 w-6" />
               </span>
-              <h3 className="mt-5 font-display text-2xl font-bold">
-                New Café 1 clips are on the way
-              </h3>
+              <h3 className="mt-5 font-display text-2xl font-bold">Connect the automatic feeds</h3>
               <p className="mx-auto mt-2 max-w-xl text-muted-foreground">
-                Follow our official channels for the newest specials, kitchen videos and St Albans
-                updates.
+                Our official profiles are ready. The latest videos will appear here after the
+                YouTube or Instagram server connection is enabled.
               </p>
               {SOCIAL_PROFILES[0] && (
                 <a
@@ -162,10 +182,33 @@ function Socials() {
           )}
         </section>
 
-        <section
-          className="border-y border-border bg-secondary/45"
-          aria-labelledby="google-reviews"
-        >
+        {(facebook || tiktok) && (
+          <section
+            className="border-y border-border bg-secondary/45"
+            aria-labelledby="live-socials"
+          >
+            <div className="mx-auto max-w-6xl px-4 py-16">
+              <div className="max-w-2xl">
+                <p className="text-sm font-semibold uppercase tracking-[0.18em] text-primary">
+                  Always current
+                </p>
+                <h2 id="live-socials" className="mt-2 font-display text-4xl font-bold">
+                  Follow the café as it happens
+                </h2>
+                <p className="mt-3 leading-relaxed text-muted-foreground">
+                  Browse our official TikTok creator feed and Facebook timeline here. These players
+                  load only after you allow marketing cookies.
+                </p>
+              </div>
+              <div className="mt-9 grid gap-6 lg:grid-cols-2">
+                {tiktok && <TikTokCreatorFeed profileUrl={tiktok.url} />}
+                {facebook && <FacebookPageFeed profileUrl={facebook.url} />}
+              </div>
+            </div>
+          </section>
+        )}
+
+        <section className="border-b border-border" aria-labelledby="google-reviews">
           <div className="mx-auto max-w-6xl px-4 py-16">
             <div className="flex flex-col justify-between gap-5 sm:flex-row sm:items-end">
               <div>

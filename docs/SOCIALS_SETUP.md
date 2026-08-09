@@ -1,5 +1,9 @@
 # Café 1 socials and live Google reviews
 
+For automatic YouTube, Instagram, TikTok and Facebook feeds, use
+`docs/SOCIALS_AUTO_SETUP.md`. The manual configuration below remains available
+for featured posts and as a fallback when an automatic provider is unavailable.
+
 The public `/socials` page uses official source players. It never copies a video
 into the Café 1 application, and it does not load Facebook, Instagram, TikTok or
 YouTube until the visitor has allowed marketing cookies.

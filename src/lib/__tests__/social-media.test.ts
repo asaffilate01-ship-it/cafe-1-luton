@@ -1,6 +1,14 @@
 import { describe, expect, it } from "vitest";
 
-import { createSocialPost, createSocialProfiles, parseSocialPosts } from "../social-media";
+import {
+  createSocialPost,
+  createSocialProfiles,
+  facebookPagePluginUrl,
+  findSocialProfile,
+  mergeSocialPosts,
+  parseSocialPosts,
+  tiktokCreatorHandle,
+} from "../social-media";
 
 describe("social media embed configuration", () => {
   it("creates privacy-enhanced YouTube and official TikTok players", () => {
@@ -45,5 +53,24 @@ describe("social media embed configuration", () => {
       VITE_SOCIAL_INSTAGRAM_URL: "https://evil.example/cafe1",
     });
     expect(profiles.map((item) => item.platform)).toEqual(["facebook", "tiktok"]);
+    expect(findSocialProfile(profiles, "facebook")?.label).toBe("Facebook");
+    expect(findSocialProfile(profiles, "youtube")).toBeNull();
+  });
+
+  it("creates validated profile embeds without accepting lookalike hosts", () => {
+    expect(tiktokCreatorHandle("https://www.tiktok.com/@Cafe1_Stalbans")).toBe("Cafe1_Stalbans");
+    expect(tiktokCreatorHandle("https://tiktok.example/@Cafe1_Stalbans")).toBeNull();
+    expect(facebookPagePluginUrl("https://www.facebook.com/cafe1stalbans")).toContain(
+      "facebook.com%2Fcafe1stalbans",
+    );
+    expect(facebookPagePluginUrl("https://facebook.example/cafe1stalbans")).toBeNull();
+  });
+
+  it("combines automatic and manual posts without duplicates", () => {
+    const post = createSocialPost("youtube", "https://www.youtube.com/watch?v=dQw4w9WgXcQ");
+    const second = createSocialPost("instagram", "https://www.instagram.com/reel/ABCdef123/");
+    expect(post).not.toBeNull();
+    expect(second).not.toBeNull();
+    expect(mergeSocialPosts([post!], [post!, second!])).toEqual([post, second]);
   });
 });

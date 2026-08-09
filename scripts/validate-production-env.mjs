@@ -132,8 +132,60 @@ export function validateProductionEnvironment(env, { expectedRelease } = {}) {
       "SUMUP_AFFILIATE_KEY is absent; confirm it is not required for the connected readers",
     );
   }
-  if (!value(env, "VITE_SOCIAL_EMBEDS_JSON")) {
-    warnings.push("VITE_SOCIAL_EMBEDS_JSON is absent; /socials will show its safe empty state");
+
+  const youtubeKey = value(env, "YOUTUBE_API_KEY");
+  const youtubeSources = [
+    "YOUTUBE_UPLOADS_PLAYLIST_ID",
+    "YOUTUBE_CHANNEL_ID",
+    "YOUTUBE_CHANNEL_HANDLE",
+  ].filter((name) => value(env, name));
+  if (youtubeKey && youtubeSources.length !== 1) {
+    errors.push("YouTube automatic feeds require exactly one channel, handle or uploads playlist");
+  }
+  if (!youtubeKey && youtubeSources.length > 0) {
+    errors.push("YOUTUBE_API_KEY is required when a YouTube feed source is configured");
+  }
+  if (youtubeKey && (youtubeKey.length < 20 || PLACEHOLDER.test(youtubeKey))) {
+    errors.push("YOUTUBE_API_KEY is not a valid production credential");
+  }
+  if (
+    value(env, "YOUTUBE_UPLOADS_PLAYLIST_ID") &&
+    !/^[A-Za-z0-9_-]{10,80}$/.test(value(env, "YOUTUBE_UPLOADS_PLAYLIST_ID"))
+  ) {
+    errors.push("YOUTUBE_UPLOADS_PLAYLIST_ID is malformed");
+  }
+  if (
+    value(env, "YOUTUBE_CHANNEL_ID") &&
+    !/^UC[A-Za-z0-9_-]{20,30}$/.test(value(env, "YOUTUBE_CHANNEL_ID"))
+  ) {
+    errors.push("YOUTUBE_CHANNEL_ID is malformed");
+  }
+  if (
+    value(env, "YOUTUBE_CHANNEL_HANDLE") &&
+    !/^@?[A-Za-z0-9._-]{3,40}$/.test(value(env, "YOUTUBE_CHANNEL_HANDLE"))
+  ) {
+    errors.push("YOUTUBE_CHANNEL_HANDLE is malformed");
+  }
+
+  const instagramToken = value(env, "INSTAGRAM_ACCESS_TOKEN");
+  if (instagramToken && (instagramToken.length < 20 || PLACEHOLDER.test(instagramToken))) {
+    errors.push("INSTAGRAM_ACCESS_TOKEN is not a valid production credential");
+  }
+  if (
+    value(env, "INSTAGRAM_GRAPH_VERSION") &&
+    !/^v\d{1,3}\.\d{1,2}$/.test(value(env, "INSTAGRAM_GRAPH_VERSION"))
+  ) {
+    errors.push("INSTAGRAM_GRAPH_VERSION must use the vNN.N format");
+  }
+
+  if (!youtubeKey) warnings.push("YouTube automatic social updates are not configured");
+  if (!instagramToken) warnings.push("Instagram automatic social updates are not configured");
+  if (
+    (!value(env, "VITE_SOCIAL_EMBEDS_JSON") || value(env, "VITE_SOCIAL_EMBEDS_JSON") === "[]") &&
+    !youtubeKey &&
+    !instagramToken
+  ) {
+    warnings.push("No automatic or manually curated social posts are configured");
   }
 
   return { errors: [...new Set(errors)], warnings: [...new Set(warnings)] };
