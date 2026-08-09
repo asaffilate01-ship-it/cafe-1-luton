@@ -1,0 +1,129 @@
+name: Record verified release evidence
+
+on:
+  workflow_dispatch:
+    inputs:
+      production_checks_run_url:
+        description: Successful Production checks URL for the exact candidate
+        required: true
+        type: string
+      browser_run_url:
+        description: Successful Browser journeys URL for the exact candidate
+        required: true
+        type: string
+      codeql_run_url:
+        description: Successful CodeQL URL for the exact candidate
+        required: true
+        type: string
+      production_smoke_run_url:
+        description: Optional successful Production smoke URL after deployment
+        required: false
+        type: string
+      release_candidate_run_url:
+        description: Optional successful Release candidate evidence URL
+        required: false
+        type: string
+      confirmation:
+        description: Type RECORD-CAFE1 to create a reviewable evidence PR
+        required: true
+        type: string
+
+permissions:
+  actions: read
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: cafe1-record-release-evidence
+  cancel-in-progress: false
+
+jobs:
+  record:
+    name: Verify runs and prepare acceptance record
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      GH_TOKEN: ${{ github.token }}
+      PRODUCTION_CHECKS_RUN_URL: ${{ inputs.production_checks_run_url }}
+      BROWSER_RUN_URL: ${{ inputs.browser_run_url }}
+      CODEQL_RUN_URL: ${{ inputs.codeql_run_url }}
+      PRODUCTION_SMOKE_RUN_URL: ${{ inputs.production_smoke_run_url }}
+      RELEASE_CANDIDATE_RUN_URL: ${{ inputs.release_candidate_run_url }}
+    steps:
+      - name: Validate request
+        env:
+          CONFIRMATION: ${{ inputs.confirmation }}
+        run: |
+          if [ "$CONFIRMATION" != "RECORD-CAFE1" ]; then
+            echo "Confirmation did not match RECORD-CAFE1."
+            exit 1
+          fi
+
+      - name: Check out exact candidate
+        uses: actions/checkout@v7.0.1
+        with:
+          fetch-depth: 0
+
+      - name: Use Node.js 22
+        uses: actions/setup-node@v7.0.0
+        with:
+          node-version: 22
+
+      - name: Verify exact-SHA workflow evidence
+        run: |
+          args=(
+            --production-checks-url "$PRODUCTION_CHECKS_RUN_URL"
+            --browser-url "$BROWSER_RUN_URL"
+            --codeql-url "$CODEQL_RUN_URL"
+          )
+          if [ -n "$PRODUCTION_SMOKE_RUN_URL" ]; then
+            args+=(--production-smoke-url "$PRODUCTION_SMOKE_RUN_URL")
+          fi
+          if [ -n "$RELEASE_CANDIDATE_RUN_URL" ]; then
+            args+=(--release-candidate-url "$RELEASE_CANDIDATE_RUN_URL")
+          fi
+          npm run operational:record-github -- "${args[@]}"
+          npm run operational:status
+
+      - name: Detect evidence change
+        id: change
+        run: |
+          if git diff --quiet -- release/operational-acceptance.json; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Create reviewable evidence pull request
+        id: evidence_pr
+        if: steps.change.outputs.changed == 'true'
+        continue-on-error: true
+        env:
+          BASE_BRANCH: ${{ github.ref_name }}
+        run: |
+          branch="operations/release-evidence-${GITHUB_RUN_ID}"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git switch -c "$branch"
+          git add release/operational-acceptance.json
+          git commit -m "Record verified release evidence for ${GITHUB_SHA}"
+          git push --set-upstream origin "$branch"
+          gh pr create \
+            --base "$BASE_BRANCH" \
+            --head "$branch" \
+            --draft \
+            --title "Record verified release evidence for ${GITHUB_SHA:0:12}" \
+            --body "Exact-SHA GitHub workflow evidence was verified before updating the automated operational gates. Physical, payment, legal and staff gates remain unchanged for manual review."
+
+      - name: Report pull-request permission limitation
+        if: steps.evidence_pr.outcome == 'failure'
+        run: echo "::warning::The evidence record was generated, but repository settings did not allow the workflow to open a pull request. Download the retained artifact and review it manually."
+
+      - name: Upload verified acceptance record
+        if: always()
+        uses: actions/upload-artifact@v7.0.1
+        with:
+          name: cafe1-operational-acceptance-${{ github.sha }}-${{ github.run_id }}
+          path: release/operational-acceptance.json
+          if-no-files-found: error
+          retention-days: 90
