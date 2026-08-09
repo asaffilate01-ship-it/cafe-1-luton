@@ -14,26 +14,34 @@ import {
 
 import { SiteFooter, SiteHeader } from "@/components/site-header";
 import hero from "@/assets/cafe1-hero.webp";
+import { localBusinessJsonLd } from "@/lib/nap";
+import {
+  absoluteUrl,
+  breadcrumbJsonLd,
+  canonicalLink,
+  jsonLdScript,
+  seoMeta,
+  webPageJsonLd,
+} from "@/lib/seo";
+
+const title = "About Café 1 | Independent Halal Café in St Albans";
+const description =
+  "Meet Café 1, an independent halal café open to the public at St Albans Crown Court, serving all-day breakfast, lunch and coffee on weekdays.";
 
 export const Route = createFileRoute("/about")({
   head: () => ({
-    meta: [
-      { title: "About Café 1 St Albans — Our Story" },
-      {
-        name: "description",
-        content:
-          "Meet Café 1 St Albans: an independent, welcoming café at St Albans Crown Court serving freshly prepared halal food at honest prices.",
-      },
-      { property: "og:title", content: "About Café 1 St Albans" },
-      {
-        property: "og:description",
-        content: "Good food, good prices and a friendly welcome at St Albans Crown Court.",
-      },
-      { property: "og:type", content: "website" },
-      { property: "og:url", content: "https://cafe1stalbans.co.uk/about" },
-      { name: "twitter:card", content: "summary_large_image" },
+    meta: seoMeta({ title, description, path: "/about", image: hero }),
+    links: [canonicalLink("/about")],
+    scripts: [
+      jsonLdScript(localBusinessJsonLd(absoluteUrl(hero))),
+      jsonLdScript(webPageJsonLd({ name: title, description, path: "/about" })),
+      jsonLdScript(
+        breadcrumbJsonLd([
+          { name: "Home", path: "/" },
+          { name: "About Café 1", path: "/about" },
+        ]),
+      ),
     ],
-    links: [{ rel: "canonical", href: "https://cafe1stalbans.co.uk/about" }],
   }),
   component: About,
 });

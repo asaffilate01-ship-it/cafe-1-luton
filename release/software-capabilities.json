@@ -494,6 +494,49 @@
           ]
         }
       ]
+    },
+    {
+      "id": "local_search_seo",
+      "name": "Server-rendered local search pages, people-first articles and crawl controls",
+      "evidence": [
+        {
+          "path": "src/lib/seo.ts",
+          "includes": [
+            "export function seoMeta",
+            "export function breadcrumbJsonLd",
+            "export function articleJsonLd",
+            "max-image-preview:large"
+          ]
+        },
+        {
+          "path": "src/routes/breakfast-st-albans.tsx",
+          "includes": ["Breakfast in St Albans", "localBusinessJsonLd", "webPageJsonLd"]
+        },
+        {
+          "path": "src/routes/halal-food-st-albans.tsx",
+          "includes": ["Halal food in St Albans", "Every food item served at Café 1 is halal"]
+        },
+        {
+          "path": "src/routes/lunch-st-albans.tsx",
+          "includes": ["Lunch in St Albans", "Local lunch delivery in St Albans"]
+        },
+        {
+          "path": "src/routes/blog.index.tsx",
+          "includes": ["loader: loadPublishedPosts", "initialData: initialPosts"]
+        },
+        {
+          "path": "supabase/migrations/20260809234000_local_search_content_phase24.sql",
+          "includes": [
+            "food-near-st-albans-crown-court",
+            "desi-breakfast-guide-st-albans",
+            "quick-weekday-lunch-st-albans"
+          ]
+        },
+        {
+          "path": "scripts/verify-seo.mjs",
+          "includes": ["verifySeoRepository", "expected ${BLOG_SLUGS.length} article bodies"]
+        }
+      ]
     }
   ]
 }

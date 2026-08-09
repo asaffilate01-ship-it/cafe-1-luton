@@ -20,6 +20,10 @@ const PAGE_SECURITY_HEADERS = [
 export const PRODUCTION_CHECKS = [
   { path: "/", statuses: [200], contentType: /text\/html/i, inspectPostcode: true },
   { path: "/menu", statuses: [200], contentType: /text\/html/i },
+  { path: "/breakfast-st-albans", statuses: [200], contentType: /text\/html/i },
+  { path: "/halal-food-st-albans", statuses: [200], contentType: /text\/html/i },
+  { path: "/lunch-st-albans", statuses: [200], contentType: /text\/html/i },
+  { path: "/blog", statuses: [200], contentType: /text\/html/i },
   { path: "/about", statuses: [200], contentType: /text\/html/i },
   { path: "/socials", statuses: [200], contentType: /text\/html/i },
   { path: "/privacy", statuses: [200], contentType: /text\/html/i },
@@ -50,6 +54,7 @@ export const PRODUCTION_CHECKS = [
     path: "/sitemap.xml",
     statuses: [200],
     contentType: /(?:application|text)\/xml/i,
+    inspectSitemap: true,
     browserDocument: false,
   },
   {
@@ -175,6 +180,10 @@ export async function verifyProduction({
         if (Number.isFinite(ageValue) && ageValue > 0) {
           fail(`protected response has a reusable cache age of ${ageValue}`);
         }
+
+        if (!/\bnoindex\b/i.test(response.headers.get("x-robots-tag") ?? "")) {
+          fail("protected response must include x-robots-tag: noindex");
+        }
       }
 
       const contentType = response.headers.get("content-type") ?? "";
@@ -186,6 +195,7 @@ export async function verifyProduction({
         response.status === 200 &&
         (specification.inspectPostcode ||
           specification.inspectRobots ||
+          specification.inspectSitemap ||
           specification.inspectRelease);
       if (shouldInspectBody) {
         const body = await response.text();
@@ -197,6 +207,18 @@ export async function verifyProduction({
           if (!/Disallow:\s*\/admin/i.test(body)) fail("robots.txt does not block admin routes");
           if (!body.includes("https://cafe1stalbans.co.uk/sitemap.xml")) {
             fail("robots.txt does not reference the canonical sitemap");
+          }
+        }
+        if (specification.inspectSitemap) {
+          for (const required of [
+            "https://cafe1stalbans.co.uk/breakfast-st-albans",
+            "https://cafe1stalbans.co.uk/halal-food-st-albans",
+            "https://cafe1stalbans.co.uk/lunch-st-albans",
+            "https://cafe1stalbans.co.uk/blog",
+          ]) {
+            if (!body.includes(`<loc>${required}</loc>`)) {
+              fail(`sitemap is missing ${required}`);
+            }
           }
         }
         if (specification.inspectRelease) {
