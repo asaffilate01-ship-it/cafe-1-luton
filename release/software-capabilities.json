@@ -122,11 +122,7 @@
         },
         {
           "path": "src/hooks/use-customer-display-relay.ts",
-          "includes": [
-            "Signed Supabase Realtime relay",
-            "displayRelayTopic",
-            "sendCachedState"
-          ]
+          "includes": ["Signed Supabase Realtime relay", "displayRelayTopic", "sendCachedState"]
         },
         {
           "path": "src/lib/__tests__/customer-display-relay.test.ts",
@@ -284,11 +280,7 @@
         },
         {
           "path": ".github/workflows/record-release-evidence.yml",
-          "includes": [
-            "RECORD-CAFE1",
-            "pull-requests: write",
-            "operational:record-github"
-          ]
+          "includes": ["RECORD-CAFE1", "pull-requests: write", "operational:record-github"]
         }
       ]
     },
@@ -334,6 +326,60 @@
         {
           "path": "scripts/release-guard.mjs",
           "includes": ["native blocking browser dialog remains in application UI"]
+        }
+      ]
+    },
+    {
+      "id": "menu_catalogue_quality",
+      "name": "Canonical active menu catalogue with duplicate prevention and tolerant discovery",
+      "evidence": [
+        {
+          "path": "supabase/migrations/20260809120000_menu_catalogue_quality_phase19.sql",
+          "includes": [
+            "historic order item references",
+            "menu_categories_active_site_name_uniq",
+            "menu_items_active_site_category_name_uniq",
+            "Garlic mayoM"
+          ]
+        },
+        {
+          "path": "supabase/tests/menu_catalogue_integrity.sql",
+          "includes": [
+            "select plan(10)",
+            "legacy item aliases and spelling errors are not offered for sale",
+            "canonical catalogue labels remain available"
+          ]
+        },
+        {
+          "path": "src/lib/menu-discovery.test.ts",
+          "includes": [
+            "normalises punctuation, diacritics and whitespace",
+            "matches every search word across item, description and category",
+            "1 item"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "live_release_drift",
+      "name": "Exact live-versus-candidate release drift reporting",
+      "evidence": [
+        {
+          "path": "scripts/compare-live-release.mjs",
+          "includes": [
+            "export async function compareLiveRelease",
+            "commits_behind",
+            "--strict",
+            "/api/public/health"
+          ]
+        },
+        {
+          "path": "scripts/compare-live-release.test.mjs",
+          "includes": [
+            "identifies an exact deployed release",
+            "reports how many commits production is behind",
+            "fails closed for missing or unrelated release identities"
+          ]
         }
       ]
     }
