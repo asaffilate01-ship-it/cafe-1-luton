@@ -49,6 +49,8 @@ USB and Bluetooth printers must first be paired with the operating system and ex
 - Complete live SumUp Google Pay charge/refund and settlement reconciliation.
 - Test the exact card terminal, receipt printer, cash drawer, KDS screen and customer display used on site.
 - Complete MFA/RLS, backup restore, monitoring/alert and staff rehearsal evidence in the operational acceptance record.
-- Obtain the named go-live approval. A separate Wi-Fi tablet used as the customer display still requires a paired server relay; this phase makes same-browser secondary displays reliable.
+- Obtain the named go-live approval. At this historical phase, a separate Wi-Fi
+  tablet still required a paired relay; Phase 17 adds the signed, revocable
+  cross-device relay while retaining this same-browser recovery path.
 
 No release should be described as 100% live-ready until these operational gates are evidenced and signed off.

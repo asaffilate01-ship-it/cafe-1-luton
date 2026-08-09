@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { money } from "@/lib/format";
 import {
@@ -23,6 +23,8 @@ import {
 import { QrCode } from "@/components/qr-code";
 import { JUROR_DAILY_ALLOWANCE_CENTS } from "@/lib/juror";
 import { lookupVoucher, optInVoucher } from "@/lib/vouchers.functions";
+import { useCustomerDisplayRelay } from "@/hooks/use-customer-display-relay";
+import type { RemoteDisplayMessage } from "@/lib/customer-display-relay";
 
 export const Route = createFileRoute("/display")({
   head: () => ({
@@ -34,6 +36,7 @@ export const Route = createFileRoute("/display")({
           "Second-screen customer display for Cafe 1 at St Albans Crown Court: shows the live order at the counter and plays cafe adverts between sales.",
       },
       { name: "robots", content: "noindex" },
+      { name: "referrer", content: "no-referrer" },
       { property: "og:title", content: "Customer display — Cafe 1 St Albans" },
       { property: "og:description", content: "Counter-facing order and advert screen for Cafe 1." },
       { property: "og:type", content: "website" },
@@ -77,6 +80,43 @@ function DisplayPage() {
   const [now, setNow] = useState(() => new Date());
   const paidTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  const handleDisplayMessage = useCallback((msg: DisplayMessage | RemoteDisplayMessage) => {
+    if (msg.type === "juror") {
+      setJurorUrl(msg.url);
+      return;
+    }
+    if (msg.type === "juror_applied") return;
+    setJurorUrl(null);
+    if (msg.type === "order") {
+      setPaid(null);
+      setLines(msg.lines);
+      setSubtotal(msg.subtotal);
+      setVoucherCents(msg.voucher_cents);
+      setDiscountCents(msg.discount_cents);
+      setTotal(msg.due);
+      setFulfilment(msg.fulfilment);
+    } else if (msg.type === "paid") {
+      setLines([]);
+      setTotal(0);
+      setSubtotal(0);
+      setVoucherCents(0);
+      setDiscountCents(0);
+      setPaid({ order_number: msg.order_number, total: msg.total });
+      if (paidTimer.current) clearTimeout(paidTimer.current);
+      paidTimer.current = setTimeout(() => setPaid(null), 10_000);
+    } else {
+      setLines([]);
+      setTotal(0);
+      setSubtotal(0);
+      setVoucherCents(0);
+      setDiscountCents(0);
+    }
+  }, []);
+  const displayRelay = useCustomerDisplayRelay({
+    role: "display",
+    onMessage: handleDisplayMessage,
+  });
+
   useEffect(() => {
     (async () => {
       const { data } = await supabase
@@ -100,43 +140,12 @@ function DisplayPage() {
   }, [banners.length]);
 
   useEffect(() => {
-    const unsubscribe = subscribeToDisplay((msg: DisplayMessage) => {
-      if (msg.type === "juror") {
-        setJurorUrl(msg.url);
-        return;
-      }
-      if (msg.type === "juror_applied") return;
-      setJurorUrl(null);
-      if (msg.type === "order") {
-        setPaid(null);
-        setLines(msg.lines);
-        setSubtotal(msg.subtotal);
-        setVoucherCents(msg.voucher_cents);
-        setDiscountCents(msg.discount_cents);
-        setTotal(msg.due);
-        setFulfilment(msg.fulfilment);
-      } else if (msg.type === "paid") {
-        setLines([]);
-        setTotal(0);
-        setSubtotal(0);
-        setVoucherCents(0);
-        setDiscountCents(0);
-        setPaid({ order_number: msg.order_number, total: msg.total });
-        if (paidTimer.current) clearTimeout(paidTimer.current);
-        paidTimer.current = setTimeout(() => setPaid(null), 10_000);
-      } else {
-        setLines([]);
-        setTotal(0);
-        setSubtotal(0);
-        setVoucherCents(0);
-        setDiscountCents(0);
-      }
-    });
+    const unsubscribe = subscribeToDisplay(handleDisplayMessage);
     return () => {
       unsubscribe();
       if (paidTimer.current) clearTimeout(paidTimer.current);
     };
-  }, []);
+  }, [handleDisplayMessage]);
 
   useEffect(() => {
     announceDisplayPresence();
@@ -243,13 +252,22 @@ function DisplayPage() {
 
           <div className="flex items-center justify-between">
             <p className="text-xl text-white/50">St Albans Crown Court · cafe1stalbans.co.uk</p>
-            <div className="flex gap-2">
-              {banners.map((b, i) => (
-                <span
-                  key={b.id}
-                  className={`h-2 rounded-full transition-all ${i === slide ? "w-10 bg-primary" : "w-2 bg-white/30"}`}
-                />
-              ))}
+            <div className="flex items-center gap-4">
+              <span className="rounded-full bg-black/35 px-3 py-1 text-xs font-semibold text-white/55 backdrop-blur">
+                {displayRelay.configured
+                  ? displayRelay.channelStatus === "connected"
+                    ? "Secure till relay"
+                    : "Relay reconnecting"
+                  : "Pair in Till settings"}
+              </span>
+              <div className="flex gap-2">
+                {banners.map((b, i) => (
+                  <span
+                    key={b.id}
+                    className={`h-2 rounded-full transition-all ${i === slide ? "w-10 bg-primary" : "w-2 bg-white/30"}`}
+                  />
+                ))}
+              </div>
             </div>
           </div>
         </div>

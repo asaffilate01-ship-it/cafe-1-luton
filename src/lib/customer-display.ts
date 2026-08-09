@@ -1,4 +1,5 @@
 export const DISPLAY_CHANNEL = "cafe1-customer-display";
+export const DISPLAY_REMOTE_MESSAGE_EVENT = "cafe1:customer-display-remote-message";
 
 const DISPLAY_STATE_KEY = "cafe1-customer-display-state-v2";
 const DISPLAY_PRESENCE_KEY = "cafe1-customer-display-presence-v2";
@@ -48,7 +49,7 @@ function openChannel(): BroadcastChannel | null {
   return new BroadcastChannel(DISPLAY_CHANNEL);
 }
 
-function cacheable(
+export function isRemoteSafeDisplayMessage(
   message: DisplayMessage,
 ): message is Extract<DisplayMessage, { type: "order" | "paid" | "idle" }> {
   return message.type === "order" || message.type === "paid" || message.type === "idle";
@@ -58,7 +59,11 @@ function parseCachedState(raw: string | null): CachedDisplayState | null {
   if (!raw) return null;
   try {
     const value = JSON.parse(raw) as Partial<CachedDisplayState>;
-    if (!value.message || typeof value.saved_at !== "number" || !cacheable(value.message)) {
+    if (
+      !value.message ||
+      typeof value.saved_at !== "number" ||
+      !isRemoteSafeDisplayMessage(value.message)
+    ) {
       return null;
     }
     if (value.message.type === "paid" && Date.now() - value.saved_at > PAID_REPLAY_MS) {
@@ -77,15 +82,24 @@ function parseCachedState(raw: string | null): CachedDisplayState | null {
  */
 export function postToDisplay(message: DisplayMessage) {
   if (typeof window === "undefined") return;
-  if (cacheable(message)) {
+  if (isRemoteSafeDisplayMessage(message)) {
     window.localStorage.setItem(
       DISPLAY_STATE_KEY,
       JSON.stringify({ saved_at: Date.now(), message } satisfies CachedDisplayState),
     );
+    window.dispatchEvent(new CustomEvent(DISPLAY_REMOTE_MESSAGE_EVENT, { detail: message }));
   }
   const channel = openChannel();
   channel?.postMessage(message);
   channel?.close();
+}
+
+export function readCachedDisplayMessage(): Extract<
+  DisplayMessage,
+  { type: "order" | "paid" | "idle" }
+> | null {
+  if (typeof window === "undefined") return null;
+  return parseCachedState(window.localStorage.getItem(DISPLAY_STATE_KEY))?.message ?? null;
 }
 
 /** Listen across BroadcastChannel and the storage-event fallback. */

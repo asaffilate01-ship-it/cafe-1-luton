@@ -67,6 +67,38 @@
       ]
     },
     {
+      "id": "cross_device_display_relay",
+      "name": "Signed and revocable customer-display relay for separate Wi-Fi screens",
+      "evidence": [
+        {
+          "path": "src/lib/customer-display-relay.ts",
+          "includes": [
+            "generateDisplayRelayToken",
+            "signDisplayRelayPayload",
+            "verifyDisplayRelayEnvelope",
+            "isRemoteDisplayMessage",
+            "URL fragment"
+          ]
+        },
+        {
+          "path": "src/hooks/use-customer-display-relay.ts",
+          "includes": [
+            "Signed Supabase Realtime relay",
+            "displayRelayTopic",
+            "sendCachedState"
+          ]
+        },
+        {
+          "path": "src/lib/__tests__/customer-display-relay.test.ts",
+          "includes": [
+            "never permits juror credentials",
+            "valid HMAC signature",
+            "one-way topic identifier"
+          ]
+        }
+      ]
+    },
+    {
       "id": "sumup_google_pay",
       "name": "SumUp-hosted Google Pay configuration and verified payment confirmation",
       "evidence": [
