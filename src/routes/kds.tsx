@@ -1975,7 +1975,7 @@ function KDS() {
         onClick={() => setManualOpen(true)}
         disabled={!canCompleteOrders}
         aria-label="Add a manual order"
-        className="fixed right-4 bottom-[calc(4.75rem+env(safe-area-inset-bottom))] z-45 flex items-center gap-2 rounded-full bg-[#00CCBC] px-4 py-3 text-sm font-black text-black shadow-lg active:scale-[0.97] disabled:opacity-40 min-[860px]:max-lg:bottom-6 lg:hidden"
+        className="fixed right-4 bottom-[calc(4.75rem+env(safe-area-inset-bottom))] z-[45] flex items-center gap-2 rounded-full bg-[#00CCBC] px-4 py-3 text-sm font-black text-black shadow-lg active:scale-[0.97] disabled:opacity-40 min-[860px]:max-lg:bottom-6 lg:hidden"
       >
         <Plus className="h-5 w-5" /> Add order
       </button>
