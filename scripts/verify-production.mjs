@@ -75,7 +75,17 @@ export const PRODUCTION_CHECKS = [
   },
   {
     path: "/api/public/deliveroo/webhook",
-    statuses: [401],
+    // 401 means the Orders API channel is configured and rejected this unsigned probe.
+    // 503 is the correct fail-closed state when the café uses only the Hub watcher.
+    statuses: [401, 503],
+    method: "POST",
+    protectedRoute: true,
+    browserDocument: false,
+  },
+  {
+    path: "/api/public/deliveroo/hub-ingest",
+    // The watcher endpoint follows the inverse configuration state but must never accept this probe.
+    statuses: [401, 503],
     method: "POST",
     protectedRoute: true,
     browserDocument: false,

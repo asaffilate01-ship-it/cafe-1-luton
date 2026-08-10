@@ -42,6 +42,7 @@ Do not enable live ordering or live SumUp charging until every mandatory box is 
 - [ ] Test cash, voucher, split tender, partial refund and remaining refund.
 - [ ] Confirm duplicate requests do not create a second order, charge, refund or loyalty award.
 - [ ] Reconcile the test transactions against the SumUp settlement export.
+- [ ] On the café phone and tablet, complete orders at 320–430px portrait, phone landscape, tablet portrait checkout-sheet and tablet landscape split-view layouts; retain screenshots with operator and date.
 - [ ] Test the receipt printer, cash drawer and customer display on the production till device.
 
 ## 5. Ordering and operations
