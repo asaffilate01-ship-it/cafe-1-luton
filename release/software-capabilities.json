@@ -468,6 +468,7 @@
             "loadAutomaticSocialFeed",
             "YOUTUBE_API_KEY",
             "INSTAGRAM_ACCESS_TOKEN",
+            "normaliseYouTubeAtom",
             "normaliseYouTubePlaylist",
             "normaliseInstagramMedia"
           ]
@@ -504,6 +505,7 @@
           "includes": [
             "CONSENT_MAX_AGE_DAYS = 180",
             "parseStoredConsent",
+            "allowSocialPlayers",
             "expiresAt",
             "cafe1_cookie_consent"
           ]
@@ -519,8 +521,8 @@
         {
           "path": "src/components/tiktok-creator-feed.tsx",
           "includes": [
-            "tiktokCreatorEmbedUrl",
-            "referrerPolicy=\"strict-origin-when-cross-origin\""
+            "data-embed-type=\"creator\"",
+            "https://www.tiktok.com/embed.js"
           ]
         },
         {
@@ -546,11 +548,12 @@
           "includes": [
             "min-[700px]:grid-cols-[minmax(0,1fr)_340px]",
             "xl:grid-cols-[148px_minmax(0,1fr)_392px]",
-            "grid-cols-[minmax(0,1fr)_auto_auto]",
-            "min-[480px]:grid-cols-3",
-            "Order ·",
+            "grid-cols-[auto_minmax(0,1fr)_auto]",
+            "min-[560px]:grid-cols-3",
+            "View order",
             "env(safe-area-inset-bottom)",
-            "grid grid-cols-3 items-center gap-1 text-xs"
+            "h-dvh min-h-0 w-full max-w-full",
+            "grid-cols-[minmax(0,1fr)_auto] gap-x-2"
           ]
         },
         {

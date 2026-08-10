@@ -72,8 +72,8 @@ Google-listing link instead of breaking.
 After deployment:
 
 1. Confirm `/about` and `/socials` work on phone and desktop.
-2. Reject marketing cookies and prove no social iframe is loaded.
-3. Allow marketing cookies and play one item from every configured platform.
+2. Reject marketing cookies and prove no social iframe or TikTok embed script is loaded.
+3. Use the one-tap **Allow and show** action and play one item from every configured platform.
 4. Confirm every player opens the original source post.
 5. Compare the displayed rating, review count and review authors with the live
    Google listing.

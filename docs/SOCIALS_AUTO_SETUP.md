@@ -9,28 +9,35 @@ secret manager and never add them to a `VITE_` variable or commit them to Git.
 
 ## TikTok and Facebook
 
-These use the official public profile embeds and do not require API tokens:
+These use the official public profile embeds and do not require API tokens. TikTok is rendered by
+its supported creator-profile embed script rather than an unsupported profile iframe:
 
 ```text
 VITE_SOCIAL_TIKTOK_URL=https://www.tiktok.com/@Cafe1_Stalbans
 VITE_SOCIAL_FACEBOOK_URL=https://www.facebook.com/cafe1stalbans
 ```
 
-Visitors must allow marketing cookies before either provider is loaded.
+Visitors must allow marketing cookies before either provider is loaded. The paused card now offers
+a one-tap **Allow and show** action; analytics remains off unless the visitor separately allows it.
 
 ## YouTube automatic uploads
 
-Create a restricted YouTube Data API v3 key and set `YOUTUBE_API_KEY`. Then set
-exactly one source:
+The simplest setup needs no API key. Copy the channel's public `UC...` ID and set:
+
+```text
+YOUTUBE_CHANNEL_ID=UC1234567890123456789012
+```
+
+The server reads YouTube's public uploads feed. If you need to configure by handle or uploads
+playlist instead, create a restricted YouTube Data API v3 key and set exactly one source:
 
 ```text
 YOUTUBE_API_KEY=server-only-key
 YOUTUBE_CHANNEL_HANDLE=@YOUR_CHANNEL
 ```
 
-Alternatively use `YOUTUBE_CHANNEL_ID` or `YOUTUBE_UPLOADS_PLAYLIST_ID`. The
-server requests up to six public uploads, caches successful results for 15
-minutes and never sends the API key to the browser.
+Alternatively use `YOUTUBE_UPLOADS_PLAYLIST_ID`. The server requests up to six public uploads,
+caches successful results for 15 minutes and never sends an API key to the browser.
 
 ## Instagram automatic Reels
 

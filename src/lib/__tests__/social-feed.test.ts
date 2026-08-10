@@ -3,6 +3,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   loadAutomaticSocialFeed,
   normaliseInstagramMedia,
+  normaliseYouTubeAtom,
   normaliseYouTubePlaylist,
   resetAutomaticSocialFeedCacheForTests,
 } from "../social-feed.server";
@@ -55,6 +56,30 @@ describe("automatic social feeds", () => {
     });
     expect(posts).toHaveLength(1);
     expect(posts[0]?.title).toBe("Fresh from the kitchen");
+  });
+
+  it("parses the public YouTube channel feed without an API key", async () => {
+    const xml = `<?xml version="1.0"?><feed xmlns:yt="http://www.youtube.com/xml/schemas/2015">
+      <entry><yt:videoId>abcDEF12345</yt:videoId><title>Breakfast &amp; coffee</title></entry>
+      <entry><yt:videoId>invalid id</yt:videoId><title>Ignore me</title></entry>
+    </feed>`;
+    expect(normaliseYouTubeAtom(xml)).toMatchObject([
+      { platform: "youtube", title: "Breakfast & coffee" },
+    ]);
+
+    const fetchImpl = vi.fn(async (_input: URL | RequestInfo) =>
+      new Response(xml, { status: 200 }),
+    );
+    const result = await loadAutomaticSocialFeed(fetchImpl as typeof fetch, {
+      YOUTUBE_CHANNEL_ID: "UC1234567890123456789012",
+    });
+    expect(result.providers[0]).toMatchObject({
+      provider: "youtube",
+      configured: true,
+      available: true,
+    });
+    expect(result.posts[0]?.sourceUrl).toContain("abcDEF12345");
+    expect(String(fetchImpl.mock.calls[0]?.[0])).toContain("feeds/videos.xml");
   });
 
   it("loads configured providers without returning their secrets", async () => {

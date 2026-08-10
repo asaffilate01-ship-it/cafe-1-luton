@@ -1,6 +1,6 @@
 import { ExternalLink, LockKeyhole } from "lucide-react";
 
-import { openCookieSettings, useConsent } from "@/lib/cookie-consent";
+import { allowSocialPlayers, openCookieSettings, useConsent } from "@/lib/cookie-consent";
 import type { SocialPost } from "@/lib/social-media";
 
 export function SocialMediaEmbed({ post }: { post: SocialPost }) {
@@ -40,8 +40,15 @@ export function SocialMediaEmbed({ post }: { post: SocialPost }) {
             <div className="mt-5 flex flex-wrap justify-center gap-2">
               <button
                 type="button"
-                onClick={openCookieSettings}
+                onClick={allowSocialPlayers}
                 className="rounded-full bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground hover:bg-primary/90"
+              >
+                Allow and play
+              </button>
+              <button
+                type="button"
+                onClick={openCookieSettings}
+                className="rounded-full border border-border bg-background px-4 py-2 text-sm font-semibold hover:border-primary hover:text-primary"
               >
                 Cookie settings
               </button>

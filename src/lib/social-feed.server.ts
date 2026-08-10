@@ -32,6 +32,7 @@ const SUCCESS_CACHE_MS = 15 * 60 * 1000;
 const RETRY_CACHE_MS = 2 * 60 * 1000;
 const REQUEST_TIMEOUT_MS = 8_000;
 const MAX_PROVIDER_POSTS = 6;
+const MAX_XML_BYTES = 256_000;
 
 let feedCache: { expires: number; value: AutomaticSocialFeed } | undefined;
 
@@ -61,6 +62,30 @@ async function jsonRequest<T>(url: URL, fetchImpl: typeof fetch): Promise<T> {
   return (await response.json()) as T;
 }
 
+async function textRequest(url: URL, fetchImpl: typeof fetch): Promise<string> {
+  const response = await fetchImpl(url, {
+    headers: { Accept: "application/atom+xml, application/xml;q=0.9, text/xml;q=0.8" },
+    signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
+  });
+  if (!response.ok) throw new Error(`provider returned ${response.status}`);
+  const body = await response.text();
+  if (body.length > MAX_XML_BYTES) throw new Error("provider response was too large");
+  return body;
+}
+
+function decodeXmlText(value: string): string {
+  return value
+    .replace(/^<!\[CDATA\[|\]\]>$/g, "")
+    .replace(/&#(\d+);/g, (_, code: string) => String.fromCodePoint(Number(code)))
+    .replace(/&#x([\da-f]+);/gi, (_, code: string) => String.fromCodePoint(Number.parseInt(code, 16)))
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;|&apos;/g, "'")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&amp;/g, "&")
+    .trim();
+}
+
 export function normaliseYouTubePlaylist(payload: YouTubePlaylistResponse): SocialPost[] {
   return (payload.items ?? []).flatMap((item) => {
     if (item.status?.privacyStatus !== "public") return [];
@@ -74,6 +99,21 @@ export function normaliseYouTubePlaylist(payload: YouTubePlaylistResponse): Soci
     );
     return post ? [post] : [];
   });
+}
+
+/** Parses YouTube's public uploads Atom feed so a channel can auto-update without an API key. */
+export function normaliseYouTubeAtom(xml: string): SocialPost[] {
+  const posts: SocialPost[] = [];
+  for (const entry of xml.match(/<entry\b[\s\S]*?<\/entry>/gi) ?? []) {
+    const videoId = entry.match(/<yt:videoId>([^<]+)<\/yt:videoId>/i)?.[1]?.trim();
+    const rawTitle = entry.match(/<title>([\s\S]*?)<\/title>/i)?.[1] ?? "";
+    const title = decodeXmlText(rawTitle).slice(0, 100);
+    if (!videoId || !/^[A-Za-z0-9_-]{6,20}$/.test(videoId) || !title) continue;
+    const post = createSocialPost("youtube", `https://www.youtube.com/watch?v=${videoId}`, title);
+    if (post) posts.push(post);
+    if (posts.length === MAX_PROVIDER_POSTS) break;
+  }
+  return posts;
 }
 
 export function normaliseInstagramMedia(payload: InstagramMediaResponse): SocialPost[] {
@@ -92,15 +132,28 @@ async function loadYouTube(
   fetchImpl: typeof fetch,
 ): Promise<AutomaticSocialProviderFeed> {
   const apiKey = value(env, "YOUTUBE_API_KEY");
+  const channelId = value(env, "YOUTUBE_CHANNEL_ID");
   const configuredSources = [
     ["playlist", value(env, "YOUTUBE_UPLOADS_PLAYLIST_ID")],
-    ["channel", value(env, "YOUTUBE_CHANNEL_ID")],
+    ["channel", channelId],
     ["handle", value(env, "YOUTUBE_CHANNEL_HANDLE")],
   ].filter((entry) => entry[1]);
-  const configured = Boolean(apiKey && configuredSources.length === 1);
+  const usePublicFeed =
+    !apiKey &&
+    configuredSources.length === 1 &&
+    configuredSources[0]?.[0] === "channel" &&
+    /^UC[A-Za-z0-9_-]{20,30}$/.test(channelId);
+  const configured = usePublicFeed || Boolean(apiKey && configuredSources.length === 1);
   if (!configured) return provider("youtube", false, []);
 
   try {
+    if (usePublicFeed) {
+      const feedUrl = new URL("https://www.youtube.com/feeds/videos.xml");
+      feedUrl.searchParams.set("channel_id", channelId);
+      const posts = normaliseYouTubeAtom(await textRequest(feedUrl, fetchImpl));
+      return provider("youtube", true, posts);
+    }
+
     let playlistId = configuredSources[0]?.[1] ?? "";
     if (configuredSources[0]?.[0] !== "playlist") {
       const channelUrl = new URL("https://www.googleapis.com/youtube/v3/channels");

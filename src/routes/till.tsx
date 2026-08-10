@@ -89,7 +89,7 @@ import {
   Delete,
   ReceiptText,
   UtensilsCrossed,
-  ChevronDown,
+  ChevronLeft,
   Ticket,
   ShieldCheck,
   Wifi,
@@ -988,11 +988,11 @@ function Till() {
   if (locked) return <LockScreen onUnlock={() => setLocked(false)} />;
 
   return (
-    <div className="flex h-screen h-dvh flex-col overflow-hidden bg-[radial-gradient(120%_100%_at_50%_0%,#16181d_0%,#0a0a0b_60%)] text-white">
+    <div className="flex h-screen h-dvh w-full max-w-full flex-col overflow-hidden bg-[radial-gradient(120%_100%_at_50%_0%,#16181d_0%,#0a0a0b_60%)] text-white">
       {/* A deterministic two-row phone header prevents the till controls wrapping out of alignment. */}
       <header
         data-pos-region="header"
-        className="relative grid shrink-0 grid-cols-[minmax(0,1fr)_auto_auto] items-center gap-2 border-b border-white/10 bg-neutral-900/95 px-2.5 py-2 backdrop-blur min-[700px]:flex min-[700px]:gap-3 min-[700px]:px-4 lg:py-1.5"
+        className="relative grid w-full max-w-full shrink-0 grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-2 overflow-visible border-b border-white/10 bg-neutral-900/95 px-2.5 py-2 backdrop-blur min-[700px]:flex min-[700px]:gap-3 min-[700px]:px-4 lg:py-1.5"
       >
         <span className="inline-flex w-fit rounded-xl bg-primary px-2.5 py-1.5 text-[11px] font-black uppercase tracking-[0.16em] text-primary-foreground shadow-lg shadow-primary/25 xl:px-3 xl:text-xs xl:tracking-[0.2em]">
           Cafe 1 <span className="ml-1 hidden sm:inline">Till</span>
@@ -1010,11 +1010,11 @@ function Till() {
         </div>
         <button
           onClick={() => setShiftPanel(shift ? "close" : "open")}
-          className={`shrink-0 rounded-full px-3 py-1.5 text-[11px] font-bold uppercase tracking-wide transition hover:brightness-125 ${shift ? "bg-emerald-500/15 text-emerald-300" : "bg-amber-500/15 text-amber-300"}`}
+          className={`mx-auto min-w-0 max-w-full truncate rounded-full px-2.5 py-1.5 text-[10px] font-bold uppercase tracking-wide transition hover:brightness-125 min-[380px]:px-3 min-[380px]:text-[11px] min-[700px]:mx-0 min-[700px]:shrink-0 ${shift ? "bg-emerald-500/15 text-emerald-300" : "bg-amber-500/15 text-amber-300"}`}
         >
           {shiftLoading ? "Loading shift…" : shift ? "Shift open" : "Open shift"}
         </button>
-        <div className="ml-auto flex items-center gap-2">
+        <div className="ml-auto flex shrink-0 items-center gap-2">
           <span className="hidden items-center gap-2 rounded-full border border-white/10 bg-neutral-950/60 px-2.5 py-1.5 text-[11px] font-semibold uppercase tracking-wide lg:inline-flex">
             <StatusDot ok={online} label={online ? "Online" : "Offline"} />
             <StatusDot ok={readerReady} label="Card" />
@@ -1121,7 +1121,7 @@ function Till() {
         </p>
       )}
 
-      <div className="grid min-h-0 flex-1 min-[700px]:grid-cols-[minmax(0,1fr)_340px] xl:grid-cols-[148px_minmax(0,1fr)_392px] 2xl:grid-cols-[156px_minmax(0,1fr)_420px]">
+      <div className="grid min-h-0 min-w-0 flex-1 overflow-hidden min-[700px]:grid-cols-[minmax(0,1fr)_340px] xl:grid-cols-[148px_minmax(0,1fr)_392px] 2xl:grid-cols-[156px_minmax(0,1fr)_420px]">
         {/* category rail (desktop) */}
         <nav className="hidden min-h-0 flex-col gap-1 overflow-y-auto border-r border-white/10 bg-neutral-900/40 p-2 xl:flex">
           <button
@@ -1205,7 +1205,7 @@ function Till() {
             ref={gridRef}
             className="min-h-0 flex-1 overflow-y-auto p-2 pb-24 min-[700px]:p-3 min-[700px]:pb-3"
           >
-            <div className="grid grid-cols-2 gap-2 min-[480px]:grid-cols-3 min-[700px]:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
+            <div className="grid min-w-0 grid-cols-2 gap-2 min-[560px]:grid-cols-3 min-[700px]:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
               {visible.map((i) => (
                 <div
                   key={i.id}
@@ -1267,17 +1267,25 @@ function Till() {
         {/* order panel */}
         <aside
           data-pos-region="order"
-          className={`fixed inset-0 z-40 min-h-0 min-w-0 flex-col bg-neutral-900 shadow-[-12px_0_40px_-24px_rgba(0,0,0,0.9)] min-[700px]:static min-[700px]:z-auto min-[700px]:flex min-[700px]:border-l min-[700px]:border-white/10 ${showOrder ? "flex" : "hidden"}`}
+          className={`fixed inset-0 z-40 h-dvh min-h-0 w-full max-w-full min-w-0 flex-col overflow-hidden overscroll-contain bg-neutral-900 shadow-[-12px_0_40px_-24px_rgba(0,0,0,0.9)] min-[700px]:static min-[700px]:z-auto min-[700px]:flex min-[700px]:h-auto min-[700px]:border-l min-[700px]:border-white/10 ${showOrder ? "flex" : "hidden"}`}
         >
-          <div className="flex shrink-0 items-center justify-between border-b border-white/10 px-4 py-3 min-[700px]:hidden">
-            <span className="font-display text-lg font-bold">Current order</span>
+          <div className="grid shrink-0 grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 border-b border-white/10 bg-neutral-950/45 px-3 pb-3 pt-[calc(0.75rem+env(safe-area-inset-top))] min-[700px]:hidden">
             <button
               onClick={() => setShowOrder(false)}
               aria-label="Back to menu"
-              className="grid h-9 w-9 place-items-center rounded-lg border border-white/15"
+              className="grid h-10 w-10 place-items-center rounded-xl border border-white/15 bg-white/5 active:scale-95"
             >
-              <ChevronDown className="h-4 w-4" />
+              <ChevronLeft className="h-5 w-5" />
             </button>
+            <span className="min-w-0">
+              <span className="block truncate font-display text-lg font-bold">Current order</span>
+              <span className="block text-[11px] font-semibold uppercase tracking-wide text-white/45">
+                {count} item{count === 1 ? "" : "s"} · {FULFIL.find((item) => item.id === type)?.label}
+              </span>
+            </span>
+            <span className="font-display text-xl font-black tabular-nums text-primary">
+              {money(due)}
+            </span>
           </div>
           <div className="shrink-0 space-y-2 border-b border-white/10 p-4 md:space-y-1.5 md:p-2.5">
             <div className="grid grid-cols-2 gap-1.5 rounded-2xl border border-white/10 bg-neutral-950/50 p-1.5 md:gap-1 md:p-1">
@@ -1343,45 +1351,49 @@ function Till() {
                 <li
                   key={l.key}
                   data-line={l.key}
-                  className={`group flex items-center gap-2 rounded-2xl border p-2 text-sm transition duration-200 ${
+                  className={`group grid grid-cols-[minmax(0,1fr)_auto] gap-x-2 gap-y-2 rounded-2xl border p-2.5 text-sm transition duration-200 ${
                     flashKey === l.key
                       ? "border-primary/70 bg-primary/15"
                       : "border-white/5 bg-neutral-800/60 hover:border-white/15"
                   }`}
                 >
-                  <div className="flex items-center gap-1">
-                    <button
-                      onClick={() => bump(l.key, -1)}
-                      aria-label={`Remove one ${l.name}`}
-                      className="grid h-8 w-8 place-items-center rounded-xl border border-white/10 bg-white/5 transition hover:border-primary active:scale-90"
-                    >
-                      <Minus className="h-3.5 w-3.5" />
-                    </button>
-                    <span className="w-6 text-center font-bold tabular-nums">{l.qty}</span>
-                    <button
-                      onClick={() => bump(l.key, 1)}
-                      aria-label={`Add one ${l.name}`}
-                      className="grid h-8 w-8 place-items-center rounded-xl border border-white/10 bg-white/5 transition hover:border-primary active:scale-90"
-                    >
-                      <Plus className="h-3.5 w-3.5" />
-                    </button>
-                  </div>
-                  <span className="min-w-0 flex-1">
-                    <span className="block truncate font-medium">{l.name}</span>
+                  <span className="min-w-0 self-center">
+                    <span className="block truncate font-semibold">{l.name}</span>
                     {(l.modifier_names.length > 0 || l.notes) && (
                       <span className="block truncate text-[11px] text-white/45">
                         {[...l.modifier_names, l.notes].filter(Boolean).join(" · ")}
                       </span>
                     )}
                   </span>
-                  <span className="font-semibold tabular-nums">{money(l.price_cents * l.qty)}</span>
-                  <button
-                    onClick={() => bump(l.key, -l.qty)}
-                    aria-label={`Remove ${l.name} from the order`}
-                    className="grid h-8 w-8 shrink-0 place-items-center rounded-xl text-white/30 transition hover:bg-red-500/15 hover:text-red-300 active:scale-90"
-                  >
-                    <Trash2 className="h-3.5 w-3.5" />
-                  </button>
+                  <span className="flex items-center gap-1.5 self-start">
+                    <span className="font-semibold tabular-nums">
+                      {money(l.price_cents * l.qty)}
+                    </span>
+                    <button
+                      onClick={() => bump(l.key, -l.qty)}
+                      aria-label={`Remove ${l.name} from the order`}
+                      className="grid h-8 w-8 shrink-0 place-items-center rounded-xl text-white/30 transition hover:bg-red-500/15 hover:text-red-300 active:scale-90"
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </button>
+                  </span>
+                  <div className="col-span-2 flex w-fit items-center gap-1 rounded-xl border border-white/10 bg-neutral-950/40 p-0.5">
+                    <button
+                      onClick={() => bump(l.key, -1)}
+                      aria-label={`Remove one ${l.name}`}
+                      className="grid h-9 w-9 place-items-center rounded-lg transition hover:bg-white/10 active:scale-90"
+                    >
+                      <Minus className="h-3.5 w-3.5" />
+                    </button>
+                    <span className="w-7 text-center font-bold tabular-nums">{l.qty}</span>
+                    <button
+                      onClick={() => bump(l.key, 1)}
+                      aria-label={`Add one ${l.name}`}
+                      className="grid h-9 w-9 place-items-center rounded-lg transition hover:bg-white/10 active:scale-90"
+                    >
+                      <Plus className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
                 </li>
               ))}
               {!lines.length && (
@@ -1616,11 +1628,23 @@ function Till() {
         <button
           data-pos-region="mobile-order-bar"
           onClick={() => setShowOrder(true)}
-          className="fixed inset-x-2 bottom-[calc(0.5rem+env(safe-area-inset-bottom))] z-30 flex h-14 items-center justify-between gap-3 rounded-2xl border border-white/10 bg-primary px-4 text-primary-foreground shadow-2xl shadow-primary/30 transition active:scale-[0.99] min-[700px]:hidden"
+          className="fixed inset-x-2 bottom-[calc(0.5rem+env(safe-area-inset-bottom))] z-30 grid h-16 grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 rounded-2xl border border-white/10 bg-primary px-3.5 text-left text-primary-foreground shadow-2xl shadow-primary/30 transition active:scale-[0.99] min-[700px]:hidden"
         >
-          <span className="inline-flex min-w-0 items-center gap-2 truncate text-xs font-bold uppercase tracking-wide min-[380px]:text-sm">
-            <ReceiptText className="h-5 w-5 shrink-0" /> Order · {count} item
-            {count === 1 ? "" : "s"}
+          <span className="relative grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-black/15">
+            <ReceiptText className="h-5 w-5" />
+            {count > 0 && (
+              <span className="absolute -right-1 -top-1 grid h-5 min-w-5 place-items-center rounded-full bg-white px-1 text-[10px] font-black text-primary">
+                {count > 99 ? "99+" : count}
+              </span>
+            )}
+          </span>
+          <span className="min-w-0">
+            <span className="block truncate text-sm font-black uppercase tracking-wide">
+              View order
+            </span>
+            <span className="block truncate text-[11px] font-semibold text-primary-foreground/75">
+              {count ? `${count} item${count === 1 ? "" : "s"} ready to review` : "Tap to start or review"}
+            </span>
           </span>
           <span className="font-display text-xl font-black tabular-nums">{money(due)}</span>
         </button>
