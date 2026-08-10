@@ -1080,6 +1080,14 @@ function KDS() {
           )}
           <div className="flex flex-wrap items-center gap-2">
             <button
+              onClick={() => setManualOpen(true)}
+              disabled={!canCompleteOrders}
+              className="flex items-center gap-1 rounded-full bg-[#00CCBC] px-2.5 py-1 text-[11px] font-bold text-black disabled:opacity-40"
+              title="Key in an order by hand"
+            >
+              <Plus className="h-3.5 w-3.5" /> Add
+            </button>
+            <button
               onClick={() => setAll("preparing", "ready")}
               disabled={
                 bulking || !canCompleteOrders || !tickets.some((t) => t.status === "preparing")
