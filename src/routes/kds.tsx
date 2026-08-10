@@ -1472,15 +1472,15 @@ function KDS() {
           return (
             <div
               key={t.id}
-              className={`kds-card flex flex-col rounded-2xl border-4 bg-white p-4 shadow-sm ring-2 transition-shadow sm:rounded-xl sm:p-3 min-[860px]:max-lg:p-2 min-[860px]:max-lg:text-[13px] ${channel.border} ${channel.ring} ${hot ? "shadow-brand" : ""}`}
+              className={`kds-card flex min-w-0 flex-col break-words rounded-2xl border-4 bg-white p-4 shadow-sm ring-2 transition-shadow sm:rounded-xl sm:p-3 min-[860px]:max-lg:p-2 min-[860px]:max-lg:text-[13px] ${channel.border} ${channel.ring} ${hot ? "shadow-brand" : ""}`}
             >
               {/* Area + cook state share one strip so the ticket stays short */}
-              <div className="-mx-4 -mt-4 mb-1.5 flex text-[10px] font-black uppercase tracking-[0.12em] sm:-mx-3 sm:-mt-3">
-                <span className={`flex-1 px-2 py-1 text-center ${channel.chip}`}>
+              <div className="-mx-4 -mt-4 mb-1.5 grid grid-cols-2 overflow-hidden rounded-t-xl text-[10px] font-black uppercase tracking-[0.12em] sm:-mx-3 sm:-mt-3">
+                <span className={`truncate px-2 py-1 text-center ${channel.chip}`}>
                   {channel.label}
                 </span>
                 <span
-                  className={`flex-1 px-2 py-1 text-center text-white ${cook ? "bg-blue-600" : "bg-amber-500"}`}
+                  className={`truncate px-2 py-1 text-center text-white ${cook ? "bg-blue-600" : "bg-amber-500"}`}
                 >
                   {cook ? "Cook / hot" : "No cooking"}
                 </span>
@@ -1554,16 +1554,17 @@ function KDS() {
                   </p>
                 </div>
               )}
-              <div className="flex items-start justify-between gap-2">
-                <p className="font-display text-xl font-bold leading-none sm:text-lg">
+              <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-2">
+                <p className="truncate font-display text-xl font-bold leading-none sm:text-lg">
                   #{t.order_number}
                 </p>
-                <div className="flex flex-wrap items-center justify-end gap-1">
-                  <span
-                    className={`rounded-full px-1.5 py-px text-[9px] font-black uppercase tracking-wide ${channel.chip}`}
-                  >
-                    {channel.label}
-                  </span>
+                <span
+                  className={`shrink-0 rounded-full px-2 py-0.5 font-mono text-xs font-black tabular-nums ${timerTone}`}
+                  title={`Time in kitchen · target ${Math.ceil(targetSeconds / 60)} minutes`}
+                >
+                  {clock}
+                </span>
+                <div className="col-span-2 flex flex-wrap items-center gap-1">
                   {t.payment_method === "account" ||
                   t.payment_status === "on_account" ||
                   t.payment_status === "unpaid" ||
@@ -1580,28 +1581,22 @@ function KDS() {
                       {t.payment_method === "cash" ? "Cash" : "Card"}
                     </span>
                   )}
-                  <span
-                    className={`rounded-full px-2 py-px font-mono text-xs font-black tabular-nums ${timerTone}`}
-                    title={`Time in kitchen · target ${Math.ceil(targetSeconds / 60)} minutes`}
-                  >
-                    {clock}
+                  <span className="truncate text-[10px] font-semibold text-muted-foreground">
+                    {new Date(t.created_at).toLocaleString([], {
+                      weekday: "short",
+                      day: "2-digit",
+                      month: "short",
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    })}
                   </span>
                 </div>
               </div>
-              <p className="mt-0.5 text-[10px] font-semibold text-muted-foreground">
-                {new Date(t.created_at).toLocaleString([], {
-                  weekday: "short",
-                  day: "2-digit",
-                  month: "short",
-                  hour: "2-digit",
-                  minute: "2-digit",
-                })}
-              </p>
               <div
                 className={`mt-1 rounded-lg px-2 py-1 ${TYPE_TONE[t.type] ?? "bg-slate-500 text-white"}`}
               >
-                <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
-                  <p className="flex min-w-0 items-center gap-1 font-display text-xs font-black uppercase leading-none tracking-wide">
+                <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-2">
+                  <p className="flex min-w-0 items-center gap-1 truncate font-display text-xs font-black uppercase leading-none tracking-wide">
                     {(() => {
                       const Icon =
                         t.type === "dine_in"
@@ -1611,11 +1606,13 @@ function KDS() {
                             : ShoppingBag;
                       return <Icon className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />;
                     })()}
+                    <span className="truncate">
                     {t.source === "sumup_pos" && t.type === "collection"
                       ? "TAKEAWAY"
                       : (TYPE_LABEL[t.type] ?? t.type.replace("_", " ").toUpperCase())}
+                    </span>
                   </p>
-                  <p className="text-[11px] font-black leading-none">
+                  <p className="shrink-0 text-[11px] font-black leading-none">
                     {whenLabel(t) === "ASAP" ? "ASAP" : `FOR ${whenLabel(t)}`}
                   </p>
                 </div>
