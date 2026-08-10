@@ -10,11 +10,12 @@ const PAGE_SECURITY_HEADERS = [
   ["x-content-type-options", /^nosniff$/i],
   ["referrer-policy", /strict-origin-when-cross-origin/i],
   ["x-frame-options", /^DENY$/i],
-  ["permissions-policy", /camera=/i],
+  ["permissions-policy", /camera=\(\)/i],
   ["content-security-policy", /base-uri\s+'self'/i],
   ["content-security-policy", /object-src\s+'none'/i],
   ["content-security-policy", /frame-ancestors\s+'none'/i],
   ["content-security-policy", /frame-src\s+'self'[^;]*youtube-nocookie\.com/i],
+  ["content-security-policy", /form-action\s+'self'/i],
 ];
 
 export const PRODUCTION_CHECKS = [
@@ -27,6 +28,7 @@ export const PRODUCTION_CHECKS = [
   { path: "/about", statuses: [200], contentType: /text\/html/i },
   { path: "/socials", statuses: [200], contentType: /text\/html/i },
   { path: "/privacy", statuses: [200], contentType: /text\/html/i },
+  { path: "/cookies", statuses: [200], contentType: /text\/html/i },
   { path: "/cart", statuses: [200], contentType: /text\/html/i, protectedRoute: true },
   { path: "/checkout", statuses: [200], contentType: /text\/html/i, protectedRoute: true },
   { path: "/admin/login", statuses: [200], contentType: /text\/html/i, protectedRoute: true },
@@ -68,6 +70,13 @@ export const PRODUCTION_CHECKS = [
     path: "/api/public/juror-daily",
     statuses: [405],
     method: "GET",
+    protectedRoute: true,
+    browserDocument: false,
+  },
+  {
+    path: "/api/public/deliveroo/webhook",
+    statuses: [401],
+    method: "POST",
     protectedRoute: true,
     browserDocument: false,
   },

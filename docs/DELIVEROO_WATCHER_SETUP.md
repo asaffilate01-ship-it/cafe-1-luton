@@ -1,70 +1,67 @@
-# Deliveroo auto-link — shop PC setup
+# Café 1 Deliveroo Hub watcher — one-click Windows setup
 
-The Deliveroo tablet keeps working exactly as it does now. This only mirrors
-each order onto the Cafe1 kitchen display so nothing has to be keyed in twice.
+Use this automatic fallback while Deliveroo production Orders API access is unavailable. The
+Deliveroo tablet continues accepting and printing orders exactly as it does now; the café PC only
+mirrors accepted Restaurant Hub order data into the existing Café 1 KDS.
 
-Being signed into Restaurant Hub in a browser is **not** enough on its own —
-a small background program (the "watcher") has to be running on the shop PC.
-Once installed with the steps below it starts on its own every time the PC is
-on, and restarts itself if it ever stops.
+## What staff do
 
-## One-time setup (Windows, ~5 minutes)
+1. Download and extract `cafe1-deliveroo-watcher-windows.zip` on the café Windows PC.
+2. Double-click `START-CAFE1-DELIVEROO.cmd`.
+3. If setup says the website bridge is not ready, paste the two settings it copied into the
+   production secrets and redeploy once.
+4. When Microsoft Edge opens, sign into Restaurant Hub once using the same Deliveroo device
+   account used at the café.
+5. Wait for the green **Connected** message. The downloaded folder can then be deleted.
 
-1. Make sure Node.js is installed on the shop PC (https://nodejs.org — take
-   the "LTS" download and click through).
-2. In the `scripts` folder, copy `deliveroo-hub-watcher.env.example` and name
-   the copy `deliveroo-hub-watcher.env`.
-3. Open that copy in Notepad and fill in **both** logins if you have them:
-   - `DEVICE_USERNAME` / `DEVICE_PASSWORD` — the device account the tablet
-     uses. This is tried **first**, because it never expires.
-   - `HUB_USERNAME` / `HUB_PASSWORD` — your normal Restaurant Hub **email**
-     login. Used only as a **backup** if the device account cannot get in.
-     Having both is what stops the kitchen display badge dropping out: if one
-     login is knocked back, the watcher quietly falls over to the other.
-     Either way it only ever reads Hub — it never accepts, rejects or changes
-     an order.
-   - `DELIVEROO_BRIDGE_SECRET` — the shared secret for this shop.
-   Save and close.
-4. Right-click `install-deliveroo-watcher.ps1` and choose
-   **Run with PowerShell**.
+The tablet's live app session cannot be copied to a separate PC. The same device account therefore
+has to be signed into Deliveroo's own Restaurant Hub page once on the PC. Café 1 never reads or
+stores that username or password; Edge retains the dedicated Hub session in the installed Windows
+profile.
 
-The installer automatically installs Playwright and its private Chromium
-browser without asking you to run npm or approve another installer. Keep the
-window open while it finishes; the first setup can take several minutes.
+## The only website configuration
 
-That's it. Within a minute the kitchen display badge turns green,
-**Deliveroo auto**.
+Deliveroo does not supply the fallback bridge key. On first run, setup generates a random 256-bit
+key, protects it with Windows DPAPI and copies the matching production settings to the clipboard:
 
-## Checking it later
-
-- **Kitchen display badge** — green "Deliveroo auto" means orders are landing
-  on their own. Grey "Deliveroo offline" means the link has gone quiet; hover
-  it to see how long ago it last checked in.
-- **Log file** — `scripts\logs\deliveroo-hub-watcher.log` on the shop PC.
-- **Windows Task Scheduler** — the task is called
-  *Cafe1 Deliveroo Watcher*. Right-click it to Run, End, or check its history.
-
-## If the badge goes grey
-
-1. Is the shop PC on and online?
-2. Open Task Scheduler and check *Cafe1 Deliveroo Watcher* is Running; if not,
-   right-click → Run.
-3. Check the log file for `sign-in did not complete` — that means Deliveroo has
-   put 2FA on the device account. Fix by running once by hand to sign in:
-   `node scripts\deliveroo-hub-watcher.mjs --login`
-4. Meanwhile, staff can use the **Add Deliveroo** button on the kitchen
-   display to key a ticket in manually. Nothing is lost.
-
-## Removing it
-
-In an Administrator PowerShell window:
-
-```powershell
-Unregister-ScheduledTask -TaskName "Cafe1 Deliveroo Watcher" -Confirm:$false
+```text
+DELIVEROO_INGEST_MODE=hub_watcher
+DELIVEROO_BRIDGE_SECRET=<generated 64-character key>
 ```
 
-## Mac or Linux shop machine
+Add them to the production secret manager and redeploy. Do not put the generated value in GitHub,
+email or support messages. The installer reuses the protected value on upgrades.
 
-Use the same `.env` values and run the watcher under the machine's own service
-manager (`launchd` on Mac, `systemd` on Linux) with restart-on-failure enabled,
-pointing at `node scripts/deliveroo-hub-watcher.mjs`.
+## What setup automates
+
+- copies the installed watcher to `%LOCALAPPDATA%\Cafe1\DeliverooWatcher`;
+- uses Node 20+ if present, otherwise downloads the latest Node LTS Windows runtime and verifies its
+  published SHA-256 checksum;
+- installs pinned `playwright-core` without downloading another browser;
+- uses Microsoft Edge, with Google Chrome as a fallback;
+- restricts the watcher directory to the current Windows user, SYSTEM and administrators;
+- keeps a dedicated persistent Hub browser profile without storing Deliveroo credentials;
+- creates an auto-restarting Windows task at sign-in;
+- runs hidden, prevents a second copy and rotates its log at 5 MB;
+- reloads Hub every 45 seconds and sends the KDS a health heartbeat every minute; and
+- installs **Café 1 Deliveroo Status** and **Repair Deliveroo Login** desktop shortcuts.
+
+## Daily operation
+
+Keep the café PC powered on, online and signed into the same Windows user. A green **Deliveroo
+auto** badge on KDS confirms recent watcher heartbeats. Use the status shortcut for a direct bridge
+test and the latest log lines.
+
+If Deliveroo ever ends the browser session, KDS reports that it is signed out and the watcher writes
+`LOGIN-REQUIRED.txt`. Double-click **Repair Deliveroo Login** and sign into Deliveroo's page again.
+The watcher does not attempt unattended password entry, so a Café 1 file can never expose the
+Deliveroo device password.
+
+## Limitations and safe fallback
+
+This is a controlled browser fallback, not an official Deliveroo API. Hub screen/API changes can
+interrupt it, so staff must keep the Deliveroo tablet audible and compare every tablet order with
+KDS during acceptance testing. If a ticket is missing, use **Add Deliveroo** on KDS.
+
+After Deliveroo enables the official Orders API, follow `DELIVEROO_ORDERS_API_SETUP.md`, change the
+ingestion mode, verify a real order and uninstall the watcher.

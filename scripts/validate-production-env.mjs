@@ -127,10 +127,59 @@ export function validateProductionEnvironment(env, { expectedRelease } = {}) {
       "Deliveroo is partially configured; set all three Deliveroo variables or none of them",
     );
   }
+  const deliverooMode =
+    value(env, "DELIVEROO_INGEST_MODE") ||
+    (configuredDeliveroo.length === deliveroo.length ? "orders_api" : "disabled");
+  if (!["disabled", "orders_api", "hub_watcher", "dual"].includes(deliverooMode)) {
+    errors.push("DELIVEROO_INGEST_MODE must be disabled, orders_api, hub_watcher or dual");
+  }
+  if (["orders_api", "dual"].includes(deliverooMode)) {
+    for (const name of deliveroo) {
+      if (!value(env, name)) errors.push(`${name} is required for ${deliverooMode} mode`);
+    }
+    if (!/^(?:tablet|tabletless)$/.test(value(env, "DELIVEROO_SITE_MODE"))) {
+      errors.push("DELIVEROO_SITE_MODE must be tablet or tabletless for Orders API mode");
+    }
+  }
+  if (
+    value(env, "DELIVEROO_API_ENV") &&
+    !/^(?:production|sandbox)$/.test(value(env, "DELIVEROO_API_ENV"))
+  ) {
+    errors.push("DELIVEROO_API_ENV must be production or sandbox");
+  }
+  if (
+    value(env, "DELIVEROO_WEBHOOK_SECRET") &&
+    value(env, "DELIVEROO_WEBHOOK_SECRET").length < 32
+  ) {
+    errors.push("DELIVEROO_WEBHOOK_SECRET must contain at least 32 characters");
+  }
+  if (["hub_watcher", "dual"].includes(deliverooMode)) {
+    if (value(env, "DELIVEROO_BRIDGE_SECRET").length < 32) {
+      errors.push(
+        `DELIVEROO_BRIDGE_SECRET must contain at least 32 characters for ${deliverooMode} mode`,
+      );
+    }
+  } else if (
+    value(env, "DELIVEROO_BRIDGE_SECRET") &&
+    value(env, "DELIVEROO_BRIDGE_SECRET").length < 32
+  ) {
+    errors.push("DELIVEROO_BRIDGE_SECRET must contain at least 32 characters when configured");
+  }
+  if (deliverooMode === "disabled" && configuredDeliveroo.length === deliveroo.length) {
+    warnings.push("Deliveroo credentials are present but DELIVEROO_INGEST_MODE is disabled");
+  }
   if (!value(env, "SUMUP_AFFILIATE_KEY")) {
     warnings.push(
       "SUMUP_AFFILIATE_KEY is absent; confirm it is not required for the connected readers",
     );
+  }
+
+  const analyticsMeasurement = value(env, "VITE_GA_MEASUREMENT_ID");
+  if (analyticsMeasurement && !/^G-[A-Z0-9]{6,20}$/i.test(analyticsMeasurement)) {
+    errors.push("VITE_GA_MEASUREMENT_ID must be a valid GA4 G-XXXXXXXX measurement ID");
+  }
+  if (!analyticsMeasurement) {
+    warnings.push("Optional analytics is disabled; the consent panel will show it as unavailable");
   }
 
   const youtubeKey = value(env, "YOUTUBE_API_KEY");

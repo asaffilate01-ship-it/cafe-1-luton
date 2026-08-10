@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, useRouterState } from "@tanstack/react-router";
 import { Cookie } from "lucide-react";
+import { analyticsConfigured } from "@/lib/analytics-consent";
 import { saveConsent, useConsent } from "@/lib/cookie-consent";
 
 export function CookieBanner() {
@@ -10,14 +11,13 @@ export function CookieBanner() {
   const [details, setDetails] = useState(false);
   const [analytics, setAnalytics] = useState(false);
   const [marketing, setMarketing] = useState(false);
+  const analyticsAvailable = analyticsConfigured(import.meta.env.VITE_GA_MEASUREMENT_ID);
   /** Never stack the banner on top of another dialog (order setup, item customise…). */
   const [dialogOpen, setDialogOpen] = useState(false);
 
   useEffect(() => {
     const check = () =>
-      setDialogOpen(
-        document.querySelectorAll('[role="dialog"][aria-modal="true"]').length > 0,
-      );
+      setDialogOpen(document.querySelectorAll('[role="dialog"][aria-modal="true"]').length > 0);
     check();
     const observer = new MutationObserver(check);
     observer.observe(document.body, { childList: true, subtree: true, attributes: true });
@@ -65,9 +65,12 @@ export function CookieBanner() {
           <div className="min-w-0 flex-1">
             <p className="font-display text-base font-bold">We use cookies</p>
             <p className="mt-1 text-sm text-muted-foreground">
-              Essential cookies keep your basket, sign-in and checkout working. With your permission we
-              also use analytics and marketing cookies.{" "}
-              <Link to="/cookies" className="font-semibold text-primary underline underline-offset-2">
+              Essential cookies keep your basket, sign-in and checkout working. With your permission
+              we also use analytics and marketing cookies.{" "}
+              <Link
+                to="/cookies"
+                className="font-semibold text-primary underline underline-offset-2"
+              >
                 Cookie Policy
               </Link>
               .
@@ -78,18 +81,29 @@ export function CookieBanner() {
                 <div className="flex items-center justify-between gap-3">
                   <div>
                     <p className="font-semibold">Strictly necessary</p>
-                    <p className="text-xs text-muted-foreground">Basket, login, checkout, security. Always on.</p>
+                    <p className="text-xs text-muted-foreground">
+                      Basket, login, checkout, security. Always on.
+                    </p>
                   </div>
-                  <span className="rounded-full bg-secondary px-2 py-0.5 text-xs font-semibold">Always on</span>
+                  <span className="rounded-full bg-secondary px-2 py-0.5 text-xs font-semibold">
+                    Always on
+                  </span>
                 </div>
-                <label className="flex items-center justify-between gap-3">
+                <label
+                  className={`flex items-center justify-between gap-3 ${analyticsAvailable ? "" : "opacity-60"}`}
+                >
                   <div>
                     <p className="font-semibold">Analytics</p>
-                    <p className="text-xs text-muted-foreground">Helps us see which pages and dishes are popular.</p>
+                    <p className="text-xs text-muted-foreground">
+                      {analyticsAvailable
+                        ? "Helps us see which pages and dishes are popular."
+                        : "Not currently enabled on this site."}
+                    </p>
                   </div>
                   <input
                     type="checkbox"
                     checked={analytics}
+                    disabled={!analyticsAvailable}
                     onChange={(e) => setAnalytics(e.target.checked)}
                     className="h-5 w-5 accent-[hsl(var(--primary))]"
                   />
@@ -97,7 +111,9 @@ export function CookieBanner() {
                 <label className="flex items-center justify-between gap-3">
                   <div>
                     <p className="font-semibold">Marketing</p>
-                    <p className="text-xs text-muted-foreground">Offers and promotions relevant to you.</p>
+                    <p className="text-xs text-muted-foreground">
+                      Offers and promotions relevant to you.
+                    </p>
                   </div>
                   <input
                     type="checkbox"
@@ -111,7 +127,7 @@ export function CookieBanner() {
 
             <div className="mt-3 flex flex-wrap gap-2">
               <button
-                onClick={() => decide(true, true)}
+                onClick={() => decide(analyticsAvailable, true)}
                 className="h-10 rounded-full bg-primary px-5 text-sm font-semibold text-primary-foreground hover:bg-primary-hover"
               >
                 Accept all

@@ -4,15 +4,32 @@
  * Server-only: uses the service-role client to write kitchen tickets.
  */
 
-export type IngestLine = { name: string; qty: number; notes: string | null };
+import { createHash, timingSafeEqual } from "node:crypto";
+import { deliverooCanonicalRef, deliverooReferenceKeys } from "@/lib/deliveroo.server";
+
+export type IngestLine = {
+  name: string;
+  qty: number;
+  notes: string | null;
+  unitPriceCents?: number;
+};
 
 export type IngestOrder = {
   reference: string;
+  alternateReferences?: string[];
   customerName: string | null;
   type: "delivery" | "collection";
   totalCents: number;
   notes: string | null;
   items: IngestLine[];
+  customerPhone?: string | null;
+  scheduledFor?: string | null;
+  address?: {
+    line1?: string | null;
+    line2?: string | null;
+    city?: string | null;
+    postcode?: string | null;
+  };
 };
 
 export type IngestResult = { order_id: string; reference: string; duplicate: boolean };
@@ -25,11 +42,13 @@ export type IngestResult = { order_id: string; reference: string; duplicate: boo
 export async function recordIntegrationHeartbeat(key: string, detail: string): Promise<void> {
   try {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    await (supabaseAdmin as unknown as {
-      from: (t: string) => {
-        upsert: (v: Record<string, unknown>, o: { onConflict: string }) => Promise<unknown>;
-      };
-    })
+    await (
+      supabaseAdmin as unknown as {
+        from: (t: string) => {
+          upsert: (v: Record<string, unknown>, o: { onConflict: string }) => Promise<unknown>;
+        };
+      }
+    )
       .from("integration_status")
       .upsert(
         {
@@ -54,10 +73,9 @@ export async function recordIntegrationHeartbeat(key: string, detail: string): P
 export function bridgeSecretMatches(provided: string): boolean {
   const secret = process.env["DELIVEROO_BRIDGE_SECRET"];
   if (!secret) return false;
-  if (provided.length !== secret.length) return false;
-  let diff = 0;
-  for (let i = 0; i < secret.length; i += 1) diff |= provided.charCodeAt(i) ^ secret.charCodeAt(i);
-  return diff === 0;
+  const suppliedHash = createHash("sha256").update(provided, "utf8").digest();
+  const expectedHash = createHash("sha256").update(secret, "utf8").digest();
+  return timingSafeEqual(suppliedHash, expectedHash);
 }
 
 /** Read the shared secret from either header style the bridges use. */
@@ -69,31 +87,46 @@ export function readBridgeSecret(request: Request): string {
   );
 }
 
+/** Remove a cancelled/rejected Deliveroo ticket regardless of which ingest path created it. */
+export async function cancelDeliverooOrder(reference: string): Promise<void> {
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  const { error } = await supabaseAdmin
+    .from("orders")
+    .update({ status: "cancelled" })
+    .in("deliveroo_order_id", deliverooReferenceKeys(reference));
+  if (error) throw new Error(error.message);
+}
+
 /**
- * Create the KDS ticket. `source` prefixes the idempotency key so the same
- * order arriving twice (a reprint, or Hub re-listing it on the next poll)
- * never produces a second ticket.
+ * Create one KDS ticket. All ingestion paths share the same canonical key so
+ * a webhook, Hub poll and receipt reprint can never create separate tickets.
  */
 export async function ingestDeliverooOrder(
   order: IngestOrder,
-  source: "print" | "hub",
+  source: "print" | "hub" | "webhook",
 ): Promise<IngestResult> {
-  const ref = `${source}:${order.reference}`;
+  const ref = deliverooCanonicalRef(order.reference);
+  const legacyKeys = [order.reference, ...(order.alternateReferences ?? [])].flatMap(
+    deliverooReferenceKeys,
+  );
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
   const { data: existing } = await supabaseAdmin
     .from("orders")
     .select("id")
-    .eq("deliveroo_order_id", ref)
+    .in("deliveroo_order_id", legacyKeys)
+    .limit(1)
     .maybeSingle();
-  if (existing) return { order_id: existing.id, reference: order.reference, duplicate: true };
+  if (existing) {
+    return { order_id: existing.id, reference: order.reference, duplicate: true };
+  }
 
   const total = order.totalCents;
   const { data: inserted, error } = await supabaseAdmin
     .from("orders")
     .insert({
       customer_name: order.customerName || "Deliveroo customer",
-      customer_phone: "",
+      customer_phone: order.customerPhone ?? "",
       type: order.type,
       status: "preparing",
       payment_status: "paid",
@@ -105,16 +138,31 @@ export async function ingestDeliverooOrder(
       voucher_cents: 0,
       points_earned: 0,
       total_cents: total,
-      schedule_mode: "asap",
-      scheduled_for: null,
+      schedule_mode: order.scheduledFor ? "scheduled" : "asap",
+      scheduled_for: order.scheduledFor ?? null,
       source: "deliveroo",
       deliveroo_order_id: ref,
       delivery_notes: order.notes,
+      address_line1: order.address?.line1 ?? null,
+      address_line2: order.address?.line2 ?? null,
+      city: order.address?.city ?? null,
+      postcode: order.address?.postcode ?? null,
     })
     .select("id")
     .single();
 
-  if (error || !inserted) throw new Error(error?.message ?? "Could not create the ticket");
+  if (error || !inserted) {
+    // A concurrent webhook retry may win the unique-key race after our read.
+    if (error?.code === "23505") {
+      const { data: raced } = await supabaseAdmin
+        .from("orders")
+        .select("id")
+        .eq("deliveroo_order_id", ref)
+        .maybeSingle();
+      if (raced) return { order_id: raced.id, reference: order.reference, duplicate: true };
+    }
+    throw new Error(error?.message ?? "Could not create the ticket");
+  }
 
   const units = order.items.reduce((sum, line) => sum + line.qty, 0);
   const unit = units > 0 ? Math.round(total / units) : 0;
@@ -123,12 +171,22 @@ export async function ingestDeliverooOrder(
       order_id: inserted.id,
       name: line.name,
       qty: line.qty,
-      unit_price_cents: unit,
+      unit_price_cents:
+        typeof line.unitPriceCents === "number" ? Math.max(0, line.unitPriceCents) : unit,
       notes: line.notes,
     })),
   );
-  // A ticket with no lines is still better than no ticket; log and continue.
-  if (lineError) console.error("Deliveroo ingest lines failed:", lineError.message);
+  if (lineError) {
+    // Never acknowledge a kitchen ticket whose item lines were lost. Removing
+    // the partial order lets Deliveroo retry the entire atomic-looking ingest.
+    await supabaseAdmin.from("orders").delete().eq("id", inserted.id);
+    throw new Error(`Deliveroo item ingest failed: ${lineError.message}`);
+  }
+
+  await recordIntegrationHeartbeat(
+    source === "webhook" ? "deliveroo_orders_api" : "deliveroo_hub",
+    `${source === "webhook" ? "Orders API" : "Hub watcher"} created ticket ${order.reference}`,
+  );
 
   return { order_id: inserted.id, reference: order.reference, duplicate: false };
 }

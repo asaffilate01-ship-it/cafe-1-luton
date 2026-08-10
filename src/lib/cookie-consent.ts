@@ -5,26 +5,50 @@ export type ConsentPrefs = {
   analytics: boolean;
   marketing: boolean;
   decidedAt: string;
+  expiresAt: string;
   version: number;
 };
 
-export const CONSENT_VERSION = 1;
-const KEY = "cafe1_cookie_consent";
+export const CONSENT_VERSION = 2;
+export const CONSENT_MAX_AGE_DAYS = 180;
+export const CONSENT_STORAGE_KEY = "cafe1_cookie_consent";
 
 let cached: ConsentPrefs | null | undefined;
 const listeners = new Set<() => void>();
 
-function read(): ConsentPrefs | null {
-  if (typeof window === "undefined") return null;
+function isValidDate(value: unknown): value is string {
+  return typeof value === "string" && Number.isFinite(Date.parse(value));
+}
+
+export function parseStoredConsent(raw: string | null, now = Date.now()): ConsentPrefs | null {
+  if (!raw) return null;
   try {
-    const raw = window.localStorage.getItem(KEY);
-    if (!raw) return null;
-    const p = JSON.parse(raw) as ConsentPrefs;
-    if (p.version !== CONSENT_VERSION) return null;
-    return p;
+    const value = JSON.parse(raw) as Partial<ConsentPrefs>;
+    if (
+      value.version !== CONSENT_VERSION ||
+      value.necessary !== true ||
+      typeof value.analytics !== "boolean" ||
+      typeof value.marketing !== "boolean" ||
+      !isValidDate(value.decidedAt) ||
+      !isValidDate(value.expiresAt) ||
+      Date.parse(value.expiresAt) <= now
+    ) {
+      return null;
+    }
+    return value as ConsentPrefs;
   } catch {
     return null;
   }
+}
+
+function read(): ConsentPrefs | null {
+  if (typeof window === "undefined") return null;
+  const raw = window.localStorage.getItem(CONSENT_STORAGE_KEY);
+  const consent = parseStoredConsent(raw);
+  if (raw && !consent) {
+    window.localStorage.removeItem(CONSENT_STORAGE_KEY);
+  }
+  return consent;
 }
 
 function emit() {
@@ -34,7 +58,14 @@ function emit() {
 
 function subscribe(cb: () => void) {
   listeners.add(cb);
-  return () => listeners.delete(cb);
+  const onStorage = (event: StorageEvent) => {
+    if (event.key === CONSENT_STORAGE_KEY) emit();
+  };
+  if (typeof window !== "undefined") window.addEventListener("storage", onStorage);
+  return () => {
+    listeners.delete(cb);
+    if (typeof window !== "undefined") window.removeEventListener("storage", onStorage);
+  };
 }
 
 function snapshot(): ConsentPrefs | null {
@@ -44,21 +75,25 @@ function snapshot(): ConsentPrefs | null {
 
 export function saveConsent(prefs: { analytics: boolean; marketing: boolean }) {
   if (typeof window === "undefined") return;
+  const decidedAt = new Date();
+  const expiresAt = new Date(decidedAt);
+  expiresAt.setUTCDate(expiresAt.getUTCDate() + CONSENT_MAX_AGE_DAYS);
   const value: ConsentPrefs = {
     necessary: true,
     analytics: prefs.analytics,
     marketing: prefs.marketing,
-    decidedAt: new Date().toISOString(),
+    decidedAt: decidedAt.toISOString(),
+    expiresAt: expiresAt.toISOString(),
     version: CONSENT_VERSION,
   };
-  window.localStorage.setItem(KEY, JSON.stringify(value));
+  window.localStorage.setItem(CONSENT_STORAGE_KEY, JSON.stringify(value));
   emit();
   window.dispatchEvent(new CustomEvent("cafe1:consent", { detail: value }));
 }
 
 export function clearConsent() {
   if (typeof window === "undefined") return;
-  window.localStorage.removeItem(KEY);
+  window.localStorage.removeItem(CONSENT_STORAGE_KEY);
   emit();
 }
 

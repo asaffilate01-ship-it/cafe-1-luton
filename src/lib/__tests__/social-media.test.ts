@@ -8,6 +8,7 @@ import {
   mergeSocialPosts,
   parseSocialPosts,
   tiktokCreatorHandle,
+  tiktokCreatorEmbedUrl,
 } from "../social-media";
 
 describe("social media embed configuration", () => {
@@ -59,7 +60,11 @@ describe("social media embed configuration", () => {
 
   it("creates validated profile embeds without accepting lookalike hosts", () => {
     expect(tiktokCreatorHandle("https://www.tiktok.com/@Cafe1_Stalbans")).toBe("Cafe1_Stalbans");
+    expect(tiktokCreatorEmbedUrl("https://www.tiktok.com/@Cafe1_Stalbans")).toContain(
+      "www.tiktok.com/embed/@Cafe1_Stalbans",
+    );
     expect(tiktokCreatorHandle("https://tiktok.example/@Cafe1_Stalbans")).toBeNull();
+    expect(tiktokCreatorEmbedUrl("https://tiktok.example/@Cafe1_Stalbans")).toBeNull();
     expect(facebookPagePluginUrl("https://www.facebook.com/cafe1stalbans")).toContain(
       "facebook.com%2Fcafe1stalbans",
     );

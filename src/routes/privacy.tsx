@@ -68,10 +68,12 @@ export const Route = createFileRoute("/privacy")({
       </Section>
       <Section heading="Who we share it with">
         <p>
-          Our payment provider (SumUp), our hosting and database provider, our delivery drivers for
-          delivery orders, and Google Maps services used to check our delivery radius. If you allow
-          marketing cookies and play an embedded social video, its source platform receives the
-          normal browser request. We do not sell your data.
+          Our payment provider (SumUp), website security and edge provider (Cloudflare), hosting and
+          database provider (Supabase/Lovable), our delivery drivers for delivery orders, and Google
+          Maps services used to check our delivery radius. If you allow analytics, Google Analytics
+          receives the normal browser and page-use data with advertising features disabled. If you
+          allow marketing cookies and play an embedded social video, its source platform receives
+          the normal browser request. We do not sell your data.
         </p>
       </Section>
       <Section heading="How long we keep it">
@@ -81,6 +83,14 @@ export const Route = createFileRoute("/privacy")({
           consent.
         </p>
       </Section>
+      <Section heading="Security and international services">
+        <p>
+          We use access controls, encrypted HTTPS connections, audit records and role-based database
+          rules to protect data. Some technology providers may process data outside the UK; where
+          that happens, we rely on the provider's applicable contractual and legal transfer
+          safeguards. No internet service can guarantee absolute security.
+        </p>
+      </Section>
       <Section heading="Your rights">
         <p>
           You can request access, correction, deletion, restriction or a copy of your data, and
@@ -88,6 +98,9 @@ export const Route = createFileRoute("/privacy")({
           info@cafe1stalbans.co.uk. You can also complain to the Information Commissioner's Office
           (ico.org.uk).
         </p>
+      </Section>
+      <Section heading="Policy details">
+        <p>Last updated: 9 August 2026.</p>
       </Section>
     </LegalPage>
   ),

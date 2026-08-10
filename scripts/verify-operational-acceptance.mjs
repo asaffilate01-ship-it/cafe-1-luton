@@ -22,6 +22,7 @@ export const REQUIRED_OPERATIONAL_GATES = [
   "printer_cash_drawer",
   "customer_display",
   "kds_routing_recovery",
+  "deliveroo_kds_integration",
   "fulfilment_flows",
   "manager_mfa_aal2",
   "production_environment",

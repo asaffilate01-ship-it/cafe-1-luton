@@ -39,6 +39,7 @@ Complete this record with real evidence. A code build cannot prove payment settl
 | Cash drawer                                        | ☐ Pass ☐ Fail |                    |                 |
 | Customer display                                   | ☐ Pass ☐ Fail |                    |                 |
 | KDS station routing and bump/recovery              | ☐ Pass ☐ Fail |                    |                 |
+| Deliveroo accepted order → one KDS ticket + sync   | ☐ Pass ☐ Fail |                    |                 |
 | Two-driver claim race                              | ☐ Pass ☐ Fail |                    |                 |
 | Delivery, collection, dine-in and jury-room orders | ☐ Pass ☐ Fail |                    |                 |
 

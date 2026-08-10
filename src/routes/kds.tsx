@@ -797,37 +797,30 @@ function KDS() {
     }
   };
   const [manualOpen, setManualOpen] = useState(false);
-  // "Live" means the shop's Hub watcher checked in recently, so Deliveroo
-  // orders land here on their own and nobody needs to key anything in.
+  // Prefer the official Orders API heartbeat; keep the Hub watcher as fallback.
   const [deliverooLive, setDeliverooLive] = useState<boolean | null>(null);
   const [deliverooSeenAt, setDeliverooSeenAt] = useState<number | null>(null);
+  const [deliverooConnection, setDeliverooConnection] = useState<"orders_api" | "hub" | null>(null);
 
   useEffect(() => {
     let cancelled = false;
     async function check() {
-      const { data } = await (
-        supabase as unknown as {
-          from: (t: string) => {
-            select: (c: string) => {
-              eq: (
-                c: string,
-                v: string,
-              ) => {
-                maybeSingle: () => Promise<{ data: { last_seen_at: string } | null }>;
-              };
-            };
-          };
-        }
-      )
+      const { data } = await supabase
         .from("integration_status")
-        .select("last_seen_at")
-        .eq("key", "deliveroo_hub")
-        .maybeSingle();
+        .select("key, last_seen_at, healthy")
+        .in("key", ["deliveroo_orders_api", "deliveroo_hub"])
+        .order("last_seen_at", { ascending: false });
       if (cancelled) return;
-      const seen = data?.last_seen_at ? new Date(data.last_seen_at).getTime() : 0;
+      const api = data?.find((row) => row.key === "deliveroo_orders_api");
+      const hub = data?.find((row) => row.key === "deliveroo_hub");
+      const selected = api ?? hub ?? null;
+      const seen = selected?.last_seen_at ? new Date(selected.last_seen_at).getTime() : 0;
       setDeliverooSeenAt(seen || null);
-      // The watcher checks in every minute; allow three misses before alarming.
-      setDeliverooLive(seen > Date.now() - 180_000);
+      setDeliverooConnection(api ? "orders_api" : hub ? "hub" : null);
+      // Push webhooks are quiet between orders; watcher heartbeats arrive each minute.
+      setDeliverooLive(
+        api ? api.healthy : hub ? hub.healthy && seen > Date.now() - 180_000 : false,
+      );
     }
     void check();
     const id = window.setInterval(() => void check(), 60_000);
@@ -1148,17 +1141,21 @@ function KDS() {
                   }`}
                   title={
                     deliverooLive
-                      ? "Deliveroo orders are arriving here automatically"
+                      ? deliverooConnection === "orders_api"
+                        ? "Official Deliveroo Orders API is sending accepted orders directly to this KDS"
+                        : "Deliveroo orders are arriving through the shop Hub watcher"
                       : deliverooSeenAt
-                        ? `The shop's Deliveroo watcher last checked in ${Math.round((Date.now() - deliverooSeenAt) / 60000)} min ago. Being signed into Restaurant Hub is not enough — the watcher program must be running on this PC. Key tickets in manually until it is back.`
-                        : "The shop's Deliveroo watcher has never checked in. Being signed into Restaurant Hub is not enough — the watcher program must be running on this PC."
+                        ? `The Deliveroo link last checked in ${Math.round((Date.now() - deliverooSeenAt) / 60000)} min ago. Key tickets in manually until it is restored.`
+                        : "No Deliveroo connection has completed a verified check-in yet."
                   }
                 >
                   <Bike className="h-3.5 w-3.5" />
                   {deliverooLive === null
                     ? "Deliveroo…"
                     : deliverooLive
-                      ? "Deliveroo auto"
+                      ? deliverooConnection === "orders_api"
+                        ? "Deliveroo API"
+                        : "Deliveroo auto"
                       : "Deliveroo offline"}
                 </span>
                 <SyncPill lastSync={lastSync} ok={syncOk} now={now} />
@@ -1307,14 +1304,16 @@ function KDS() {
                 {deliverooLive === null
                   ? "Deliveroo…"
                   : deliverooLive
-                    ? "Deliveroo online"
+                    ? deliverooConnection === "orders_api"
+                      ? "Deliveroo API"
+                      : "Deliveroo online"
                     : "Deliveroo offline"}
               </span>
               {deliverooLive === false ? (
                 <span className="shrink-0 rounded-full bg-primary-foreground/15 px-3 py-2 text-[11px] font-semibold text-primary-foreground">
                   {deliverooSeenAt
                     ? `Last seen ${Math.max(1, Math.round((now - deliverooSeenAt) / 60000))} min ago — key tickets in by hand`
-                    : "Watcher never checked in — key tickets in by hand"}
+                    : "No verified Deliveroo check-in — key tickets in by hand"}
                 </span>
               ) : null}
             </div>

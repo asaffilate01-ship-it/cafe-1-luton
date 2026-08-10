@@ -22,6 +22,14 @@ export function isPreviewHost(hostname: string): boolean {
   );
 }
 
+function permissionsPolicy(pathname: string): string {
+  const geolocation = /^\/driver(?:\/|$)/.test(pathname) ? "geolocation=(self)" : "geolocation=()";
+  const payment = /^(?:\/checkout(?:\/|$)|\/pay(?:\/|$))/.test(pathname)
+    ? "payment=(self)"
+    : "payment=()";
+  return ["camera=()", geolocation, "microphone=()", payment, "usb=()"].join(", ");
+}
+
 export function withProductionHeaders(request: Request, response: Response): Response {
   const url = new URL(request.url);
   const previewHost = isPreviewHost(url.hostname);
@@ -33,19 +41,19 @@ export function withProductionHeaders(request: Request, response: Response): Res
     headers.set("X-Frame-Options", "DENY");
   }
   headers.set("Referrer-Policy", "strict-origin-when-cross-origin");
-  headers.set(
-    "Permissions-Policy",
-    "camera=(self), geolocation=(self), microphone=(), payment=(self), usb=()",
-  );
+  headers.set("Permissions-Policy", permissionsPolicy(url.pathname));
   headers.set(
     "Content-Security-Policy",
     [
       "base-uri 'self'",
       "object-src 'none'",
+      "form-action 'self'",
+      "manifest-src 'self'",
+      "worker-src 'self' blob:",
       previewHost
         ? "frame-ancestors 'self' https://lovable.dev https://*.lovable.dev https://*.lovable.app https://*.lovableproject.com"
         : "frame-ancestors 'none'",
-      "frame-src 'self' https://www.youtube-nocookie.com https://www.youtube.com https://www.tiktok.com https://www.instagram.com https://www.facebook.com",
+      "frame-src 'self' https://gateway.sumup.com https://pay.google.com https://www.youtube-nocookie.com https://www.youtube.com https://www.tiktok.com https://www.instagram.com https://www.facebook.com",
       "upgrade-insecure-requests",
     ].join("; "),
   );
