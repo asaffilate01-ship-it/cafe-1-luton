@@ -92,6 +92,20 @@ test("covers every live POS and operational surface with private caching checks"
   }
 });
 
+test("requires both Deliveroo channels to fail closed when probed without credentials", () => {
+  for (const path of [
+    "/api/public/deliveroo/webhook",
+    "/api/public/deliveroo/hub-ingest",
+  ]) {
+    const check = PRODUCTION_CHECKS.find((candidate) => candidate.path === path);
+    assert.ok(check, `${path} is missing from production smoke`);
+    assert.deepEqual(check.statuses, [401, 503]);
+    assert.equal(check.method, "POST");
+    assert.equal(check.protectedRoute, true);
+    assert.equal(check.statuses.includes(200), false);
+  }
+});
+
 test("rejects an unversioned or mismatched deployment", async () => {
   const report = await verifyProduction({
     baseUrl: "https://cafe1stalbans.co.uk",

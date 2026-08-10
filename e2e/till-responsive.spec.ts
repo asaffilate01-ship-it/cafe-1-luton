@@ -85,6 +85,7 @@ for (const viewport of [
   { width: 360, height: 800 },
   { width: 390, height: 844 },
   { width: 430, height: 932 },
+  { width: 844, height: 390 },
 ]) {
   test(`phone till aligns catalogue and order at ${viewport.width}px`, async ({ page }) => {
     await page.setViewportSize(viewport);
@@ -109,14 +110,52 @@ for (const viewport of [
     const order = page.locator('[data-pos-region="order"]');
     await expect(order).toBeVisible();
     const orderBox = await order.boundingBox();
-    expect(orderBox?.x).toBe(0);
-    expect(orderBox?.width).toBe(viewport.width);
+    if (viewport.width < 640) {
+      expect(orderBox?.x).toBe(0);
+      expect(orderBox?.width).toBe(viewport.width);
+    } else {
+      expect(orderBox?.width).toBeLessThanOrEqual(480);
+      expect((orderBox?.x ?? 0) + (orderBox?.width ?? 0)).toBeLessThanOrEqual(
+        viewport.width + 1,
+      );
+    }
     await expectNoHorizontalOverflow(page);
   });
 }
 
-test("portrait tablet keeps a persistent catalogue and checkout split", async ({ page }) => {
-  await page.setViewportSize({ width: 768, height: 1024 });
+for (const viewport of [
+  { width: 700, height: 1024 },
+  { width: 768, height: 1024 },
+  { width: 834, height: 1112 },
+]) {
+  test(`portrait tablet uses the aligned checkout sheet at ${viewport.width}px`, async ({
+    page,
+  }) => {
+    await page.setViewportSize(viewport);
+    await openTill(page);
+    const catalogue = page.locator('[data-pos-region="catalogue"]');
+    const order = page.locator('[data-pos-region="order"]');
+    const bar = page.locator('[data-pos-region="mobile-order-bar"]');
+    await expect(catalogue).toBeVisible();
+    await expect(order).toBeHidden();
+    await expect(bar).toBeVisible();
+    expect((await catalogue.boundingBox())?.width).toBeGreaterThan(viewport.width - 2);
+
+    await bar.click();
+    await expect(order).toBeVisible();
+    const orderBox = await order.boundingBox();
+    expect(orderBox?.width).toBeLessThanOrEqual(480);
+    expect(orderBox?.width).toBeGreaterThanOrEqual(478);
+    expect((orderBox?.x ?? 0) + (orderBox?.width ?? 0)).toBeLessThanOrEqual(
+      viewport.width + 1,
+    );
+    await expectNoHorizontalOverflow(page);
+  });
+}
+
+test("landscape tablet keeps the efficient catalogue and checkout split", async ({ page }) => {
+  const viewport = { width: 1024, height: 768 };
+  await page.setViewportSize(viewport);
   await openTill(page);
   const catalogue = page.locator('[data-pos-region="catalogue"]');
   const order = page.locator('[data-pos-region="order"]');
@@ -124,8 +163,10 @@ test("portrait tablet keeps a persistent catalogue and checkout split", async ({
   await expect(order).toBeVisible();
   await expect(page.locator('[data-pos-region="mobile-order-bar"]')).toBeHidden();
   const [catalogueBox, orderBox] = await Promise.all([catalogue.boundingBox(), order.boundingBox()]);
-  expect(catalogueBox?.width).toBeGreaterThan(400);
+  expect(catalogueBox?.width).toBeGreaterThan(680);
   expect(orderBox?.width).toBeGreaterThanOrEqual(338);
-  expect((catalogueBox?.width ?? 0) + (orderBox?.width ?? 0)).toBeLessThanOrEqual(769);
+  expect((catalogueBox?.width ?? 0) + (orderBox?.width ?? 0)).toBeLessThanOrEqual(
+    viewport.width + 1,
+  );
   await expectNoHorizontalOverflow(page);
 });

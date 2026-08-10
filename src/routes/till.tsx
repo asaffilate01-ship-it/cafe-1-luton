@@ -989,20 +989,20 @@ function Till() {
 
   return (
     <div className="flex h-screen h-dvh w-full max-w-full flex-col overflow-hidden bg-[radial-gradient(120%_100%_at_50%_0%,#16181d_0%,#0a0a0b_60%)] text-white">
-      {/* A deterministic two-row phone header prevents the till controls wrapping out of alignment. */}
+      {/* Keep the compact two-row header until there is enough room for the desktop split. */}
       <header
         data-pos-region="header"
-        className="relative grid w-full max-w-full shrink-0 grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-2 overflow-visible border-b border-white/10 bg-neutral-900/95 px-2.5 py-2 backdrop-blur min-[700px]:flex min-[700px]:gap-3 min-[700px]:px-4 lg:py-1.5"
+        className="relative grid w-full max-w-full shrink-0 grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-2 overflow-visible border-b border-white/10 bg-neutral-900/95 px-2.5 py-2 backdrop-blur min-[960px]:flex min-[960px]:gap-3 min-[960px]:px-4 lg:py-1.5"
       >
         <span className="inline-flex w-fit rounded-xl bg-primary px-2.5 py-1.5 text-[11px] font-black uppercase tracking-[0.16em] text-primary-foreground shadow-lg shadow-primary/25 xl:px-3 xl:text-xs xl:tracking-[0.2em]">
           Cafe 1 <span className="ml-1 hidden sm:inline">Till</span>
         </span>
-        <div className="col-span-3 row-start-2 grid w-full grid-cols-3 gap-1 rounded-xl border border-white/10 bg-neutral-950/70 p-1 shadow-inner shadow-black/30 min-[700px]:col-span-1 min-[700px]:row-auto min-[700px]:flex min-[700px]:w-auto min-[700px]:shrink-0">
+        <div className="col-span-3 row-start-2 grid w-full grid-cols-3 gap-1 rounded-xl border border-white/10 bg-neutral-950/70 p-1 shadow-inner shadow-black/30 min-[960px]:col-span-1 min-[960px]:row-auto min-[960px]:flex min-[960px]:w-auto min-[960px]:shrink-0">
           {(["jury", "judge", "public"] as const).map((s) => (
             <button
               key={s}
               onClick={() => changeSide(s)}
-              className={`h-9 w-full rounded-lg px-2 text-center text-[11px] font-black uppercase tracking-wide transition active:scale-95 min-[700px]:h-8 min-[700px]:w-auto min-[700px]:px-3 ${side === s ? `${SIDE_TONE[s]} shadow-md` : "text-white/50 hover:bg-white/5 hover:text-white"}`}
+              className={`h-9 w-full rounded-lg px-2 text-center text-[11px] font-black uppercase tracking-wide transition active:scale-95 min-[960px]:h-8 min-[960px]:w-auto min-[960px]:px-3 ${side === s ? `${SIDE_TONE[s]} shadow-md` : "text-white/50 hover:bg-white/5 hover:text-white"}`}
             >
               {SIDE_LABEL[s]}
             </button>
@@ -1010,7 +1010,7 @@ function Till() {
         </div>
         <button
           onClick={() => setShiftPanel(shift ? "close" : "open")}
-          className={`mx-auto min-w-0 max-w-full truncate rounded-full px-2.5 py-1.5 text-[10px] font-bold uppercase tracking-wide transition hover:brightness-125 min-[380px]:px-3 min-[380px]:text-[11px] min-[700px]:mx-0 min-[700px]:shrink-0 ${shift ? "bg-emerald-500/15 text-emerald-300" : "bg-amber-500/15 text-amber-300"}`}
+          className={`mx-auto min-w-0 max-w-full truncate rounded-full px-2.5 py-1.5 text-[10px] font-bold uppercase tracking-wide transition hover:brightness-125 min-[380px]:px-3 min-[380px]:text-[11px] min-[960px]:mx-0 min-[960px]:shrink-0 ${shift ? "bg-emerald-500/15 text-emerald-300" : "bg-amber-500/15 text-amber-300"}`}
         >
           {shiftLoading ? "Loading shift…" : shift ? "Shift open" : "Open shift"}
         </button>
@@ -1121,7 +1121,10 @@ function Till() {
         </p>
       )}
 
-      <div className="grid min-h-0 min-w-0 flex-1 overflow-hidden min-[700px]:grid-cols-[minmax(0,1fr)_340px] xl:grid-cols-[148px_minmax(0,1fr)_392px] 2xl:grid-cols-[156px_minmax(0,1fr)_420px]">
+      <div
+        data-pos-region="workspace"
+        className="grid min-h-0 min-w-0 flex-1 overflow-hidden min-[960px]:grid-cols-[minmax(0,1fr)_340px] xl:grid-cols-[148px_minmax(0,1fr)_392px] 2xl:grid-cols-[156px_minmax(0,1fr)_420px]"
+      >
         {/* category rail (desktop) */}
         <nav className="hidden min-h-0 flex-col gap-1 overflow-y-auto border-r border-white/10 bg-neutral-900/40 p-2 xl:flex">
           <button
@@ -1157,7 +1160,7 @@ function Till() {
 
         {/* products */}
         <section data-pos-region="catalogue" className="flex min-h-0 min-w-0 flex-col">
-          <div className="shrink-0 space-y-2 border-b border-white/10 p-2.5 min-[700px]:p-3 xl:space-y-0 xl:px-4 xl:py-2.5">
+          <div className="shrink-0 space-y-2 border-b border-white/10 p-2.5 min-[960px]:p-3 xl:space-y-0 xl:px-4 xl:py-2.5">
             <div className="flex items-center gap-2 rounded-xl border border-white/10 bg-neutral-900/80 px-3 shadow-inner shadow-black/40 focus-within:border-primary/60">
               <Search className="h-4 w-4 shrink-0 text-white/40" />
               <input
@@ -1203,9 +1206,9 @@ function Till() {
 
           <div
             ref={gridRef}
-            className="min-h-0 flex-1 overflow-y-auto p-2 pb-24 min-[700px]:p-3 min-[700px]:pb-3"
+            className="min-h-0 flex-1 overflow-y-auto p-2 pb-24 min-[960px]:p-3 min-[960px]:pb-3"
           >
-            <div className="grid min-w-0 grid-cols-2 gap-2 min-[560px]:grid-cols-3 min-[700px]:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
+            <div className="grid min-w-0 grid-cols-2 gap-2 min-[560px]:grid-cols-3 min-[800px]:grid-cols-4 min-[960px]:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
               {visible.map((i) => (
                 <div
                   key={i.id}
@@ -1264,12 +1267,22 @@ function Till() {
           </div>
         </section>
 
-        {/* order panel */}
+        {/* A scrim makes the tablet checkout sheet an explicit, dismissible task. */}
+        {showOrder && (
+          <button
+            type="button"
+            aria-label="Close current order"
+            onClick={() => setShowOrder(false)}
+            className="fixed inset-0 z-[35] hidden bg-black/60 backdrop-blur-[2px] sm:block min-[960px]:hidden"
+          />
+        )}
+
+        {/* Phone checkout is full-screen; tablet checkout is a right sheet; desktop is split. */}
         <aside
           data-pos-region="order"
-          className={`fixed inset-0 z-40 h-dvh min-h-0 w-full max-w-full min-w-0 flex-col overflow-hidden overscroll-contain bg-neutral-900 shadow-[-12px_0_40px_-24px_rgba(0,0,0,0.9)] min-[700px]:static min-[700px]:z-auto min-[700px]:flex min-[700px]:h-auto min-[700px]:border-l min-[700px]:border-white/10 ${showOrder ? "flex" : "hidden"}`}
+          className={`fixed inset-0 z-40 h-dvh min-h-0 w-full max-w-full min-w-0 flex-col overflow-hidden overscroll-contain bg-neutral-900 shadow-[-12px_0_40px_-24px_rgba(0,0,0,0.9)] sm:left-auto sm:w-[min(30rem,100vw)] sm:border-l sm:border-white/10 min-[960px]:static min-[960px]:z-auto min-[960px]:flex min-[960px]:h-auto min-[960px]:w-full ${showOrder ? "flex" : "hidden"}`}
         >
-          <div className="grid shrink-0 grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 border-b border-white/10 bg-neutral-950/45 px-3 pb-3 pt-[calc(0.75rem+env(safe-area-inset-top))] min-[700px]:hidden">
+          <div className="grid shrink-0 grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 border-b border-white/10 bg-neutral-950/45 px-3 pb-3 pt-[calc(0.75rem+env(safe-area-inset-top))] min-[960px]:hidden">
             <button
               onClick={() => setShowOrder(false)}
               aria-label="Back to menu"
@@ -1325,7 +1338,7 @@ function Till() {
                 Pre-order · kitchen will hold this until {laterTime}
               </p>
             )}
-            <div className="grid gap-2 min-[700px]:gap-1.5 xl:grid-cols-2">
+            <div className="grid gap-2 min-[960px]:gap-1.5 xl:grid-cols-2">
               <input
                 value={name}
                 onChange={(e) => setName(e.target.value)}
@@ -1628,7 +1641,7 @@ function Till() {
         <button
           data-pos-region="mobile-order-bar"
           onClick={() => setShowOrder(true)}
-          className="fixed inset-x-2 bottom-[calc(0.5rem+env(safe-area-inset-bottom))] z-30 grid h-16 grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 rounded-2xl border border-white/10 bg-primary px-3.5 text-left text-primary-foreground shadow-2xl shadow-primary/30 transition active:scale-[0.99] min-[700px]:hidden"
+          className="fixed inset-x-2 bottom-[calc(0.5rem+env(safe-area-inset-bottom))] z-30 grid h-16 grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 rounded-2xl border border-white/10 bg-primary px-3.5 text-left text-primary-foreground shadow-2xl shadow-primary/30 transition active:scale-[0.99] min-[960px]:hidden"
         >
           <span className="relative grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-black/15">
             <ReceiptText className="h-5 w-5" />

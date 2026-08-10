@@ -541,15 +541,16 @@
     },
     {
       "id": "responsive_pos_workspace",
-      "name": "Aligned compact phone till and persistent tablet split-view checkout",
+      "name": "Aligned phone checkout, portrait-tablet sheet and landscape split-view till",
       "evidence": [
         {
           "path": "src/routes/till.tsx",
           "includes": [
-            "min-[700px]:grid-cols-[minmax(0,1fr)_340px]",
+            "min-[960px]:grid-cols-[minmax(0,1fr)_340px]",
             "xl:grid-cols-[148px_minmax(0,1fr)_392px]",
             "grid-cols-[auto_minmax(0,1fr)_auto]",
             "min-[560px]:grid-cols-3",
+            "sm:w-[min(30rem,100vw)]",
             "View order",
             "env(safe-area-inset-bottom)",
             "h-dvh min-h-0 w-full max-w-full",
@@ -557,8 +558,8 @@
           ]
         },
         {
-          "path": "docs/PRODUCTION_AUDIT_PHASE_25.md",
-          "includes": ["Phone till", "Tablet till", "persistent split workspace"]
+          "path": "docs/PRODUCTION_AUDIT_PHASE_28.md",
+          "includes": ["Phone", "Portrait tablet", "Landscape tablet", "960px"]
         }
       ]
     },
@@ -590,6 +591,13 @@
           "includes": [
             "watcher ZIP contains forbidden runtime or credential material",
             "playwright-core must remain exactly pinned"
+          ]
+        },
+        {
+          "path": "scripts/verify-production.mjs",
+          "includes": [
+            "/api/public/deliveroo/hub-ingest",
+            "statuses: [401, 503]"
           ]
         },
         {
