@@ -12,9 +12,9 @@ const securityHeaders = {
   "x-content-type-options": "nosniff",
   "referrer-policy": "strict-origin-when-cross-origin",
   "x-frame-options": "DENY",
-  "permissions-policy": "camera=(self), microphone=()",
+  "permissions-policy": "camera=(), geolocation=(), microphone=(), payment=(), usb=()",
   "content-security-policy":
-    "base-uri 'self'; object-src 'none'; frame-ancestors 'none'; frame-src 'self' https://www.youtube-nocookie.com https://www.tiktok.com; upgrade-insecure-requests",
+    "base-uri 'self'; object-src 'none'; form-action 'self'; frame-ancestors 'none'; frame-src 'self' https://www.youtube-nocookie.com https://www.tiktok.com; upgrade-insecure-requests",
 };
 
 function successfulFetch(input) {

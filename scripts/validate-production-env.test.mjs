@@ -23,6 +23,7 @@ function validEnvironment(overrides = {}) {
     RESEND_API_KEY: "resend-key",
     GOOGLE_MAPS_API_KEY: "maps-key",
     GOOGLE_PLACE_ID: "ChIJcafe1StAlbans12345",
+    VITE_GA_MEASUREMENT_ID: "G-ABC12345",
     VITE_SOCIAL_EMBEDS_JSON: "[]",
     YOUTUBE_API_KEY: "youtube-production-key-1234567890",
     YOUTUBE_CHANNEL_HANDLE: "@Cafe1_Stalbans",
@@ -124,4 +125,30 @@ test("rejects incomplete or malformed automatic social configurations", () => {
     validEnvironment({ INSTAGRAM_GRAPH_VERSION: "latest" }),
   );
   assert.ok(badInstagram.errors.some((message) => message.includes("vNN.N")));
+});
+
+test("validates official and fallback Deliveroo ingestion modes", () => {
+  const official = validateProductionEnvironment(
+    validEnvironment({
+      DELIVEROO_INGEST_MODE: "orders_api",
+      DELIVEROO_SITE_MODE: "tablet",
+      DELIVEROO_API_ENV: "production",
+      DELIVEROO_CLIENT_ID: "client-id",
+      DELIVEROO_CLIENT_SECRET: "client-secret",
+      DELIVEROO_WEBHOOK_SECRET: "w".repeat(32),
+    }),
+  );
+  assert.deepEqual(official.errors, []);
+
+  const fallback = validateProductionEnvironment(
+    validEnvironment({ DELIVEROO_INGEST_MODE: "hub_watcher", DELIVEROO_BRIDGE_SECRET: "short" }),
+  );
+  assert.ok(fallback.errors.some((message) => message.includes("DELIVEROO_BRIDGE_SECRET")));
+});
+
+test("rejects malformed optional analytics configuration", () => {
+  const result = validateProductionEnvironment(
+    validEnvironment({ VITE_GA_MEASUREMENT_ID: "UA-legacy-id" }),
+  );
+  assert.ok(result.errors.some((message) => message.includes("VITE_GA_MEASUREMENT_ID")));
 });

@@ -496,6 +496,154 @@
       ]
     },
     {
+      "id": "privacy_consent_hardening",
+      "name": "Expiring granular consent, local fonts, revocable social embeds and scoped browser permissions",
+      "evidence": [
+        {
+          "path": "src/lib/cookie-consent.ts",
+          "includes": [
+            "CONSENT_MAX_AGE_DAYS = 180",
+            "parseStoredConsent",
+            "expiresAt",
+            "cafe1_cookie_consent"
+          ]
+        },
+        {
+          "path": "src/components/consent-integrations.tsx",
+          "includes": [
+            "analytics_storage: permitted ? \"granted\" : \"denied\"",
+            "allow_ad_personalization_signals: false",
+            "expireAnalyticsCookies"
+          ]
+        },
+        {
+          "path": "src/components/tiktok-creator-feed.tsx",
+          "includes": [
+            "tiktokCreatorEmbedUrl",
+            "referrerPolicy=\"strict-origin-when-cross-origin\""
+          ]
+        },
+        {
+          "path": "src/server.ts",
+          "includes": ["camera=()", "geolocation=(self)", "form-action 'self'"]
+        },
+        {
+          "path": "src/routes/cookies.tsx",
+          "includes": ["__cf_bm (Cloudflare)", "180 days", "fonts are hosted"]
+        },
+        {
+          "path": "src/lib/__tests__/cookie-consent.test.ts",
+          "includes": ["rejects malformed, legacy, incomplete and expired preferences"]
+        }
+      ]
+    },
+    {
+      "id": "responsive_pos_workspace",
+      "name": "Aligned compact phone till and persistent tablet split-view checkout",
+      "evidence": [
+        {
+          "path": "src/routes/till.tsx",
+          "includes": [
+            "min-[700px]:grid-cols-[minmax(0,1fr)_340px]",
+            "xl:grid-cols-[148px_minmax(0,1fr)_392px]",
+            "grid-cols-[minmax(0,1fr)_auto_auto]",
+            "min-[480px]:grid-cols-3",
+            "Order ·",
+            "env(safe-area-inset-bottom)",
+            "grid grid-cols-3 items-center gap-1 text-xs"
+          ]
+        },
+        {
+          "path": "docs/PRODUCTION_AUDIT_PHASE_25.md",
+          "includes": ["Phone till", "Tablet till", "persistent split workspace"]
+        }
+      ]
+    },
+    {
+      "id": "deliveroo_one_click_watcher",
+      "name": "One-click, credential-safe and self-restarting Deliveroo Hub fallback",
+      "evidence": [
+        {
+          "path": "tools/deliveroo-watcher/deliveroo-hub-watcher.mjs",
+          "includes": [
+            "launchPersistentContext",
+            "Cafe1-Deliveroo-Watcher/2",
+            "isDeliverooUrl",
+            "LOGIN-REQUIRED.txt",
+            "heartbeat: true"
+          ]
+        },
+        {
+          "path": "tools/deliveroo-watcher/install-deliveroo-watcher.ps1",
+          "includes": [
+            "ConvertFrom-SecureString",
+            "Get-FileHash $archive -Algorithm SHA256",
+            "RestartCount 999",
+            "LOCALAPPDATA"
+          ]
+        },
+        {
+          "path": "scripts/verify-deliveroo-watcher-package.mjs",
+          "includes": [
+            "watcher ZIP contains forbidden runtime or credential material",
+            "playwright-core must remain exactly pinned"
+          ]
+        },
+        {
+          "path": "docs/DELIVEROO_WATCHER_SETUP.md",
+          "includes": [
+            "one-click Windows setup",
+            "Microsoft Edge",
+            "auto-restarting Windows task"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "deliveroo_orders_api_kds",
+      "name": "Watcher-free signed Deliveroo Orders API ingestion into the KDS",
+      "evidence": [
+        {
+          "path": "src/lib/deliveroo.server.ts",
+          "includes": [
+            "sequence-guid + separator + raw-body",
+            "extractDeliverooEnvelope",
+            "latestDeliverooStatus",
+            "deliverooReferenceKeys"
+          ]
+        },
+        {
+          "path": "src/routes/api/public/deliveroo/webhook.ts",
+          "includes": [
+            "awaiting_acceptance",
+            "pushDeliverooSyncStatus",
+            "kds_created",
+            "x-deliveroo-payload-type"
+          ]
+        },
+        {
+          "path": "src/lib/deliveroo-ingest.server.ts",
+          "includes": ["deliverooCanonicalRef", "23505", "Deliveroo item ingest failed"]
+        },
+        {
+          "path": "src/lib/deliveroo-sync.server.ts",
+          "includes": ["sync_status", "prep_stage", "ready_for_collection"]
+        },
+        {
+          "path": "src/lib/deliveroo.server.test.ts",
+          "includes": [
+            "verifies the GUID, official separator and exact raw bytes",
+            "uses the newest status-log timestamp when callbacks arrive out of order",
+            "deduplicates every ingest path"
+          ]
+        },
+        {
+          "path": "docs/DELIVEROO_ORDERS_API_SETUP.md",
+          "includes": ["No watcher is required", "DELIVEROO_INGEST_MODE=orders_api"]
+        }
+      ]
+    },
+    {
       "id": "local_search_seo",
       "name": "Server-rendered local search pages, people-first articles and crawl controls",
       "evidence": [

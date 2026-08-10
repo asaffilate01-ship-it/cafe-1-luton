@@ -12,13 +12,37 @@ describe("production response security", () => {
 
     expect(response.headers.get("x-content-type-options")).toBe("nosniff");
     expect(response.headers.get("x-frame-options")).toBe("DENY");
-    expect(response.headers.get("permissions-policy")).toContain("payment=(self)");
+    expect(response.headers.get("permissions-policy")).toContain("payment=()");
+    expect(response.headers.get("permissions-policy")).toContain("geolocation=()");
     expect(response.headers.get("content-security-policy")).toContain("frame-ancestors 'none'");
     expect(response.headers.get("content-security-policy")).toContain(
-      "frame-src 'self' https://www.youtube-nocookie.com",
+      "https://www.youtube-nocookie.com",
     );
     expect(response.headers.get("content-security-policy")).toContain("https://www.tiktok.com");
+    expect(response.headers.get("content-security-policy")).toContain("form-action 'self'");
     expect(response.headers.get("strict-transport-security")).toContain("max-age=31536000");
+  });
+
+  it("grants sensitive browser capabilities only to the routes that use them", () => {
+    const driver = withProductionHeaders(
+      new Request("https://cafe1stalbans.co.uk/driver"),
+      new Response("driver"),
+    );
+    const checkout = withProductionHeaders(
+      new Request("https://cafe1stalbans.co.uk/checkout"),
+      new Response("checkout"),
+    );
+    const payment = withProductionHeaders(
+      new Request("https://cafe1stalbans.co.uk/pay/order-1"),
+      new Response("payment"),
+    );
+
+    expect(driver.headers.get("permissions-policy")).toContain("geolocation=(self)");
+    expect(driver.headers.get("permissions-policy")).toContain("payment=()");
+    expect(checkout.headers.get("permissions-policy")).toContain("geolocation=()");
+    expect(checkout.headers.get("permissions-policy")).toContain("payment=(self)");
+    expect(payment.headers.get("permissions-policy")).toContain("payment=(self)");
+    expect(payment.headers.get("permissions-policy")).toContain("camera=()");
   });
 
   it("prevents private operational pages from being cached", () => {

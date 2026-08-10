@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { extractHubOrders } from "@/lib/deliveroo-hub";
+import { extractHubOrders, hubOrderAction } from "@/lib/deliveroo-hub";
 import {
+  cancelDeliverooOrder,
   bridgeSecretMatches,
   ingestDeliverooOrder,
   readBridgeSecret,
@@ -67,9 +68,21 @@ export const Route = createFileRoute("/api/public/deliveroo/hub-ingest")({
 
         let created = 0;
         let duplicates = 0;
+        let cancelled = 0;
+        let awaitingAcceptance = 0;
         const references: string[] = [];
         for (const order of orders) {
           try {
+            const action = hubOrderAction(order.status);
+            if (action === "cancel") {
+              await cancelDeliverooOrder(order.reference);
+              cancelled += 1;
+              continue;
+            }
+            if (action === "wait") {
+              awaitingAcceptance += 1;
+              continue;
+            }
             const result = await ingestDeliverooOrder(order, "hub");
             if (result.duplicate) duplicates += 1;
             else {
@@ -81,7 +94,15 @@ export const Route = createFileRoute("/api/public/deliveroo/hub-ingest")({
           }
         }
 
-        return Response.json({ ok: true, created, duplicates, recognised: orders.length, references });
+        return Response.json({
+          ok: true,
+          created,
+          duplicates,
+          cancelled,
+          awaiting_acceptance: awaitingAcceptance,
+          recognised: orders.length,
+          references,
+        });
       },
     },
   },

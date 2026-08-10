@@ -180,6 +180,15 @@ export function tiktokCreatorHandle(profileUrl: string): string | null {
   return handle.slice(1);
 }
 
+export function tiktokCreatorEmbedUrl(profileUrl: string): string | null {
+  const handle = tiktokCreatorHandle(profileUrl);
+  if (!handle) return null;
+  const embed = new URL(`https://www.tiktok.com/embed/@${handle}`);
+  embed.searchParams.set("lang", "en-GB");
+  embed.searchParams.set("referrer", "https://cafe1stalbans.co.uk/socials");
+  return embed.toString();
+}
+
 export function facebookPagePluginUrl(profileUrl: string): string | null {
   const url = httpsUrl(profileUrl);
   if (!url || !ALLOWED_PROFILE_HOSTS.facebook.has(url.hostname)) return null;
