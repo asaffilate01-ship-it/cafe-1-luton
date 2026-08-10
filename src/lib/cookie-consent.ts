@@ -91,6 +91,16 @@ export function saveConsent(prefs: { analytics: boolean; marketing: boolean }) {
   window.dispatchEvent(new CustomEvent("cafe1:consent", { detail: value }));
 }
 
+/**
+ * Grants only the marketing category needed for an explicitly requested social player.
+ * An existing analytics choice is preserved; a first-time social choice keeps analytics off.
+ */
+export function allowSocialPlayers() {
+  if (typeof window === "undefined") return;
+  const existing = read();
+  saveConsent({ analytics: existing?.analytics ?? false, marketing: true });
+}
+
 export function clearConsent() {
   if (typeof window === "undefined") return;
   window.localStorage.removeItem(CONSENT_STORAGE_KEY);

@@ -80,28 +80,40 @@ async function expectNoHorizontalOverflow(page: Page) {
   expect(dimensions.body).toBeLessThanOrEqual(dimensions.viewport + 1);
 }
 
-test("phone till keeps its controls aligned in catalogue and order modes", async ({ page }) => {
-  await page.setViewportSize({ width: 360, height: 800 });
-  await openTill(page);
-  await expectNoHorizontalOverflow(page);
+for (const viewport of [
+  { width: 320, height: 700 },
+  { width: 360, height: 800 },
+  { width: 390, height: 844 },
+  { width: 430, height: 932 },
+]) {
+  test(`phone till aligns catalogue and order at ${viewport.width}px`, async ({ page }) => {
+    await page.setViewportSize(viewport);
+    await openTill(page);
+    await expectNoHorizontalOverflow(page);
 
-  const header = page.locator('[data-pos-region="header"]');
-  const bar = page.locator('[data-pos-region="mobile-order-bar"]');
-  await expect(bar).toBeVisible();
-  const [headerBox, barBox] = await Promise.all([header.boundingBox(), bar.boundingBox()]);
-  expect(headerBox?.x).toBeGreaterThanOrEqual(0);
-  expect((headerBox?.x ?? 0) + (headerBox?.width ?? 0)).toBeLessThanOrEqual(361);
-  expect(barBox?.x).toBeGreaterThanOrEqual(0);
-  expect((barBox?.x ?? 0) + (barBox?.width ?? 0)).toBeLessThanOrEqual(361);
+    const header = page.locator('[data-pos-region="header"]');
+    const bar = page.locator('[data-pos-region="mobile-order-bar"]');
+    await expect(bar).toBeVisible();
+    await expect(bar).toContainText("View order");
+    const [headerBox, barBox] = await Promise.all([header.boundingBox(), bar.boundingBox()]);
+    expect(headerBox?.x).toBeGreaterThanOrEqual(0);
+    expect((headerBox?.x ?? 0) + (headerBox?.width ?? 0)).toBeLessThanOrEqual(
+      viewport.width + 1,
+    );
+    expect(barBox?.x).toBeGreaterThanOrEqual(0);
+    expect((barBox?.x ?? 0) + (barBox?.width ?? 0)).toBeLessThanOrEqual(
+      viewport.width + 1,
+    );
 
-  await bar.click();
-  const order = page.locator('[data-pos-region="order"]');
-  await expect(order).toBeVisible();
-  const orderBox = await order.boundingBox();
-  expect(orderBox?.x).toBe(0);
-  expect(orderBox?.width).toBe(360);
-  await expectNoHorizontalOverflow(page);
-});
+    await bar.click();
+    const order = page.locator('[data-pos-region="order"]');
+    await expect(order).toBeVisible();
+    const orderBox = await order.boundingBox();
+    expect(orderBox?.x).toBe(0);
+    expect(orderBox?.width).toBe(viewport.width);
+    await expectNoHorizontalOverflow(page);
+  });
+}
 
 test("portrait tablet keeps a persistent catalogue and checkout split", async ({ page }) => {
   await page.setViewportSize({ width: 768, height: 1024 });

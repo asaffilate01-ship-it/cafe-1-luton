@@ -121,6 +121,18 @@ test("rejects incomplete or malformed automatic social configurations", () => {
   );
   assert.ok(missingYouTubeKey.errors.some((message) => message.includes("YOUTUBE_API_KEY")));
 
+  const publicChannelFeed = validateProductionEnvironment(
+    validEnvironment({
+      YOUTUBE_API_KEY: "",
+      YOUTUBE_CHANNEL_HANDLE: "",
+      YOUTUBE_CHANNEL_ID: "UC1234567890123456789012",
+    }),
+  );
+  assert.equal(
+    publicChannelFeed.errors.some((message) => message.includes("YOUTUBE_API_KEY")),
+    false,
+  );
+
   const badInstagram = validateProductionEnvironment(
     validEnvironment({ INSTAGRAM_GRAPH_VERSION: "latest" }),
   );

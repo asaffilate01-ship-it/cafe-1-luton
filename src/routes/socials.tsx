@@ -70,6 +70,9 @@ function Socials() {
     retry: 1,
   });
   const posts = mergeSocialPosts(automatic?.posts ?? [], SOCIAL_POSTS);
+  const automaticFeedConfigured = Boolean(
+    automatic?.providers.some((provider) => provider.configured),
+  );
   const facebook = findSocialProfile(SOCIAL_PROFILES, "facebook");
   const tiktok = findSocialProfile(SOCIAL_PROFILES, "tiktok");
 
@@ -163,21 +166,29 @@ function Socials() {
               <span className="icon-3d mx-auto h-14 w-14">
                 <Play className="h-6 w-6" />
               </span>
-              <h3 className="mt-5 font-display text-2xl font-bold">Connect the automatic feeds</h3>
+              <h3 className="mt-5 font-display text-2xl font-bold">
+                {automaticFeedConfigured
+                  ? "The latest clips are temporarily unavailable"
+                  : "Our latest clips are on the way"}
+              </h3>
               <p className="mx-auto mt-2 max-w-xl text-muted-foreground">
-                Our official profiles are ready. The latest videos will appear here after the
-                YouTube or Instagram server connection is enabled.
+                {automaticFeedConfigured
+                  ? "You can still open every official Café 1 channel below while the live feed reconnects."
+                  : "Follow our official channels now. New YouTube videos and Instagram Reels will appear here automatically once their live connections are enabled."}
               </p>
-              {SOCIAL_PROFILES[0] && (
-                <a
-                  href={SOCIAL_PROFILES[0].url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="mt-5 inline-flex items-center gap-2 rounded-full bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground hover:bg-primary/90"
-                >
-                  Follow {SOCIAL_PROFILES[0].label} <ArrowRight className="h-4 w-4" />
-                </a>
-              )}
+              <div className="mt-5 flex flex-wrap justify-center gap-2">
+                {SOCIAL_PROFILES.map((profile) => (
+                  <a
+                    key={profile.platform}
+                    href={profile.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-2 rounded-full border border-border bg-card px-4 py-2.5 text-sm font-semibold hover:border-primary hover:text-primary"
+                  >
+                    {profile.label} <ArrowRight className="h-4 w-4" />
+                  </a>
+                ))}
+              </div>
             </div>
           )}
         </section>

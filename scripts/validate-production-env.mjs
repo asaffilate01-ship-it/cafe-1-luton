@@ -183,6 +183,7 @@ export function validateProductionEnvironment(env, { expectedRelease } = {}) {
   }
 
   const youtubeKey = value(env, "YOUTUBE_API_KEY");
+  const youtubeChannelId = value(env, "YOUTUBE_CHANNEL_ID");
   const youtubeSources = [
     "YOUTUBE_UPLOADS_PLAYLIST_ID",
     "YOUTUBE_CHANNEL_ID",
@@ -191,8 +192,12 @@ export function validateProductionEnvironment(env, { expectedRelease } = {}) {
   if (youtubeKey && youtubeSources.length !== 1) {
     errors.push("YouTube automatic feeds require exactly one channel, handle or uploads playlist");
   }
-  if (!youtubeKey && youtubeSources.length > 0) {
-    errors.push("YOUTUBE_API_KEY is required when a YouTube feed source is configured");
+  if (
+    !youtubeKey &&
+    youtubeSources.length > 0 &&
+    !(youtubeSources.length === 1 && Boolean(youtubeChannelId))
+  ) {
+    errors.push("YOUTUBE_API_KEY is required for a YouTube handle or uploads playlist");
   }
   if (youtubeKey && (youtubeKey.length < 20 || PLACEHOLDER.test(youtubeKey))) {
     errors.push("YOUTUBE_API_KEY is not a valid production credential");
@@ -204,8 +209,8 @@ export function validateProductionEnvironment(env, { expectedRelease } = {}) {
     errors.push("YOUTUBE_UPLOADS_PLAYLIST_ID is malformed");
   }
   if (
-    value(env, "YOUTUBE_CHANNEL_ID") &&
-    !/^UC[A-Za-z0-9_-]{20,30}$/.test(value(env, "YOUTUBE_CHANNEL_ID"))
+    youtubeChannelId &&
+    !/^UC[A-Za-z0-9_-]{20,30}$/.test(youtubeChannelId)
   ) {
     errors.push("YOUTUBE_CHANNEL_ID is malformed");
   }
@@ -227,11 +232,14 @@ export function validateProductionEnvironment(env, { expectedRelease } = {}) {
     errors.push("INSTAGRAM_GRAPH_VERSION must use the vNN.N format");
   }
 
-  if (!youtubeKey) warnings.push("YouTube automatic social updates are not configured");
+  if (!youtubeKey && !youtubeChannelId) {
+    warnings.push("YouTube automatic social updates are not configured");
+  }
   if (!instagramToken) warnings.push("Instagram automatic social updates are not configured");
   if (
     (!value(env, "VITE_SOCIAL_EMBEDS_JSON") || value(env, "VITE_SOCIAL_EMBEDS_JSON") === "[]") &&
     !youtubeKey &&
+    !youtubeChannelId &&
     !instagramToken
   ) {
     warnings.push("No automatic or manually curated social posts are configured");
