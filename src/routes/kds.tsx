@@ -1080,6 +1080,14 @@ function KDS() {
           )}
           <div className="flex flex-wrap items-center gap-2">
             <button
+              onClick={() => setManualOpen(true)}
+              disabled={!canCompleteOrders}
+              className="flex items-center gap-1 rounded-full bg-[#00CCBC] px-2.5 py-1 text-[11px] font-bold text-black disabled:opacity-40"
+              title="Key in an order by hand"
+            >
+              <Plus className="h-3.5 w-3.5" /> Add
+            </button>
+            <button
               onClick={() => setAll("preparing", "ready")}
               disabled={
                 bulking || !canCompleteOrders || !tickets.some((t) => t.status === "preparing")
@@ -1899,6 +1907,16 @@ function KDS() {
               </div>
               <button
                 onClick={() => {
+                  setSheet(null);
+                  setManualOpen(true);
+                }}
+                disabled={!canCompleteOrders}
+                className="flex w-full items-center gap-2 rounded-2xl bg-[#00CCBC] px-4 py-3 text-left text-sm font-bold text-black disabled:opacity-40"
+              >
+                <Plus className="h-4 w-4" /> Add order by hand
+              </button>
+              <button
+                onClick={() => {
                   setRecall(!recall);
                   setSheet(null);
                 }}
@@ -1959,6 +1977,16 @@ function KDS() {
           )}
         </div>
       )}
+      {/* Phone / tablet: always-available add-order action */}
+      <button
+        type="button"
+        onClick={() => setManualOpen(true)}
+        disabled={!canCompleteOrders}
+        aria-label="Add a manual order"
+        className="fixed right-4 bottom-[calc(4.75rem+env(safe-area-inset-bottom))] z-[45] flex items-center gap-2 rounded-full bg-[#00CCBC] px-4 py-3 text-sm font-black text-black shadow-lg active:scale-[0.97] disabled:opacity-40 min-[860px]:max-lg:bottom-6 lg:hidden"
+      >
+        <Plus className="h-5 w-5" /> Add order
+      </button>
       <nav
         aria-label="Kitchen display navigation"
         className="kds-tabbar fixed inset-x-0 bottom-0 z-40 grid grid-cols-7 gap-0.5 border-t border-border bg-primary px-1 pb-[env(safe-area-inset-bottom)] pt-1.5 text-primary-foreground min-[860px]:max-lg:bottom-auto min-[860px]:max-lg:top-0 min-[860px]:max-lg:z-50 min-[860px]:max-lg:border-b min-[860px]:max-lg:border-t-0 min-[860px]:max-lg:pb-1.5 lg:hidden"
