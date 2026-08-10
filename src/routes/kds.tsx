@@ -1899,6 +1899,16 @@ function KDS() {
               </div>
               <button
                 onClick={() => {
+                  setSheet(null);
+                  setManualOpen(true);
+                }}
+                disabled={!canCompleteOrders}
+                className="flex w-full items-center gap-2 rounded-2xl bg-[#00CCBC] px-4 py-3 text-left text-sm font-bold text-black disabled:opacity-40"
+              >
+                <Plus className="h-4 w-4" /> Add order by hand
+              </button>
+              <button
+                onClick={() => {
                   setRecall(!recall);
                   setSheet(null);
                 }}
