@@ -2940,6 +2940,14 @@ export type Database = {
         Args: { _business_date: string; _site_id: string }
         Returns: Json
       }
+      cafe1_quick_add_account: {
+        Args: { _name: string }
+        Returns: {
+          existed: boolean
+          id: string
+          name: string
+        }[]
+      }
       cafe1_reassign_order_channel: {
         Args: { _channel: string; _order_id: string }
         Returns: {
@@ -3014,6 +3022,16 @@ export type Database = {
         Returns: Json
       }
       cafe1_record_stock_movement: { Args: { _payload: Json }; Returns: Json }
+      cafe1_record_tab_payment: {
+        Args: {
+          _account_id: string
+          _amount_cents: number
+          _method: string
+          _note?: string
+          _reference?: string
+        }
+        Returns: Json
+      }
       cafe1_refresh_operational_alerts: {
         Args: { _site_id: string }
         Returns: number

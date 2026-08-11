@@ -139,6 +139,9 @@ for (const viewport of [
     await bar.click();
     const order = page.locator('[data-pos-region="order"]');
     await expect(order).toBeVisible();
+    const backToMenu = order.locator('[data-pos-action="back-to-menu"]');
+    await expect(backToMenu).toBeVisible();
+    await expect(backToMenu).toHaveAccessibleName("Back to menu");
     const orderFulfilment = order.locator('[data-pos-region="order-fulfilment"]');
     await expect(orderFulfilment.getByRole("button", { name: "Dine in" })).toBeVisible();
     await expect(orderFulfilment.getByRole("button", { name: "Takeaway" })).toBeVisible();
@@ -155,6 +158,21 @@ for (const viewport of [
       expect(orderBox?.width).toBeLessThanOrEqual(480);
       expect((orderBox?.x ?? 0) + (orderBox?.width ?? 0)).toBeLessThanOrEqual(viewport.width + 1);
     }
+    const layers = await page.evaluate(() => ({
+      order: Number.parseInt(
+        getComputedStyle(document.querySelector<HTMLElement>('[data-pos-region="order"]')!).zIndex,
+        10,
+      ),
+      header: Number.parseInt(
+        getComputedStyle(document.querySelector<HTMLElement>('[data-pos-region="header"]')!).zIndex,
+        10,
+      ),
+    }));
+    expect(layers.order).toBeGreaterThan(layers.header);
+    await backToMenu.click();
+    await expect(order).toBeHidden();
+    await expect(page.locator('[data-pos-region="catalogue"]')).toBeVisible();
+    await expect(bar).toBeVisible();
     await expectNoHorizontalOverflow(page);
   });
 }
@@ -224,9 +242,13 @@ test("till action menu stays above the product grid on a phone", async ({ page }
   const layers = await page.evaluate(() => {
     const header = document.querySelector<HTMLElement>('[data-pos-region="header"]');
     const workspace = document.querySelector<HTMLElement>('[data-pos-region="workspace"]');
+    const layer = (element: HTMLElement) => {
+      const value = getComputedStyle(element).zIndex;
+      return value === "auto" ? 0 : Number.parseInt(value, 10);
+    };
     return {
-      header: Number.parseInt(getComputedStyle(header!).zIndex, 10),
-      workspace: Number.parseInt(getComputedStyle(workspace!).zIndex, 10),
+      header: layer(header!),
+      workspace: layer(workspace!),
     };
   });
   expect(layers.header).toBeGreaterThan(layers.workspace);

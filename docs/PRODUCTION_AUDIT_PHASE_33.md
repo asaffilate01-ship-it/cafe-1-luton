@@ -83,8 +83,10 @@ costs. The dashboard deliberately counts zero-cost sale lines so missing cost da
 
 1. Merge Phase 33 through a protected pull request; require Application, Supabase pgTAP, browser
    journeys and CodeQL, then deploy the exact resulting 40-character `main` SHA.
-2. Apply `20260811220000_finance_kpis_phase33.sql`, run the anonymous/customer/staff/driver/manager
-   RLS suite and prove non-admin staff cannot read the financial ledger or sale costs.
+2. Confirm the canonical hosted migration
+   `20260811214754_1542aaa3-c874-48b8-bc64-257ad8dda913.sql` is applied, run the
+   anonymous/customer/staff/driver/manager RLS suite and prove non-admin staff cannot read the
+   financial ledger or sale costs. Keep the later `20260811220000` copy as a compatibility no-op.
 3. Set production `PUBLIC_RELEASE_SHA` to the deployed SHA, run the production smoke and retain the
    exact-SHA evidence. Do not use the GitHub base SHA after Phase 33 is merged.
 4. Complete named staff accounts, manager authenticator MFA/AAL2, `REQUIRE_ADMIN_MFA=true`, Google

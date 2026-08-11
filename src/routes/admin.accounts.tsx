@@ -10,11 +10,9 @@ import {
   updateAccount,
   regenerateAccountCode,
   getAccountStatement,
-  settleAccount,
   recordAccountPayment,
   deleteAccountPayment,
   listTabOrders,
-  markTabOrdersPaid,
 } from "@/lib/accounts.functions";
 import { money } from "@/lib/format";
 import { buildStatementPdf } from "@/lib/account-statement-pdf";
@@ -179,7 +177,13 @@ function AccountsManager() {
             </tbody>
           </table>
         </div>
-        <TabOrdersPanel onChanged={() => void refresh()} />
+        <TabOrdersPanel
+          onOpenAccount={(accountId) => {
+            const account = rows.find((row) => row.id === accountId);
+            if (account) setSelected(account);
+            else toast.error("That tab account is no longer available");
+          }}
+        />
       </div>
 
       {showCreate && (
@@ -209,25 +213,22 @@ function AccountsManager() {
 
 type TabOrder = Awaited<ReturnType<typeof listTabOrders>>["rows"][number];
 
-function TabOrdersPanel({ onChanged }: { onChanged: () => void }) {
+function TabOrdersPanel({
+  onOpenAccount,
+}: {
+  onOpenAccount: (accountId: string) => void;
+}) {
   const load = useServerFn(listTabOrders);
-  const markPaid = useServerFn(markTabOrdersPaid);
-  const pay = useServerFn(recordAccountPayment);
   const [status, setStatus] = useState<"unpaid" | "paid" | "all">("unpaid");
   const [q, setQ] = useState("");
   const [rows, setRows] = useState<TabOrder[]>([]);
   const [totalDue, setTotalDue] = useState(0);
-  const [picked, setPicked] = useState<Set<string>>(new Set());
-  const [partFor, setPartFor] = useState<TabOrder | null>(null);
-  const [partAmount, setPartAmount] = useState("");
-  const [busy, setBusy] = useState(false);
 
   async function refresh() {
     try {
       const res = await load({ data: { status, q: q.trim() || undefined } });
       setRows(res.rows);
       setTotalDue(res.total_due_cents);
-      setPicked(new Set());
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Load failed");
     }
@@ -235,54 +236,6 @@ function TabOrdersPanel({ onChanged }: { onChanged: () => void }) {
   useEffect(() => {
     void refresh();
   }, [status]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  const selectedDue = rows
-    .filter((r) => picked.has(r.id))
-    .reduce((s, r) => s + (r.payment_status === "on_account" ? r.due_cents : 0), 0);
-
-  async function payAll() {
-    const ids = [...picked];
-    if (!ids.length) return;
-    if (!(await askConfirm(`Mark ${ids.length} order(s) as fully paid?`))) return;
-    setBusy(true);
-    try {
-      const res = await markPaid({ data: { order_ids: ids } });
-      toast.success(`${res.count} order(s) paid at ${new Date(res.paid_at).toLocaleString()}`);
-      await refresh();
-      onChanged();
-    } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Could not mark paid");
-    } finally {
-      setBusy(false);
-    }
-  }
-
-  async function submitPart(e: React.FormEvent) {
-    e.preventDefault();
-    if (!partFor?.account_id) return;
-    const cents = Math.round(parseFloat(partAmount || "0") * 100);
-    if (!cents || cents <= 0) return toast.error("Enter an amount");
-    setBusy(true);
-    try {
-      await pay({
-        data: {
-          account_id: partFor.account_id,
-          amount_cents: cents,
-          method: "bank_transfer",
-          reference: `Part payment · order #${partFor.order_number}`,
-        },
-      });
-      toast.success(`Part payment of ${money(cents)} recorded ${new Date().toLocaleString()}`);
-      setPartFor(null);
-      setPartAmount("");
-      await refresh();
-      onChanged();
-    } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Could not record payment");
-    } finally {
-      setBusy(false);
-    }
-  }
 
   return (
     <section className="mt-10">
@@ -325,15 +278,8 @@ function TabOrdersPanel({ onChanged }: { onChanged: () => void }) {
           <strong>{rows.length}</strong> orders · Total due{" "}
           <span className="font-display text-lg font-bold text-primary">{money(totalDue)}</span>
         </span>
-        <span className="flex items-center gap-2">
-          {picked.size > 0 && <span>Selected {money(selectedDue)}</span>}
-          <button
-            disabled={busy || picked.size === 0}
-            onClick={payAll}
-            className="inline-flex h-9 items-center gap-2 rounded-full bg-primary px-4 text-sm font-semibold text-primary-foreground disabled:opacity-50"
-          >
-            <CheckCircle2 className="h-4 w-4" /> Mark selected paid
-          </button>
+        <span className="text-xs text-muted-foreground">
+          Open an account to record a referenced payment or settle its exact balance.
         </span>
       </div>
 
@@ -341,7 +287,6 @@ function TabOrdersPanel({ onChanged }: { onChanged: () => void }) {
         <table className="w-full text-sm">
           <thead className="bg-secondary/60 text-left text-xs uppercase tracking-wide text-muted-foreground">
             <tr>
-              <th className="p-3"></th>
               <th className="p-3">Name</th>
               <th className="p-3">Date &amp; time</th>
               <th className="p-3">Order details</th>
@@ -353,29 +298,13 @@ function TabOrdersPanel({ onChanged }: { onChanged: () => void }) {
           <tbody className="divide-y divide-border">
             {rows.length === 0 && (
               <tr>
-                <td colSpan={7} className="p-8 text-center text-muted-foreground">
+                <td colSpan={6} className="p-8 text-center text-muted-foreground">
                   No tab orders match this filter.
                 </td>
               </tr>
             )}
             {rows.map((o) => (
               <tr key={o.id} className="align-top hover:bg-secondary/30">
-                <td className="p-3">
-                  <input
-                    type="checkbox"
-                    className="h-4 w-4"
-                    disabled={o.payment_status !== "on_account"}
-                    checked={picked.has(o.id)}
-                    onChange={(e) =>
-                      setPicked((cur) => {
-                        const next = new Set(cur);
-                        if (e.target.checked) next.add(o.id);
-                        else next.delete(o.id);
-                        return next;
-                      })
-                    }
-                  />
-                </td>
                 <td className="p-3 font-semibold">
                   {o.account_name ?? o.customer_name}
                   <div className="text-xs font-normal text-muted-foreground">
@@ -414,13 +343,10 @@ function TabOrdersPanel({ onChanged }: { onChanged: () => void }) {
                 <td className="p-3 text-right">
                   {o.payment_status === "on_account" && o.account_id && (
                     <button
-                      onClick={() => {
-                        setPartFor(o);
-                        setPartAmount((o.due_cents / 100).toFixed(2));
-                      }}
+                      onClick={() => onOpenAccount(o.account_id!)}
                       className="text-xs font-semibold text-primary hover:underline"
                     >
-                      Part paid
+                      View tab →
                     </button>
                   )}
                 </td>
@@ -430,49 +356,6 @@ function TabOrdersPanel({ onChanged }: { onChanged: () => void }) {
         </table>
       </div>
 
-      {partFor && (
-        <div
-          className="fixed inset-0 z-50 grid place-items-center bg-black/40 p-4"
-          onClick={() => setPartFor(null)}
-        >
-          <form
-            onSubmit={submitPart}
-            onClick={(e) => e.stopPropagation()}
-            className="w-full max-w-sm space-y-3 rounded-2xl border border-border bg-card p-6 shadow-2xl"
-          >
-            <h3 className="font-display text-lg font-bold">
-              Part payment · {partFor.account_name ?? partFor.customer_name}
-            </h3>
-            <p className="text-sm text-muted-foreground">
-              Order #{partFor.order_number} · due {money(partFor.due_cents)}
-            </p>
-            <input
-              type="number"
-              min="0.01"
-              step="0.01"
-              autoFocus
-              value={partAmount}
-              onChange={(e) => setPartAmount(e.target.value)}
-              className="h-11 w-full rounded-xl border border-border bg-background px-4"
-            />
-            <div className="flex justify-end gap-2">
-              <button
-                type="button"
-                onClick={() => setPartFor(null)}
-                className="h-10 rounded-full border border-border px-4 text-sm font-semibold"
-              >
-                Cancel
-              </button>
-              <button
-                disabled={busy}
-                className="h-10 rounded-full bg-primary px-5 text-sm font-semibold text-primary-foreground disabled:opacity-60"
-              >
-                Record payment
-              </button>
-            </div>
-          </form>
-        </div>
-      )}
     </section>
   );
 }
@@ -598,7 +481,6 @@ function StatementModal({
   onSettled: () => void;
 }) {
   const load = useServerFn(getAccountStatement);
-  const settle = useServerFn(settleAccount);
   const pay = useServerFn(recordAccountPayment);
   const delPay = useServerFn(deleteAccountPayment);
   const [data, setData] = useState<Statement | null>(null);
@@ -633,16 +515,13 @@ function StatementModal({
     itemsByOrder.set(it.order_id, arr);
   }
 
-  async function doSettle() {
-    if (!(await askConfirm(`Mark the remaining ${money(outstanding)} of tab charges as paid?`)))
-      return;
-    try {
-      await settle({ data: { account_id: account.id } });
-      toast.success("Tab settled");
-      onSettled();
-    } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Settle failed");
-    }
+  function prepareFullSettlement() {
+    setPayForm({
+      amount: (outstanding / 100).toFixed(2),
+      method: "bank_transfer",
+      reference: "",
+    });
+    setPayOpen(true);
   }
 
   async function submitPayment(e: React.FormEvent) {
@@ -654,7 +533,7 @@ function StatementModal({
     }
     setBusy(true);
     try {
-      await pay({
+      const result = await pay({
         data: {
           account_id: account.id,
           amount_cents: cents,
@@ -662,10 +541,15 @@ function StatementModal({
           reference: payForm.reference || undefined,
         },
       });
-      toast.success(`Payment of ${money(cents)} recorded`);
+      toast.success(
+        result.fully_settled
+          ? `Tab paid in full · ${result.paid_orders} order${result.paid_orders === 1 ? "" : "s"} settled`
+          : `Part-payment of ${money(cents)} recorded · ${money(result.balance_after_cents)} remains`,
+      );
       setPayForm({ amount: "", method: "bank_transfer", reference: "" });
       setPayOpen(false);
       await reload();
+      if (result.fully_settled) onSettled();
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Could not record payment");
     } finally {
@@ -678,7 +562,7 @@ function StatementModal({
       account,
       orders: data!.orders,
       items: data!.items,
-      payments: unsettledPayments,
+      payments: data!.payments,
     });
   }
 
@@ -729,7 +613,7 @@ function StatementModal({
             )}
             {outstanding > 0 && (
               <button
-                onClick={doSettle}
+                onClick={prepareFullSettlement}
                 className="inline-flex h-10 items-center gap-2 rounded-full bg-primary px-4 text-sm font-semibold text-primary-foreground shadow-brand"
               >
                 <CheckCircle2 className="h-4 w-4" />
@@ -805,33 +689,38 @@ function StatementModal({
           </div>
         </div>
 
-        {unsettledPayments.length > 0 && (
+        {data.payments.length > 0 && (
           <section className="mt-6">
-            <h3 className="font-display text-lg font-bold">Payments received</h3>
+            <h3 className="font-display text-lg font-bold">Payment history</h3>
             <ul className="mt-2 divide-y divide-border text-sm">
-              {unsettledPayments.map((p) => (
+              {data.payments.map((p) => (
                 <li key={p.id} className="flex items-center justify-between py-2">
                   <span>
                     {new Date(p.created_at).toLocaleDateString()} · {p.method.replace("_", " ")}
                     {p.reference && <span className="text-muted-foreground"> · {p.reference}</span>}
+                    <span className="ml-2 rounded-full bg-secondary px-2 py-0.5 text-[10px] font-semibold uppercase text-muted-foreground">
+                      {p.settled_at ? "Settled" : "Part payment"}
+                    </span>
                   </span>
                   <span className="flex items-center gap-3">
                     <span className="font-semibold">− {money(p.amount_cents)}</span>
-                    <button
-                      className="text-muted-foreground hover:text-primary print:hidden"
-                      title="Remove payment"
-                      onClick={async () => {
-                        if (!(await askConfirm("Remove this payment record?"))) return;
-                        try {
-                          await delPay({ data: { id: p.id } });
-                          await reload();
-                        } catch (e) {
-                          toast.error(e instanceof Error ? e.message : "Delete failed");
-                        }
-                      }}
-                    >
-                      <Trash2 className="h-3.5 w-3.5" />
-                    </button>
+                    {!p.settled_at && (
+                      <button
+                        className="text-muted-foreground hover:text-primary print:hidden"
+                        title="Remove part-payment"
+                        onClick={async () => {
+                          if (!(await askConfirm("Remove this part-payment record?"))) return;
+                          try {
+                            await delPay({ data: { id: p.id } });
+                            await reload();
+                          } catch (e) {
+                            toast.error(e instanceof Error ? e.message : "Delete failed");
+                          }
+                        }}
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </button>
+                    )}
                   </span>
                 </li>
               ))}

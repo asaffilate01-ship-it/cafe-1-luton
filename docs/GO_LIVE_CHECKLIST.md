@@ -45,6 +45,8 @@ Do not enable live ordering or live SumUp charging until every mandatory box is 
 - [ ] Confirm duplicate requests do not create a second order, charge, refund or loyalty award.
 - [ ] Reconcile the test transactions against the SumUp settlement export.
 - [ ] On the café phone and tablet, complete orders at 320–430px portrait, phone landscape, tablet portrait checkout-sheet and tablet landscape split-view layouts; retain screenshots with operator and date.
+- [ ] On each mobile till size, open **View order**, prove Dine In/Takeaway and **Back to menu** remain visible, return to the catalogue, then complete one public-side and one judge-side sale.
+- [ ] Create a test house tab, charge it from both tills, prove one order reaches the KDS each time, inspect running items/payment history, reject a charge above its credit limit and settle it with a dated payment reference.
 - [ ] On real 320–430px phones, confirm the till action menu stays above every product image, the dense three/four-column quick-key grid is aligned and readable, safe areas are applied once, and checkout remains reachable without horizontal overflow.
 - [ ] Measure three cold and three warm production navigations for `/`, `/menu`, `/socials` and `/till`; retain timings and confirm public edge caching reduces the cold public-page delay without caching the till.
 - [ ] Test the receipt printer, cash drawer and customer display on the production till device.
@@ -97,7 +99,9 @@ Do not enable live ordering or live SumUp charging until every mandatory box is 
 
 ## 9. Financial controls and stock purchasing
 
-- [ ] Apply `20260811220000_finance_kpis_phase33.sql` and retain the full pgTAP result.
+- [ ] Confirm the canonical hosted Phase 33 migration
+      `20260811214754_1542aaa3-c874-48b8-bc64-257ad8dda913.sql` is applied and retain the full pgTAP
+      result. Keep `20260811220000_finance_kpis_phase33.sql` as its compatibility no-op.
 - [ ] As anonymous, customer, staff and driver, prove financial RPCs and tables are denied; as a
       named AAL2 manager, prove authorised access and audit events.
 - [ ] Enter an opening stock count, current gross supplier costs and complete recipes for all sold
