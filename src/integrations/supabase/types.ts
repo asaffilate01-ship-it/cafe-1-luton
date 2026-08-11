@@ -238,6 +238,93 @@ export type Database = {
         }
         Relationships: []
       }
+      business_expenses: {
+        Row: {
+          amount_cents: number
+          category: string
+          created_at: string
+          created_by: string | null
+          description: string
+          expense_date: string
+          id: string
+          invoice_reference: string | null
+          notes: string | null
+          payment_method: string
+          provider_reference: string | null
+          receipt_reference: string | null
+          site_id: string
+          source: string
+          status: string
+          supplier_id: string | null
+          tax_included_cents: number
+          updated_at: string
+          void_reason: string | null
+          voided_at: string | null
+          voided_by: string | null
+        }
+        Insert: {
+          amount_cents: number
+          category: string
+          created_at?: string
+          created_by?: string | null
+          description: string
+          expense_date: string
+          id?: string
+          invoice_reference?: string | null
+          notes?: string | null
+          payment_method?: string
+          provider_reference?: string | null
+          receipt_reference?: string | null
+          site_id: string
+          source?: string
+          status?: string
+          supplier_id?: string | null
+          tax_included_cents?: number
+          updated_at?: string
+          void_reason?: string | null
+          voided_at?: string | null
+          voided_by?: string | null
+        }
+        Update: {
+          amount_cents?: number
+          category?: string
+          created_at?: string
+          created_by?: string | null
+          description?: string
+          expense_date?: string
+          id?: string
+          invoice_reference?: string | null
+          notes?: string | null
+          payment_method?: string
+          provider_reference?: string | null
+          receipt_reference?: string | null
+          site_id?: string
+          source?: string
+          status?: string
+          supplier_id?: string | null
+          tax_included_cents?: number
+          updated_at?: string
+          void_reason?: string | null
+          voided_at?: string | null
+          voided_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "business_expenses_site_id_fkey"
+            columns: ["site_id"]
+            isOneToOne: false
+            referencedRelation: "sites"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "business_expenses_supplier_id_fkey"
+            columns: ["supplier_id"]
+            isOneToOne: false
+            referencedRelation: "suppliers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       business_hours: {
         Row: {
           close_time: string
@@ -1101,6 +1188,7 @@ export type Database = {
           notes: string | null
           order_id: string
           qty: number
+          unit_cost_cents: number
           unit_price_cents: number
         }
         Insert: {
@@ -1112,6 +1200,7 @@ export type Database = {
           notes?: string | null
           order_id: string
           qty: number
+          unit_cost_cents?: number
           unit_price_cents: number
         }
         Update: {
@@ -1123,6 +1212,7 @@ export type Database = {
           notes?: string | null
           order_id?: string
           qty?: number
+          unit_cost_cents?: number
           unit_price_cents?: number
         }
         Relationships: [
@@ -1748,47 +1838,71 @@ export type Database = {
       purchase_orders: {
         Row: {
           created_at: string
+          delivery_cost_cents: number
+          discount_cents: number
           expected_on: string | null
           id: string
+          invoice_date: string | null
+          invoice_number: string | null
           note: string | null
           ordered_at: string | null
           ordered_by: string | null
+          paid_at: string | null
+          payment_method: string | null
+          payment_status: string
           received_at: string | null
           received_by: string | null
           site_id: string
           status: string
           supplier_id: string | null
           supplier_reference: string | null
+          total_cost_cents: number
           updated_at: string
         }
         Insert: {
           created_at?: string
+          delivery_cost_cents?: number
+          discount_cents?: number
           expected_on?: string | null
           id?: string
+          invoice_date?: string | null
+          invoice_number?: string | null
           note?: string | null
           ordered_at?: string | null
           ordered_by?: string | null
+          paid_at?: string | null
+          payment_method?: string | null
+          payment_status?: string
           received_at?: string | null
           received_by?: string | null
           site_id: string
           status?: string
           supplier_id?: string | null
           supplier_reference?: string | null
+          total_cost_cents?: number
           updated_at?: string
         }
         Update: {
           created_at?: string
+          delivery_cost_cents?: number
+          discount_cents?: number
           expected_on?: string | null
           id?: string
+          invoice_date?: string | null
+          invoice_number?: string | null
           note?: string | null
           ordered_at?: string | null
           ordered_by?: string | null
+          paid_at?: string | null
+          payment_method?: string | null
+          payment_status?: string
           received_at?: string | null
           received_by?: string | null
           site_id?: string
           status?: string
           supplier_id?: string | null
           supplier_reference?: string | null
+          total_cost_cents?: number
           updated_at?: string
         }
         Relationships: [
@@ -2090,6 +2204,62 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "stocktakes_site_id_fkey"
+            columns: ["site_id"]
+            isOneToOne: false
+            referencedRelation: "sites"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sumup_settlements: {
+        Row: {
+          amount_cents: number
+          currency: string
+          fee_cents: number
+          id: string
+          imported_at: string
+          imported_by: string | null
+          provider_id: string
+          provider_reference: string | null
+          settlement_date: string
+          settlement_type: string
+          site_id: string
+          status: string
+          transaction_code: string | null
+        }
+        Insert: {
+          amount_cents: number
+          currency?: string
+          fee_cents?: number
+          id?: string
+          imported_at?: string
+          imported_by?: string | null
+          provider_id: string
+          provider_reference?: string | null
+          settlement_date: string
+          settlement_type: string
+          site_id: string
+          status: string
+          transaction_code?: string | null
+        }
+        Update: {
+          amount_cents?: number
+          currency?: string
+          fee_cents?: number
+          id?: string
+          imported_at?: string
+          imported_by?: string | null
+          provider_id?: string
+          provider_reference?: string | null
+          settlement_date?: string
+          settlement_type?: string
+          site_id?: string
+          status?: string
+          transaction_code?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sumup_settlements_site_id_fkey"
             columns: ["site_id"]
             isOneToOne: false
             referencedRelation: "sites"
@@ -2613,6 +2783,7 @@ export type Database = {
         Args: { _days: number; _from: string }
         Returns: string
       }
+      cafe1_assert_finance_manager: { Args: never; Returns: string }
       cafe1_assert_operator: {
         Args: { _admin_only?: boolean }
         Returns: string
@@ -2724,8 +2895,20 @@ export type Database = {
         Args: { _component_id: string }
         Returns: boolean
       }
+      cafe1_finance_dashboard: {
+        Args: { _from_date: string; _site_id: string; _to_date: string }
+        Returns: Json
+      }
       cafe1_generate_daily_summary: {
         Args: { _business_date: string; _site_id: string }
+        Returns: Json
+      }
+      cafe1_import_sumup_expenses: {
+        Args: { _rows: Json; _site_id: string }
+        Returns: Json
+      }
+      cafe1_import_sumup_settlements: {
+        Args: { _rows: Json; _site_id: string }
         Returns: Json
       }
       cafe1_inventory_dashboard: { Args: { _site_id: string }; Returns: Json }
@@ -2826,6 +3009,10 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      cafe1_receive_purchase: {
+        Args: { _payload: Json; _site_id: string }
+        Returns: Json
+      }
       cafe1_record_stock_movement: { Args: { _payload: Json }; Returns: Json }
       cafe1_refresh_operational_alerts: {
         Args: { _site_id: string }
@@ -2836,12 +3023,20 @@ export type Database = {
         Returns: Json
       }
       cafe1_resolve_alert: { Args: { _alert_id: string }; Returns: boolean }
+      cafe1_save_expense: {
+        Args: { _payload: Json; _site_id: string }
+        Returns: Json
+      }
       cafe1_save_inventory_item: {
         Args: { _payload: Json; _site_id: string }
         Returns: Json
       }
       cafe1_save_recipe_component: { Args: { _payload: Json }; Returns: Json }
       cafe1_save_site: { Args: { _payload: Json }; Returns: Json }
+      cafe1_save_supplier: {
+        Args: { _payload: Json; _site_id: string }
+        Returns: Json
+      }
       cafe1_security_dashboard: { Args: { _site_id: string }; Returns: Json }
       cafe1_set_juror_daily_allowance: {
         Args: {
@@ -2867,6 +3062,10 @@ export type Database = {
       cafe1_toggle_favourite: {
         Args: { _menu_item_id: string }
         Returns: boolean
+      }
+      cafe1_void_expense: {
+        Args: { _expense_id: string; _reason: string }
+        Returns: Json
       }
       cancel_counter_order: {
         Args: { _order_id: string; _reason: string }
