@@ -249,8 +249,8 @@ export const recordAccountPayment = createServerFn({ method: "POST" })
       _account_id: data.account_id,
       _amount_cents: data.amount_cents,
       _method: data.method,
-      _reference: data.reference || null,
-      _note: data.note || null,
+      _reference: data.reference || undefined,
+      _note: data.note || undefined,
     });
     if (error) throw new Error(error.message);
     return result as {
