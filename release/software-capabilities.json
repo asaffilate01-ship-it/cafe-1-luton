@@ -520,10 +520,7 @@
         },
         {
           "path": "src/components/tiktok-creator-feed.tsx",
-          "includes": [
-            "data-embed-type=\"creator\"",
-            "https://www.tiktok.com/embed.js"
-          ]
+          "includes": ["data-embed-type=\"creator\"", "https://www.tiktok.com/embed.js"]
         },
         {
           "path": "src/server.ts",
@@ -541,7 +538,7 @@
     },
     {
       "id": "responsive_pos_workspace",
-      "name": "Aligned phone checkout, portrait-tablet sheet and landscape split-view till",
+      "name": "Compact aligned POS grid, correctly layered action menu and responsive checkout",
       "evidence": [
         {
           "path": "src/routes/till.tsx",
@@ -549,7 +546,10 @@
             "min-[960px]:grid-cols-[minmax(0,1fr)_340px]",
             "xl:grid-cols-[148px_minmax(0,1fr)_392px]",
             "grid-cols-[auto_minmax(0,1fr)_auto]",
-            "min-[560px]:grid-cols-3",
+            "grid-cols-3 gap-1.5",
+            "min-[560px]:grid-cols-4",
+            "data-pos-region=\"till-menu\"",
+            "menuOpen ? \"z-[60]\" : \"z-20\"",
             "sm:w-[min(30rem,100vw)]",
             "View order",
             "env(safe-area-inset-bottom)",
@@ -558,8 +558,94 @@
           ]
         },
         {
-          "path": "docs/PRODUCTION_AUDIT_PHASE_28.md",
-          "includes": ["Phone", "Portrait tablet", "Landscape tablet", "960px"]
+          "path": "e2e/till-responsive.spec.ts",
+          "includes": [
+            "expectedProductColumns",
+            "till action menu stays above the product grid on a phone",
+            "expectNoHorizontalOverflow"
+          ]
+        },
+        {
+          "path": "docs/PRODUCTION_AUDIT_PHASE_29.md",
+          "includes": ["Three-column phone grid", "stacking", "Just browsing", "checkout"]
+        }
+      ]
+    },
+    {
+      "id": "public_menu_browsing_intent",
+      "name": "Public menu browsing without a fake order context and enforced setup at checkout",
+      "evidence": [
+        {
+          "path": "src/lib/menu-intent.ts",
+          "includes": ["cafe1_menu_browsing_v1", "requiresOrderSetup"]
+        },
+        {
+          "path": "src/lib/menu-intent.test.ts",
+          "includes": [
+            "remembers Just browsing only in the supplied session store",
+            "requires order setup once a browsing customer proceeds with a basket"
+          ]
+        },
+        {
+          "path": "src/components/order-setup-gate.tsx",
+          "includes": ["Order now or just browse?", "Just browsing"]
+        },
+        {
+          "path": "src/routes/menu.tsx",
+          "includes": ["browseMenuOnly", "onBrowse={!ctx ? browseMenuOnly : undefined}"]
+        },
+        {
+          "path": "src/routes/checkout.tsx",
+          "includes": [
+            "Choose pickup, delivery or dine-in before continuing.",
+            "dismissible={!!ctx}"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "sumup_split_sale_single_kds_ticket",
+      "name": "One KDS order for SumUp cash/card split sales and Cafe1 Solo settlements",
+      "evidence": [
+        {
+          "path": "src/lib/sumup-sale-grouping.ts",
+          "includes": [
+            "replace(/;\\d+$/, \"\")",
+            "groupSumupSaleParts",
+            "sumupSaleTotalCents",
+            "sumupSalePaymentMethod"
+          ]
+        },
+        {
+          "path": "src/lib/sumup-sale-grouping.test.ts",
+          "includes": [
+            "turns cash and card payment parts into one logical sale",
+            "does not merge separate sales or count a repeated history row twice"
+          ]
+        },
+        {
+          "path": "src/lib/sumup-pos.functions.ts",
+          "includes": [
+            "const saleGroups = groupSumupSaleParts(successful)",
+            "readerSaleKeys.has(saleKey)",
+            "sumup_sale_key: saleKey",
+            "payment_method: paymentMethod"
+          ]
+        },
+        {
+          "path": "supabase/migrations/20260811110000_sumup_split_sale_kds_dedupe.sql",
+          "includes": ["sumup_sale_key", "orders_sumup_sale_key_uniq"]
+        },
+        {
+          "path": "supabase/tests/production_hardening.sql",
+          "includes": [
+            "orders retain one logical SumUp sale key",
+            "one SumUp sale can create only one order"
+          ]
+        },
+        {
+          "path": "docs/PRODUCTION_AUDIT_PHASE_30.md",
+          "includes": ["one KDS ticket", "cash + card", "Cafe1 Solo", "sale key"]
         }
       ]
     },
@@ -595,18 +681,11 @@
         },
         {
           "path": "scripts/verify-production.mjs",
-          "includes": [
-            "/api/public/deliveroo/hub-ingest",
-            "statuses: [401, 503]"
-          ]
+          "includes": ["/api/public/deliveroo/hub-ingest", "statuses: [401, 503]"]
         },
         {
           "path": "docs/DELIVEROO_WATCHER_SETUP.md",
-          "includes": [
-            "one-click Windows setup",
-            "Microsoft Edge",
-            "auto-restarting Windows task"
-          ]
+          "includes": ["one-click Windows setup", "Microsoft Edge", "auto-restarting Windows task"]
         }
       ]
     },

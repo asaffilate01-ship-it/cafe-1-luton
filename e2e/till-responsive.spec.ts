@@ -80,6 +80,23 @@ async function expectNoHorizontalOverflow(page: Page) {
   expect(dimensions.body).toBeLessThanOrEqual(dimensions.viewport + 1);
 }
 
+function expectedProductColumns(width: number) {
+  if (width < 560) return 3;
+  if (width < 800) return 4;
+  if (width < 960) return 5;
+  if (width < 1536) return 4;
+  return 5;
+}
+
+async function expectProductColumns(page: Page, width: number) {
+  const columns = await page
+    .locator('[data-pos-region="product-grid"]')
+    .evaluate(
+      (element) => getComputedStyle(element).gridTemplateColumns.split(" ").filter(Boolean).length,
+    );
+  expect(columns).toBe(expectedProductColumns(width));
+}
+
 for (const viewport of [
   { width: 320, height: 700 },
   { width: 360, height: 800 },
@@ -91,6 +108,7 @@ for (const viewport of [
     await page.setViewportSize(viewport);
     await openTill(page);
     await expectNoHorizontalOverflow(page);
+    await expectProductColumns(page, viewport.width);
 
     const header = page.locator('[data-pos-region="header"]');
     const bar = page.locator('[data-pos-region="mobile-order-bar"]');
@@ -98,13 +116,9 @@ for (const viewport of [
     await expect(bar).toContainText("View order");
     const [headerBox, barBox] = await Promise.all([header.boundingBox(), bar.boundingBox()]);
     expect(headerBox?.x).toBeGreaterThanOrEqual(0);
-    expect((headerBox?.x ?? 0) + (headerBox?.width ?? 0)).toBeLessThanOrEqual(
-      viewport.width + 1,
-    );
+    expect((headerBox?.x ?? 0) + (headerBox?.width ?? 0)).toBeLessThanOrEqual(viewport.width + 1);
     expect(barBox?.x).toBeGreaterThanOrEqual(0);
-    expect((barBox?.x ?? 0) + (barBox?.width ?? 0)).toBeLessThanOrEqual(
-      viewport.width + 1,
-    );
+    expect((barBox?.x ?? 0) + (barBox?.width ?? 0)).toBeLessThanOrEqual(viewport.width + 1);
 
     await bar.click();
     const order = page.locator('[data-pos-region="order"]');
@@ -115,9 +129,7 @@ for (const viewport of [
       expect(orderBox?.width).toBe(viewport.width);
     } else {
       expect(orderBox?.width).toBeLessThanOrEqual(480);
-      expect((orderBox?.x ?? 0) + (orderBox?.width ?? 0)).toBeLessThanOrEqual(
-        viewport.width + 1,
-      );
+      expect((orderBox?.x ?? 0) + (orderBox?.width ?? 0)).toBeLessThanOrEqual(viewport.width + 1);
     }
     await expectNoHorizontalOverflow(page);
   });
@@ -133,6 +145,7 @@ for (const viewport of [
   }) => {
     await page.setViewportSize(viewport);
     await openTill(page);
+    await expectProductColumns(page, viewport.width);
     const catalogue = page.locator('[data-pos-region="catalogue"]');
     const order = page.locator('[data-pos-region="order"]');
     const bar = page.locator('[data-pos-region="mobile-order-bar"]');
@@ -146,9 +159,7 @@ for (const viewport of [
     const orderBox = await order.boundingBox();
     expect(orderBox?.width).toBeLessThanOrEqual(480);
     expect(orderBox?.width).toBeGreaterThanOrEqual(478);
-    expect((orderBox?.x ?? 0) + (orderBox?.width ?? 0)).toBeLessThanOrEqual(
-      viewport.width + 1,
-    );
+    expect((orderBox?.x ?? 0) + (orderBox?.width ?? 0)).toBeLessThanOrEqual(viewport.width + 1);
     await expectNoHorizontalOverflow(page);
   });
 }
@@ -157,16 +168,47 @@ test("landscape tablet keeps the efficient catalogue and checkout split", async 
   const viewport = { width: 1024, height: 768 };
   await page.setViewportSize(viewport);
   await openTill(page);
+  await expectProductColumns(page, viewport.width);
   const catalogue = page.locator('[data-pos-region="catalogue"]');
   const order = page.locator('[data-pos-region="order"]');
   await expect(catalogue).toBeVisible();
   await expect(order).toBeVisible();
   await expect(page.locator('[data-pos-region="mobile-order-bar"]')).toBeHidden();
-  const [catalogueBox, orderBox] = await Promise.all([catalogue.boundingBox(), order.boundingBox()]);
+  const [catalogueBox, orderBox] = await Promise.all([
+    catalogue.boundingBox(),
+    order.boundingBox(),
+  ]);
   expect(catalogueBox?.width).toBeGreaterThan(680);
   expect(orderBox?.width).toBeGreaterThanOrEqual(338);
   expect((catalogueBox?.width ?? 0) + (orderBox?.width ?? 0)).toBeLessThanOrEqual(
     viewport.width + 1,
   );
+  await expectNoHorizontalOverflow(page);
+});
+
+test("till action menu stays above the product grid on a phone", async ({ page }) => {
+  const viewport = { width: 390, height: 844 };
+  await page.setViewportSize(viewport);
+  await openTill(page);
+
+  await page
+    .getByRole("button", { name: "Till menu" })
+    .evaluate((button: HTMLButtonElement) => button.click());
+  const menu = page.locator('[data-pos-region="till-menu"]');
+  await expect(menu).toBeVisible();
+
+  const layers = await page.evaluate(() => {
+    const header = document.querySelector<HTMLElement>('[data-pos-region="header"]');
+    const workspace = document.querySelector<HTMLElement>('[data-pos-region="workspace"]');
+    return {
+      header: Number.parseInt(getComputedStyle(header!).zIndex, 10),
+      workspace: Number.parseInt(getComputedStyle(workspace!).zIndex, 10),
+    };
+  });
+  expect(layers.header).toBeGreaterThan(layers.workspace);
+
+  const menuBox = await menu.boundingBox();
+  expect(menuBox?.x).toBeGreaterThanOrEqual(0);
+  expect((menuBox?.x ?? 0) + (menuBox?.width ?? 0)).toBeLessThanOrEqual(viewport.width + 1);
   await expectNoHorizontalOverflow(page);
 });

@@ -40,9 +40,11 @@ Do not enable live ordering or live SumUp charging until every mandatory box is 
 - [ ] Test one real low-value website charge, one reader charge and one manual-reference transaction.
 - [ ] Cancel and decline a payment; confirm no paid KDS ticket appears and vouchers are released.
 - [ ] Test cash, voucher, split tender, partial refund and remaining refund.
+- [ ] On both the Cafe1 till and SumUp POS, complete a cash + card split sale; confirm the full sale appears as exactly one KDS ticket, remains one ticket after repeated sync/reload and records payment method `split`.
 - [ ] Confirm duplicate requests do not create a second order, charge, refund or loyalty award.
 - [ ] Reconcile the test transactions against the SumUp settlement export.
 - [ ] On the café phone and tablet, complete orders at 320–430px portrait, phone landscape, tablet portrait checkout-sheet and tablet landscape split-view layouts; retain screenshots with operator and date.
+- [ ] On a real 320–430px phone, confirm the till action menu stays above every product image, the three-column quick-key grid is aligned and readable, and checkout remains reachable without horizontal overflow.
 - [ ] Test the receipt printer, cash drawer and customer display on the production till device.
 
 ## 5. Ordering and operations
@@ -51,6 +53,7 @@ Do not enable live ordering or live SumUp charging until every mandatory box is 
 - [ ] Test a vegetarian item with both vegetarian and non-vegetarian modifiers on the customer menu and till; confirm the Veg labels and non-veg warning are correct through basket and checkout.
 - [ ] Verify Mon–Fri 08:00–17:00 dine-in/pickup/takeaway, 08:30–16:30 delivery, weekend/bank-holiday closure, the 805-metre radius and AL1 3JU map origin.
 - [ ] Test delivery, collection, dine-in and jury-room orders from phone and desktop.
+- [ ] On `/menu`, choose **Just browsing**, confirm no order mode is silently created, then add an item and prove checkout requires pickup, delivery or dine-in before submission.
 - [ ] Test barcode search, held/recovered baskets and every KDS station.
 - [ ] Enter opening stock, build recipes, post waste and complete a controlled stocktake.
 - [ ] Clock staff in/out and generate/sign off a daily control summary.

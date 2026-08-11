@@ -1301,6 +1301,7 @@ export type Database = {
           sumup_checkout_id: string | null
           sumup_order_ref: string | null
           sumup_reference: string | null
+          sumup_sale_key: string | null
           sumup_transaction_id: string | null
           table_number: string | null
           till_shift_id: string | null
@@ -1360,6 +1361,7 @@ export type Database = {
           sumup_checkout_id?: string | null
           sumup_order_ref?: string | null
           sumup_reference?: string | null
+          sumup_sale_key?: string | null
           sumup_transaction_id?: string | null
           table_number?: string | null
           till_shift_id?: string | null
@@ -1419,6 +1421,7 @@ export type Database = {
           sumup_checkout_id?: string | null
           sumup_order_ref?: string | null
           sumup_reference?: string | null
+          sumup_sale_key?: string | null
           sumup_transaction_id?: string | null
           table_number?: string | null
           till_shift_id?: string | null
@@ -2664,6 +2667,7 @@ export type Database = {
           sumup_checkout_id: string | null
           sumup_order_ref: string | null
           sumup_reference: string | null
+          sumup_sale_key: string | null
           sumup_transaction_id: string | null
           table_number: string | null
           till_shift_id: string | null
@@ -2803,6 +2807,7 @@ export type Database = {
           sumup_checkout_id: string | null
           sumup_order_ref: string | null
           sumup_reference: string | null
+          sumup_sale_key: string | null
           sumup_transaction_id: string | null
           table_number: string | null
           till_shift_id: string | null
@@ -2917,6 +2922,7 @@ export type Database = {
           sumup_checkout_id: string | null
           sumup_order_ref: string | null
           sumup_reference: string | null
+          sumup_sale_key: string | null
           sumup_transaction_id: string | null
           table_number: string | null
           till_shift_id: string | null
@@ -3008,6 +3014,7 @@ export type Database = {
           sumup_checkout_id: string | null
           sumup_order_ref: string | null
           sumup_reference: string | null
+          sumup_sale_key: string | null
           sumup_transaction_id: string | null
           table_number: string | null
           till_shift_id: string | null
@@ -3077,6 +3084,7 @@ export type Database = {
           sumup_checkout_id: string | null
           sumup_order_ref: string | null
           sumup_reference: string | null
+          sumup_sale_key: string | null
           sumup_transaction_id: string | null
           table_number: string | null
           till_shift_id: string | null
@@ -3382,6 +3390,7 @@ export type Database = {
           sumup_checkout_id: string | null
           sumup_order_ref: string | null
           sumup_reference: string | null
+          sumup_sale_key: string | null
           sumup_transaction_id: string | null
           table_number: string | null
           till_shift_id: string | null
@@ -3453,6 +3462,7 @@ export type Database = {
           sumup_checkout_id: string | null
           sumup_order_ref: string | null
           sumup_reference: string | null
+          sumup_sale_key: string | null
           sumup_transaction_id: string | null
           table_number: string | null
           till_shift_id: string | null

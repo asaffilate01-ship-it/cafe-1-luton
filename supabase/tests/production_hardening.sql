@@ -1,6 +1,6 @@
 begin;
 
-select plan(26);
+select plan(28);
 
 select has_table('public', 'audit_events', 'immutable audit event table exists');
 select has_table('public', 'till_shifts', 'till shift table exists');
@@ -12,6 +12,13 @@ select has_table('public', 'order_refunds', 'refund ledger exists');
 select has_column('public', 'orders', 'idempotency_key', 'orders have an idempotency key');
 select has_column('public', 'orders', 'refunded_cents', 'orders track refunded value');
 select has_column('public', 'orders', 'till_shift_id', 'orders retain till shift attribution');
+select has_column('public', 'orders', 'sumup_sale_key', 'orders retain one logical SumUp sale key');
+select has_index(
+  'public',
+  'orders',
+  'orders_sumup_sale_key_uniq',
+  'one SumUp sale can create only one order'
+);
 select has_column('public', 'accounts', 'access_code_hash', 'account codes are hashable');
 
 select has_function('public', 'open_till_shift', 'atomic shift opening exists');

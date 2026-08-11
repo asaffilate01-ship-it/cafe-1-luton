@@ -992,7 +992,7 @@ function Till() {
       {/* Keep the compact two-row header until there is enough room for the desktop split. */}
       <header
         data-pos-region="header"
-        className="relative grid w-full max-w-full shrink-0 grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-2 overflow-visible border-b border-white/10 bg-neutral-900/95 px-2.5 py-2 backdrop-blur min-[960px]:flex min-[960px]:gap-3 min-[960px]:px-4 lg:py-1.5"
+        className={`relative grid w-full max-w-full shrink-0 grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-2 overflow-visible border-b border-white/10 bg-neutral-900/95 px-2.5 py-2 backdrop-blur min-[960px]:flex min-[960px]:gap-3 min-[960px]:px-4 lg:py-1.5 ${menuOpen ? "z-[60]" : "z-20"}`}
       >
         <span className="inline-flex w-fit rounded-xl bg-primary px-2.5 py-1.5 text-[11px] font-black uppercase tracking-[0.16em] text-primary-foreground shadow-lg shadow-primary/25 xl:px-3 xl:text-xs xl:tracking-[0.2em]">
           Cafe 1 <span className="ml-1 hidden sm:inline">Till</span>
@@ -1037,7 +1037,10 @@ function Till() {
               onClick={() => setMenuOpen(false)}
               className="fixed inset-0 z-40 cursor-default"
             />
-            <div className="absolute right-3 top-full z-50 mt-2 w-64 overflow-hidden rounded-2xl border border-white/10 bg-neutral-900 p-1.5 shadow-2xl shadow-black/60">
+            <div
+              data-pos-region="till-menu"
+              className="absolute right-2 top-full z-50 mt-2 max-h-[calc(100dvh-7rem)] w-[min(16rem,calc(100vw-1rem))] overflow-y-auto rounded-2xl border border-white/10 bg-neutral-900 p-1.5 shadow-2xl shadow-black/60 sm:right-3"
+            >
               <TillMenuItem
                 icon={Inbox}
                 label="Open cash drawer"
@@ -1123,7 +1126,7 @@ function Till() {
 
       <div
         data-pos-region="workspace"
-        className="grid min-h-0 min-w-0 flex-1 overflow-hidden min-[960px]:grid-cols-[minmax(0,1fr)_340px] xl:grid-cols-[148px_minmax(0,1fr)_392px] 2xl:grid-cols-[156px_minmax(0,1fr)_420px]"
+        className="relative z-0 grid min-h-0 min-w-0 flex-1 overflow-hidden min-[960px]:grid-cols-[minmax(0,1fr)_340px] xl:grid-cols-[148px_minmax(0,1fr)_392px] 2xl:grid-cols-[156px_minmax(0,1fr)_420px]"
       >
         {/* category rail (desktop) */}
         <nav className="hidden min-h-0 flex-col gap-1 overflow-y-auto border-r border-white/10 bg-neutral-900/40 p-2 xl:flex">
@@ -1208,17 +1211,21 @@ function Till() {
             ref={gridRef}
             className="min-h-0 flex-1 overflow-y-auto p-2 pb-24 min-[960px]:p-3 min-[960px]:pb-3"
           >
-            <div className="grid min-w-0 grid-cols-2 gap-2 min-[560px]:grid-cols-3 min-[800px]:grid-cols-4 min-[960px]:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
+            <div
+              data-pos-region="product-grid"
+              className="grid min-w-0 grid-cols-3 gap-1.5 min-[560px]:grid-cols-4 min-[800px]:grid-cols-5 min-[960px]:grid-cols-4 sm:gap-2 xl:grid-cols-4 2xl:grid-cols-5"
+            >
               {visible.map((i) => (
                 <div
                   key={i.id}
-                  className="group relative min-w-0 overflow-hidden rounded-xl border border-white/10 bg-neutral-900/80 shadow-lg shadow-black/30 transition duration-150 hover:-translate-y-0.5 hover:border-primary/70 hover:bg-neutral-800 hover:shadow-xl hover:shadow-primary/10 sm:rounded-2xl"
+                  data-pos-item
+                  className="group relative min-w-0 overflow-hidden rounded-lg border border-white/10 bg-neutral-900/80 shadow-lg shadow-black/30 transition duration-150 hover:-translate-y-0.5 hover:border-primary/70 hover:bg-neutral-800 hover:shadow-xl hover:shadow-primary/10 sm:rounded-xl"
                 >
                   <button
                     onClick={() => add(i)}
                     className="flex h-full w-full flex-col text-left transition active:scale-[0.97]"
                   >
-                    <div className="relative aspect-[16/10] w-full overflow-hidden bg-neutral-800 lg:aspect-[16/9]">
+                    <div className="relative aspect-[4/3] w-full overflow-hidden bg-neutral-800 sm:aspect-[16/10] xl:aspect-[16/9]">
                       {i.image_url ? (
                         <>
                           <img
@@ -1235,11 +1242,11 @@ function Till() {
                         </div>
                       )}
                     </div>
-                    <div className="flex min-h-[58px] min-w-0 flex-1 flex-col justify-between gap-1 p-2 pr-9 lg:min-h-[54px] lg:pr-9">
-                      <span className="line-clamp-2 text-xs font-semibold leading-snug">
+                    <div className="flex min-h-[50px] min-w-0 flex-1 flex-col justify-between gap-0.5 p-1.5 pr-8 sm:min-h-[56px] sm:p-2 sm:pr-9 lg:min-h-[52px]">
+                      <span className="line-clamp-2 text-[11px] font-semibold leading-tight sm:text-xs">
                         {i.name}
                       </span>
-                      <span className="font-display text-sm font-black tabular-nums text-primary">
+                      <span className="font-display text-xs font-black tabular-nums text-primary sm:text-sm">
                         {money(i.price_cents)}
                       </span>
                     </div>
@@ -1248,7 +1255,7 @@ function Till() {
                     onClick={() => favourites.toggle(i.id)}
                     aria-label={`${favourites.has(i.id) ? "Remove" : "Add"} ${i.name} ${favourites.has(i.id) ? "from" : "to"} favourites`}
                     aria-pressed={favourites.has(i.id)}
-                    className={`absolute bottom-2 right-2 grid h-8 w-8 place-items-center rounded-lg border shadow-lg transition active:scale-90 lg:h-7 lg:w-7 ${favourites.has(i.id) ? "border-amber-300 bg-amber-400 text-neutral-950" : "border-white/15 bg-neutral-950/80 text-white/55 hover:text-amber-300"}`}
+                    className={`absolute bottom-1.5 right-1.5 grid h-7 w-7 place-items-center rounded-lg border shadow-lg transition active:scale-90 sm:bottom-2 sm:right-2 sm:h-8 sm:w-8 lg:h-7 lg:w-7 ${favourites.has(i.id) ? "border-amber-300 bg-amber-400 text-neutral-950" : "border-white/15 bg-neutral-950/80 text-white/55 hover:text-amber-300"}`}
                   >
                     <Star
                       className={`h-4 w-4 lg:h-3.5 lg:w-3.5 ${favourites.has(i.id) ? "fill-current" : ""}`}
@@ -1293,7 +1300,8 @@ function Till() {
             <span className="min-w-0">
               <span className="block truncate font-display text-lg font-bold">Current order</span>
               <span className="block text-[11px] font-semibold uppercase tracking-wide text-white/45">
-                {count} item{count === 1 ? "" : "s"} · {FULFIL.find((item) => item.id === type)?.label}
+                {count} item{count === 1 ? "" : "s"} ·{" "}
+                {FULFIL.find((item) => item.id === type)?.label}
               </span>
             </span>
             <span className="font-display text-xl font-black tabular-nums text-primary">
@@ -1656,7 +1664,9 @@ function Till() {
               View order
             </span>
             <span className="block truncate text-[11px] font-semibold text-primary-foreground/75">
-              {count ? `${count} item${count === 1 ? "" : "s"} ready to review` : "Tap to start or review"}
+              {count
+                ? `${count} item${count === 1 ? "" : "s"} ready to review`
+                : "Tap to start or review"}
             </span>
           </span>
           <span className="font-display text-xl font-black tabular-nums">{money(due)}</span>
