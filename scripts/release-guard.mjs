@@ -113,6 +113,9 @@ for (const required of [
   "src/lib/customer-display-relay.ts",
   "src/hooks/use-customer-display-relay.ts",
   "src/lib/__tests__/customer-display-relay.test.ts",
+  "src/lib/__tests__/expense-import.test.ts",
+  "src/lib/expense-import.ts",
+  "src/lib/finance.functions.ts",
   "src/routes/api/public/health.ts",
   "release/operational-acceptance.json",
   "release/software-capabilities.json",
@@ -120,8 +123,10 @@ for (const required of [
   "docs/PRODUCTION_AUDIT_PHASE_30.md",
   "docs/PRODUCTION_AUDIT_PHASE_31.md",
   "docs/PRODUCTION_AUDIT_PHASE_32.md",
+  "docs/PRODUCTION_AUDIT_PHASE_33.md",
   "INSTALL_PHASE_31.md",
   "INSTALL_PHASE_32.md",
+  "INSTALL_PHASE_33.md",
   "src/components/facebook-page-feed.tsx",
   "src/components/tiktok-creator-feed.tsx",
   "src/components/cookie-banner.tsx",
@@ -130,9 +135,11 @@ for (const required of [
   "supabase/migrations/20260808123000_full_cafe1_menu_and_modifier_rules.sql",
   "supabase/migrations/20260809120000_menu_catalogue_quality_phase19.sql",
   "supabase/migrations/20260811110000_sumup_split_sale_kds_dedupe.sql",
+  "supabase/migrations/20260811220000_finance_kpis_phase33.sql",
   "supabase/tests/operations_controls_v2.sql",
   "supabase/tests/production_hardening.sql",
   "supabase/tests/menu_catalogue_integrity.sql",
+  "supabase/tests/finance_kpis_phase33.sql",
 ]) {
   if (!releaseSet.has(required)) fail(`required release file is missing: ${required}`);
 }

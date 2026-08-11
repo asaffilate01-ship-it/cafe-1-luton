@@ -1163,6 +1163,25 @@ function Till() {
 
         {/* products */}
         <section data-pos-region="catalogue" className="flex min-h-0 min-w-0 flex-col">
+          <div
+            data-pos-region="mobile-fulfilment"
+            className="shrink-0 border-b border-white/10 bg-neutral-950/55 px-2 py-1.5 min-[960px]:hidden"
+          >
+            <div className="grid grid-cols-2 gap-1.5 rounded-xl border border-white/10 bg-neutral-900/80 p-1">
+              {FULFIL.map(({ id, label, Icon }) => (
+                <button
+                  key={id}
+                  type="button"
+                  aria-pressed={type === id}
+                  onClick={() => setType(id)}
+                  className={`flex min-h-11 min-w-0 items-center justify-center gap-2 rounded-lg px-2 text-xs font-black uppercase tracking-wide transition active:scale-[0.98] ${type === id ? "bg-primary text-primary-foreground shadow-md shadow-primary/25" : "text-white/65 hover:bg-white/5 hover:text-white"}`}
+                >
+                  <Icon className="h-4 w-4 shrink-0" />
+                  <span className="truncate">{label}</span>
+                </button>
+              ))}
+            </div>
+          </div>
           <div className="shrink-0 space-y-2 border-b border-white/10 p-2.5 min-[960px]:p-3 xl:space-y-0 xl:px-4 xl:py-2.5">
             <div className="flex items-center gap-2 rounded-xl border border-white/10 bg-neutral-900/80 px-3 shadow-inner shadow-black/40 focus-within:border-primary/60">
               <Search className="h-4 w-4 shrink-0 text-white/40" />
@@ -1309,10 +1328,15 @@ function Till() {
             </span>
           </div>
           <div className="shrink-0 space-y-1.5 border-b border-white/10 p-2.5 md:p-2.5">
-            <div className="grid grid-cols-2 gap-1.5 rounded-2xl border border-white/10 bg-neutral-950/50 p-1.5 md:gap-1 md:p-1">
+            <div
+              data-pos-region="order-fulfilment"
+              className="grid grid-cols-2 gap-1.5 rounded-2xl border border-white/10 bg-neutral-950/50 p-1.5 md:gap-1 md:p-1"
+            >
               {FULFIL.map(({ id, label, Icon }) => (
                 <button
                   key={id}
+                  type="button"
+                  aria-pressed={type === id}
                   onClick={() => setType(id)}
                   className={`flex min-h-10 flex-row items-center justify-center gap-1.5 rounded-xl py-2 text-[10px] font-bold uppercase tracking-wide transition active:scale-95 md:min-h-0 md:gap-0.5 md:py-1.5 ${type === id ? "bg-primary text-primary-foreground shadow-md shadow-primary/25" : "text-white/55 hover:bg-white/5 hover:text-white"}`}
                 >
@@ -1665,8 +1689,8 @@ function Till() {
             </span>
             <span className="block truncate text-[11px] font-semibold text-primary-foreground/75">
               {count
-                ? `${count} item${count === 1 ? "" : "s"} ready to review`
-                : "Tap to start or review"}
+                ? `${FULFIL.find((item) => item.id === type)?.label} · ${count} item${count === 1 ? "" : "s"}`
+                : `${FULFIL.find((item) => item.id === type)?.label} · tap to review`}
             </span>
           </span>
           <span className="font-display text-xl font-black tabular-nums">{money(due)}</span>

@@ -815,7 +815,9 @@
             "min-[560px]:grid-cols-5",
             "min-[800px]:grid-cols-6",
             "z-[90]",
-            "env(safe-area-inset-top)"
+            "env(safe-area-inset-top)",
+            "data-pos-region=\"mobile-fulfilment\"",
+            "aria-pressed={type === id}"
           ]
         },
         {
@@ -823,7 +825,9 @@
           "includes": [
             "phone till aligns catalogue and order",
             "portrait tablet uses the aligned checkout sheet",
-            "till action menu stays above the product grid"
+            "till action menu stays above the product grid",
+            "mobile-fulfilment",
+            "toHaveAttribute("
           ]
         },
         {
@@ -860,6 +864,57 @@
             "lets the CDN absorb cold starts only for anonymous public HTML",
             "never shares public documents when a request or response is personalised"
           ]
+        }
+      ]
+    },
+    {
+      "id": "management_financials_and_stock_purchases",
+      "name": "Auditable management P&L, KPI controls and inventory purchase receipts",
+      "evidence": [
+        {
+          "path": "supabase/migrations/20260811220000_finance_kpis_phase33.sql",
+          "includes": [
+            "cafe1_snapshot_order_item_cost",
+            "cafe1_finance_dashboard",
+            "cafe1_receive_purchase",
+            "new_cost := CASE",
+            "finance.purchase.receive"
+          ]
+        },
+        {
+          "path": "src/routes/admin.reports.tsx",
+          "includes": [
+            "Financials & KPIs",
+            "Operating result",
+            "Receive supplier stock",
+            "Accounting scope:"
+          ]
+        },
+        {
+          "path": "supabase/tests/finance_kpis_phase33.sql",
+          "includes": [
+            "select plan(22)",
+            "customer order-item reads cannot see internal cost snapshots",
+            "supplier receipt RPC exists"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "sumup_expense_and_settlement_reconciliation",
+      "name": "Idempotent SumUp expense CSV, payout, deduction and fee reconciliation",
+      "evidence": [
+        {
+          "path": "src/lib/finance.functions.ts",
+          "includes": ["payouts.read", "/v1.0/merchants/", "cafe1_import_sumup_settlements"]
+        },
+        {
+          "path": "src/lib/expense-import.ts",
+          "includes": ["parseSumupExpenseCsv", "stableReference", "tax_included_cents"]
+        },
+        {
+          "path": "src/lib/__tests__/expense-import.test.ts",
+          "includes": ["parses the official expense fields", "same deduplication reference"]
         }
       ]
     }
