@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import { isH3SwallowedErrorBody, isPreviewHost, withProductionHeaders } from "../../server";
 import { isPrivatePath, PRIVATE_ROUTE_ROOTS } from "../private-cache";
+import { canCachePublicDocument, isPublicDocumentPath } from "../public-cache";
 
 describe("production response security", () => {
   it("sets browser security headers on the production origin", () => {
@@ -69,6 +70,44 @@ describe("production response security", () => {
     expect(isPrivatePath("/menu")).toBe(false);
     expect(isPrivatePath("/administrator")).toBe(false);
     expect(isPrivatePath("/orders-public")).toBe(false);
+  });
+
+  it("lets the CDN absorb cold starts only for anonymous public HTML", () => {
+    const response = withProductionHeaders(
+      new Request("https://cafe1stalbans.co.uk/menu"),
+      new Response("<main>menu</main>", { headers: { "content-type": "text/html" } }),
+    );
+
+    expect(response.headers.get("cache-control")).toBe("public, max-age=0, must-revalidate");
+    expect(response.headers.get("cdn-cache-control")).toContain("s-maxage=300");
+    expect(response.headers.get("cloudflare-cdn-cache-control")).toContain(
+      "stale-while-revalidate=86400",
+    );
+    expect(isPublicDocumentPath("/blog/halal-breakfast-st-albans")).toBe(true);
+    expect(isPublicDocumentPath("/checkout")).toBe(false);
+  });
+
+  it("never shares public documents when a request or response is personalised", () => {
+    const html = new Response("<main>menu</main>", {
+      headers: { "content-type": "text/html", "set-cookie": "session=private" },
+    });
+    expect(canCachePublicDocument(new Request("https://cafe1stalbans.co.uk/menu"), html)).toBe(
+      false,
+    );
+    expect(
+      canCachePublicDocument(
+        new Request("https://cafe1stalbans.co.uk/menu", {
+          headers: { cookie: "session=private" },
+        }),
+        new Response("<main>menu</main>", { headers: { "content-type": "text/html" } }),
+      ),
+    ).toBe(false);
+    expect(
+      canCachePublicDocument(
+        new Request("https://cafe1stalbans.co.uk/contact"),
+        new Response("<main>contact</main>", { headers: { "content-type": "text/html" } }),
+      ),
+    ).toBe(false);
   });
 
   it("allows Lovable preview framing without weakening production", () => {

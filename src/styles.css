@@ -164,9 +164,10 @@
   }
   html,
   body {
-    /* iOS/Android standalone safe areas */
-    padding-top: env(safe-area-inset-top);
-    padding-bottom: env(safe-area-inset-bottom);
+    /* Safe areas are owned by the fixed/sticky component that touches an edge.
+       Padding both html and body applied the inset twice and displaced the POS. */
+    margin: 0;
+    padding: 0;
   }
   h1,
   h2,
