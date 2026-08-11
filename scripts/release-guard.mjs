@@ -124,9 +124,13 @@ for (const required of [
   "docs/PRODUCTION_AUDIT_PHASE_31.md",
   "docs/PRODUCTION_AUDIT_PHASE_32.md",
   "docs/PRODUCTION_AUDIT_PHASE_33.md",
+  "docs/PRODUCTION_AUDIT_PHASE_34.md",
+  "docs/PRODUCTION_AUDIT_PHASE_35.md",
   "INSTALL_PHASE_31.md",
   "INSTALL_PHASE_32.md",
   "INSTALL_PHASE_33.md",
+  "INSTALL_PHASE_34.md",
+  "INSTALL_PHASE_35.md",
   "src/components/facebook-page-feed.tsx",
   "src/components/tiktok-creator-feed.tsx",
   "src/components/cookie-banner.tsx",
@@ -135,11 +139,14 @@ for (const required of [
   "supabase/migrations/20260808123000_full_cafe1_menu_and_modifier_rules.sql",
   "supabase/migrations/20260809120000_menu_catalogue_quality_phase19.sql",
   "supabase/migrations/20260811110000_sumup_split_sale_kds_dedupe.sql",
+  "supabase/migrations/20260811214754_1542aaa3-c874-48b8-bc64-257ad8dda913.sql",
   "supabase/migrations/20260811220000_finance_kpis_phase33.sql",
+  "supabase/migrations/20260812003000_house_tabs_phase35.sql",
   "supabase/tests/operations_controls_v2.sql",
   "supabase/tests/production_hardening.sql",
   "supabase/tests/menu_catalogue_integrity.sql",
   "supabase/tests/finance_kpis_phase33.sql",
+  "supabase/tests/house_tabs_phase35.sql",
 ]) {
   if (!releaseSet.has(required)) fail(`required release file is missing: ${required}`);
 }
@@ -151,6 +158,7 @@ const compatibilityMigrations = [
   "supabase/migrations/20260802094627_7ded25ea-dd1d-4f39-a605-4d8a81cbe289.sql",
   "supabase/migrations/20260802094659_9a8dde4d-17cd-4be0-b44e-309a0a923b85.sql",
   "supabase/migrations/20260802110000_go_live_release.sql",
+  "supabase/migrations/20260811220000_finance_kpis_phase33.sql",
 ];
 
 for (const path of compatibilityMigrations) {

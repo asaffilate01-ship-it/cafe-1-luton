@@ -37,7 +37,11 @@ import {
   setDeviceBridgeConfig,
 } from "@/lib/device-bridge";
 import { lookupVoucher } from "@/lib/vouchers.functions";
-import { listAccounts, quickAddAccount } from "@/lib/accounts.functions";
+import {
+  getAccountStatement,
+  listAccounts,
+  quickAddAccount,
+} from "@/lib/accounts.functions";
 import { chargeOrderToAccount, findSimilarAccountOrder } from "@/lib/judge-tab.functions";
 import { QrCode } from "@/components/qr-code";
 import {
@@ -638,11 +642,13 @@ function Till() {
       } else if (event.key === "Escape" && target === searchRef.current) {
         setQ("");
         searchRef.current?.blur();
+      } else if (event.key === "Escape" && showOrder && !typing) {
+        setShowOrder(false);
       }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, []);
+  }, [showOrder]);
 
   function add(i: Item) {
     const available = modifiers.filter(
@@ -849,10 +855,11 @@ function Till() {
   );
 
   /**
-   * Judge orders may go on that judge's tab. The judge list is the same house
-   * account list the KDS manual ticket uses, so both routes bill one judge.
+   * House-account orders use the same account ledger as online and manual KDS
+   * orders. Preparing once and then changing that order to on_account keeps a
+   * tab sale as one KDS ticket.
    */
-  const chargeJudgeTab = useCallback(
+  const chargeAccountTab = useCallback(
     async (account: { id: string; name: string }) => {
       if (!shift) return toast.error("Open a till shift first");
       if (!online) return toast.error("The till is offline — reconnect before charging a tab");
@@ -1126,7 +1133,7 @@ function Till() {
 
       <div
         data-pos-region="workspace"
-        className="relative z-0 grid min-h-0 min-w-0 flex-1 overflow-hidden min-[960px]:grid-cols-[minmax(0,1fr)_340px] xl:grid-cols-[148px_minmax(0,1fr)_392px] 2xl:grid-cols-[156px_minmax(0,1fr)_420px]"
+        className="relative grid min-h-0 min-w-0 flex-1 overflow-hidden min-[960px]:grid-cols-[minmax(0,1fr)_340px] xl:grid-cols-[148px_minmax(0,1fr)_392px] 2xl:grid-cols-[156px_minmax(0,1fr)_420px]"
       >
         {/* category rail (desktop) */}
         <nav className="hidden min-h-0 flex-col gap-1 overflow-y-auto border-r border-white/10 bg-neutral-900/40 p-2 xl:flex">
@@ -1299,22 +1306,25 @@ function Till() {
             type="button"
             aria-label="Close current order"
             onClick={() => setShowOrder(false)}
-            className="fixed inset-0 z-[35] hidden bg-black/60 backdrop-blur-[2px] sm:block min-[960px]:hidden"
+            className="fixed inset-0 z-[84] hidden bg-black/60 backdrop-blur-[2px] sm:block min-[960px]:hidden"
           />
         )}
 
         {/* Phone checkout is full-screen; tablet checkout is a right sheet; desktop is split. */}
         <aside
           data-pos-region="order"
-          className={`fixed inset-0 z-40 h-dvh min-h-0 w-full max-w-full min-w-0 flex-col overflow-hidden overscroll-contain bg-neutral-900 shadow-[-12px_0_40px_-24px_rgba(0,0,0,0.9)] sm:left-auto sm:w-[min(30rem,100vw)] sm:border-l sm:border-white/10 min-[960px]:static min-[960px]:z-auto min-[960px]:flex min-[960px]:h-auto min-[960px]:w-full ${showOrder ? "flex" : "hidden"}`}
-        >
-          <div className="grid shrink-0 grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 border-b border-white/10 bg-neutral-950/45 px-3 pb-3 pt-[calc(0.75rem+env(safe-area-inset-top))] min-[960px]:hidden">
+        className={`fixed inset-0 z-[85] h-dvh min-h-0 w-full max-w-full min-w-0 flex-col overflow-hidden overscroll-contain bg-neutral-900 shadow-[-12px_0_40px_-24px_rgba(0,0,0,0.9)] sm:left-auto sm:w-[min(30rem,100vw)] sm:border-l sm:border-white/10 min-[960px]:static min-[960px]:z-auto min-[960px]:flex min-[960px]:h-auto min-[960px]:w-full ${showOrder ? "flex" : "hidden"}`}
+      >
+          <div className="relative z-10 grid shrink-0 grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-2 border-b border-white/10 bg-neutral-950 px-2.5 pb-2.5 pt-[calc(0.625rem+env(safe-area-inset-top))] shadow-lg shadow-black/20 min-[380px]:gap-3 min-[380px]:px-3 min-[960px]:hidden">
             <button
+              type="button"
+              data-pos-action="back-to-menu"
               onClick={() => setShowOrder(false)}
               aria-label="Back to menu"
-              className="grid h-10 w-10 place-items-center rounded-xl border border-white/15 bg-white/5 active:scale-95"
+              className="inline-flex h-11 min-w-11 items-center justify-center gap-1 rounded-xl border border-white/15 bg-white/5 px-2 text-xs font-black uppercase tracking-wide active:scale-95 min-[360px]:px-3"
             >
               <ChevronLeft className="h-5 w-5" />
+              <span className="hidden min-[360px]:inline">Menu</span>
             </button>
             <span className="min-w-0">
               <span className="block truncate font-display text-lg font-bold">Current order</span>
@@ -1327,7 +1337,7 @@ function Till() {
               {money(due)}
             </span>
           </div>
-          <div className="shrink-0 space-y-1.5 border-b border-white/10 p-2.5 md:p-2.5">
+          <div className="relative z-10 shrink-0 space-y-1.5 border-b border-white/10 bg-neutral-900 p-2.5 shadow-md shadow-black/10 md:p-2.5">
             <div
               data-pos-region="order-fulfilment"
               className="grid grid-cols-2 gap-1.5 rounded-2xl border border-white/10 bg-neutral-950/50 p-1.5 md:gap-1 md:p-1"
@@ -1698,7 +1708,7 @@ function Till() {
       )}
 
       {payOpen && (
-        <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/70 p-0 backdrop-blur-sm sm:items-center sm:p-4">
+        <div className="fixed inset-0 z-[110] flex items-end justify-center bg-black/70 p-0 backdrop-blur-sm sm:items-center sm:p-4">
           <div className="w-full max-w-md rounded-t-3xl border border-white/10 bg-neutral-900 p-4 shadow-2xl sm:rounded-3xl">
             <div className="mb-4 flex items-baseline justify-between">
               <h2 className="font-display text-lg font-black">How are they paying?</h2>
@@ -1758,17 +1768,15 @@ function Till() {
                   }}
                 />
               )}
-              {side === "judge" && (
-                <PayChoice
-                  icon={ReceiptText}
-                  label="Put on a judge's tab"
-                  hint="Billed to the judge's account, not paid now"
-                  onClick={() => {
-                    setPayOpen(false);
-                    setTabOpen(true);
-                  }}
-                />
-              )}
+              <PayChoice
+                icon={ReceiptText}
+                label="House tab"
+                hint="Choose an account · bill now, settle later"
+                onClick={() => {
+                  setPayOpen(false);
+                  setTabOpen(true);
+                }}
+              />
             </div>
             <button
               onClick={() => setPayOpen(false)}
@@ -1789,11 +1797,12 @@ function Till() {
         />
       )}
       {tabOpen && (
-        <JudgeTabModal
+        <AccountTabModal
           total={due}
           busy={busy}
+          canCreate={has("admin")}
           onClose={() => setTabOpen(false)}
-          onConfirm={(account: { id: string; name: string }) => void chargeJudgeTab(account)}
+          onConfirm={(account: { id: string; name: string }) => void chargeAccountTab(account)}
         />
       )}
       {(pay === "reader" || pay === "split") && shift && readerSaleKey && (
@@ -1915,32 +1924,41 @@ function Till() {
 /** One row in the till's overflow menu. */
 
 /** One payment method row in the charge sheet. */
-/** Judge tab picker — same house accounts the KDS manual judge ticket uses. */
-function JudgeTabModal({
+type TillTabAccount = Awaited<ReturnType<typeof listAccounts>>[number];
+type TillTabStatement = Awaited<ReturnType<typeof getAccountStatement>>;
+
+/** Account picker and ledger preview for both public and judge-side tills. */
+function AccountTabModal({
   total,
   busy,
+  canCreate,
   onClose,
   onConfirm,
 }: {
   total: number;
   busy: boolean;
+  canCreate: boolean;
   onClose: () => void;
   onConfirm: (account: { id: string; name: string }) => void;
 }) {
   const load = useServerFn(listAccounts);
   const add = useServerFn(quickAddAccount);
-  const [accounts, setAccounts] = useState<{ id: string; name: string }[]>([]);
+  const statement = useServerFn(getAccountStatement);
+  const [accounts, setAccounts] = useState<TillTabAccount[]>([]);
   const [loading, setLoading] = useState(true);
   const [query, setQuery] = useState("");
   const [adding, setAdding] = useState(false);
+  const [selected, setSelected] = useState<TillTabAccount | null>(null);
+  const [details, setDetails] = useState<TillTabStatement | null>(null);
+  const [detailsLoading, setDetailsLoading] = useState(false);
 
   useEffect(() => {
     let live = true;
     void load()
       .then((rows) => {
-        if (live) setAccounts(rows.map((r) => ({ id: r.id, name: r.name })));
+        if (live) setAccounts(rows.filter((row) => row.active));
       })
-      .catch(() => toast.error("Could not load the judge tabs"))
+      .catch(() => toast.error("Could not load house tabs"))
       .finally(() => live && setLoading(false));
     return () => {
       live = false;
@@ -1948,71 +1966,324 @@ function JudgeTabModal({
   }, [load]);
 
   const term = query.trim().toLowerCase();
-  const shown = accounts.filter((a) => !term || a.name.toLowerCase().includes(term));
+  const shown = accounts.filter(
+    (account) =>
+      !term ||
+      account.name.toLowerCase().includes(term) ||
+      account.contact_name?.toLowerCase().includes(term) ||
+      account.contact_phone?.toLowerCase().includes(term),
+  );
   const exact = accounts.some((a) => a.name.toLowerCase() === term);
+
+  async function choose(account: TillTabAccount) {
+    setSelected(account);
+    setDetails(null);
+    setDetailsLoading(true);
+    try {
+      setDetails(await statement({ data: { account_id: account.id } }));
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Could not load the tab history");
+      setSelected(null);
+    } finally {
+      setDetailsLoading(false);
+    }
+  }
 
   async function createAndCharge() {
     const name = query.trim();
-    if (name.length < 2) return toast.error("Enter the judge's name");
+    if (name.length < 2) return toast.error("Enter the account or customer name");
     setAdding(true);
     try {
       const account = await add({ data: { name } });
-      setAccounts((current) =>
-        current.some((a) => a.id === account.id)
-          ? current
-          : [{ id: account.id, name: account.name }, ...current],
-      );
+      // A counter-created account has no limit or contact details yet. Charge
+      // it now; a manager can complete those details from Tab accounts.
       onConfirm({ id: account.id, name: account.name });
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Could not add that judge");
+      toast.error(e instanceof Error ? e.message : "Could not add that tab");
     } finally {
       setAdding(false);
     }
   }
 
   return (
-    <Modal title="Put on a judge's tab" onClose={onClose}>
+    <Modal title="Charge a house tab" onClose={onClose} wide>
       <div className="space-y-3">
-        <p className="text-sm text-white/60">
-          {money(total)} will be billed to the judge's account. Nothing is taken now.
-        </p>
-        <input
-          autoFocus
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          placeholder="Search or type a judge's name"
-          className="h-12 w-full rounded-2xl border border-white/10 bg-white/5 px-4 text-base font-semibold outline-none focus:border-primary"
-        />
-        <div className="max-h-64 space-y-1.5 overflow-y-auto">
-          {loading && <p className="text-sm text-white/40">Loading tabs…</p>}
-          {!loading && !shown.length && (
-            <p className="text-sm text-white/40">No matching tab — add the judge below.</p>
-          )}
-          {shown.map((account) => (
-            <button
-              key={account.id}
-              disabled={busy}
-              onClick={() => onConfirm(account)}
-              className="flex h-12 w-full items-center justify-between rounded-2xl border border-white/10 bg-white/5 px-4 text-left text-sm font-bold transition hover:bg-white/10 disabled:opacity-40"
-            >
-              <span className="truncate">{account.name}</span>
-              <span className="text-[11px] font-semibold uppercase tracking-wide text-white/40">
-                Charge tab
-              </span>
-            </button>
-          ))}
-        </div>
-        {term.length >= 2 && !exact && (
-          <button
-            disabled={adding || busy}
-            onClick={() => void createAndCharge()}
-            className="h-12 w-full rounded-2xl bg-primary text-sm font-bold text-primary-foreground disabled:opacity-40"
-          >
-            Add “{query.trim()}” and charge tab
-          </button>
+        {!selected ? (
+          <>
+            <p className="text-sm text-white/60">
+              Select the customer or business. {money(total)} is added to their running balance and
+              this order is sent to the KDS once.
+            </p>
+            <input
+              autoFocus
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Search name, contact or phone"
+              className="h-12 w-full rounded-2xl border border-white/10 bg-white/5 px-4 text-base font-semibold outline-none focus:border-primary"
+            />
+            <div className="max-h-[min(24rem,48dvh)] space-y-1.5 overflow-y-auto overscroll-contain pr-0.5">
+              {loading && <p className="text-sm text-white/40">Loading tabs…</p>}
+              {!loading && !shown.length && (
+                <p className="text-sm text-white/40">No matching active tab.</p>
+              )}
+              {shown.map((account) => {
+                const projected = account.outstanding_cents + total;
+                const overLimit =
+                  account.credit_limit_cents !== null && projected > account.credit_limit_cents;
+                return (
+                  <button
+                    key={account.id}
+                    type="button"
+                    disabled={busy}
+                    onClick={() => void choose(account)}
+                    className="grid min-h-16 w-full grid-cols-[minmax(0,1fr)_auto] items-center gap-3 rounded-2xl border border-white/10 bg-white/5 px-4 py-2.5 text-left transition hover:border-primary/40 hover:bg-white/10 disabled:opacity-40"
+                  >
+                    <span className="min-w-0">
+                      <span className="block truncate text-sm font-bold">{account.name}</span>
+                      <span className="block truncate text-[11px] text-white/45">
+                        {account.contact_name || account.contact_phone || "House account"}
+                      </span>
+                    </span>
+                    <span className="text-right">
+                      <span className="block text-sm font-black tabular-nums">
+                        {money(account.outstanding_cents)} due
+                      </span>
+                      <span
+                        className={`block text-[10px] font-bold uppercase tracking-wide ${overLimit ? "text-red-300" : "text-white/40"}`}
+                      >
+                        {overLimit
+                          ? "Would exceed limit"
+                          : account.credit_limit_cents === null
+                            ? "View tab"
+                            : `${money(account.credit_limit_cents)} limit`}
+                      </span>
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+            {canCreate && term.length >= 2 && !exact && (
+              <button
+                disabled={adding || busy}
+                onClick={() => void createAndCharge()}
+                className="h-12 w-full rounded-2xl border border-primary/50 bg-primary/15 text-sm font-bold text-primary disabled:opacity-40"
+              >
+                {adding ? "Creating…" : `Create “${query.trim()}” and charge ${money(total)}`}
+              </button>
+            )}
+            {!canCreate && term.length >= 2 && !exact && (
+              <p className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-xs text-white/45">
+                A manager must create a new tab. Staff can charge any active tab listed above.
+              </p>
+            )}
+          </>
+        ) : (
+          <TabAccountPreview
+            account={selected}
+            details={details}
+            loading={detailsLoading}
+            total={total}
+            busy={busy}
+            onBack={() => {
+              setSelected(null);
+              setDetails(null);
+            }}
+            onConfirm={() => onConfirm({ id: selected.id, name: selected.name })}
+          />
         )}
       </div>
     </Modal>
+  );
+}
+
+function TabAccountPreview({
+  account,
+  details,
+  loading,
+  total,
+  busy,
+  onBack,
+  onConfirm,
+}: {
+  account: TillTabAccount;
+  details: TillTabStatement | null;
+  loading: boolean;
+  total: number;
+  busy: boolean;
+  onBack: () => void;
+  onConfirm: () => void;
+}) {
+  const unpaid = details?.orders.filter((order) => order.payment_status === "on_account") ?? [];
+  const paid = details?.orders.filter((order) => order.payment_status !== "on_account") ?? [];
+  const unsettledPayments = details?.payments.filter((payment) => !payment.settled_at) ?? [];
+  const charges = unpaid.reduce(
+    (sum, order) => sum + Math.max(0, order.total_cents - order.refunded_cents),
+    0,
+  );
+  const payments = unsettledPayments.reduce((sum, payment) => sum + payment.amount_cents, 0);
+  const outstanding = details ? Math.max(0, charges - payments) : account.outstanding_cents;
+  const projected = outstanding + total;
+  const overLimit =
+    account.credit_limit_cents !== null && projected > account.credit_limit_cents;
+  const itemsByOrder = new Map<string, NonNullable<TillTabStatement>["items"]>();
+  for (const item of details?.items ?? []) {
+    const current = itemsByOrder.get(item.order_id) ?? [];
+    current.push(item);
+    itemsByOrder.set(item.order_id, current);
+  }
+
+  return (
+    <div data-pos-region="tab-account-preview" className="space-y-3">
+      <button
+        type="button"
+        onClick={onBack}
+        className="inline-flex h-9 items-center gap-1 rounded-xl border border-white/10 px-3 text-xs font-bold text-white/65 hover:bg-white/5 hover:text-white"
+      >
+        <ChevronLeft className="h-4 w-4" /> All tabs
+      </button>
+
+      <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div className="min-w-0">
+            <h3 className="truncate font-display text-xl font-black">{account.name}</h3>
+            <p className="mt-0.5 text-xs text-white/50">
+              {[account.contact_name, account.contact_phone].filter(Boolean).join(" · ") ||
+                "House account"}
+            </p>
+          </div>
+          <span
+            className={`rounded-full px-3 py-1 text-[10px] font-black uppercase tracking-wide ${outstanding > 0 ? "bg-amber-500/15 text-amber-200" : "bg-emerald-500/15 text-emerald-200"}`}
+          >
+            {outstanding > 0 ? "Payment due" : "Paid up"}
+          </span>
+        </div>
+        {account.notes && (
+          <p className="mt-3 rounded-xl bg-neutral-950/40 px-3 py-2 text-xs text-white/60">
+            {account.notes}
+          </p>
+        )}
+        <div className="mt-3 grid grid-cols-3 gap-2 text-center">
+          <TabMetric label="Current" value={money(outstanding)} />
+          <TabMetric label="This order" value={`+${money(total)}`} />
+          <TabMetric label="New balance" value={money(projected)} important />
+        </div>
+        <div className="mt-2 flex flex-wrap justify-between gap-2 text-[11px] text-white/45">
+          <span>
+            {unpaid.length} running order{unpaid.length === 1 ? "" : "s"}
+            {payments > 0 ? ` · ${money(payments)} part-paid` : ""}
+          </span>
+          <span>
+            {account.credit_limit_cents === null
+              ? "No credit limit set"
+              : `${money(account.credit_limit_cents)} credit limit`}
+          </span>
+        </div>
+      </div>
+
+      {loading && (
+        <div aria-live="polite" className="rounded-2xl border border-white/10 p-5 text-sm text-white/45">
+          Loading running items and history…
+        </div>
+      )}
+
+      {!loading && details && (
+        <div className="grid gap-3 sm:grid-cols-2">
+          <section className="min-w-0 rounded-2xl border border-white/10 bg-neutral-950/35 p-3">
+            <h4 className="text-xs font-black uppercase tracking-widest text-white/55">
+              Running items · not paid
+            </h4>
+            <div className="mt-2 max-h-44 space-y-2 overflow-y-auto overscroll-contain pr-1">
+              {!unpaid.length && <p className="text-xs text-white/35">No unpaid orders.</p>}
+              {unpaid.slice(0, 8).map((order) => (
+                <div key={order.id} className="rounded-xl bg-white/5 px-3 py-2 text-xs">
+                  <div className="flex justify-between gap-2 font-bold">
+                    <span>#{order.order_number} · {new Date(order.created_at).toLocaleDateString()}</span>
+                    <span className="shrink-0 tabular-nums text-amber-200">
+                      {money(Math.max(0, order.total_cents - order.refunded_cents))}
+                    </span>
+                  </div>
+                  <p className="mt-1 line-clamp-2 text-[11px] text-white/45">
+                    {(itemsByOrder.get(order.id) ?? [])
+                      .map((item) => `${item.qty}× ${item.name}`)
+                      .join(" · ") || "Order details unavailable"}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </section>
+
+          <section className="min-w-0 rounded-2xl border border-white/10 bg-neutral-950/35 p-3">
+            <h4 className="text-xs font-black uppercase tracking-widest text-white/55">
+              Payment &amp; order history
+            </h4>
+            <div className="mt-2 max-h-44 space-y-2 overflow-y-auto overscroll-contain pr-1">
+              {!details.payments.length && !paid.length && (
+                <p className="text-xs text-white/35">No settled history yet.</p>
+              )}
+              {details.payments.slice(0, 5).map((payment) => (
+                <div key={payment.id} className="flex justify-between gap-2 rounded-xl bg-white/5 px-3 py-2 text-xs">
+                  <span className="min-w-0 truncate text-white/55">
+                    Payment · {payment.method.replaceAll("_", " ")} · {new Date(payment.created_at).toLocaleDateString()}
+                  </span>
+                  <span className="shrink-0 font-bold tabular-nums text-emerald-200">
+                    −{money(payment.amount_cents)}
+                  </span>
+                </div>
+              ))}
+              {paid.slice(0, 5).map((order) => (
+                <div key={order.id} className="flex justify-between gap-2 rounded-xl bg-white/5 px-3 py-2 text-xs">
+                  <span className="min-w-0 truncate text-white/55">
+                    #{order.order_number} · Paid · {new Date(order.created_at).toLocaleDateString()}
+                  </span>
+                  <span className="shrink-0 font-bold tabular-nums">{money(order.total_cents)}</span>
+                </div>
+              ))}
+            </div>
+          </section>
+        </div>
+      )}
+
+      {overLimit && (
+        <p role="alert" className="rounded-2xl border border-red-400/30 bg-red-500/10 p-3 text-sm font-semibold text-red-200">
+          This would take the tab to {money(projected)}, above its {money(account.credit_limit_cents ?? 0)} limit. Take payment or ask a manager to change the limit.
+        </p>
+      )}
+
+      <button
+        type="button"
+        disabled={busy || loading || !details || overLimit}
+        onClick={onConfirm}
+        className="inline-flex h-14 w-full items-center justify-between rounded-2xl bg-primary px-5 text-sm font-black text-primary-foreground shadow-lg shadow-primary/20 disabled:opacity-40"
+      >
+        <span className="inline-flex items-center gap-2">
+          <ReceiptText className="h-5 w-5" /> Charge house tab
+        </span>
+        <span className="font-display text-lg tabular-nums">{money(total)}</span>
+      </button>
+    </div>
+  );
+}
+
+function TabMetric({
+  label,
+  value,
+  important = false,
+}: {
+  label: string;
+  value: string;
+  important?: boolean;
+}) {
+  return (
+    <span className="min-w-0 rounded-xl bg-neutral-950/45 px-2 py-2">
+      <span className="block truncate text-[9px] font-black uppercase tracking-widest text-white/35">
+        {label}
+      </span>
+      <span
+        className={`mt-0.5 block truncate text-sm font-black tabular-nums ${important ? "text-primary" : "text-white"}`}
+      >
+        {value}
+      </span>
+    </span>
   );
 }
 
@@ -2093,10 +2364,12 @@ function Modal({
   title,
   children,
   onClose,
+  wide = false,
 }: {
   title: string;
   children: React.ReactNode;
   onClose: () => void;
+  wide?: boolean;
 }) {
   const panel = useRef<HTMLDivElement>(null);
   const titleId = useId();
@@ -2131,7 +2404,7 @@ function Modal({
   }
   return (
     <div
-      className="fixed inset-0 z-50 grid place-items-center bg-black/70 p-4"
+      className="fixed inset-0 z-[110] grid place-items-center bg-black/70 p-2 min-[380px]:p-4"
       role="dialog"
       aria-modal="true"
       aria-labelledby={titleId}
@@ -2142,7 +2415,7 @@ function Modal({
     >
       <div
         ref={panel}
-        className="max-h-[90vh] w-full max-w-md overflow-y-auto rounded-3xl border border-white/10 bg-neutral-900 p-6 text-white shadow-2xl"
+        className={`max-h-[calc(100dvh-1rem)] w-full overflow-y-auto rounded-3xl border border-white/10 bg-neutral-900 p-4 text-white shadow-2xl min-[380px]:max-h-[90vh] min-[380px]:p-6 ${wide ? "max-w-2xl" : "max-w-md"}`}
       >
         <div className="mb-4 flex items-start justify-between gap-4">
           <h2 id={titleId} className="font-display text-xl font-bold">

@@ -6,8 +6,11 @@ updates.
 
 1. Create a branch from that exact commit and copy the supplied files over the checkout. Do not
    remove unrelated GitHub or Lovable files.
-2. Apply `supabase/migrations/20260811220000_finance_kpis_phase33.sql` to the connected Supabase
-   project. Run the complete pgTAP suite, including `supabase/tests/finance_kpis_phase33.sql`.
+2. Apply the canonical Phase 33 migration
+   `supabase/migrations/20260811214754_1542aaa3-c874-48b8-bc64-257ad8dda913.sql` to the connected
+   Supabase project. `20260811220000_finance_kpis_phase33.sql` is a compatibility no-op and must not
+   be restored to executable SQL. Run the complete pgTAP suite, including
+   `supabase/tests/finance_kpis_phase33.sql`.
 3. Run `npm ci`, `npm run release:guard`, `npm run check`,
    `npx playwright test e2e/till-responsive.spec.ts` and `npm audit --omit=dev`.
 4. Open a protected pull request. Require Application, Supabase migrations/pgTAP, CodeQL and Browser

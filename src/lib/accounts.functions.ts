@@ -135,36 +135,22 @@ export const createAccount = createServerFn({ method: "POST" })
   });
 
 /**
- * Counter-friendly account creation: any signed-in operator (admin or staff) can
- * add a judge/advocate tab on the fly from the manual order dialog.
+ * Counter-friendly account creation is manager-authorised. Staff can charge an
+ * existing active tab, but cannot create unlimited credit accounts themselves.
  */
 export const quickAddAccount = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .validator((d: unknown) => z.object({ name: z.string().min(2).max(120) }).parse(d))
   .handler(async ({ data, context }) => {
-    const [{ data: isAdmin }, { data: isStaff }] = await Promise.all([
-      context.supabase.rpc("has_role", { _user_id: context.userId, _role: "admin" }),
-      context.supabase.rpc("has_role", { _user_id: context.userId, _role: "staff" }),
-    ]);
-    if (!isAdmin && !isStaff) throw new Error("Staff sign-in required");
+    await requireAdmin(context);
     const name = data.name.trim();
-    const { data: existing } = await context.supabase
-      .from("accounts")
-      .select("id,name")
-      .ilike("name", name)
-      .limit(1)
-      .maybeSingle();
-    if (existing) return { id: existing.id, name: existing.name, existed: true as const };
-    for (let attempt = 0; attempt < 5; attempt++) {
-      const { data: row, error } = await context.supabase
-        .from("accounts")
-        .insert({ name, access_code_hash: await codeHash(randomCode()) })
-        .select("id,name")
-        .single();
-      if (!error) return { id: row.id, name: row.name, existed: false as const };
-      if (!/duplicate|unique/i.test(error.message)) throw new Error(error.message);
-    }
-    throw new Error("Could not create the account, try again.");
+    const { data: rows, error } = await context.supabase.rpc("cafe1_quick_add_account", {
+      _name: name,
+    });
+    if (error) throw new Error(error.message);
+    const row = rows?.[0];
+    if (!row) throw new Error("Could not create the account, try again.");
+    return row;
   });
 
 export const updateAccount = createServerFn({ method: "POST" })
@@ -259,20 +245,23 @@ export const recordAccountPayment = createServerFn({ method: "POST" })
   )
   .handler(async ({ data, context }) => {
     await requireAdmin(context);
-    const { data: row, error } = await context.supabase
-      .from("account_payments")
-      .insert({
-        account_id: data.account_id,
-        amount_cents: data.amount_cents,
-        method: data.method,
-        reference: data.reference || null,
-        note: data.note || null,
-        recorded_by: context.userId,
-      })
-      .select()
-      .single();
+    const { data: result, error } = await context.supabase.rpc("cafe1_record_tab_payment", {
+      _account_id: data.account_id,
+      _amount_cents: data.amount_cents,
+      _method: data.method,
+      _reference: data.reference || null,
+      _note: data.note || null,
+    });
     if (error) throw new Error(error.message);
-    return row;
+    return result as {
+      payment_id: string;
+      amount_cents: number;
+      balance_before_cents: number;
+      balance_after_cents: number;
+      fully_settled: boolean;
+      paid_orders: number;
+      settled_at: string | null;
+    };
   });
 
 export const deleteAccountPayment = createServerFn({ method: "POST" })
@@ -345,87 +334,4 @@ export const listTabOrders = createServerFn({ method: "GET" })
         .filter((r) => r.payment_status === "on_account")
         .reduce((s, r) => s + r.due_cents, 0),
     };
-  });
-
-/** Mark selected tab orders as fully paid, stamped with the payment time. */
-export const markTabOrdersPaid = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
-  .validator((d: unknown) =>
-    z
-      .object({
-        order_ids: z.array(z.string().uuid()).min(1).max(200),
-        method: z.enum(["cash", "card", "bank_transfer", "other"]).default("bank_transfer"),
-        reference: z.string().max(120).optional(),
-      })
-      .parse(d),
-  )
-  .handler(async ({ data, context }) => {
-    await requireAdmin(context);
-    const paidAt = new Date().toISOString();
-    const { data: orders, error: oErr } = await context.supabase
-      .from("orders")
-      .select("id,order_number,account_id,total_cents,refunded_cents")
-      .in("id", data.order_ids)
-      .eq("payment_status", "on_account");
-    if (oErr) throw new Error(oErr.message);
-    if (!orders?.length) return { ok: true, paid_at: paidAt, count: 0 };
-
-    const { error } = await context.supabase
-      .from("orders")
-      .update({ payment_status: "paid" })
-      .in(
-        "id",
-        orders.map((o) => o.id),
-      )
-      .eq("payment_status", "on_account");
-    if (error) throw new Error(error.message);
-
-    // Keep a dated receipt line per account. settled_at is stamped so the row
-    // is history only and does not double-count against the balance.
-    const byAccount = new Map<string, { amount: number; numbers: number[] }>();
-    for (const o of orders) {
-      if (!o.account_id) continue;
-      const entry = byAccount.get(o.account_id) ?? { amount: 0, numbers: [] };
-      entry.amount += Math.max(0, o.total_cents - o.refunded_cents);
-      entry.numbers.push(o.order_number);
-      byAccount.set(o.account_id, entry);
-    }
-    if (byAccount.size) {
-      const { error: pErr } = await context.supabase.from("account_payments").insert(
-        [...byAccount].map(([account_id, entry]) => ({
-          account_id,
-          amount_cents: entry.amount,
-          method: data.method,
-          reference: data.reference || null,
-          note: `Paid in full: orders ${entry.numbers.map((n) => `#${n}`).join(", ")}`,
-          recorded_by: context.userId,
-          settled_at: paidAt,
-        })),
-      );
-      if (pErr) throw new Error(pErr.message);
-    }
-    return { ok: true, paid_at: paidAt, count: orders.length };
-  });
-
-/** Mark all currently-on-tab orders for an account as paid (settlement). */
-export const settleAccount = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
-  .validator((d: unknown) => z.object({ account_id: z.string().uuid() }).parse(d))
-  .handler(async ({ data, context }) => {
-    await requireAdmin(context);
-    const { error } = await context.supabase
-      .from("orders")
-      .update({ payment_status: "paid" })
-      .eq("account_id", data.account_id)
-      .eq("payment_status", "on_account");
-    if (error) throw new Error(error.message);
-    // Roll any recorded part-payments into this settlement so they stop
-    // counting against the (now zero) balance, while staying in history.
-    const { error: pErr } = await context.supabase
-      .from("account_payments")
-      .update({ settled_at: new Date().toISOString() })
-      .eq("account_id", data.account_id)
-      .is("settled_at", null);
-    if (pErr) throw new Error(pErr.message);
-    return { ok: true };
   });
