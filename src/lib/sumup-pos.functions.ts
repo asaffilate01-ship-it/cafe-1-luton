@@ -1,6 +1,13 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { guessCategory } from "@/lib/cooking";
+import {
+  groupSumupSaleParts,
+  normaliseSumupClientTransactionId,
+  primarySumupSalePart,
+  sumupSalePaymentMethod,
+  sumupSaleTotalCents,
+} from "@/lib/sumup-sale-grouping";
 
 export type PosSide = "jury" | "judge" | "public";
 
@@ -146,6 +153,21 @@ async function loadSumupSale(
   return { detailed, products };
 }
 
+/** A split sale can attach the basket to only one payment part. */
+async function loadSumupSaleGroup(parts: SumupTxn[], key: string) {
+  const primary = primarySumupSalePart(parts);
+  const ordered = [primary, ...parts.filter((part) => part.id !== primary.id)].sort(
+    (a, b) => Number(Boolean(b.products?.length)) - Number(Boolean(a.products?.length)),
+  );
+  let fallback: Awaited<ReturnType<typeof loadSumupSale>> | null = null;
+  for (const part of ordered) {
+    const sale = await loadSumupSale(part, key);
+    fallback ??= sale;
+    if (sale.products?.length) return sale;
+  }
+  return fallback ?? { detailed: primary, products: primary.products };
+}
+
 /** Merchant code, needed by the receipt endpoint. Parsed off the sale itself. */
 function merchantCode(t: SumupTxn): string | null {
   const parts = (t.client_transaction_id ?? "").split(":");
@@ -171,9 +193,10 @@ async function sumupReceiptProducts(t: SumupTxn, key: string): Promise<SumupTxn[
   }
 }
 
-
 /** A sale is void when SumUp cancelled/failed it, or the full amount was refunded. */
-function isVoidTxn(t: Pick<SumupTxn, "status" | "amount" | "refunded_amount">): "refunded" | "cancelled" | null {
+function isVoidTxn(
+  t: Pick<SumupTxn, "status" | "amount" | "refunded_amount">,
+): "refunded" | "cancelled" | null {
   const st = String(t.status ?? "").toUpperCase();
   if (st === "REFUNDED") return "refunded";
   if (st === "CANCELLED" || st === "CANCELED" || st === "FAILED") return "cancelled";
@@ -229,7 +252,10 @@ function derivePosSide(
  * (product summary, line-item names, or the terminal's internal reference).
  * Falls back to collection (counter sale) when the terminal gives no hint.
  */
-function deriveFulfilment(t: SumupTxn, products: SumupTxn["products"]): {
+function deriveFulfilment(
+  t: SumupTxn,
+  products: SumupTxn["products"],
+): {
   type: "dine_in" | "collection" | "delivery";
   table_number: string | null;
 } {
@@ -249,11 +275,14 @@ function deriveFulfilment(t: SumupTxn, products: SumupTxn["products"]): {
   // product summary, e.g. "Latte (Takeaway)" or a "Take away" line item.
   const isTakeaway = /\b(take\s*-?\s*away|takeaway|to\s*go|take\s*out|takeout)\b/.test(haystack);
   const isDineIn =
-    /\b(dine\s*-?\s*in|dinein|eat\s*-?\s*in|sit\s*-?\s*in|in\s*house|eat\s*here)\b/.test(haystack) ||
+    /\b(dine\s*-?\s*in|dinein|eat\s*-?\s*in|sit\s*-?\s*in|in\s*house|eat\s*here)\b/.test(
+      haystack,
+    ) ||
     (!!tableMatch && !isTakeaway);
   const isDelivery = /\b(delivery|deliver)\b/.test(haystack);
 
-  if (isDineIn && !isTakeaway) return { type: "dine_in", table_number: tableMatch ? tableMatch[1].toUpperCase() : null };
+  if (isDineIn && !isTakeaway)
+    return { type: "dine_in", table_number: tableMatch ? tableMatch[1].toUpperCase() : null };
   if (isTakeaway) return { type: "collection", table_number: null };
   if (isDelivery) return { type: "delivery", table_number: null };
   return { type: "collection", table_number: null };
@@ -331,8 +360,14 @@ export const syncSumupPos = createServerFn({ method: "POST" })
     }
 
     // Verify caller is staff/admin (RLS-scoped supabase from middleware)
-    const { data: isAdmin } = await context.supabase.rpc("has_role", { _user_id: context.userId, _role: "admin" });
-    const { data: isStaff } = await context.supabase.rpc("has_role", { _user_id: context.userId, _role: "staff" });
+    const { data: isAdmin } = await context.supabase.rpc("has_role", {
+      _user_id: context.userId,
+      _role: "admin",
+    });
+    const { data: isStaff } = await context.supabase.rpc("has_role", {
+      _user_id: context.userId,
+      _role: "staff",
+    });
     if (!isAdmin && !isStaff) throw new Error("Forbidden");
 
     const { supabaseAdmin: admin } = await import("@/integrations/supabase/client.server");
@@ -350,10 +385,17 @@ export const syncSumupPos = createServerFn({ method: "POST" })
     if (Date.now() - lastAt < THROTTLE_MS) {
       return { imported: 0, skipped: 0, voided: 0, throttled: true, error: null };
     }
-    await admin.from("integration_status").upsert(
-      { key: "sumup_pos_sync", healthy: true, last_seen_at: new Date().toISOString(), updated_at: new Date().toISOString() },
-      { onConflict: "key" },
-    );
+    await admin
+      .from("integration_status")
+      .upsert(
+        {
+          key: "sumup_pos_sync",
+          healthy: true,
+          last_seen_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        },
+        { onConflict: "key" },
+      );
 
     // Pull the last 24h of transactions, NEWEST FIRST and paginated. SumUp
     // returns the oldest rows of the window by default, so a busy day pushes
@@ -375,8 +417,7 @@ export const syncSumupPos = createServerFn({ method: "POST" })
         break;
       }
       const payload = (await res.json()) as
-        | { items?: SumupTxn[]; links?: Array<{ href?: string; rel?: string }> }
-        | SumupTxn[];
+        { items?: SumupTxn[]; links?: Array<{ href?: string; rel?: string }> } | SumupTxn[];
       if (Array.isArray(payload)) {
         items.push(...payload);
         next = null;
@@ -436,25 +477,129 @@ export const syncSumupPos = createServerFn({ method: "POST" })
       if (t.transaction_code) voidByRef.set(t.transaction_code, v);
     }
 
-    for (const t of items) {
-      if (t.status !== "SUCCESSFUL" || String(t.type ?? "PAYMENT").toUpperCase() === "REFUND") { skipped++; continue; }
-      // Already refunded on the terminal — never bring it onto the kitchen display.
-      if (isVoidTxn(t) || voidByRef.has(t.transaction_code ?? "") || voidByRef.has(t.id)) { skipped++; continue; }
-      // Skip transactions that came from our own website checkout (they already exist as orders).
-      // Website checkouts are created via /v0.1/checkouts and reconciled by the webhook using sumup_transaction_id.
-      const ref = t.transaction_code ?? t.id;
-      // Dedupe against existing orders (either from webhook match or previous sync).
-      const { data: existing } = await supabaseAdmin
-        .from("orders")
-        .select("id, delivery_notes")
-        .or(`sumup_order_ref.eq.${ref},sumup_transaction_id.eq.${t.id}`)
-        .maybeSingle();
+    const successful = items.filter((transaction) => {
+      if (
+        transaction.status !== "SUCCESSFUL" ||
+        String(transaction.type ?? "PAYMENT").toUpperCase() === "REFUND"
+      ) {
+        skipped++;
+        return false;
+      }
+      if (
+        isVoidTxn(transaction) ||
+        voidByRef.has(transaction.transaction_code ?? "") ||
+        voidByRef.has(transaction.id)
+      ) {
+        skipped++;
+        return false;
+      }
+      return true;
+    });
+    const saleGroups = groupSumupSaleParts(successful);
+    const saleKeys = saleGroups.map((group) => group.saleKey);
+    const transactionIds = successful.map((transaction) => transaction.id);
+    const transactionRefs = successful
+      .map((transaction) => transaction.transaction_code)
+      .filter((value): value is string => Boolean(value));
+    const existingFields =
+      "id, delivery_notes, source, total_cents, payment_method, sumup_sale_key, sumup_transaction_id, sumup_order_ref";
+    const [bySaleKey, byTransaction, byReference, recentAttempts] = await Promise.all([
+      saleKeys.length
+        ? supabaseAdmin.from("orders").select(existingFields).in("sumup_sale_key", saleKeys)
+        : Promise.resolve({ data: [], error: null }),
+      transactionIds.length
+        ? supabaseAdmin
+            .from("orders")
+            .select(existingFields)
+            .in("sumup_transaction_id", transactionIds)
+        : Promise.resolve({ data: [], error: null }),
+      transactionRefs.length
+        ? supabaseAdmin.from("orders").select(existingFields).in("sumup_order_ref", transactionRefs)
+        : Promise.resolve({ data: [], error: null }),
+      supabaseAdmin
+        .from("payment_attempts")
+        .select("provider_transaction_id, client_transaction_id")
+        .gte("created_at", since),
+    ]);
+    for (const result of [bySaleKey, byTransaction, byReference, recentAttempts]) {
+      if (result.error) throw new Error(result.error.message);
+    }
+
+    type ExistingSumupOrder = NonNullable<typeof bySaleKey.data>[number];
+    const existingByIdentity = new Map<string, ExistingSumupOrder>();
+    for (const order of [
+      ...(bySaleKey.data ?? []),
+      ...(byTransaction.data ?? []),
+      ...(byReference.data ?? []),
+    ]) {
+      if (order.sumup_sale_key) existingByIdentity.set(`sale:${order.sumup_sale_key}`, order);
+      if (order.sumup_transaction_id)
+        existingByIdentity.set(`transaction:${order.sumup_transaction_id}`, order);
+      if (order.sumup_order_ref)
+        existingByIdentity.set(`reference:${order.sumup_order_ref}`, order);
+    }
+    const readerTransactionIds = new Set(
+      (recentAttempts.data ?? [])
+        .map((attempt) => attempt.provider_transaction_id)
+        .filter((value): value is string => Boolean(value)),
+    );
+    const readerSaleKeys = new Set(
+      (recentAttempts.data ?? [])
+        .map((attempt) => normaliseSumupClientTransactionId(attempt.client_transaction_id))
+        .filter((value): value is string => Boolean(value)),
+    );
+
+    for (const { saleKey, paymentParts } of saleGroups) {
+      // Cafe1's own Solo flow has already prepared one counter order. Never
+      // re-import its provider payment as an unrelated SumUp POS ticket while
+      // the till and KDS reconciliation jobs race each other.
+      if (
+        paymentParts.some((part) => readerTransactionIds.has(part.id)) ||
+        readerSaleKeys.has(saleKey)
+      ) {
+        skipped += paymentParts.length;
+        continue;
+      }
+
+      const primary = primarySumupSalePart(paymentParts);
+      const ref = primary.transaction_code ?? primary.id;
+      const existing =
+        existingByIdentity.get(`sale:${saleKey}`) ??
+        paymentParts
+          .map(
+            (part) =>
+              existingByIdentity.get(`transaction:${part.id}`) ??
+              (part.transaction_code
+                ? existingByIdentity.get(`reference:${part.transaction_code}`)
+                : undefined),
+          )
+          .find(Boolean);
+      const totalCents = sumupSaleTotalCents(paymentParts);
+      const paymentMethod = sumupSalePaymentMethod(paymentParts);
       if (existing) {
+        // If the first payment part arrived before the remaining split parts,
+        // keep the same order and expand it to the final sale total.
+        if (
+          existing.source === "sumup_pos" &&
+          (existing.total_cents !== totalCents ||
+            existing.payment_method !== paymentMethod ||
+            existing.sumup_sale_key !== saleKey)
+        ) {
+          await supabaseAdmin
+            .from("orders")
+            .update({
+              subtotal_cents: totalCents,
+              total_cents: totalCents,
+              payment_method: paymentMethod,
+              sumup_sale_key: saleKey,
+            })
+            .eq("id", existing.id);
+        }
         // The note is often only on the detailed transaction, which arrives
         // after the ticket was first created. Backfill it so the till note
         // always shows on the kitchen card.
         if (!existing.delivery_notes) {
-          const sale = await loadSumupSale(t, key);
+          const sale = await loadSumupSaleGroup(paymentParts, key);
           const backfill = sumupOrderNote(sale.detailed, sale.products);
           if (backfill) {
             await supabaseAdmin
@@ -463,16 +608,14 @@ export const syncSumupPos = createServerFn({ method: "POST" })
               .eq("id", existing.id);
           }
         }
-        skipped++;
+        skipped += paymentParts.length;
         continue;
       }
 
-      // Try to fetch details: the basket, and the SumUp login that took the sale
-      // (neither is present on the history listing).
-      const { detailed, products } = await loadSumupSale(t, key);
+      // One payment part carries the sale basket; another can be cash/card only.
+      const { detailed, products } = await loadSumupSaleGroup(paymentParts, key);
 
-      const totalCents = Math.round(Number(t.amount) * 100);
-      const cardTail = t.card?.last_4_digits ? ` ••${t.card.last_4_digits}` : "";
+      const cardTail = detailed.card?.last_4_digits ? ` ••${detailed.card.last_4_digits}` : "";
       const fulfilment = deriveFulfilment(detailed, products);
       const posSide = derivePosSide(detailed, products, mapping);
       const schedule = deriveSchedule(detailed, products);
@@ -488,6 +631,7 @@ export const syncSumupPos = createServerFn({ method: "POST" })
           delivery_notes: sumupOrderNote(detailed, products),
           status: "preparing",
           payment_status: "paid",
+          payment_method: paymentMethod,
           subtotal_cents: totalCents,
           delivery_fee_cents: 0,
           discount_cents: 0,
@@ -498,14 +642,18 @@ export const syncSumupPos = createServerFn({ method: "POST" })
           schedule_mode: schedule.schedule_mode,
           scheduled_for: schedule.scheduled_for,
           source: "sumup_pos",
+          sumup_sale_key: saleKey,
           sumup_order_ref: ref,
-          sumup_transaction_id: t.id,
-          sumup_reference: t.transaction_code ?? null,
+          sumup_transaction_id: primary.id,
+          sumup_reference: primary.transaction_code ?? null,
         })
         .select("id")
         .single();
 
-      if (insErr || !inserted) { skipped++; continue; }
+      if (insErr || !inserted) {
+        skipped++;
+        continue;
+      }
 
       const menuByName = await menuByNameIndex();
 
@@ -517,29 +665,32 @@ export const syncSumupPos = createServerFn({ method: "POST" })
         return matches.find((match) => match.category?.trim().toLowerCase() === category);
       };
 
-      const lines = (products && products.length > 0)
-        ? products.map((p) => {
-            const matched = matchMenuItem(p);
-            return {
-              order_id: inserted.id,
-              menu_item_id: matched?.id ?? null,
-              category_label:
-                sumupCategory(p) ?? matched?.category ?? guessCategory(p.name ?? "") ?? null,
-              name: p.name || "Item",
-              qty: Math.max(1, Number(p.quantity ?? 1)),
-              unit_price_cents: Math.round(Number(p.price ?? 0) * 100),
-              notes: sumupLineNote(p),
-            };
-          })
-        : [{
-            order_id: inserted.id,
-            menu_item_id: null as string | null,
-            category_label: null as string | null,
-            name: t.product_summary || "SumUp POS sale",
-            qty: 1,
-            unit_price_cents: totalCents,
-            notes: null as string | null,
-          }];
+      const lines =
+        products && products.length > 0
+          ? products.map((p) => {
+              const matched = matchMenuItem(p);
+              return {
+                order_id: inserted.id,
+                menu_item_id: matched?.id ?? null,
+                category_label:
+                  sumupCategory(p) ?? matched?.category ?? guessCategory(p.name ?? "") ?? null,
+                name: p.name || "Item",
+                qty: Math.max(1, Number(p.quantity ?? 1)),
+                unit_price_cents: Math.round(Number(p.price ?? 0) * 100),
+                notes: sumupLineNote(p),
+              };
+            })
+          : [
+              {
+                order_id: inserted.id,
+                menu_item_id: null as string | null,
+                category_label: null as string | null,
+                name: detailed.product_summary || primary.product_summary || "SumUp POS sale",
+                qty: 1,
+                unit_price_cents: totalCents,
+                notes: null as string | null,
+              },
+            ];
 
       await supabaseAdmin.from("order_items").insert(lines);
       imported++;
@@ -557,15 +708,20 @@ export const syncSumupPos = createServerFn({ method: "POST" })
     for (const o of live ?? []) {
       const refKey = o.sumup_transaction_id ?? o.sumup_order_ref;
       if (!refKey) continue;
-      let voided_as = voidByRef.get(o.sumup_transaction_id ?? "") ?? voidByRef.get(o.sumup_order_ref ?? "");
-      const seen = items.some((t) => t.id === o.sumup_transaction_id || t.transaction_code === o.sumup_order_ref);
+      let voided_as =
+        voidByRef.get(o.sumup_transaction_id ?? "") ?? voidByRef.get(o.sumup_order_ref ?? "");
+      const seen = items.some(
+        (t) => t.id === o.sumup_transaction_id || t.transaction_code === o.sumup_order_ref,
+      );
       // Cap the one-by-one SumUp lookups: they are the slowest part of the
       // sweep and older tickets get picked up on a later pass anyway.
       if (!voided_as && !seen && lookups < 10) {
         lookups++;
         // Not in the recent window — ask SumUp directly.
         try {
-          const param = o.sumup_transaction_id ? `id=${encodeURIComponent(o.sumup_transaction_id)}` : `transaction_code=${encodeURIComponent(o.sumup_order_ref!)}`;
+          const param = o.sumup_transaction_id
+            ? `id=${encodeURIComponent(o.sumup_transaction_id)}`
+            : `transaction_code=${encodeURIComponent(o.sumup_order_ref!)}`;
           const d = await fetch(`https://api.sumup.com/v0.1/me/transactions?${param}`, {
             headers: { Authorization: `Bearer ${key}` },
           });
@@ -573,7 +729,9 @@ export const syncSumupPos = createServerFn({ method: "POST" })
             const dj = (await d.json()) as SumupTxn;
             voided_as = isVoidTxn(dj) ?? undefined;
           }
-        } catch { /* ignore */ }
+        } catch {
+          /* ignore */
+        }
       }
       if (voided_as) {
         const refunded = voided_as === "refunded";

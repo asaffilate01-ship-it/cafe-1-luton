@@ -10,7 +10,7 @@ import {
 } from "@/lib/order-context";
 import { useStoreStatus } from "@/hooks/use-store-status";
 import { buildScheduleSlots } from "@/lib/business";
-import { X, MapPin, Clock, Store, Bike, Utensils } from "lucide-react";
+import { X, MapPin, Clock, Store, Bike, Utensils, Eye } from "lucide-react";
 
 /**
  * Jury Only menu: delivery is restricted to the court jury areas — nowhere else.
@@ -28,11 +28,14 @@ export const JURY_DELIVERY_ROOMS = [
 export function OrderSetupGate({
   open,
   onClose,
+  onBrowse,
   dismissible = true,
   juryOnly = false,
 }: {
   open: boolean;
   onClose: () => void;
+  /** Public menu only: leave without creating an order context. */
+  onBrowse?: () => void;
   dismissible?: boolean;
   /** Restrict delivery to the court jury areas (Jury Only menu). */
   juryOnly?: boolean;
@@ -44,7 +47,9 @@ export function OrderSetupGate({
   const [step, setStep] = useState<1 | 2>(1);
   const [mode, setMode] = useState<OrderMode>(existing?.mode ?? "collection");
   const [postcode, setPostcode] = useState(existing?.postcode ?? "");
-  const [area, setArea] = useState<null | { ok: boolean; message: string; distance_m?: number }>(null);
+  const [area, setArea] = useState<null | { ok: boolean; message: string; distance_m?: number }>(
+    null,
+  );
   const [areaBusy, setAreaBusy] = useState(false);
   const [scheduleMode, setScheduleMode] = useState<ScheduleMode>(existing?.schedule_mode ?? "asap");
   const [scheduledFor, setScheduledFor] = useState<string>(existing?.scheduled_for ?? "");
@@ -123,7 +128,9 @@ export function OrderSetupGate({
       role="dialog"
       aria-modal="true"
       aria-labelledby="order-setup-title"
-      onKeyDown={(e) => { if (e.key === "Escape" && dismissible) onClose?.(); }}
+      onKeyDown={(e) => {
+        if (e.key === "Escape" && dismissible) onClose();
+      }}
       className="fixed inset-0 z-[60] flex items-end justify-center bg-black/50 p-0 sm:items-center sm:p-4"
     >
       <div className="w-full max-w-lg overflow-hidden rounded-t-3xl bg-card shadow-2xl sm:rounded-3xl">
@@ -131,7 +138,11 @@ export function OrderSetupGate({
           <div>
             <p className="text-xs font-medium uppercase tracking-widest text-primary">Cafe1</p>
             <h2 id="order-setup-title" className="font-display text-lg font-bold">
-              {step === 1 ? "How would you like your order?" : "When?"}
+              {step === 1
+                ? onBrowse
+                  ? "Order now or just browse?"
+                  : "How would you like your order?"
+                : "When?"}
             </h2>
           </div>
           {dismissible && (
@@ -149,14 +160,18 @@ export function OrderSetupGate({
         <div className="space-y-5 px-5 py-5">
           {step === 1 && (
             <>
+              {onBrowse && (
+                <p className="text-sm leading-relaxed text-muted-foreground">
+                  Choose an ordering option, or look through the menu without selecting delivery,
+                  pickup or dine-in.
+                </p>
+              )}
               <div className="grid grid-cols-3 gap-2">
-                {(
-                  [
-                    { m: "collection" as const, label: "Pickup", icon: Store },
-                    { m: "delivery" as const, label: "Delivery", icon: Bike },
-                    { m: "dine_in" as const, label: "Dine in", icon: Utensils },
-                  ]
-                ).map(({ m, label, icon: Icon }) => (
+                {[
+                  { m: "collection" as const, label: "Pickup", icon: Store },
+                  { m: "delivery" as const, label: "Delivery", icon: Bike },
+                  { m: "dine_in" as const, label: "Dine in", icon: Utensils },
+                ].map(({ m, label, icon: Icon }) => (
                   <button
                     type="button"
                     key={m}
@@ -270,7 +285,9 @@ export function OrderSetupGate({
                     </div>
                   )}
                   <p className="mt-2 text-xs text-muted-foreground">
-                    We deliver up to ½ mile from {settings?.delivery_origin_postcode ?? "AL1 3JU"}, {(settings?.delivery_open_time ?? "08:30").slice(0, 5)}–{(settings?.delivery_close_time ?? "16:30").slice(0, 5)}.
+                    We deliver up to ½ mile from {settings?.delivery_origin_postcode ?? "AL1 3JU"},{" "}
+                    {(settings?.delivery_open_time ?? "08:30").slice(0, 5)}–
+                    {(settings?.delivery_close_time ?? "16:30").slice(0, 5)}.
                   </p>
                 </div>
               )}
@@ -283,6 +300,22 @@ export function OrderSetupGate({
               >
                 Continue
               </button>
+
+              {onBrowse && (
+                <>
+                  <div className="flex items-center gap-3 text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">
+                    <span className="h-px flex-1 bg-border" /> Or{" "}
+                    <span className="h-px flex-1 bg-border" />
+                  </div>
+                  <button
+                    type="button"
+                    onClick={onBrowse}
+                    className="flex min-h-12 w-full items-center justify-center gap-2 rounded-full border border-border bg-background px-4 font-semibold transition hover:border-primary hover:bg-primary/5 hover:text-primary"
+                  >
+                    <Eye className="h-4 w-4" /> Just browsing
+                  </button>
+                </>
+              )}
             </>
           )}
 

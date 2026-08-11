@@ -16,6 +16,7 @@ import { useStoreStatus } from "@/hooks/use-store-status";
 import { buildScheduleSlots } from "@/lib/business";
 import { useOrderContext, describeContext } from "@/lib/order-context";
 import { OrderSetupGate } from "@/components/order-setup-gate";
+import { requiresOrderSetup } from "@/lib/menu-intent";
 import { useJurySession } from "@/lib/jury-session";
 import { Settings2 } from "lucide-react";
 import {
@@ -119,6 +120,10 @@ function Checkout() {
       }
     }
   }, [ctx]);
+
+  useEffect(() => {
+    if (requiresOrderSetup(ctx, c.items.length)) setGateOpen(true);
+  }, [c.items.length, ctx]);
 
   async function verifyPostcode(pc: string) {
     if (!pc.trim()) {
@@ -394,6 +399,11 @@ function Checkout() {
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     if (!c.items.length) return;
+    if (!ctx) {
+      setGateOpen(true);
+      toast.error("Choose pickup, delivery or dine-in before continuing.");
+      return;
+    }
     if (
       voucher &&
       mode === "delivery" &&
@@ -504,6 +514,7 @@ function Checkout() {
           <OrderSetupGate
             open={gateOpen}
             onClose={() => setGateOpen(false)}
+            dismissible={!!ctx}
             juryOnly={!!jurySessionActive}
           />
           {!status.open && (

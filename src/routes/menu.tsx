@@ -30,7 +30,8 @@ import {
 import { toast } from "sonner";
 import { OrderSetupGate } from "@/components/order-setup-gate";
 import { useJurySession } from "@/lib/jury-session";
-import { describeContext, useOrderContext, orderContext } from "@/lib/order-context";
+import { describeContext, useOrderContext } from "@/lib/order-context";
+import { hasMenuBrowsingIntent, setMenuBrowsingIntent } from "@/lib/menu-intent";
 import {
   groupModifierOptions,
   selectionInstruction,
@@ -100,10 +101,22 @@ function MenuPage() {
   const { juror: jurorParam } = Route.useSearch();
   const ctx = useOrderContext();
   const [gateOpen, setGateOpen] = useState(false);
+  const [intentReady, setIntentReady] = useState(false);
+  const [browsingOnly, setBrowsingOnly] = useState(false);
   const jurySessionActive = useJurySession();
   useEffect(() => {
-    if (!ctx) setGateOpen(true);
-  }, [ctx]);
+    setBrowsingOnly(hasMenuBrowsingIntent());
+    setIntentReady(true);
+  }, []);
+  useEffect(() => {
+    if (!intentReady) return;
+    if (ctx) {
+      setBrowsingOnly(false);
+      setMenuBrowsingIntent(false);
+      return;
+    }
+    if (!browsingOnly) setGateOpen(true);
+  }, [browsingOnly, ctx, intentReady]);
   const { data, isLoading } = useQuery<PublicMenu>({
     queryKey: ["menu"],
     queryFn: loadPublicMenu,
@@ -125,6 +138,18 @@ function MenuPage() {
   const cartState = useCart();
   const cartCount = cartState.items.reduce((a, i) => a + i.qty, 0);
   const cartTotal = cartState.items.reduce((a, i) => a + i.qty * i.price_cents, 0);
+
+  function browseMenuOnly() {
+    setMenuBrowsingIntent(true);
+    setBrowsingOnly(true);
+    setGateOpen(false);
+  }
+
+  function openOrderSetup() {
+    setMenuBrowsingIntent(false);
+    setBrowsingOnly(false);
+    setGateOpen(true);
+  }
 
   useEffect(() => {
     if (!user) {
@@ -352,18 +377,21 @@ function MenuPage() {
           </div>
           <button
             type="button"
-            onClick={() => setGateOpen(true)}
+            onClick={openOrderSetup}
             className="mt-2 inline-flex items-center gap-2 rounded-full border border-primary/40 bg-primary/10 px-4 py-2 text-sm font-semibold text-primary hover:bg-primary/20 sm:mt-3"
           >
             <Settings2 className="h-4 w-4" />
-            {describeContext(ctx)}
-            <span className="text-xs font-medium opacity-70">Change</span>
+            {ctx ? describeContext(ctx) : browsingOnly ? "Just browsing" : "Set up order"}
+            <span className="text-xs font-medium opacity-70">
+              {ctx ? "Change" : browsingOnly ? "Order now" : "Choose"}
+            </span>
           </button>
         </div>
       </div>
       <OrderSetupGate
         open={gateOpen}
         onClose={() => setGateOpen(false)}
+        onBrowse={!ctx ? browseMenuOnly : undefined}
         dismissible={!!ctx}
         juryOnly={!!jurySessionActive}
       />
