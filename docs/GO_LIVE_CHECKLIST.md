@@ -31,6 +31,7 @@ Do not enable live ordering or live SumUp charging until every mandatory box is 
 - [ ] Restrict the Google Maps browser key to `https://cafe1stalbans.co.uk/*` and only required APIs.
 - [ ] Enable GitHub secret scanning and Supabase security notifications.
 - [ ] Verify CSP, HSTS, frame blocking and `Cache-Control: no-store` on protected routes at the production edge.
+- [ ] Verify anonymous `/`, `/menu`, `/socials` and `/blog` HTML exposes the five-minute CDN policy, while cookie-bearing requests and every private route bypass shared caching.
 - [ ] Confirm `npm run verify:build-output` passes and the deployed `/admin/security` response contains `private, no-store`.
 
 ## 4. Payments and till
@@ -44,7 +45,8 @@ Do not enable live ordering or live SumUp charging until every mandatory box is 
 - [ ] Confirm duplicate requests do not create a second order, charge, refund or loyalty award.
 - [ ] Reconcile the test transactions against the SumUp settlement export.
 - [ ] On the café phone and tablet, complete orders at 320–430px portrait, phone landscape, tablet portrait checkout-sheet and tablet landscape split-view layouts; retain screenshots with operator and date.
-- [ ] On a real 320–430px phone, confirm the till action menu stays above every product image, the three-column quick-key grid is aligned and readable, and checkout remains reachable without horizontal overflow.
+- [ ] On real 320–430px phones, confirm the till action menu stays above every product image, the dense three/four-column quick-key grid is aligned and readable, safe areas are applied once, and checkout remains reachable without horizontal overflow.
+- [ ] Measure three cold and three warm production navigations for `/`, `/menu`, `/socials` and `/till`; retain timings and confirm public edge caching reduces the cold public-page delay without caching the till.
 - [ ] Test the receipt printer, cash drawer and customer display on the production till device.
 
 ## 5. Ordering and operations
@@ -67,6 +69,8 @@ Do not enable live ordering or live SumUp charging until every mandatory box is 
 - [ ] Confirm the scheduled **Production smoke** workflow has a recent successful run and retained JSON evidence.
 - [ ] Verify email delivery, bounce handling and the correct sender/domain records.
 - [ ] Configure official social profiles, automatic YouTube/Instagram feeds and `GOOGLE_PLACE_ID` using `docs/SOCIALS_AUTO_SETUP.md`; verify `/about` and `/socials`, the marketing-consent gate, source links and Google review attribution on phone and desktop.
+- [ ] On `/socials`, choose **Allow and show TikTok**; confirm the cookie banner closes, the canonical `@cafe1_stalbans` creator feed replaces the paused card, and no **Profile not available** error appears.
+- [ ] Correct the public TikTok bio's legacy postcode and `08:30–17:00` hours to `AL1 3JU` and the confirmed public hours: Mon–Fri 08:00–17:00, delivery 08:30–16:30, weekends and England/Wales bank holidays closed. Verify Facebook, Instagram and YouTube profiles show the same NAP and hours.
 - [ ] If Deliveroo Orders API is enabled, complete `docs/DELIVEROO_ORDERS_API_SETUP.md`: verify exact-byte HMAC rejection, accepted-only KDS release, cross-channel duplicate handling, tablet sync status, scheduled orders, cancellation and staff-triggered ready-for-collection.
 - [ ] While the Hub watcher fallback is used, complete `docs/DELIVEROO_WATCHER_SETUP.md`: prove accepted-only KDS release, exact items/modifiers/notes/total, refresh/restart deduplication, cancellation removal, minute heartbeats, sign-out warning and automatic Windows restart. Record the chosen flow under `deliveroo_kds_integration`.
 

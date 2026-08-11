@@ -81,9 +81,10 @@ async function expectNoHorizontalOverflow(page: Page) {
 }
 
 function expectedProductColumns(width: number) {
-  if (width < 560) return 3;
-  if (width < 800) return 4;
-  if (width < 960) return 5;
+  if (width < 390) return 3;
+  if (width < 560) return 4;
+  if (width < 800) return 5;
+  if (width < 960) return 6;
   if (width < 1536) return 4;
   return 5;
 }

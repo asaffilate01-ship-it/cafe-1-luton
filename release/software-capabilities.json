@@ -479,7 +479,33 @@
             "getAutomaticSocialFeed",
             "SocialFeedCarousel",
             "TikTokCreatorFeed",
-            "FacebookPageFeed"
+            "FacebookPageFeed",
+            "showAutomaticPosts",
+            "Latest videos and posts"
+          ]
+        },
+        {
+          "path": "src/lib/social-media.ts",
+          "includes": [
+            "tiktokCreatorHandle",
+            "toLowerCase()",
+            "TikTok profile navigation is case-insensitive"
+          ]
+        },
+        {
+          "path": "src/components/cookie-banner.tsx",
+          "includes": [
+            "setOpen(false)",
+            "Consent may be granted from a social placeholder",
+            "Loads social videos and posts"
+          ]
+        },
+        {
+          "path": "e2e/go-live.spec.ts",
+          "includes": [
+            "social consent opens the canonical TikTok creator feed",
+            "cafe1_stalbans",
+            "cookie preferences"
           ]
         },
         {
@@ -546,10 +572,12 @@
             "min-[960px]:grid-cols-[minmax(0,1fr)_340px]",
             "xl:grid-cols-[148px_minmax(0,1fr)_392px]",
             "grid-cols-[auto_minmax(0,1fr)_auto]",
-            "grid-cols-3 gap-1.5",
-            "min-[560px]:grid-cols-4",
+            "grid-cols-3 items-stretch gap-1.5",
+            "min-[390px]:grid-cols-4",
+            "min-[560px]:grid-cols-5",
             "data-pos-region=\"till-menu\"",
-            "menuOpen ? \"z-[60]\" : \"z-20\"",
+            "relative z-[80] grid",
+            "z-[90]",
             "sm:w-[min(30rem,100vw)]",
             "View order",
             "env(safe-area-inset-bottom)",
@@ -773,6 +801,65 @@
         {
           "path": "scripts/verify-seo.mjs",
           "includes": ["verifySeoRepository", "expected ${BLOG_SLUGS.length} article bodies"]
+        }
+      ]
+    },
+    {
+      "id": "mobile_till_phase32",
+      "name": "Safe-area-correct dense mobile till with deterministic menu layering",
+      "evidence": [
+        {
+          "path": "src/routes/till.tsx",
+          "includes": [
+            "min-[390px]:grid-cols-4",
+            "min-[560px]:grid-cols-5",
+            "min-[800px]:grid-cols-6",
+            "z-[90]",
+            "env(safe-area-inset-top)"
+          ]
+        },
+        {
+          "path": "e2e/till-responsive.spec.ts",
+          "includes": [
+            "phone till aligns catalogue and order",
+            "portrait tablet uses the aligned checkout sheet",
+            "till action menu stays above the product grid"
+          ]
+        },
+        {
+          "path": "src/styles.css",
+          "includes": ["Padding both html and body applied the inset twice", "padding: 0"]
+        }
+      ]
+    },
+    {
+      "id": "public_cold_start_cache",
+      "name": "Anonymous public edge caching without private-route or personalised leakage",
+      "evidence": [
+        {
+          "path": "src/lib/public-cache.ts",
+          "includes": [
+            "s-maxage=300",
+            "stale-while-revalidate=86400",
+            "request.headers.has(\"authorization\")",
+            "request.headers.has(\"cookie\")",
+            "response.headers.has(\"set-cookie\")"
+          ]
+        },
+        {
+          "path": "src/server.ts",
+          "includes": [
+            "canCachePublicDocument",
+            "PUBLIC_DOCUMENT_CACHE_HEADERS",
+            "isPrivatePath(pathname)"
+          ]
+        },
+        {
+          "path": "src/lib/__tests__/server-security.test.ts",
+          "includes": [
+            "lets the CDN absorb cold starts only for anonymous public HTML",
+            "never shares public documents when a request or response is personalised"
+          ]
         }
       ]
     }

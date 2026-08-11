@@ -3,6 +3,7 @@ import "./lib/error-capture";
 import { consumeLastCapturedError } from "./lib/error-capture";
 import { renderErrorPage } from "./lib/error-page";
 import { isPrivatePath, PRIVATE_CACHE_HEADERS } from "./lib/private-cache";
+import { canCachePublicDocument, PUBLIC_DOCUMENT_CACHE_HEADERS } from "./lib/public-cache";
 
 type ServerEntry = {
   fetch: (request: Request, env: unknown, ctx: unknown) => Promise<Response> | Response;
@@ -67,6 +68,10 @@ export function withProductionHeaders(request: Request, response: Response): Res
       headers.set(name, value);
     }
     headers.set("X-Robots-Tag", "noindex, nofollow, noarchive");
+  } else if (!previewHost && canCachePublicDocument(request, response)) {
+    for (const [name, value] of Object.entries(PUBLIC_DOCUMENT_CACHE_HEADERS)) {
+      headers.set(name, value);
+    }
   }
 
   return new Response(response.body, {

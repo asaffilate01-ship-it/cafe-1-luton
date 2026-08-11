@@ -58,7 +58,7 @@ export function SiteHeader() {
     { to: "/contact", label: "Contact" },
   ];
   return (
-    <header className="sticky top-0 z-40 border-b border-border bg-background/85 backdrop-blur">
+    <header className="sticky top-0 z-40 border-b border-border bg-background/95 pt-[env(safe-area-inset-top)] supports-[backdrop-filter]:bg-background/85 supports-[backdrop-filter]:backdrop-blur">
       <div className="mx-auto flex h-20 max-w-6xl items-center justify-between px-4">
         <Link to="/" className="flex items-center gap-2">
           <img
