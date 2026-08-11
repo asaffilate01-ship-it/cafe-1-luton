@@ -112,9 +112,24 @@ for (const viewport of [
     await expectProductColumns(page, viewport.width);
 
     const header = page.locator('[data-pos-region="header"]');
+    const fulfilment = page.locator('[data-pos-region="mobile-fulfilment"]');
     const bar = page.locator('[data-pos-region="mobile-order-bar"]');
+    await expect(fulfilment).toBeVisible();
+    await expect(fulfilment.getByRole("button", { name: "Dine in" })).toBeVisible();
+    await expect(fulfilment.getByRole("button", { name: "Takeaway" })).toBeVisible();
+    const fulfilmentBox = await fulfilment.boundingBox();
+    expect(fulfilmentBox?.x).toBeGreaterThanOrEqual(0);
+    expect((fulfilmentBox?.x ?? 0) + (fulfilmentBox?.width ?? 0)).toBeLessThanOrEqual(
+      viewport.width + 1,
+    );
+    await fulfilment.getByRole("button", { name: "Dine in" }).click();
+    await expect(fulfilment.getByRole("button", { name: "Dine in" })).toHaveAttribute(
+      "aria-pressed",
+      "true",
+    );
     await expect(bar).toBeVisible();
     await expect(bar).toContainText("View order");
+    await expect(bar).toContainText("Dine in");
     const [headerBox, barBox] = await Promise.all([header.boundingBox(), bar.boundingBox()]);
     expect(headerBox?.x).toBeGreaterThanOrEqual(0);
     expect((headerBox?.x ?? 0) + (headerBox?.width ?? 0)).toBeLessThanOrEqual(viewport.width + 1);
@@ -124,6 +139,14 @@ for (const viewport of [
     await bar.click();
     const order = page.locator('[data-pos-region="order"]');
     await expect(order).toBeVisible();
+    const orderFulfilment = order.locator('[data-pos-region="order-fulfilment"]');
+    await expect(orderFulfilment.getByRole("button", { name: "Dine in" })).toBeVisible();
+    await expect(orderFulfilment.getByRole("button", { name: "Takeaway" })).toBeVisible();
+    const orderFulfilmentBox = await orderFulfilment.boundingBox();
+    expect(orderFulfilmentBox?.x).toBeGreaterThanOrEqual(0);
+    expect((orderFulfilmentBox?.x ?? 0) + (orderFulfilmentBox?.width ?? 0)).toBeLessThanOrEqual(
+      viewport.width + 1,
+    );
     const orderBox = await order.boundingBox();
     if (viewport.width < 640) {
       expect(orderBox?.x).toBe(0);

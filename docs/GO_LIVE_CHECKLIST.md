@@ -95,6 +95,25 @@ Do not enable live ordering or live SumUp charging until every mandatory box is 
 - [ ] Make Google Business Profile NAP, regular hours, public-holiday hours, menu URL and ordering links match production.
 - [ ] Record Search Console and Business Profile baseline metrics before assessing organic movement.
 
+## 9. Financial controls and stock purchasing
+
+- [ ] Apply `20260811220000_finance_kpis_phase33.sql` and retain the full pgTAP result.
+- [ ] As anonymous, customer, staff and driver, prove financial RPCs and tables are denied; as a
+      named AAL2 manager, prove authorised access and audit events.
+- [ ] Enter an opening stock count, current gross supplier costs and complete recipes for all sold
+      items; resolve every zero-cost sale-line warning before relying on gross margin.
+- [ ] Receive a controlled supplier invoice and prove its delivery/discount-adjusted landed cost,
+      stock movement and purchase order are created exactly once. Do not also post it as an operating
+      expense.
+- [ ] Import the official SumUp POS expense CSV twice and prove the second import is skipped. Void one
+      test expense with a reason and retain both the record and audit event.
+- [ ] Give the server credential `payouts.read`, sync SumUp payouts/deductions twice and prove the
+      settlement and processing-fee records remain idempotent.
+- [ ] Reconcile one full week of gross sales, vouchers, cash, card, refunds, SumUp fees/payouts,
+      expenses and supplier purchases to the till, SumUp and bank statement.
+- [ ] Have the accountant approve the chart of accounts and confirm the non-VAT treatment, opening
+      balances, payroll, accruals, depreciation and statutory/year-end process.
+
 Record payment, hardware, recovery and staff evidence in `docs/OPERATIONAL_ACCEPTANCE_RECORD.md`.
 
 Automated GitHub gates can be recorded without editing JSON by hand: after the
