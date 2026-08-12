@@ -27,7 +27,9 @@ export const verifyTabCode = createServerFn({ method: "POST" })
 
 function randomCode(): string {
   const alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"; // no ambiguous chars
-  const random = new Uint8Array(8);
+  // 12 characters over a 32-symbol alphabet ≈ 60 bits of entropy, so the
+  // stored hash cannot be brute-forced offline the way a short code could.
+  const random = new Uint8Array(12);
   crypto.getRandomValues(random);
   let out = "";
   for (const value of random) out += alphabet[value % alphabet.length];
