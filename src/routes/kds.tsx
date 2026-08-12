@@ -253,10 +253,14 @@ type Station = (typeof STATIONS)[number];
  */
 function preferMenuMeta<T extends { category: string | null }>(
   candidates: T[] | undefined,
+  name?: string,
 ): T | undefined {
   if (!candidates?.length) return undefined;
   if (candidates.length === 1) return candidates[0];
-  const winner = preferCategory(candidates.map((c) => c.category));
+  const winner = preferCategory(
+    candidates.map((c) => c.category),
+    name,
+  );
   return candidates.find((c) => c.category === winner) ?? candidates[0];
 }
 
@@ -524,7 +528,7 @@ function KDS() {
           : undefined;
         const byIdMeta = item.menu_item_id ? byId.get(item.menu_item_id) : undefined;
         const candidates = byName.get(key) ?? byName.get(fuzzyMenuKey(item.name, nameKeys) ?? "");
-        const direct = byIdMeta ?? withCategory ?? preferMenuMeta(candidates);
+        const direct = byIdMeta ?? withCategory ?? preferMenuMeta(candidates, item.name);
         if (direct) return direct;
         // Nothing on the menu looks like it — fall back to keyword rules.
         const cooked = looksCooked(item.name);
@@ -1472,10 +1476,10 @@ function KDS() {
           return (
             <div
               key={t.id}
-              className={`kds-card flex min-w-0 flex-col break-words rounded-2xl border-4 bg-white p-4 shadow-sm ring-2 transition-shadow sm:rounded-xl sm:p-3 min-[860px]:max-lg:p-2 min-[860px]:max-lg:text-[13px] ${channel.border} ${channel.ring} ${hot ? "shadow-brand" : ""}`}
+              className={`kds-card flex min-w-0 flex-col break-words rounded-xl border-4 bg-white p-3 shadow-sm ring-2 transition-shadow sm:p-3 min-[860px]:max-lg:p-2 min-[860px]:max-lg:text-[13px] ${channel.border} ${channel.ring} ${hot ? "shadow-brand" : ""}`}
             >
               {/* Area + cook state share one strip so the ticket stays short */}
-              <div className="-mx-4 -mt-4 mb-1.5 grid grid-cols-2 overflow-hidden rounded-t-xl text-[10px] font-black uppercase tracking-[0.12em] sm:-mx-3 sm:-mt-3">
+              <div className="-mx-3 -mt-3 mb-1.5 grid grid-cols-2 overflow-hidden rounded-t-xl text-[10px] font-black uppercase tracking-[0.12em] sm:-mx-3 sm:-mt-3">
                 <span className={`truncate px-2 py-1 text-center ${channel.chip}`}>
                   {channel.label}
                 </span>
@@ -1528,7 +1532,7 @@ function KDS() {
                           type="button"
                           disabled={current}
                           onClick={() => reassignChannel(t, key)}
-                          className={`h-10 rounded-lg px-2 text-[11px] font-black uppercase tracking-wide sm:h-8 sm:text-[10px] ${
+                          className={`h-9 rounded-lg px-2 text-[10px] font-black uppercase tracking-wide sm:h-8 ${
                             current
                               ? "cursor-default border border-dashed border-slate-400 bg-white text-slate-400"
                               : `${target.chip} active:scale-[0.98]`
@@ -1542,7 +1546,7 @@ function KDS() {
                 )}
               </div>
               {scheduledAt && (
-                <div className="-mx-4 -mt-2 mb-2 bg-violet-700 px-3 py-1.5 text-center text-white sm:-mx-3">
+                <div className="-mx-3 -mt-2 mb-2 bg-violet-700 px-3 py-1.5 text-center text-white sm:-mx-3">
                   <p className="font-display text-base font-black uppercase leading-none tracking-[0.14em]">
                     Later order · for{" "}
                     {scheduledAt.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
@@ -1555,7 +1559,7 @@ function KDS() {
                 </div>
               )}
               <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-2">
-                <p className="truncate font-display text-xl font-bold leading-none sm:text-lg">
+                <p className="truncate font-display text-lg font-bold leading-none">
                   #{t.order_number}
                 </p>
                 <span
@@ -1721,11 +1725,11 @@ function KDS() {
                   </li>
                 ))}
               </ul>
-              <div className="mt-3 flex flex-wrap gap-2 sm:mt-2 sm:gap-1.5">
+              <div className="mt-2 flex flex-wrap gap-1.5">
                 {canCompleteOrders && t.status === "preparing" && (
                   <button
                     onClick={() => set(t.id, "ready", { undoTo: "preparing" })}
-                    className={`h-12 min-w-[8rem] flex-1 rounded-full text-sm font-bold active:scale-[0.98] sm:h-8 sm:text-xs ${cook ? "bg-blue-600 text-white hover:bg-blue-700" : "bg-amber-400 text-amber-950 hover:bg-amber-500"}`}
+                    className={`h-10 min-w-[7rem] flex-1 rounded-full text-xs font-bold active:scale-[0.98] sm:h-8 ${cook ? "bg-blue-600 text-white hover:bg-blue-700" : "bg-amber-400 text-amber-950 hover:bg-amber-500"}`}
                   >
                     Mark ready
                   </button>
@@ -1734,13 +1738,13 @@ function KDS() {
                   <>
                     <button
                       onClick={() => set(t.id, "completed", { undoTo: "ready" })}
-                      className="h-12 min-w-[8rem] flex-1 rounded-full bg-emerald-600 text-sm font-bold text-white active:scale-[0.98] hover:bg-emerald-700 sm:h-8 sm:text-xs sm:font-semibold"
+                      className="h-10 min-w-[7rem] flex-1 rounded-full bg-emerald-600 text-xs font-bold text-white active:scale-[0.98] hover:bg-emerald-700 sm:h-8 sm:font-semibold"
                     >
                       Mark complete
                     </button>
                     <button
                       onClick={() => set(t.id, "preparing")}
-                      className="h-12 rounded-full border border-border px-4 text-sm font-semibold hover:border-primary hover:text-primary sm:h-8 sm:px-3 sm:text-xs"
+                      className="h-10 rounded-full border border-border px-3 text-xs font-semibold hover:border-primary hover:text-primary sm:h-8"
                       title="Sent to ready by mistake — put it back in preparing"
                     >
                       ↩ Undo ready
@@ -1754,7 +1758,7 @@ function KDS() {
                     t.status === "paid") && (
                     <button
                       onClick={() => set(t.id, "preparing")}
-                      className="h-12 min-w-[8rem] flex-1 rounded-full bg-amber-500 text-sm font-bold text-white active:scale-[0.98] hover:bg-amber-600 sm:h-8 sm:text-xs"
+                      className="h-10 min-w-[7rem] flex-1 rounded-full bg-amber-500 text-xs font-bold text-white active:scale-[0.98] hover:bg-amber-600 sm:h-8"
                       title="Reopen this ticket back into the kitchen"
                     >
                       ↩ Reopen ticket
@@ -1764,7 +1768,7 @@ function KDS() {
                   href={`/print/${t.id}?paper=${kdsPaper}&preview=1`}
                   target="_blank"
                   rel="noreferrer"
-                  className="kds-iconbtn grid h-12 w-12 place-items-center rounded-full border border-border text-base hover:border-primary hover:text-primary sm:h-8 sm:w-8 sm:text-xs"
+                  className="kds-iconbtn grid h-10 w-10 place-items-center rounded-full border border-border text-sm hover:border-primary hover:text-primary sm:h-8 sm:w-8 sm:text-xs"
                   aria-label="Print preview"
                   title="Preview then print"
                 >
@@ -1774,7 +1778,7 @@ function KDS() {
                   href={`/print/${t.id}?paper=${kdsPaper}`}
                   target="_blank"
                   rel="noreferrer"
-                  className="kds-iconbtn grid h-12 w-12 place-items-center rounded-full border border-border text-base hover:border-primary hover:text-primary sm:h-8 sm:w-8 sm:text-xs"
+                  className="kds-iconbtn grid h-10 w-10 place-items-center rounded-full border border-border text-sm hover:border-primary hover:text-primary sm:h-8 sm:w-8 sm:text-xs"
                   aria-label="Print"
                   title="Print now"
                 >
