@@ -53,19 +53,21 @@ export function PromoCarousel() {
               : { background: `linear-gradient(120deg, ${b.bg_color ?? "oklch(0.55 0.22 27)"}, color-mix(in oklab, ${b.bg_color ?? "oklch(0.55 0.22 27)"} 60%, black))` };
           const inner = (
             <div
-              className="flex h-40 w-full min-w-full snap-start items-end rounded-2xl px-5 py-5 text-white shadow-brand sm:h-56 sm:px-16 sm:py-6"
+              className="banner-gloss flex h-40 w-full min-w-full snap-start items-end rounded-2xl px-5 py-5 text-white sm:h-56 sm:px-16 sm:py-6"
               style={cardStyle}
             >
               <div className="max-w-md">
                 {b.badge && (
-                  <span className="inline-block rounded-full bg-white/95 px-2.5 py-0.5 text-[11px] font-bold uppercase tracking-wider text-primary">
+                  <span className="inline-block rounded-full bg-white/95 px-2.5 py-0.5 text-[11px] font-bold uppercase tracking-wider text-primary shadow-[0_2px_6px_-1px_rgba(0,0,0,0.35),inset_0_1px_0_rgba(255,255,255,0.9)]">
                     {b.badge}
                   </span>
                 )}
-                <p className="mt-2 font-display text-2xl font-bold leading-tight drop-shadow sm:text-3xl">{b.title}</p>
-                {b.subtitle && <p className="mt-1 text-sm opacity-90 sm:text-base">{b.subtitle}</p>}
+                <p className="mt-2 font-display text-2xl font-bold leading-tight [text-shadow:0_2px_8px_rgba(0,0,0,0.45)] sm:text-3xl">{b.title}</p>
+                {b.subtitle && (
+                  <p className="mt-1 text-sm opacity-95 [text-shadow:0_1px_5px_rgba(0,0,0,0.4)] sm:text-base">{b.subtitle}</p>
+                )}
                 {b.cta_label && b.cta_url && (
-                  <span className="mt-3 inline-block rounded-full bg-white/95 px-4 py-1.5 text-sm font-semibold text-primary">
+                  <span className="mt-3 inline-block rounded-full bg-gradient-to-b from-white to-white/85 px-4 py-1.5 text-sm font-semibold text-primary shadow-[0_6px_16px_-6px_rgba(0,0,0,0.55),inset_0_1px_0_rgba(255,255,255,0.95)]">
                     {b.cta_label} →
                   </span>
                 )}
@@ -93,14 +95,14 @@ export function PromoCarousel() {
         <>
           <button
             onClick={() => setIdx((i) => (i - 1 + banners.length) % banners.length)}
-            className="absolute left-2 top-1/2 hidden -translate-y-1/2 rounded-full bg-white/90 p-2 text-primary shadow hover:bg-white sm:block"
+            className="absolute left-2 top-1/2 hidden -translate-y-1/2 rounded-full bg-white/90 p-2 text-primary shadow-[0_8px_20px_-8px_rgba(0,0,0,0.6),inset_0_1px_0_rgba(255,255,255,0.9)] backdrop-blur-sm hover:bg-white sm:block"
             aria-label="Previous"
           >
             <ChevronLeft className="h-4 w-4" />
           </button>
           <button
             onClick={() => setIdx((i) => (i + 1) % banners.length)}
-            className="absolute right-2 top-1/2 hidden -translate-y-1/2 rounded-full bg-white/90 p-2 text-primary shadow hover:bg-white sm:block"
+            className="absolute right-2 top-1/2 hidden -translate-y-1/2 rounded-full bg-white/90 p-2 text-primary shadow-[0_8px_20px_-8px_rgba(0,0,0,0.6),inset_0_1px_0_rgba(255,255,255,0.9)] backdrop-blur-sm hover:bg-white sm:block"
             aria-label="Next"
           >
             <ChevronRight className="h-4 w-4" />
