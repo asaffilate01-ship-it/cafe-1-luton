@@ -189,9 +189,63 @@ const CATEGORY_PREFERENCE = [
   "Cold Past Pot",
 ];
 
-export function preferCategory(categories: Array<string | null>): string | null {
+/**
+ * Categories that describe how the dish is *served* rather than what it is.
+ * "Chicken Shawarma" exists as a panini, a salad and a grill item, so unless
+ * the till actually says "panini"/"wrap"/"salad" the grill version wins.
+ */
+const SERVE_STYLE_CATEGORIES: Array<{ category: string; words: string[] }> = [
+  { category: "Panini", words: ["panini", "paninis"] },
+  { category: "Toasties", words: ["toastie", "toasties", "toasted"] },
+  { category: "Baguettes", words: ["baguette", "baguettes"] },
+  { category: "Rolls", words: ["roll", "rolls"] },
+  { category: "Naan Roll", words: ["naan"] },
+  { category: "Naan Rolls", words: ["naan"] },
+  { category: "Wraps", words: ["wrap", "wraps"] },
+  { category: "Jackets", words: ["jacket"] },
+  { category: "Salads", words: ["salad", "salads"] },
+  { category: "Sandwiches", words: ["sandwich", "sandwiches", "sarnie"] },
+  { category: "Burgers", words: ["burger", "burgers"] },
+  { category: "Chips", words: ["chips", "fries", "loaded"] },
+  { category: "Cold Past Pot", words: ["pasta pot"] },
+  { category: "Omelettes", words: ["omelette", "omlette"] },
+  { category: "Paratha", words: ["paratha"] },
+  { category: "Desi Parathas", words: ["paratha"] },
+];
+
+export function preferCategory(
+  categories: Array<string | null>,
+  name?: string,
+): string | null {
   const present = categories.filter((c): c is string => !!c);
   if (!present.length) return null;
+  const trimmedName = (name ?? "").trim();
+  if (trimmedName) {
+    const tokens = new Set(
+      normaliseItemName(trimmedName)
+        .split(" ")
+        .flatMap((t) => [t, singular(t)]),
+    );
+    const normalised = normaliseItemName(trimmedName);
+    const styleOf = (category: string) =>
+      SERVE_STYLE_CATEGORIES.find(
+        (s) => s.category.toLowerCase() === category.trim().toLowerCase(),
+      );
+    // The till named the serving style — honour it.
+    const named = present.find((c) => {
+      const style = styleOf(c);
+      return (
+        !!style &&
+        style.words.some(
+          (w) => tokens.has(w) || tokens.has(singular(w)) || normalised.includes(w),
+        )
+      );
+    });
+    if (named) return named;
+    // Otherwise drop the serving-style categories and keep the plain dish.
+    const plain = present.filter((c) => !styleOf(c));
+    if (plain.length) return plain[0]!;
+  }
   for (const wanted of CATEGORY_PREFERENCE) {
     const hit = present.find((c) => c.trim().toLowerCase() === wanted.toLowerCase());
     if (hit) return hit;
