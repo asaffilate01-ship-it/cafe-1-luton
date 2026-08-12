@@ -294,17 +294,37 @@
   position: relative;
   border-radius: 1.25rem;
   background-color: var(--card);
-  background-image: linear-gradient(180deg, oklch(1 0 0) 0%, oklch(0.988 0.005 27) 100%);
-  border: 1px solid oklch(0.93 0.012 27);
+  background-image:
+    linear-gradient(180deg, oklch(1 0 0 / 0.85) 0%, oklch(1 0 0 / 0) 42%),
+    linear-gradient(180deg, oklch(1 0 0) 0%, oklch(0.985 0.006 27) 55%, oklch(0.975 0.012 27) 100%);
+  border: 1px solid oklch(0.92 0.014 27);
   box-shadow:
-    inset 0 1px 0 oklch(1 0 0 / 0.95),
-    0 1px 1px oklch(0.3 0.05 25 / 0.04),
-    0 4px 10px -6px oklch(0.4 0.12 25 / 0.18),
-    0 14px 30px -18px oklch(0.4 0.12 25 / 0.32);
+    inset 0 1px 0 oklch(1 0 0 / 0.98),
+    inset 0 0 0 1px oklch(1 0 0 / 0.55),
+    inset 0 -14px 24px -18px oklch(0.4 0.12 25 / 0.28),
+    0 1px 1px oklch(0.3 0.05 25 / 0.05),
+    0 6px 14px -8px oklch(0.4 0.12 25 / 0.22),
+    0 22px 44px -22px oklch(0.4 0.12 25 / 0.4);
   transition:
     transform 0.4s cubic-bezier(0.2, 0.8, 0.2, 1),
     box-shadow 0.4s cubic-bezier(0.2, 0.8, 0.2, 1),
     border-color 0.4s ease;
+
+  /* Angled specular sweep for the glossy, premium finish. */
+  &::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    pointer-events: none;
+    background-image: linear-gradient(
+      104deg,
+      oklch(1 0 0 / 0) 38%,
+      oklch(1 0 0 / 0.5) 48%,
+      oklch(1 0 0 / 0) 60%
+    );
+    opacity: 0.55;
+  }
 }
 
 @utility card-3d-hover {
@@ -313,8 +333,13 @@
     border-color: oklch(0.86 0.06 27);
     box-shadow:
       inset 0 1px 0 oklch(1 0 0 / 0.9),
-      0 2px 4px oklch(0.3 0.05 25 / 0.06),
-      0 26px 44px -22px oklch(0.45 0.16 25 / 0.5);
+      inset 0 0 0 1px oklch(1 0 0 / 0.6),
+      0 2px 4px oklch(0.3 0.05 25 / 0.07),
+      0 12px 22px -12px oklch(0.45 0.16 25 / 0.35),
+      0 34px 56px -26px oklch(0.45 0.16 25 / 0.55);
+  }
+  &:hover::after {
+    opacity: 0.85;
   }
   &:hover .icon-3d,
   &:hover .icon-3d-soft {
@@ -335,6 +360,50 @@
   .icon-3d,
   .icon-3d-soft {
     transition: none;
+  }
+}
+
+/* --- Glossy premium banners -------------------------------------------- */
+/* Deep contact shadow, bevelled rim and a glass sheen across the top. */
+@utility banner-gloss {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  box-shadow:
+    inset 0 1px 0 oklch(1 0 0 / 0.4),
+    inset 0 0 0 1px oklch(1 0 0 / 0.16),
+    inset 0 -30px 50px -30px oklch(0.2 0.06 25 / 0.55),
+    0 2px 4px oklch(0.25 0.06 25 / 0.12),
+    0 14px 28px -14px oklch(0.4 0.16 25 / 0.42),
+    0 34px 60px -28px oklch(0.35 0.14 25 / 0.5);
+
+  &::before {
+    content: "";
+    position: absolute;
+    inset: 0 0 auto;
+    height: 62%;
+    z-index: -1;
+    pointer-events: none;
+    background-image: linear-gradient(
+      180deg,
+      oklch(1 0 0 / 0.32) 0%,
+      oklch(1 0 0 / 0.08) 45%,
+      oklch(1 0 0 / 0) 100%
+    );
+  }
+
+  &::after {
+    content: "";
+    position: absolute;
+    inset: -40% -10%;
+    z-index: -1;
+    pointer-events: none;
+    background-image: linear-gradient(
+      104deg,
+      oklch(1 0 0 / 0) 40%,
+      oklch(1 0 0 / 0.28) 50%,
+      oklch(1 0 0 / 0) 62%
+    );
   }
 }
 

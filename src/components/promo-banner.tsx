@@ -23,9 +23,9 @@ export function PromoBanner() {
   }, []);
   if (!data || dismissed === data.id) return null;
   return (
-    <div className="border-b border-primary/30 bg-primary/10">
+    <div className="banner-gloss border-b border-primary/30 bg-gradient-to-b from-primary/15 via-primary/10 to-primary/5">
       <div className="mx-auto flex max-w-6xl items-start gap-3 px-4 py-3 text-sm">
-        <Megaphone className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
+        <Megaphone className="mt-0.5 h-4 w-4 shrink-0 text-primary drop-shadow-[0_1px_1px_rgba(0,0,0,0.15)]" />
         <div className="flex-1">
           <p className="font-semibold text-primary">{data.title}</p>
           <p className="text-muted-foreground">{data.body}</p>
