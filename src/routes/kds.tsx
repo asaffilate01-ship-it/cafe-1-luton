@@ -528,7 +528,7 @@ function KDS() {
           : undefined;
         const byIdMeta = item.menu_item_id ? byId.get(item.menu_item_id) : undefined;
         const candidates = byName.get(key) ?? byName.get(fuzzyMenuKey(item.name, nameKeys) ?? "");
-        const direct = byIdMeta ?? withCategory ?? preferMenuMeta(candidates);
+        const direct = byIdMeta ?? withCategory ?? preferMenuMeta(candidates, item.name);
         if (direct) return direct;
         // Nothing on the menu looks like it — fall back to keyword rules.
         const cooked = looksCooked(item.name);
