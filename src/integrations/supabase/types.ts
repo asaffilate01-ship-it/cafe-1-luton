@@ -533,13 +533,6 @@ export type Database = {
             referencedRelation: "menu_items"
             referencedColumns: ["id"]
           },
-          {
-            foreignKeyName: "customer_favourites_menu_item_id_fkey"
-            columns: ["menu_item_id"]
-            isOneToOne: false
-            referencedRelation: "menu_items_public"
-            referencedColumns: ["id"]
-          },
         ]
       }
       customer_feedback: {
@@ -1142,13 +1135,6 @@ export type Database = {
             referencedRelation: "menu_items"
             referencedColumns: ["id"]
           },
-          {
-            foreignKeyName: "menu_modifiers_item_id_fkey"
-            columns: ["item_id"]
-            isOneToOne: false
-            referencedRelation: "menu_items_public"
-            referencedColumns: ["id"]
-          },
         ]
       }
       operational_checklists: {
@@ -1235,13 +1221,6 @@ export type Database = {
             columns: ["menu_item_id"]
             isOneToOne: false
             referencedRelation: "menu_items"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "order_items_menu_item_id_fkey"
-            columns: ["menu_item_id"]
-            isOneToOne: false
-            referencedRelation: "menu_items_public"
             referencedColumns: ["id"]
           },
           {
@@ -1984,13 +1963,6 @@ export type Database = {
             columns: ["menu_item_id"]
             isOneToOne: false
             referencedRelation: "menu_items"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "recipe_components_menu_item_id_fkey"
-            columns: ["menu_item_id"]
-            isOneToOne: false
-            referencedRelation: "menu_items_public"
             referencedColumns: ["id"]
           },
         ]
@@ -2785,87 +2757,7 @@ export type Database = {
       }
     }
     Views: {
-      menu_items_public: {
-        Row: {
-          active: boolean | null
-          allergens: string[] | null
-          category_id: string | null
-          created_at: string | null
-          description: string | null
-          dietary_tags: string[] | null
-          group_label: string | null
-          id: string | null
-          image_url: string | null
-          is_beverage: boolean | null
-          is_veg: boolean | null
-          juror_menu: boolean | null
-          loyalty_drink: boolean | null
-          name: string | null
-          needs_cooking: boolean | null
-          price_cents: number | null
-          site_id: string | null
-          sort_order: number | null
-          updated_at: string | null
-        }
-        Insert: {
-          active?: boolean | null
-          allergens?: string[] | null
-          category_id?: string | null
-          created_at?: string | null
-          description?: string | null
-          dietary_tags?: string[] | null
-          group_label?: string | null
-          id?: string | null
-          image_url?: string | null
-          is_beverage?: boolean | null
-          is_veg?: boolean | null
-          juror_menu?: boolean | null
-          loyalty_drink?: boolean | null
-          name?: string | null
-          needs_cooking?: boolean | null
-          price_cents?: number | null
-          site_id?: string | null
-          sort_order?: number | null
-          updated_at?: string | null
-        }
-        Update: {
-          active?: boolean | null
-          allergens?: string[] | null
-          category_id?: string | null
-          created_at?: string | null
-          description?: string | null
-          dietary_tags?: string[] | null
-          group_label?: string | null
-          id?: string | null
-          image_url?: string | null
-          is_beverage?: boolean | null
-          is_veg?: boolean | null
-          juror_menu?: boolean | null
-          loyalty_drink?: boolean | null
-          name?: string | null
-          needs_cooking?: boolean | null
-          price_cents?: number | null
-          site_id?: string | null
-          sort_order?: number | null
-          updated_at?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "menu_items_category_id_fkey"
-            columns: ["category_id"]
-            isOneToOne: false
-            referencedRelation: "menu_categories"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "menu_items_site_id_fkey"
-            columns: ["site_id"]
-            isOneToOne: false
-            referencedRelation: "sites"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
+      [_ in never]: never
     }
     Functions: {
       attach_juror_voucher_reservation: {
