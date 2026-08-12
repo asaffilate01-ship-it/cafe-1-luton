@@ -177,7 +177,9 @@ export function tiktokCreatorHandle(profileUrl: string): string | null {
   if (!url || !ALLOWED_PROFILE_HOSTS.tiktok.has(url.hostname)) return null;
   const handle = url.pathname.split("/").filter(Boolean)[0];
   if (!handle?.startsWith("@") || !/^@[A-Za-z0-9._]{2,30}$/.test(handle)) return null;
-  return handle.slice(1);
+  // TikTok profile navigation is case-insensitive, and its creator embed only resolves the
+  // canonical lower-case unique id, so normalise before handing the handle to the player.
+  return handle.slice(1).toLowerCase();
 }
 
 export function facebookPagePluginUrl(profileUrl: string): string | null {

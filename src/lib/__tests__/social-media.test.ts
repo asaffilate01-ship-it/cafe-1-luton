@@ -58,7 +58,7 @@ describe("social media embed configuration", () => {
   });
 
   it("creates validated profile embeds without accepting lookalike hosts", () => {
-    expect(tiktokCreatorHandle("https://www.tiktok.com/@Cafe1_Stalbans")).toBe("Cafe1_Stalbans");
+    expect(tiktokCreatorHandle("https://www.tiktok.com/@Cafe1_Stalbans")).toBe("cafe1_stalbans");
     expect(tiktokCreatorHandle("https://tiktok.example/@Cafe1_Stalbans")).toBeNull();
     expect(facebookPagePluginUrl("https://www.facebook.com/cafe1stalbans")).toContain(
       "facebook.com%2Fcafe1stalbans",

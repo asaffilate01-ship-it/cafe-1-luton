@@ -29,6 +29,7 @@ export function CookieBanner() {
       setDetails(true);
       setOpen(true);
     }
+    // Consent may be granted from a social placeholder, which raises this same event.
     window.addEventListener("cafe1:open-cookie-settings", onOpen);
     return () => window.removeEventListener("cafe1:open-cookie-settings", onOpen);
   }, []);
@@ -112,7 +113,7 @@ export function CookieBanner() {
                   <div>
                     <p className="font-semibold">Marketing</p>
                     <p className="text-xs text-muted-foreground">
-                      Offers and promotions relevant to you.
+                      Loads social videos and posts, plus offers and promotions relevant to you.
                     </p>
                   </div>
                   <input

@@ -73,6 +73,7 @@ function Socials() {
   const automaticFeedConfigured = Boolean(
     automatic?.providers.some((provider) => provider.configured),
   );
+  const showAutomaticPosts = !isSocialLoading && posts.length > 0;
   const facebook = findSocialProfile(SOCIAL_PROFILES, "facebook");
   const tiktok = findSocialProfile(SOCIAL_PROFILES, "tiktok");
 
@@ -138,7 +139,7 @@ function Socials() {
                 Latest clips
               </p>
               <h2 id="latest-socials" className="mt-2 font-display text-4xl font-bold">
-                See what is cooking
+                Latest videos and posts
               </h2>
             </div>
             <p className="max-w-md text-sm leading-relaxed text-muted-foreground">
@@ -159,7 +160,7 @@ function Socials() {
                 />
               ))}
             </div>
-          ) : posts.length ? (
+          ) : showAutomaticPosts ? (
             <SocialFeedCarousel posts={posts} />
           ) : (
             <div className="mt-9 rounded-3xl border border-dashed border-primary/30 bg-primary-soft p-8 text-center sm:p-12">
