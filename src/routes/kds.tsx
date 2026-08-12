@@ -253,10 +253,14 @@ type Station = (typeof STATIONS)[number];
  */
 function preferMenuMeta<T extends { category: string | null }>(
   candidates: T[] | undefined,
+  name?: string,
 ): T | undefined {
   if (!candidates?.length) return undefined;
   if (candidates.length === 1) return candidates[0];
-  const winner = preferCategory(candidates.map((c) => c.category));
+  const winner = preferCategory(
+    candidates.map((c) => c.category),
+    name,
+  );
   return candidates.find((c) => c.category === winner) ?? candidates[0];
 }
 
