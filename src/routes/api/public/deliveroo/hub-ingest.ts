@@ -59,8 +59,19 @@ export const Route = createFileRoute("/api/public/deliveroo/hub-ingest")({
         const orders = extractHubOrders(payload);
         if (!orders.length) {
           if (!beat?.heartbeat) {
-            // Helps trace a Hub payload shape we do not yet recognise.
-            console.warn("Hub payload not recognised as orders:", raw.slice(0, 400));
+            // Log only the shape, never the body: Hub payloads carry customer
+            // names, addresses and phone numbers.
+            let keys: string[] = [];
+            try {
+              const obj = payload as Record<string, unknown>;
+              keys = obj && typeof obj === "object" ? Object.keys(obj).slice(0, 20) : [];
+            } catch {
+              /* non-object payload */
+            }
+            console.warn("Hub payload not recognised as orders", {
+              bytes: raw.length,
+              keys,
+            });
           }
           // Not an error: Hub sends plenty of unrelated payloads.
           return Response.json({ ok: true, created: 0, duplicates: 0, recognised: 0 });
