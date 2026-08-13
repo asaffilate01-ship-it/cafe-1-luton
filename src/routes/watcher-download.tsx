@@ -53,12 +53,12 @@ function WatcherDownload() {
           <Feature
             icon={CheckCircle2}
             title="One guided setup"
-            text="Run START-CAFE1-DELIVEROO.cmd, sign into Deliveroo's own page once and wait for Connected."
+            text="Run each START-CAFE1 file, sign into Deliveroo Hub or Just Eat Partner Centre once and wait for Connected."
           />
           <Feature
             icon={ShieldCheck}
             title="No saved password"
-            text="Café 1 never reads or stores the Deliveroo device username or password."
+            text="Café 1 never reads or stores the Deliveroo or Just Eat username or password."
           />
           <Feature
             icon={MonitorCheck}
