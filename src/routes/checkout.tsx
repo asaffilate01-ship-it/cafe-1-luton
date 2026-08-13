@@ -1137,6 +1137,88 @@ function Checkout() {
                 <span>−{money(voucherApplied)}</span>
               </div>
             )}
+            {user && !onTab && (
+              <div className="!mt-3 rounded-xl border border-border bg-background p-3">
+                <div className="flex items-center justify-between text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                  <span>Points rewards</span>
+                  <span>{pointsBalance} pts</span>
+                </div>
+                <div className="mt-2 grid grid-cols-2 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setPointsToRedeem(0)}
+                    className={`h-10 rounded-lg border text-xs font-semibold ${pointsToRedeem === 0 ? "border-primary bg-primary text-primary-foreground" : "border-border bg-background"}`}
+                  >
+                    No reward
+                  </button>
+                  {REWARD_TIERS.map((t) => {
+                    const affordable = pointsBalance >= t.points && total > 0;
+                    return (
+                      <button
+                        key={t.points}
+                        type="button"
+                        disabled={!affordable}
+                        onClick={() => setPointsToRedeem(t.points)}
+                        className={`h-10 rounded-lg border text-xs font-semibold disabled:opacity-40 ${pointsToRedeem === t.points ? "border-primary bg-primary text-primary-foreground" : "border-border bg-background"}`}
+                      >
+                        {t.points} pts · {t.label}
+                      </button>
+                    );
+                  })}
+                </div>
+                <p className="mt-2 text-xs text-muted-foreground">
+                  Earn 1 point per £1 spent. Points are only deducted when the order is placed.
+                </p>
+              </div>
+            )}
+            {pointsDiscount > 0 && (
+              <div className="flex justify-between text-primary">
+                <span>Points reward ({pointsToRedeem} pts)</span>
+                <span>−{money(pointsDiscount)}</span>
+              </div>
+            )}
+            {!onTab && (
+              <div className="!mt-3 rounded-xl border border-border bg-background p-3">
+                <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                  Add a tip for the team
+                </p>
+                <div className="mt-2 grid grid-cols-5 gap-1.5">
+                  {([null, 5, 10, 12.5] as const).map((p) => (
+                    <button
+                      key={String(p)}
+                      type="button"
+                      onClick={() => setTipPercent(p)}
+                      className={`h-10 rounded-lg border text-xs font-semibold ${tipPercent === p ? "border-primary bg-primary text-primary-foreground" : "border-border bg-background"}`}
+                    >
+                      {p === null ? "None" : `${p}%`}
+                    </button>
+                  ))}
+                  <button
+                    type="button"
+                    onClick={() => setTipPercent("custom")}
+                    className={`h-10 rounded-lg border text-xs font-semibold ${tipPercent === "custom" ? "border-primary bg-primary text-primary-foreground" : "border-border bg-background"}`}
+                  >
+                    Other
+                  </button>
+                </div>
+                {tipPercent === "custom" && (
+                  <input
+                    aria-label="Custom tip amount in pounds"
+                    inputMode="decimal"
+                    value={customTip}
+                    onChange={(e) => setCustomTip(e.target.value.replace(/[^\d.]/g, ""))}
+                    placeholder="Tip amount (£)"
+                    className="mt-2 h-10 w-full rounded-lg border border-border bg-background px-3 text-sm"
+                  />
+                )}
+              </div>
+            )}
+            {tipCents > 0 && (
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Tip</span>
+                <span>{money(tipCents)}</span>
+              </div>
+            )}
             <div className="mt-2 flex justify-between border-t border-border pt-2 font-display text-lg font-bold">
               <span>Total</span>
               <span className="text-primary">{money(finalTotal)}</span>
