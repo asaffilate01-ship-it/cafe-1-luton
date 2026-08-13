@@ -1,0 +1,2 @@
+ALTER TABLE public.orders ADD COLUMN IF NOT EXISTS partner_order_id text;
+CREATE UNIQUE INDEX IF NOT EXISTS orders_partner_order_id_key ON public.orders(partner_order_id) WHERE partner_order_id IS NOT NULL;
