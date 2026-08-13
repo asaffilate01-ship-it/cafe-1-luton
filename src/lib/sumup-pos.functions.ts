@@ -150,6 +150,20 @@ async function loadSumupSale(
       return match ? { ...match, ...p, description: p.description ?? match.description } : p;
     });
   }
+
+  // Till notes live on the POS sale record, so merge them onto the sale/lines.
+  const saleNotes = await sumupSaleNotes(detailed, key);
+  if (saleNotes) {
+    if (saleNotes.orderNotes.length) {
+      detailed = { ...detailed, note: [detailed.note, ...saleNotes.orderNotes].filter(Boolean).join(" · ") };
+    }
+    if (saleNotes.lineNotesByName.size) {
+      products = (products ?? []).map((p) => {
+        const extra = saleNotes.lineNotesByName.get((p.name ?? "").trim().toLowerCase());
+        return extra?.length ? { ...p, note: [p.note, ...extra].filter(Boolean).join(" · ") } : p;
+      });
+    }
+  }
   return { detailed, products };
 }
 
