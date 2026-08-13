@@ -150,6 +150,20 @@ async function loadSumupSale(
       return match ? { ...match, ...p, description: p.description ?? match.description } : p;
     });
   }
+
+  // Till notes live on the POS sale record, so merge them onto the sale/lines.
+  const saleNotes = await sumupSaleNotes(detailed, key);
+  if (saleNotes) {
+    if (saleNotes.orderNotes.length) {
+      detailed = { ...detailed, note: [detailed.note, ...saleNotes.orderNotes].filter(Boolean).join(" · ") };
+    }
+    if (saleNotes.lineNotesByName.size) {
+      products = (products ?? []).map((p) => {
+        const extra = saleNotes.lineNotesByName.get((p.name ?? "").trim().toLowerCase());
+        return extra?.length ? { ...p, note: [p.note, ...extra].filter(Boolean).join(" · ") } : p;
+      });
+    }
+  }
   return { detailed, products };
 }
 
@@ -191,6 +205,67 @@ async function sumupReceiptProducts(t: SumupTxn, key: string): Promise<SumupTxn[
   } catch {
     return undefined;
   }
+}
+
+/**
+ * SumUp keeps the till operator's sale/line notes on the POS *sale* record, not
+ * on the payment transaction or the receipt. Those endpoints need the
+ * `sales.read` scope on the API key; without it we simply fall back to the
+ * transaction data (the kitchen card then shows no till note).
+ */
+type SumupNoteScan = { orderNotes: string[]; lineNotesByName: Map<string, string[]> };
+
+const NOTE_KEYS = new Set(["note", "notes", "comment", "comments", "remark", "remarks", "description", "instructions", "special_instructions"]);
+
+function scanSaleNotes(node: unknown, out: SumupNoteScan, currentName?: string) {
+  if (!node || typeof node !== "object") return;
+  if (Array.isArray(node)) {
+    for (const child of node) scanSaleNotes(child, out, currentName);
+    return;
+  }
+  const record = node as Record<string, unknown>;
+  const name = typeof record.name === "string" ? record.name.trim() : currentName;
+  for (const [rawKey, value] of Object.entries(record)) {
+    const key = rawKey.toLowerCase();
+    if (typeof value === "string") {
+      const text = value.trim();
+      if (!text || !NOTE_KEYS.has(key)) continue;
+      if (name) {
+        const list = out.lineNotesByName.get(name.toLowerCase()) ?? [];
+        list.push(text);
+        out.lineNotesByName.set(name.toLowerCase(), list);
+      } else {
+        out.orderNotes.push(text);
+      }
+      continue;
+    }
+    scanSaleNotes(value, out, name);
+  }
+}
+
+async function sumupSaleNotes(t: SumupTxn, key: string): Promise<SumupNoteScan | null> {
+  const mid = merchantCode(t);
+  if (!mid) return null;
+  const saleId = normaliseSumupClientTransactionId(t.client_transaction_id)?.split(":")[4];
+  const urls = [
+    saleId ? `https://api.sumup.com/v0.1/merchants/${mid}/sales/${encodeURIComponent(saleId)}` : null,
+    t.transaction_code
+      ? `https://api.sumup.com/v0.1/merchants/${mid}/sales?transaction_code=${encodeURIComponent(t.transaction_code)}`
+      : null,
+  ].filter((u): u is string => Boolean(u));
+  for (const url of urls) {
+    try {
+      const r = await fetch(url, { headers: { Authorization: `Bearer ${key}` } });
+      if (!r.ok) continue;
+      const json: unknown = await r.json();
+      const out: SumupNoteScan = { orderNotes: [], lineNotesByName: new Map() };
+      scanSaleNotes(json, out);
+      if (out.orderNotes.length || out.lineNotesByName.size) return out;
+    } catch {
+      /* sale lookup is best-effort */
+    }
+  }
+  return null;
 }
 
 /** A sale is void when SumUp cancelled/failed it, or the full amount was refunded. */
