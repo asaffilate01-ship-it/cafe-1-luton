@@ -394,6 +394,49 @@ export const createOrder = createServerFn({ method: "POST" })
       payable = Math.max(0, payable - juror_discount);
     }
 
+    // Loyalty points redemption — signed-in customers only, never on a tab.
+    // Points are spent atomically so the same balance can't be used twice.
+    let points_redeemed = 0;
+    let points_discount = 0;
+    if (userId && !data.account_code && data.points_to_redeem > 0 && payable > 0) {
+      const { rewardDiscountCents, tierForPoints } = await import("./loyalty-tiers");
+      const tier = tierForPoints(data.points_to_redeem);
+      if (!tier) throw new Error("That rewards option isn't available.");
+      const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+      const { data: spent, error: spendErr } = await supabaseAdmin.rpc("spend_loyalty_points", {
+        _user_id: userId,
+        _points: tier.points,
+      });
+      if (spendErr) {
+        await releaseVoucher();
+        throw new Error(spendErr.message);
+      }
+      if (!spent) {
+        await releaseVoucher();
+        throw new Error("You don't have enough points for that reward yet.");
+      }
+      points_redeemed = tier.points;
+      points_discount = rewardDiscountCents(tier.points, payable);
+      payable = Math.max(0, payable - points_discount);
+    }
+
+    async function refundPoints() {
+      if (!userId || points_redeemed <= 0) return;
+      const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+      await supabaseAdmin.rpc("refund_loyalty_points", {
+        _user_id: userId,
+        _points: points_redeemed,
+      });
+      points_redeemed = 0;
+      points_discount = 0;
+    }
+
+    // Gratuity is added after every discount and is never covered by a voucher.
+    const tip_cents = data.account_code
+      ? 0
+      : Math.max(0, Math.min(TIP_MAX_CENTS, Math.trunc(data.tip_cents ?? 0)));
+    payable = payable + tip_cents;
+
     // Charge to a house-account tab if a valid code is supplied.
     let account_id: string | null = null;
     if (data.account_code) {
