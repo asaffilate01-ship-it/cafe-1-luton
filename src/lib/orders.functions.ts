@@ -505,7 +505,7 @@ export const createOrder = createServerFn({ method: "POST" })
           amount_cents: payable,
           description: compactSumupDescription,
           customer_email: data.customer_email || undefined,
-          return_url: `${publicAppUrl}/api/public/sumup-webhook`,
+          return_url: `${publicAppUrl}/order/${order_id}?token=${tracking_token}`,
           // Required for Apple Pay / Google Pay eligibility on the checkout.
           redirect_url: `${publicAppUrl}/order/${order_id}?token=${tracking_token}`,
         });
