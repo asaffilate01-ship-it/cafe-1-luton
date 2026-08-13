@@ -50,7 +50,7 @@ declare global {
         amount?: string;
         showSubmitButton?: boolean;
         showFooter?: boolean;
-        googlePay?: { merchantId: string; merchantName: string };
+        googlePay?: boolean | { merchantId: string; merchantName: string };
         applePay?: boolean;
         onResponse?: (type: string, body: unknown) => void;
         onLoad?: () => void;
@@ -170,14 +170,13 @@ function PayView() {
         // Show Apple Pay (Safari/iOS) and Google Pay (Chrome/Android) wallet
         // buttons above the card form when the device + merchant support them.
         applePay: true,
-        ...(googlePayMerchantId
+        applePay: true,
+        googlePay: googlePayMerchantId
           ? {
-              googlePay: {
-                merchantId: googlePayMerchantId,
-                merchantName: GOOGLE_PAY_MERCHANT_NAME,
-              },
+              merchantId: googlePayMerchantId,
+              merchantName: GOOGLE_PAY_MERCHANT_NAME,
             }
-          : {}),
+          : true,
         showSubmitButton: true,
         onPaymentMethodsLoad: (methods) => {
           const available = JSON.stringify(methods ?? "").toLowerCase();
