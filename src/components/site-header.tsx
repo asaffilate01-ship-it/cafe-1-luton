@@ -310,6 +310,19 @@ export function SiteFooter() {
           </button>
         </nav>
       </div>
+      <div className="border-t border-border bg-secondary/50 py-4 text-center text-xs text-muted-foreground">
+        <span className="mx-auto max-w-6xl px-4">
+          A project by{" "}
+          <a
+            href="https://itechlounge.co.uk"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="font-medium text-foreground transition hover:text-primary"
+          >
+            iTechLounge
+          </a>
+        </span>
+      </div>
     </footer>
   );
 }
