@@ -1381,6 +1381,7 @@ export type Database = {
           promo_code: string | null
           promo_discount_cents: number
           ready_at: string | null
+          receipt_sent_at: string | null
           refunded_cents: number
           schedule_mode: string
           scheduled_for: string | null
@@ -1441,6 +1442,7 @@ export type Database = {
           promo_code?: string | null
           promo_discount_cents?: number
           ready_at?: string | null
+          receipt_sent_at?: string | null
           refunded_cents?: number
           schedule_mode?: string
           scheduled_for?: string | null
@@ -1501,6 +1503,7 @@ export type Database = {
           promo_code?: string | null
           promo_discount_cents?: number
           ready_at?: string | null
+          receipt_sent_at?: string | null
           refunded_cents?: number
           schedule_mode?: string
           scheduled_for?: string | null
@@ -2828,6 +2831,7 @@ export type Database = {
           promo_code: string | null
           promo_discount_cents: number
           ready_at: string | null
+          receipt_sent_at: string | null
           refunded_cents: number
           schedule_mode: string
           scheduled_for: string | null
@@ -2988,6 +2992,7 @@ export type Database = {
           promo_code: string | null
           promo_discount_cents: number
           ready_at: string | null
+          receipt_sent_at: string | null
           refunded_cents: number
           schedule_mode: string
           scheduled_for: string | null
@@ -3129,6 +3134,7 @@ export type Database = {
           promo_code: string | null
           promo_discount_cents: number
           ready_at: string | null
+          receipt_sent_at: string | null
           refunded_cents: number
           schedule_mode: string
           scheduled_for: string | null
@@ -3221,6 +3227,7 @@ export type Database = {
           promo_code: string | null
           promo_discount_cents: number
           ready_at: string | null
+          receipt_sent_at: string | null
           refunded_cents: number
           schedule_mode: string
           scheduled_for: string | null
@@ -3291,6 +3298,7 @@ export type Database = {
           promo_code: string | null
           promo_discount_cents: number
           ready_at: string | null
+          receipt_sent_at: string | null
           refunded_cents: number
           schedule_mode: string
           scheduled_for: string | null
@@ -3597,6 +3605,7 @@ export type Database = {
           promo_code: string | null
           promo_discount_cents: number
           ready_at: string | null
+          receipt_sent_at: string | null
           refunded_cents: number
           schedule_mode: string
           scheduled_for: string | null
@@ -3669,6 +3678,7 @@ export type Database = {
           promo_code: string | null
           promo_discount_cents: number
           ready_at: string | null
+          receipt_sent_at: string | null
           refunded_cents: number
           schedule_mode: string
           scheduled_for: string | null
