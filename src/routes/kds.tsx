@@ -1181,6 +1181,25 @@ function KDS() {
                         : "Deliveroo auto"
                       : "Deliveroo offline"}
                 </span>
+                <span
+                  className={`flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-bold ${
+                    justEatLive
+                      ? "bg-[#FF8000] text-black"
+                      : "bg-primary-foreground/15 text-primary-foreground"
+                  }`}
+                  title={
+                    justEatLive
+                      ? "Just Eat orders are arriving through the shop Partner Centre watcher"
+                      : "No verified Just Eat check-in — key those tickets in by hand"
+                  }
+                >
+                  <Bike className="h-3.5 w-3.5" />
+                  {justEatLive === null
+                    ? "Just Eat off"
+                    : justEatLive
+                      ? "Just Eat auto"
+                      : "Just Eat offline"}
+                </span>
                 <SyncPill lastSync={lastSync} ok={syncOk} now={now} />
                 <AlertsToggle />
                 <WakeToggle />
