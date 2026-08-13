@@ -202,6 +202,19 @@ function Home() {
         </div>
       </section>
 
+      <section className="border-t border-border bg-soft px-4 py-20 text-center">
+        <h2 className="font-display text-4xl font-bold">Hungry?</h2>
+        <p className="mx-auto mt-3 max-w-xl text-muted-foreground">
+          Browse the menu, drop things in your basket, pay in a tap.
+        </p>
+        <Link
+          to="/menu"
+          className="mt-8 inline-flex h-12 items-center gap-2 rounded-full bg-primary px-6 font-semibold text-primary-foreground shadow-brand transition hover:bg-primary-hover"
+        >
+          Start your order <ArrowRight className="h-4 w-4" />
+        </Link>
+      </section>
+
       <section className="border-t border-border bg-soft px-4 py-12">
         <div className="mx-auto flex max-w-6xl flex-col items-center justify-center gap-3 text-center sm:flex-row sm:justify-between sm:text-left">
           <div>
