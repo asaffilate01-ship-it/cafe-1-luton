@@ -81,7 +81,7 @@ function CartPage() {
                       type="button"
                       aria-label={`Decrease quantity of ${i.name}`}
                       onClick={() => cart.setQty(i.id, i.qty - 1)}
-                      className="grid h-8 w-8 place-items-center rounded-full hover:bg-primary-soft"
+                      className="grid h-11 w-11 place-items-center rounded-full hover:bg-primary-soft"
                     >
                       <Minus className="h-4 w-4" />
                     </button>
@@ -90,7 +90,7 @@ function CartPage() {
                       type="button"
                       aria-label={`Increase quantity of ${i.name}`}
                       onClick={() => cart.setQty(i.id, i.qty + 1)}
-                      className="grid h-8 w-8 place-items-center rounded-full hover:bg-primary-soft"
+                      className="grid h-11 w-11 place-items-center rounded-full hover:bg-primary-soft"
                     >
                       <Plus className="h-4 w-4" />
                     </button>
@@ -100,7 +100,7 @@ function CartPage() {
                     type="button"
                     aria-label={`Remove ${i.name} from basket`}
                     onClick={() => cart.remove(i.id)}
-                    className="text-muted-foreground hover:text-primary"
+                    className="grid h-11 w-11 shrink-0 place-items-center rounded-full text-muted-foreground hover:bg-primary-soft hover:text-primary"
                   >
                     <Trash2 className="h-4 w-4" />
                   </button>
