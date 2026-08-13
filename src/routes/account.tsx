@@ -1,3 +1,4 @@
+import { REWARD_TIERS } from "@/lib/loyalty-tiers";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useSession } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
