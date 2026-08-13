@@ -24,7 +24,7 @@
     "verify:dependencies": "node scripts/verify-dependency-contract.mjs",
     "verify:migrations": "node scripts/verify-migration-integrity.mjs",
     "verify:capabilities": "node scripts/verify-release-capabilities.mjs",
-    "verify:watcher": "node scripts/verify-deliveroo-watcher-package.mjs",
+    "verify:watcher": "node scripts/verify-deliveroo-watcher-package.mjs && node scripts/verify-justeat-watcher-package.mjs",
     "verify:seo": "node scripts/verify-seo.mjs",
     "verify:bundle-budget": "node scripts/verify-bundle-budget.mjs",
     "verify:build-output": "node scripts/verify-build-output.mjs",
