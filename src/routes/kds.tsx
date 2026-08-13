@@ -808,6 +808,7 @@ function KDS() {
   // Just Eat has no official push for this site, so only the shop watcher can
   // prove tickets are still arriving.
   const [justEatLive, setJustEatLive] = useState<boolean | null>(null);
+  const [justEatSeenAt, setJustEatSeenAt] = useState<number | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -825,8 +826,9 @@ function KDS() {
         data?.find((row) => row.key === "just_eat_orders") ??
         null;
       const justEatSeen = justEat?.last_seen_at ? new Date(justEat.last_seen_at).getTime() : 0;
+      setJustEatSeenAt(justEatSeen || null);
       setJustEatLive(
-        justEat ? Boolean(justEat.healthy) && justEatSeen > Date.now() - 180_000 : null,
+        justEat ? Boolean(justEat.healthy) && justEatSeen > Date.now() - 180_000 : false,
       );
       const selected = api ?? hub ?? null;
       const seen = selected?.last_seen_at ? new Date(selected.last_seen_at).getTime() : 0;
@@ -1190,12 +1192,14 @@ function KDS() {
                   title={
                     justEatLive
                       ? "Just Eat orders are arriving through the shop Partner Centre watcher"
-                      : "No verified Just Eat check-in — key those tickets in by hand"
+                      : justEatSeenAt
+                        ? `The Just Eat watcher last checked in ${Math.round((Date.now() - justEatSeenAt) / 60000)} min ago. Key tickets in manually until it is restored.`
+                        : "No verified Just Eat check-in — key those tickets in by hand"
                   }
                 >
                   <Bike className="h-3.5 w-3.5" />
                   {justEatLive === null
-                    ? "Just Eat off"
+                    ? "Just Eat…"
                     : justEatLive
                       ? "Just Eat auto"
                       : "Just Eat offline"}
@@ -1356,6 +1360,40 @@ function KDS() {
                   {deliverooSeenAt
                     ? `Last seen ${Math.max(1, Math.round((now - deliverooSeenAt) / 60000))} min ago — key tickets in by hand`
                     : "No verified Deliveroo check-in — key tickets in by hand"}
+                </span>
+              ) : null}
+              <span
+                role="status"
+                aria-live="polite"
+                className={`flex shrink-0 items-center gap-1.5 rounded-full px-3 py-2 text-xs font-bold ${
+                  justEatLive === null
+                    ? "bg-primary-foreground/15 text-primary-foreground"
+                    : justEatLive
+                      ? "bg-[#FF8000] text-black"
+                      : "bg-red-600 text-white"
+                }`}
+              >
+                <span
+                  className={`h-2 w-2 rounded-full ${
+                    justEatLive === null
+                      ? "bg-primary-foreground/60"
+                      : justEatLive
+                        ? "animate-pulse bg-black/70"
+                        : "bg-white"
+                  }`}
+                />
+                <Bike className="h-4 w-4" />
+                {justEatLive === null
+                  ? "Just Eat…"
+                  : justEatLive
+                    ? "Just Eat online"
+                    : "Just Eat offline"}
+              </span>
+              {justEatLive === false ? (
+                <span className="shrink-0 rounded-full bg-primary-foreground/15 px-3 py-2 text-[11px] font-semibold text-primary-foreground">
+                  {justEatSeenAt
+                    ? `Just Eat last seen ${Math.max(1, Math.round((now - justEatSeenAt) / 60000))} min ago — key tickets in by hand`
+                    : "No verified Just Eat check-in — key tickets in by hand"}
                 </span>
               ) : null}
             </div>
