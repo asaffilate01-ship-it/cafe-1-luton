@@ -214,7 +214,12 @@ function findOrderObjects(
   return found;
 }
 
-function normaliseOrder(order: Record<string, Json>): HubOrder | null {
+export type HubParseOptions = { placeholderName?: string };
+
+function normaliseOrder(
+  order: Record<string, Json>,
+  options: HubParseOptions = {},
+): HubOrder | null {
   const found = findItems(order);
   const reference =
     asString(
@@ -231,7 +236,9 @@ function normaliseOrder(order: Record<string, Json>): HubOrder | null {
   if (!reference) return null;
   // A ticket with a placeholder line still reaches the kitchen; a dropped
   // order does not. Hub often lists the basket on a separate call.
-  const items = found.length ? found : [{ name: "Deliveroo order", qty: 1, notes: null }];
+  const items = found.length
+    ? found
+    : [{ name: options.placeholderName ?? "Deliveroo order", qty: 1, notes: null }];
 
   const customer = pick(order, ["customer", "consumer", "customer_name", "recipient"]);
   const total = pick(order, [
@@ -264,11 +271,11 @@ function normaliseOrder(order: Record<string, Json>): HubOrder | null {
  * Extract every order we can recognise from a raw Hub payload.
  * Unknown shapes yield an empty array rather than an error.
  */
-export function extractHubOrders(payload: Json): HubOrder[] {
+export function extractHubOrders(payload: Json, options: HubParseOptions = {}): HubOrder[] {
   const seen = new Set<string>();
   const orders: HubOrder[] = [];
   for (const candidate of findOrderObjects(payload)) {
-    const order = normaliseOrder(candidate);
+    const order = normaliseOrder(candidate, options);
     if (!order || seen.has(order.reference)) continue;
     seen.add(order.reference);
     orders.push(order);

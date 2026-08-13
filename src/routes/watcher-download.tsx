@@ -25,31 +25,40 @@ function WatcherDownload() {
             <MonitorCheck className="h-4 w-4" /> Café PC · Windows
           </span>
           <h1 className="mt-4 font-display text-3xl font-black tracking-tight sm:text-4xl">
-            Deliveroo → KDS setup
+            Marketplace → KDS setup
           </h1>
           <p className="mt-3 max-w-xl text-sm leading-relaxed text-white/60 sm:text-base">
-            Download, extract and double-click one file. The installer keeps the watcher running in
-            the background whenever the café PC is signed in.
+            Download, extract and double-click one file per marketplace. Each installer keeps its
+            watcher running in the background whenever the café PC is signed in.
           </p>
-          <a
-            href="/downloads/cafe1-deliveroo-watcher-windows.zip"
-            download
-            className="mt-7 inline-flex h-14 w-full items-center justify-center gap-2 rounded-2xl bg-primary px-6 font-black text-primary-foreground shadow-lg shadow-primary/25 transition hover:brightness-110 active:scale-[0.99] sm:w-auto"
-          >
-            <Download className="h-5 w-5" /> Download Windows setup
-          </a>
+          <div className="mt-7 flex flex-col gap-3 sm:flex-row">
+            <a
+              href="/downloads/cafe1-deliveroo-watcher-windows.zip"
+              download
+              className="inline-flex h-14 flex-1 items-center justify-center gap-2 rounded-2xl bg-primary px-6 font-black text-primary-foreground shadow-lg shadow-primary/25 transition hover:brightness-110 active:scale-[0.99]"
+            >
+              <Download className="h-5 w-5" /> Deliveroo setup
+            </a>
+            <a
+              href="/downloads/cafe1-justeat-watcher-windows.zip"
+              download
+              className="inline-flex h-14 flex-1 items-center justify-center gap-2 rounded-2xl border border-white/15 bg-white/10 px-6 font-black text-white transition hover:bg-white/15 active:scale-[0.99]"
+            >
+              <Download className="h-5 w-5" /> Just Eat setup
+            </a>
+          </div>
         </div>
 
         <div className="grid gap-4 p-6 sm:grid-cols-2 sm:p-8">
           <Feature
             icon={CheckCircle2}
             title="One guided setup"
-            text="Run START-CAFE1-DELIVEROO.cmd, sign into Deliveroo's own page once and wait for Connected."
+            text="Run each START-CAFE1 file, sign into Deliveroo Hub or Just Eat Partner Centre once and wait for Connected."
           />
           <Feature
             icon={ShieldCheck}
             title="No saved password"
-            text="Café 1 never reads or stores the Deliveroo device username or password."
+            text="Café 1 never reads or stores the Deliveroo or Just Eat username or password."
           />
           <Feature
             icon={MonitorCheck}

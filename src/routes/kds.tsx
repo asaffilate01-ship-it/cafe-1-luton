@@ -805,6 +805,9 @@ function KDS() {
   const [deliverooLive, setDeliverooLive] = useState<boolean | null>(null);
   const [deliverooSeenAt, setDeliverooSeenAt] = useState<number | null>(null);
   const [deliverooConnection, setDeliverooConnection] = useState<"orders_api" | "hub" | null>(null);
+  // Just Eat has no official push for this site, so only the shop watcher can
+  // prove tickets are still arriving.
+  const [justEatLive, setJustEatLive] = useState<boolean | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -812,11 +815,19 @@ function KDS() {
       const { data } = await supabase
         .from("integration_status")
         .select("key, last_seen_at, healthy")
-        .in("key", ["deliveroo_orders_api", "deliveroo_hub"])
+        .in("key", ["deliveroo_orders_api", "deliveroo_hub", "just_eat_hub", "just_eat_orders"])
         .order("last_seen_at", { ascending: false });
       if (cancelled) return;
       const api = data?.find((row) => row.key === "deliveroo_orders_api");
       const hub = data?.find((row) => row.key === "deliveroo_hub");
+      const justEat =
+        data?.find((row) => row.key === "just_eat_hub") ??
+        data?.find((row) => row.key === "just_eat_orders") ??
+        null;
+      const justEatSeen = justEat?.last_seen_at ? new Date(justEat.last_seen_at).getTime() : 0;
+      setJustEatLive(
+        justEat ? Boolean(justEat.healthy) && justEatSeen > Date.now() - 180_000 : null,
+      );
       const selected = api ?? hub ?? null;
       const seen = selected?.last_seen_at ? new Date(selected.last_seen_at).getTime() : 0;
       setDeliverooSeenAt(seen || null);
@@ -1169,6 +1180,25 @@ function KDS() {
                         ? "Deliveroo API"
                         : "Deliveroo auto"
                       : "Deliveroo offline"}
+                </span>
+                <span
+                  className={`flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-bold ${
+                    justEatLive
+                      ? "bg-[#FF8000] text-black"
+                      : "bg-primary-foreground/15 text-primary-foreground"
+                  }`}
+                  title={
+                    justEatLive
+                      ? "Just Eat orders are arriving through the shop Partner Centre watcher"
+                      : "No verified Just Eat check-in — key those tickets in by hand"
+                  }
+                >
+                  <Bike className="h-3.5 w-3.5" />
+                  {justEatLive === null
+                    ? "Just Eat off"
+                    : justEatLive
+                      ? "Just Eat auto"
+                      : "Just Eat offline"}
                 </span>
                 <SyncPill lastSync={lastSync} ok={syncOk} now={now} />
                 <AlertsToggle />
