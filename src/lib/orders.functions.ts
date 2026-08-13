@@ -77,6 +77,8 @@ const CreateOrderSchema = z.object({
   jury_room: z.string().max(60).optional(),
 });
 
+const TIP_MAX_CENTS = 20000;
+
 export const createOrder = createServerFn({ method: "POST" })
   .validator((d: unknown) => CreateOrderSchema.parse(d))
   .handler(async ({ data }) => {
