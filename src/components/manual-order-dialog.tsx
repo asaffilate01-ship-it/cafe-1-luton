@@ -252,21 +252,34 @@ export function ManualOrderDialog({
     "mt-1.5 h-11 w-full rounded-xl border border-border bg-background px-3 text-foreground";
 
   return (
-    <div className="fixed inset-0 z-50 grid place-items-center bg-black/60 p-4">
+    <div
+      className="fixed inset-0 z-50 grid place-items-center bg-black/60 p-4"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="manual-order-title"
+      aria-describedby="manual-order-hint"
+      onKeyDown={(event) => {
+        if (event.key === "Escape") onClose();
+      }}
+    >
       <form
         onSubmit={submit}
         className="max-h-[90vh] w-full max-w-xl overflow-y-auto rounded-2xl bg-background p-5 text-foreground shadow-xl"
       >
         <div className="mb-4 flex items-start justify-between gap-4">
           <div>
-            <h2 className="font-display text-xl font-bold">Add order</h2>
-            <p className="text-sm text-muted-foreground">{meta.hint}. It lands on the display in the right channel colour.</p>
+            <h2 id="manual-order-title" className="font-display text-xl font-bold">
+              Add order
+            </h2>
+            <p id="manual-order-hint" className="text-sm text-muted-foreground">
+              {meta.hint}. It lands on the display in the right channel colour.
+            </p>
           </div>
           <button
             type="button"
             onClick={onClose}
             aria-label="Close"
-            className="rounded-full p-1.5 text-muted-foreground hover:bg-muted"
+            className="grid h-11 w-11 place-items-center rounded-full text-muted-foreground hover:bg-muted"
           >
             <X className="h-5 w-5" />
           </button>
@@ -278,8 +291,9 @@ export function ManualOrderDialog({
             <button
               key={c.value}
               type="button"
+              aria-pressed={channel === c.value}
               onClick={() => pickChannel(c.value)}
-              className={`rounded-full border px-3 py-1.5 text-sm font-semibold ${
+              className={`min-h-11 rounded-full border px-3 py-1.5 text-sm font-semibold ${
                 channel === c.value
                   ? "border-primary bg-primary text-primary-foreground"
                   : "border-border hover:bg-muted"
