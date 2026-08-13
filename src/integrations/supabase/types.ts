@@ -479,6 +479,51 @@ export type Database = {
         }
         Relationships: []
       }
+      customer_addresses: {
+        Row: {
+          address_line1: string
+          address_line2: string | null
+          city: string
+          company_name: string | null
+          created_at: string
+          delivery_notes: string | null
+          id: string
+          is_default: boolean
+          label: string
+          postcode: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          address_line1: string
+          address_line2?: string | null
+          city: string
+          company_name?: string | null
+          created_at?: string
+          delivery_notes?: string | null
+          id?: string
+          is_default?: boolean
+          label?: string
+          postcode: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          address_line1?: string
+          address_line2?: string | null
+          city?: string
+          company_name?: string | null
+          created_at?: string
+          delivery_notes?: string | null
+          id?: string
+          is_default?: boolean
+          label?: string
+          postcode?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       customer_discounts: {
         Row: {
           active: boolean
@@ -1376,7 +1421,9 @@ export type Database = {
           payment_method: string
           payment_status: Database["public"]["Enums"]["payment_status"]
           picked_up_at: string | null
+          points_discount_cents: number
           points_earned: number
+          points_redeemed: number
           pos_terminal: string | null
           postcode: string | null
           promo_code: string | null
@@ -1397,6 +1444,7 @@ export type Database = {
           sumup_transaction_id: string | null
           table_number: string | null
           till_shift_id: string | null
+          tip_cents: number
           total_cents: number
           tracking_token_hash: string | null
           type: Database["public"]["Enums"]["order_type"]
@@ -1438,7 +1486,9 @@ export type Database = {
           payment_method?: string
           payment_status?: Database["public"]["Enums"]["payment_status"]
           picked_up_at?: string | null
+          points_discount_cents?: number
           points_earned?: number
+          points_redeemed?: number
           pos_terminal?: string | null
           postcode?: string | null
           promo_code?: string | null
@@ -1459,6 +1509,7 @@ export type Database = {
           sumup_transaction_id?: string | null
           table_number?: string | null
           till_shift_id?: string | null
+          tip_cents?: number
           total_cents?: number
           tracking_token_hash?: string | null
           type: Database["public"]["Enums"]["order_type"]
@@ -1500,7 +1551,9 @@ export type Database = {
           payment_method?: string
           payment_status?: Database["public"]["Enums"]["payment_status"]
           picked_up_at?: string | null
+          points_discount_cents?: number
           points_earned?: number
+          points_redeemed?: number
           pos_terminal?: string | null
           postcode?: string | null
           promo_code?: string | null
@@ -1521,6 +1574,7 @@ export type Database = {
           sumup_transaction_id?: string | null
           table_number?: string | null
           till_shift_id?: string | null
+          tip_cents?: number
           total_cents?: number
           tracking_token_hash?: string | null
           type?: Database["public"]["Enums"]["order_type"]
@@ -2829,7 +2883,9 @@ export type Database = {
           payment_method: string
           payment_status: Database["public"]["Enums"]["payment_status"]
           picked_up_at: string | null
+          points_discount_cents: number
           points_earned: number
+          points_redeemed: number
           pos_terminal: string | null
           postcode: string | null
           promo_code: string | null
@@ -2850,6 +2906,7 @@ export type Database = {
           sumup_transaction_id: string | null
           table_number: string | null
           till_shift_id: string | null
+          tip_cents: number
           total_cents: number
           tracking_token_hash: string | null
           type: Database["public"]["Enums"]["order_type"]
@@ -2991,7 +3048,9 @@ export type Database = {
           payment_method: string
           payment_status: Database["public"]["Enums"]["payment_status"]
           picked_up_at: string | null
+          points_discount_cents: number
           points_earned: number
+          points_redeemed: number
           pos_terminal: string | null
           postcode: string | null
           promo_code: string | null
@@ -3012,6 +3071,7 @@ export type Database = {
           sumup_transaction_id: string | null
           table_number: string | null
           till_shift_id: string | null
+          tip_cents: number
           total_cents: number
           tracking_token_hash: string | null
           type: Database["public"]["Enums"]["order_type"]
@@ -3134,7 +3194,9 @@ export type Database = {
           payment_method: string
           payment_status: Database["public"]["Enums"]["payment_status"]
           picked_up_at: string | null
+          points_discount_cents: number
           points_earned: number
+          points_redeemed: number
           pos_terminal: string | null
           postcode: string | null
           promo_code: string | null
@@ -3155,6 +3217,7 @@ export type Database = {
           sumup_transaction_id: string | null
           table_number: string | null
           till_shift_id: string | null
+          tip_cents: number
           total_cents: number
           tracking_token_hash: string | null
           type: Database["public"]["Enums"]["order_type"]
@@ -3228,7 +3291,9 @@ export type Database = {
           payment_method: string
           payment_status: Database["public"]["Enums"]["payment_status"]
           picked_up_at: string | null
+          points_discount_cents: number
           points_earned: number
+          points_redeemed: number
           pos_terminal: string | null
           postcode: string | null
           promo_code: string | null
@@ -3249,6 +3314,7 @@ export type Database = {
           sumup_transaction_id: string | null
           table_number: string | null
           till_shift_id: string | null
+          tip_cents: number
           total_cents: number
           tracking_token_hash: string | null
           type: Database["public"]["Enums"]["order_type"]
@@ -3300,7 +3366,9 @@ export type Database = {
           payment_method: string
           payment_status: Database["public"]["Enums"]["payment_status"]
           picked_up_at: string | null
+          points_discount_cents: number
           points_earned: number
+          points_redeemed: number
           pos_terminal: string | null
           postcode: string | null
           promo_code: string | null
@@ -3321,6 +3389,7 @@ export type Database = {
           sumup_transaction_id: string | null
           table_number: string | null
           till_shift_id: string | null
+          tip_cents: number
           total_cents: number
           tracking_token_hash: string | null
           type: Database["public"]["Enums"]["order_type"]
@@ -3518,6 +3587,10 @@ export type Database = {
         Args: { _amount_cents: number; _holder_id: string; _order_id: string }
         Returns: number
       }
+      refund_loyalty_points: {
+        Args: { _points: number; _user_id: string }
+        Returns: boolean
+      }
       release_juror_voucher_reservation: {
         Args: { _reason: string; _reservation_token: string }
         Returns: boolean
@@ -3608,7 +3681,9 @@ export type Database = {
           payment_method: string
           payment_status: Database["public"]["Enums"]["payment_status"]
           picked_up_at: string | null
+          points_discount_cents: number
           points_earned: number
+          points_redeemed: number
           pos_terminal: string | null
           postcode: string | null
           promo_code: string | null
@@ -3629,6 +3704,7 @@ export type Database = {
           sumup_transaction_id: string | null
           table_number: string | null
           till_shift_id: string | null
+          tip_cents: number
           total_cents: number
           tracking_token_hash: string | null
           type: Database["public"]["Enums"]["order_type"]
@@ -3643,6 +3719,10 @@ export type Database = {
           isOneToOne: true
           isSetofReturn: false
         }
+      }
+      spend_loyalty_points: {
+        Args: { _points: number; _user_id: string }
+        Returns: boolean
       }
       transition_order_status: {
         Args: {
@@ -3682,7 +3762,9 @@ export type Database = {
           payment_method: string
           payment_status: Database["public"]["Enums"]["payment_status"]
           picked_up_at: string | null
+          points_discount_cents: number
           points_earned: number
+          points_redeemed: number
           pos_terminal: string | null
           postcode: string | null
           promo_code: string | null
@@ -3703,6 +3785,7 @@ export type Database = {
           sumup_transaction_id: string | null
           table_number: string | null
           till_shift_id: string | null
+          tip_cents: number
           total_cents: number
           tracking_token_hash: string | null
           type: Database["public"]["Enums"]["order_type"]
