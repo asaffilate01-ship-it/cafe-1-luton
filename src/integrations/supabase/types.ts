@@ -1372,6 +1372,7 @@ export type Database = {
           loyalty_stamps_pending: number
           operator_id: string | null
           order_number: number
+          partner_order_id: string | null
           payment_method: string
           payment_status: Database["public"]["Enums"]["payment_status"]
           picked_up_at: string | null
@@ -1433,6 +1434,7 @@ export type Database = {
           loyalty_stamps_pending?: number
           operator_id?: string | null
           order_number?: number
+          partner_order_id?: string | null
           payment_method?: string
           payment_status?: Database["public"]["Enums"]["payment_status"]
           picked_up_at?: string | null
@@ -1494,6 +1496,7 @@ export type Database = {
           loyalty_stamps_pending?: number
           operator_id?: string | null
           order_number?: number
+          partner_order_id?: string | null
           payment_method?: string
           payment_status?: Database["public"]["Enums"]["payment_status"]
           picked_up_at?: string | null
@@ -2822,6 +2825,7 @@ export type Database = {
           loyalty_stamps_pending: number
           operator_id: string | null
           order_number: number
+          partner_order_id: string | null
           payment_method: string
           payment_status: Database["public"]["Enums"]["payment_status"]
           picked_up_at: string | null
@@ -2983,6 +2987,7 @@ export type Database = {
           loyalty_stamps_pending: number
           operator_id: string | null
           order_number: number
+          partner_order_id: string | null
           payment_method: string
           payment_status: Database["public"]["Enums"]["payment_status"]
           picked_up_at: string | null
@@ -3125,6 +3130,7 @@ export type Database = {
           loyalty_stamps_pending: number
           operator_id: string | null
           order_number: number
+          partner_order_id: string | null
           payment_method: string
           payment_status: Database["public"]["Enums"]["payment_status"]
           picked_up_at: string | null
@@ -3218,6 +3224,7 @@ export type Database = {
           loyalty_stamps_pending: number
           operator_id: string | null
           order_number: number
+          partner_order_id: string | null
           payment_method: string
           payment_status: Database["public"]["Enums"]["payment_status"]
           picked_up_at: string | null
@@ -3289,6 +3296,7 @@ export type Database = {
           loyalty_stamps_pending: number
           operator_id: string | null
           order_number: number
+          partner_order_id: string | null
           payment_method: string
           payment_status: Database["public"]["Enums"]["payment_status"]
           picked_up_at: string | null
@@ -3596,6 +3604,7 @@ export type Database = {
           loyalty_stamps_pending: number
           operator_id: string | null
           order_number: number
+          partner_order_id: string | null
           payment_method: string
           payment_status: Database["public"]["Enums"]["payment_status"]
           picked_up_at: string | null
@@ -3669,6 +3678,7 @@ export type Database = {
           loyalty_stamps_pending: number
           operator_id: string | null
           order_number: number
+          partner_order_id: string | null
           payment_method: string
           payment_status: Database["public"]["Enums"]["payment_status"]
           picked_up_at: string | null

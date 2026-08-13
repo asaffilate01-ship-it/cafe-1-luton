@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { guessCategory } from "@/lib/cooking";
+import { parseSumupTabIntent } from "@/lib/sumup-tab";
 import {
   groupSumupSaleParts,
   normaliseSumupClientTransactionId,
@@ -694,19 +695,47 @@ export const syncSumupPos = createServerFn({ method: "POST" })
       const fulfilment = deriveFulfilment(detailed, products);
       const posSide = derivePosSide(detailed, products, mapping);
       const schedule = deriveSchedule(detailed, products);
+      const note = sumupOrderNote(detailed, products);
+      const tab = parseSumupTabIntent(note);
+
+      // "TAB PAID: <name>" on the till clears the outstanding tab tickets
+      // instead of sending the same food to the kitchen a second time.
+      if (tab?.kind === "settle") {
+        await supabaseAdmin
+          .from("orders")
+          .update({ payment_status: "paid", payment_method: paymentMethod })
+          .eq("payment_status", "on_account")
+          .ilike("company_name", tab.name);
+        skipped += paymentParts.length;
+        continue;
+      }
+
+      // "TAB: <name>" keeps the ticket unpaid and on the named house account.
+      let tabAccountId: string | null = null;
+      if (tab?.kind === "open") {
+        const { data: account } = await supabaseAdmin
+          .from("accounts")
+          .select("id")
+          .ilike("name", tab.name)
+          .eq("active", true)
+          .maybeSingle();
+        tabAccountId = account?.id ?? null;
+      }
 
       const { data: inserted, error: insErr } = await supabaseAdmin
         .from("orders")
         .insert({
-          customer_name: `SumUp POS${cardTail}`,
+          customer_name: tab?.kind === "open" ? tab.name : `SumUp POS${cardTail}`,
+          company_name: tab?.kind === "open" ? tab.name : null,
+          account_id: tabAccountId,
           customer_phone: "",
           type: fulfilment.type,
           table_number: fulfilment.table_number,
           pos_terminal: posSide,
-          delivery_notes: sumupOrderNote(detailed, products),
+          delivery_notes: note,
           status: "preparing",
-          payment_status: "paid",
-          payment_method: paymentMethod,
+          payment_status: tab?.kind === "open" ? "on_account" : "paid",
+          payment_method: tab?.kind === "open" ? "account" : paymentMethod,
           subtotal_cents: totalCents,
           delivery_fee_cents: 0,
           discount_cents: 0,

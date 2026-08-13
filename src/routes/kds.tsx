@@ -1575,7 +1575,7 @@ function KDS() {
                   t.payment_status === "pending" ? (
                     <span className="rounded-full bg-amber-500 px-1.5 py-px text-[9px] font-black uppercase tracking-wide text-black">
                       {t.payment_method === "account" || t.payment_status === "on_account"
-                        ? "Tab · Unpaid"
+                        ? `Tab · Unpaid${t.company_name ? ` · ${t.company_name}` : ""}`
                         : "Unpaid"}
                     </span>
                   ) : (
