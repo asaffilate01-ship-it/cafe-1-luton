@@ -516,7 +516,8 @@ export const createOrder = createServerFn({ method: "POST" })
     }
 
     // Voucher covers the whole order (and it isn't on a tab) — nothing to charge.
-    const fully_covered = !account_id && payable === 0 && voucher_cents > 0;
+    const fully_covered =
+      !account_id && payable === 0 && (voucher_cents > 0 || points_discount > 0);
 
     // Guest checkout: anon can INSERT but not SELECT orders (PII protection), so
     // the row is written with the privileged server client after all validation.
@@ -555,6 +556,9 @@ export const createOrder = createServerFn({ method: "POST" })
         subtotal_cents: subtotal,
         delivery_fee_cents: delivery_fee,
         discount_cents: discount,
+        tip_cents,
+        points_redeemed,
+        points_discount_cents: points_discount,
         voucher_cents,
         voucher_holder_id,
         points_earned,
