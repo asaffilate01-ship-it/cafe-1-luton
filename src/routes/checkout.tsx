@@ -788,6 +788,44 @@ function Checkout() {
                   )}
                 </div>
               ) : (
+                <>
+                {savedAddresses.length > 0 && (
+                  <div className="mt-3 space-y-2">
+                    <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                      Saved addresses
+                    </p>
+                    <div className="grid gap-2 sm:grid-cols-2">
+                      {savedAddresses.map((a) => {
+                        const selected =
+                          form.address_line1 === a.address_line1 && form.postcode === a.postcode;
+                        return (
+                          <button
+                            key={a.id}
+                            type="button"
+                            onClick={() => {
+                              setForm((f) => ({
+                                ...f,
+                                company_name: a.company_name ?? "",
+                                address_line1: a.address_line1,
+                                city: a.city,
+                                postcode: a.postcode,
+                                delivery_notes: a.delivery_notes ?? f.delivery_notes,
+                              }));
+                              setSaveThisAddress(false);
+                              void verifyPostcode(a.postcode);
+                            }}
+                            className={`rounded-xl border px-4 py-3 text-left text-sm ${selected ? "border-primary bg-primary/10 font-semibold text-primary" : "border-border bg-background hover:border-primary"}`}
+                          >
+                            <span className="block font-semibold">{a.label}</span>
+                            <span className="block text-xs text-muted-foreground">
+                              {a.address_line1}, {a.postcode}
+                            </span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
                 <div className="mt-3 grid gap-3 sm:grid-cols-2">
                   <input
                     required
