@@ -26,12 +26,12 @@ function readConfig() {
     return {
       cafe1Url: String(parsed.cafe1Url || "https://cafe1stalbans.co.uk").replace(/\/$/, ""),
       hubUrl: String(
-        parsed.hubUrl || "https://restaurant-hub.deliveroo.net/orders",
+        parsed.hubUrl || "https://partner.just-eat.co.uk/orders",
       ),
       refreshMs: Math.max(30_000, Number(parsed.refreshMs || 45_000)),
     };
   } catch {
-    console.error("Watcher setup is incomplete. Run START-CAFE1-DELIVEROO.cmd again.");
+    console.error("Watcher setup is incomplete. Run START-CAFE1-JUSTEAT.cmd again.");
     process.exit(2);
   }
 }
@@ -77,7 +77,7 @@ let chromium;
 try {
   ({ chromium } = await import("playwright-core"));
 } catch {
-  console.error("The private watcher runtime is missing. Run START-CAFE1-DELIVEROO.cmd again.");
+  console.error("The private watcher runtime is missing. Run START-CAFE1-JUSTEAT.cmd again.");
   process.exit(2);
 }
 
@@ -102,17 +102,18 @@ async function launchContext() {
   );
 }
 
-function isJust EatUrl(value) {
+function isJustEatUrl(value) {
   try {
     const hostname = new URL(value).hostname.toLowerCase();
-    return (
-      hostname === "deliveroo.com" ||
-      hostname.endsWith(".deliveroo.com") ||
-      hostname === "deliveroo.net" ||
-      hostname.endsWith(".deliveroo.net") ||
-      hostname === "deliveroo.co.uk" ||
-      hostname.endsWith(".deliveroo.co.uk")
-    );
+    return [
+      "just-eat.co.uk",
+      "just-eat.com",
+      "justeat.co.uk",
+      "justeat.com",
+      "just-eat.io",
+      "justeattakeaway.com",
+      "skipthedishes.com",
+    ].some((domain) => hostname === domain || hostname.endsWith(`.${domain}`));
   } catch {
     return false;
   }
@@ -254,10 +255,10 @@ if (await signedOut()) {
   await heartbeat(true);
   fs.writeFileSync(
     LOGIN_REQUIRED_FILE,
-    "Just Eat Partner Centre needs signing in again. Double-click REPAIR-DELIVEROO-LOGIN.cmd.\r\n",
+    "Just Eat Partner Centre needs signing in again. Double-click REPAIR-JUSTEAT-LOGIN.cmd.\r\n",
     { mode: 0o600 },
   );
-  console.error("Just Eat login is required. Run REPAIR-DELIVEROO-LOGIN.cmd.");
+  console.error("Just Eat login is required. Run REPAIR-JUSTEAT-LOGIN.cmd.");
   await context.close();
   releaseLock();
   process.exit(20);
@@ -266,7 +267,7 @@ if (await signedOut()) {
 const ignored = /\.(js|css|png|jpe?g|svg|gif|woff2?|ico|map)(\?|$)|segment|sentry|datadog|analytics|intercom/i;
 context.on("response", async (response) => {
   const url = response.url();
-  if (!isJust EatUrl(url) || ignored.test(url)) return;
+  if (!isJustEatUrl(url) || ignored.test(url)) return;
   if (!(response.headers()["content-type"] || "").includes("json")) return;
   const text = await response.text().catch(() => "");
   if (!text || text.length > 400_000) return;
@@ -275,7 +276,7 @@ context.on("response", async (response) => {
 });
 
 page.on("websocket", (socket) => {
-  if (!isJust EatUrl(socket.url())) return;
+  if (!isJustEatUrl(socket.url())) return;
   socket.on("framereceived", async (frame) => {
     const text = typeof frame.payload === "string" ? frame.payload : "";
     if (!text || text.length > 400_000) return;
@@ -301,7 +302,7 @@ const refreshTimer = setInterval(async () => {
       await heartbeat(true);
       fs.writeFileSync(
         LOGIN_REQUIRED_FILE,
-        "Just Eat Partner Centre needs signing in again. Double-click REPAIR-DELIVEROO-LOGIN.cmd.\r\n",
+        "Just Eat Partner Centre needs signing in again. Double-click REPAIR-JUSTEAT-LOGIN.cmd.\r\n",
         { mode: 0o600 },
       );
       console.error("Just Eat session ended. Login repair is required.");
