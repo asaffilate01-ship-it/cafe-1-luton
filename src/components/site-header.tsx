@@ -1,5 +1,6 @@
 import { NAP } from "@/lib/nap";
 import { Link } from "@tanstack/react-router";
+import itechloungeLogo from "@/assets/itechlounge-logo.png";
 import {
   ShoppingBag,
   ReceiptText,
