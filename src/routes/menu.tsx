@@ -415,7 +415,7 @@ function MenuPage() {
               {q && (
                 <button
                   onClick={() => setQ("")}
-                  className="absolute right-2 top-1/2 grid h-7 w-7 -translate-y-1/2 place-items-center rounded-full text-muted-foreground hover:bg-muted hover:text-foreground"
+                  className="absolute right-1 top-1/2 grid h-9 w-9 -translate-y-1/2 place-items-center rounded-full text-muted-foreground hover:bg-muted hover:text-foreground"
                   aria-label="Clear search"
                 >
                   <X className="h-4 w-4" />
@@ -881,7 +881,7 @@ function ItemCard({
             <div className="absolute -bottom-2 -right-2 flex items-center gap-1 rounded-full border-2 border-background bg-primary px-1 py-0.5 text-primary-foreground shadow-brand">
               <button
                 onClick={decrement}
-                className="grid h-7 w-7 place-items-center rounded-full hover:bg-primary-hover"
+                className="grid h-9 w-9 place-items-center rounded-full hover:bg-primary-hover"
                 aria-label="Decrease"
               >
                 <Minus className="h-3.5 w-3.5" />
@@ -889,7 +889,7 @@ function ItemCard({
               <span className="min-w-[1ch] text-center text-sm font-bold">{qty}</span>
               <button
                 onClick={quickAdd}
-                className="grid h-7 w-7 place-items-center rounded-full hover:bg-primary-hover"
+                className="grid h-9 w-9 place-items-center rounded-full hover:bg-primary-hover"
                 aria-label="Increase"
               >
                 <Plus className="h-3.5 w-3.5" />
