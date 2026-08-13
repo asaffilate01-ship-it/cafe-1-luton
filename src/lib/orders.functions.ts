@@ -325,6 +325,9 @@ export const createOrder = createServerFn({ method: "POST" })
     const { hashTrackingToken } = await import("./order-access.server");
     const tracking_token = randomBytes(32).toString("base64url");
     const tracking_token_hash = hashTrackingToken(tracking_token);
+    // Pre-generated so the SumUp checkout can carry a wallet redirect URL that
+    // points back at this exact order.
+    const order_id = randomUUID();
 
     // Court vouchers: code + separately issued PIN, with a tokenised reservation
     // so one failed checkout can never release another concurrent order's hold.
@@ -503,6 +506,8 @@ export const createOrder = createServerFn({ method: "POST" })
           description: compactSumupDescription,
           customer_email: data.customer_email || undefined,
           return_url: `${publicAppUrl}/api/public/sumup-webhook`,
+          // Required for Apple Pay / Google Pay eligibility on the checkout.
+          redirect_url: `${publicAppUrl}/order/${order_id}?token=${tracking_token}`,
         });
         checkout_id = co.id;
       } catch (e) {
@@ -536,6 +541,7 @@ export const createOrder = createServerFn({ method: "POST" })
     const { data: order, error: orderErr } = await sbWrite
       .from("orders")
       .insert({
+        id: order_id,
         customer_id: userId,
         account_id,
         customer_name: data.customer_name,

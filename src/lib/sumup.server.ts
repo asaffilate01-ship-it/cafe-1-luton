@@ -24,6 +24,12 @@ export async function createSumUpCheckout(input: {
   currency?: string;
   description?: string;
   return_url?: string;
+  /**
+   * Browser return URL. SumUp only marks alternative payment methods
+   * (Apple Pay / Google Pay) as eligible for a checkout when this is present,
+   * so omitting it silently downgrades the widget to card-only.
+   */
+  redirect_url?: string;
   customer_email?: string;
 }): Promise<SumUpCheckout> {
   const apiKey = requireEnv("SUMUP_API_KEY");
@@ -42,6 +48,7 @@ export async function createSumUpCheckout(input: {
       merchant_code: merchantCode,
       description: input.description,
       return_url: input.return_url,
+      redirect_url: input.redirect_url,
       pay_to_email: input.customer_email,
     }),
   });
