@@ -605,6 +605,24 @@ export const createOrder = createServerFn({ method: "POST" })
       .insert(lines.map((l) => ({ ...l, order_id: order.id })));
     if (itemsErr) throw new Error(itemsErr.message);
 
+    // Remember the delivery address for signed-in customers who asked us to.
+    if (userId && data.save_address && data.type === "delivery" && data.address_line1 && data.city) {
+      try {
+        await sbWrite.from("customer_addresses").insert({
+          user_id: userId,
+          label: (data.address_label || data.company_name || "Saved address").slice(0, 40),
+          company_name: data.company_name || null,
+          address_line1: data.address_line1,
+          address_line2: data.address_line2 || null,
+          city: data.city,
+          postcode: data.postcode || "",
+          delivery_notes: data.delivery_notes || null,
+        });
+      } catch (e) {
+        console.error("[addresses] save failed", e);
+      }
+    }
+
     // Promo usage was already claimed atomically above (consume_promo_use).
 
     // Loyalty rewards are only granted once the order is actually paid.
