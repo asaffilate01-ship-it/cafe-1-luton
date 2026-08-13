@@ -1139,7 +1139,7 @@ function Checkout() {
             )}
             <div className="mt-2 flex justify-between border-t border-border pt-2 font-display text-lg font-bold">
               <span>Total</span>
-              <span className="text-primary">{money(total)}</span>
+              <span className="text-primary">{money(finalTotal)}</span>
             </div>
             {belowMin && (
               <p className="mt-2 rounded-lg bg-destructive/10 p-2 text-center text-xs font-semibold text-destructive">
