@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { SiteHeader, SiteFooter } from "@/components/site-header";
 import { Calendar, ArrowRight } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
 import { breadcrumbJsonLd, canonicalLink, jsonLdScript, seoMeta, webPageJsonLd } from "@/lib/seo";
 
 const title = "St Albans Food Guide | Breakfast, Lunch & Café News";

@@ -8,6 +8,7 @@ import { useEffect } from "react";
 import { cart } from "@/lib/cart";
 import { toast } from "sonner";
 import { RotateCcw } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export const Route = createFileRoute("/account")({
   head: () => ({
