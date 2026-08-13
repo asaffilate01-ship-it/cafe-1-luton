@@ -1,5 +1,6 @@
 import { NAP } from "@/lib/nap";
 import { Link } from "@tanstack/react-router";
+import itechloungeLogo from "@/assets/itechlounge-logo.png";
 import {
   ShoppingBag,
   ReceiptText,
@@ -317,8 +318,14 @@ export function SiteFooter() {
             href="https://itechlounge.co.uk"
             target="_blank"
             rel="noopener noreferrer"
-            className="font-medium text-foreground transition hover:text-primary"
+            className="inline-flex items-center gap-1.5 align-middle font-medium text-foreground transition hover:text-primary"
           >
+            <img
+              src={itechloungeLogo}
+              alt="iTechLounge"
+              className="h-5 w-auto"
+              loading="lazy"
+            />
             iTechLounge
           </a>
         </span>
