@@ -6,6 +6,13 @@
   "scope": "/",
   "id": "/",
   "display": "standalone",
+  "display_override": ["standalone", "minimal-ui", "browser"],
+  "lang": "en-GB",
+  "dir": "ltr",
+  "prefer_related_applications": false,
+  "launch_handler": {
+    "client_mode": "navigate-existing"
+  },
   "orientation": "portrait",
   "background_color": "#ffffff",
   "theme_color": "#dc2626",
@@ -48,15 +55,24 @@
   "shortcuts": [
     {
       "name": "Menu",
-      "url": "/menu"
+      "short_name": "Menu",
+      "description": "Browse the full Café 1 menu and order",
+      "url": "/menu",
+      "icons": [{ "src": "/icon-192.png", "sizes": "192x192", "type": "image/png" }]
     },
     {
       "name": "My orders",
-      "url": "/account"
+      "short_name": "Orders",
+      "description": "Track current orders and view past receipts",
+      "url": "/account",
+      "icons": [{ "src": "/icon-192.png", "sizes": "192x192", "type": "image/png" }]
     },
     {
       "name": "Kitchen display",
-      "url": "/kds"
+      "short_name": "KDS",
+      "description": "Kitchen display for staff",
+      "url": "/kds",
+      "icons": [{ "src": "/icon-192.png", "sizes": "192x192", "type": "image/png" }]
     }
   ]
 }
