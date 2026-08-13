@@ -392,6 +392,16 @@ function Checkout() {
     ? jurorFoodDiscount(Math.max(0, grossTotal - voucherApplied), foodSubtotal)
     : 0;
   const total = Math.max(0, grossTotal - voucherApplied - jurorDiscount);
+  const pointsDiscount = user && !onTab ? rewardDiscountCents(pointsToRedeem, total) : 0;
+  const afterPoints = Math.max(0, total - pointsDiscount);
+  const tipCents = onTab
+    ? 0
+    : tipPercent === "custom"
+      ? Math.max(0, Math.min(20000, Math.round(parseFloat(customTip || "0") * 100) || 0))
+      : tipPercent
+        ? Math.round((afterPoints * tipPercent) / 100)
+        : 0;
+  const finalTotal = afterPoints + tipCents;
   const pointsEarn = user && !onTab ? Math.floor(Math.max(0, subtotal - discount) / 100) : 0;
   const minOrder = settings?.min_order_cents ?? 0;
   const belowMin = minOrder > 0 && subtotal < minOrder;
