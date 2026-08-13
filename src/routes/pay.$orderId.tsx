@@ -115,6 +115,16 @@ function PayView() {
   const [walletDetected, setWalletDetected] = useState(false);
   const [walletConfigured, setWalletConfigured] = useState(false);
   const mountedRef = useRef(false);
+  const isDemo = isGooglePayDemoMode();
+  const demoOrder: Order = {
+    id: "gpay-demo",
+    order_number: 9999,
+    total_cents: 1850,
+    payment_status: "pending",
+    customer_email: "customer@example.com",
+    sumup_checkout_id: null,
+  };
+
 
   useEffect(() => {
     let cancelled = false;
