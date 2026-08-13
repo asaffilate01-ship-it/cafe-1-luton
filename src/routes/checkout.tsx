@@ -236,7 +236,8 @@ function Checkout() {
       .eq("id", user.id)
       .maybeSingle()
       .then(({ data }) => {
-        if (!cancelled)
+        if (!cancelled) {
+          setPointsBalance(data?.loyalty_points ?? 0);
           setStamps(
             data
               ? {
@@ -245,6 +246,7 @@ function Checkout() {
                 }
               : null,
           );
+        }
       });
     return () => {
       cancelled = true;
