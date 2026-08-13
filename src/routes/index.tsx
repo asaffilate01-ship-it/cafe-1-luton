@@ -215,20 +215,6 @@ function Home() {
         </Link>
       </section>
 
-      <section className="border-t border-border bg-soft px-4 py-6 text-center">
-        <p className="text-sm text-muted-foreground">
-          A project by{" "}
-          <a
-            href="https://itechlounge.co.uk"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="font-semibold text-foreground transition hover:text-primary"
-          >
-            iTechLounge
-          </a>
-        </p>
-      </section>
-
       <SiteFooter />
     </div>
   );
