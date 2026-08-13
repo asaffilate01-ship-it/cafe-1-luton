@@ -215,6 +215,28 @@ function Home() {
         </Link>
       </section>
 
+      <section className="border-t border-border bg-soft px-4 py-12">
+        <div className="mx-auto flex max-w-6xl flex-col items-center justify-center gap-3 text-center sm:flex-row sm:justify-between sm:text-left">
+          <div>
+            <p className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
+              A project by
+            </p>
+            <p className="font-display text-2xl font-bold text-foreground">iTechLounge</p>
+            <p className="mt-1 max-w-md text-sm text-muted-foreground">
+              Digital ordering, payments and operations technology built for Café 1 St Albans.
+            </p>
+          </div>
+          <a
+            href="https://itechlounge.co.uk"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex h-10 items-center gap-2 rounded-full border border-border bg-card px-5 text-sm font-semibold text-foreground transition hover:border-primary hover:text-primary"
+          >
+            Visit iTechLounge <ArrowRight className="h-4 w-4" />
+          </a>
+        </div>
+      </section>
+
       <SiteFooter />
     </div>
   );
