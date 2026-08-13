@@ -7,10 +7,26 @@
 3. Apply all database migrations in timestamp order with the Supabase CLI (`supabase db push`) or the hosted migration workflow. The executable release sequence is `20260801173100_production_hardening.sql`, `20260802090000_operations_controls_v2.sql`, then `20260802102930_5d58aeb2-21c2-49b4-95d6-e60e3fec1ff6.sql`. The surrounding compatibility timestamps are deliberate no-ops.
 4. Run `npm ci && npm run release:guard && npm run check && npm audit --audit-level=high`.
 5. Deploy the web application, run **Production smoke**, then run **Release candidate evidence** with the successful database-job URL. Download its evidence artifact and complete the manual smoke tests below before reopening online ordering.
-6. Configure authenticated POST scheduler calls for `/api/public/cleanup-unpaid` and `/api/public/juror-daily` using `Authorization: Bearer $CRON_SECRET`. There are deliberately no GET scheduler endpoints.
+6. Configure authenticated POST scheduler calls for `/api/public/cleanup-unpaid` and `/api/public/juror-daily` using `Authorization: Bearer $CRON_SECRET`. There are deliberately no GET scheduler endpoints. Production uses database scheduling (`pg_cron` + `pg_net`) — see **Scheduled jobs** below.
 7. Each manager must open **Admin → Security**, enrol an authenticator and verify the session at AAL2. Then set `REQUIRE_ADMIN_MFA=true` and redeploy.
 
 The release-candidate artifact contains the dependency audit, CycloneDX SBOM, structured production smoke, desktop/mobile browser report, release status and a SHA-256 manifest. Store it with the release tag and rollback record. The scheduled **Production smoke** workflow runs daily and retains 30 days of evidence; treat a failure as a deployment incident until explained.
+
+## Scheduled jobs
+
+Two database jobs call the production endpoints with the `CRON_SECRET` bearer:
+
+| Job | Schedule (UTC) | Endpoint |
+| --- | --- | --- |
+| `juror-daily-summary` | `45 22 * * *` (23:45 London in BST) | `POST /api/public/juror-daily` |
+| `purge-unpaid-orders` | `*/5 * * * *` | `POST /api/public/cleanup-unpaid` |
+
+Both post to the stable production host `project--4e8d727f-9796-42a7-9a37-e92941913d6a.lovable.app`, which serves the published deployment. Checks:
+
+- list jobs: `select jobid, jobname, schedule, active from cron.job order by jobid;`
+- last runs: `select jobname, status, return_message, start_time from cron.job_run_details order by start_time desc limit 20;`
+- a run whose response is `401` means the scheduled header no longer matches `CRON_SECRET`; after rotating the secret, reschedule both jobs with the new value in the same change window and redeploy.
+- evidence for the `scheduler_history` gate is a `cron.job_run_details` extract showing successful runs of both jobs.
 
 ## Required smoke tests
 
