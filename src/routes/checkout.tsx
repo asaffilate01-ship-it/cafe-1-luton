@@ -19,6 +19,8 @@ import { OrderSetupGate } from "@/components/order-setup-gate";
 import { requiresOrderSetup } from "@/lib/menu-intent";
 import { useJurySession } from "@/lib/jury-session";
 import { Settings2 } from "lucide-react";
+import { REWARD_TIERS, rewardDiscountCents } from "@/lib/loyalty-tiers";
+import { listAddresses } from "@/lib/addresses.functions";
 import {
   JUROR_CODE_KEY,
   JUROR_FOOD_DISCOUNT_PERCENT,
@@ -185,17 +187,52 @@ function Checkout() {
     drink_stamps: number;
     free_drinks_available: number;
   } | null>(null);
+  const [pointsBalance, setPointsBalance] = useState(0);
+  const [pointsToRedeem, setPointsToRedeem] = useState(0);
+  const [tipPercent, setTipPercent] = useState<number | "custom" | null>(null);
+  const [customTip, setCustomTip] = useState("");
+  const [savedAddresses, setSavedAddresses] = useState<
+    Array<{
+      id: string;
+      label: string;
+      company_name: string | null;
+      address_line1: string;
+      city: string;
+      postcode: string;
+      delivery_notes: string | null;
+    }>
+  >([]);
+  const [saveThisAddress, setSaveThisAddress] = useState(false);
+  const fetchAddresses = useServerFn(listAddresses);
+  useEffect(() => {
+    if (!user) {
+      setSavedAddresses([]);
+      return;
+    }
+    let cancelled = false;
+    fetchAddresses()
+      .then((rows) => {
+        if (!cancelled) setSavedAddresses(rows as typeof savedAddresses);
+      })
+      .catch(() => {
+        if (!cancelled) setSavedAddresses([]);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [user, fetchAddresses]);
   const [drinkItemIds, setDrinkItemIds] = useState<string[]>([]);
   const cartItemIds = c.items.map((i) => i.menu_item_id).join(",");
   useEffect(() => {
     if (!user) {
       setStamps(null);
+      setPointsBalance(0);
       return;
     }
     let cancelled = false;
     supabase
       .from("profiles")
-      .select("drink_stamps, free_drinks_available")
+      .select("drink_stamps, free_drinks_available, loyalty_points")
       .eq("id", user.id)
       .maybeSingle()
       .then(({ data }) => {
