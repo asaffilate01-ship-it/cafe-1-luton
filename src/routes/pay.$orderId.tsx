@@ -170,14 +170,12 @@ function PayView() {
         // Show Apple Pay (Safari/iOS) and Google Pay (Chrome/Android) wallet
         // buttons above the card form when the device + merchant support them.
         applePay: true,
-        applePay: true,
         googlePay: googlePayMerchantId
           ? {
               merchantId: googlePayMerchantId,
               merchantName: GOOGLE_PAY_MERCHANT_NAME,
             }
           : true,
-        showSubmitButton: true,
         onPaymentMethodsLoad: (methods) => {
           const available = JSON.stringify(methods ?? "").toLowerCase();
           if (
