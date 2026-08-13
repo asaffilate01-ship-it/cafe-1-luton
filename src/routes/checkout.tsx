@@ -865,6 +865,19 @@ function Checkout() {
                     className="min-h-20 rounded-xl border border-border bg-background p-3 sm:col-span-2"
                   />
                 </div>
+                <label className="mt-3 flex items-center gap-2 text-xs text-muted-foreground">
+                  <input
+                    type="checkbox"
+                    checked={saveThisAddress}
+                    onChange={(e) => setSaveThisAddress(e.target.checked)}
+                    disabled={!user}
+                    className="h-4 w-4 rounded border-border"
+                  />
+                  {user
+                    ? "Save this address for next time"
+                    : "Sign in to save addresses for next time"}
+                </label>
+                </>
               )}
               <p className="mt-3 text-xs text-muted-foreground">
                 We deliver up to ½ mile from {settings?.delivery_origin_postcode ?? "AL1 3JU"},
