@@ -129,6 +129,12 @@ function PayView() {
   useEffect(() => {
     let cancelled = false;
     (async () => {
+      if (isDemo) {
+        if (cancelled) return;
+        setOrder(demoOrder);
+        setStatus("ready");
+        return;
+      }
       const res = await getPublicOrder({ data: { order_id: orderId, tracking_token: token } });
       const data = res.order as (Order & { sumup_checkout_id: string | null }) | null;
       if (cancelled) return;
@@ -159,6 +165,7 @@ function PayView() {
         setErrorMsg("Payment widget failed to load. Check your connection and try again.");
         return;
       }
+
       let googlePayMerchantId: string | null = null;
       try {
         googlePayMerchantId = (await getWalletConfig()).googlePayMerchantId;
