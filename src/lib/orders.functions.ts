@@ -75,7 +75,16 @@ const CreateOrderSchema = z.object({
     .regex(/^\d{6}$/)
     .optional(),
   jury_room: z.string().max(60).optional(),
+  /** Optional gratuity in pence, added on top of the payable amount. */
+  tip_cents: z.number().int().min(0).max(20000).optional().default(0),
+  /** Loyalty reward tier the customer chose to spend on this order. */
+  points_to_redeem: z.number().int().min(0).max(1000).optional().default(0),
+  /** Signed-in delivery customers can store the address for next time. */
+  save_address: z.boolean().optional().default(false),
+  address_label: z.string().trim().max(40).optional(),
 });
+
+const TIP_MAX_CENTS = 20000;
 
 export const createOrder = createServerFn({ method: "POST" })
   .validator((d: unknown) => CreateOrderSchema.parse(d))
@@ -385,6 +394,51 @@ export const createOrder = createServerFn({ method: "POST" })
       payable = Math.max(0, payable - juror_discount);
     }
 
+    // Loyalty points redemption — signed-in customers only, never on a tab.
+    // Points are spent atomically so the same balance can't be used twice.
+    let points_redeemed = 0;
+    let points_discount = 0;
+    if (userId && !data.account_code && data.points_to_redeem > 0 && payable > 0) {
+      const { rewardDiscountCents, tierForPoints } = await import("./loyalty-tiers");
+      const tier = tierForPoints(data.points_to_redeem);
+      if (!tier) throw new Error("That rewards option isn't available.");
+      const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+      const { data: spent, error: spendErr } = await supabaseAdmin.rpc("spend_loyalty_points", {
+        _user_id: userId,
+        _points: tier.points,
+      });
+      if (spendErr) {
+        await releaseVoucher();
+        await refundPoints();
+        throw new Error(spendErr.message);
+      }
+      if (!spent) {
+        await releaseVoucher();
+        await refundPoints();
+        throw new Error("You don't have enough points for that reward yet.");
+      }
+      points_redeemed = tier.points;
+      points_discount = rewardDiscountCents(tier.points, payable);
+      payable = Math.max(0, payable - points_discount);
+    }
+
+    async function refundPoints() {
+      if (!userId || points_redeemed <= 0) return;
+      const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+      await supabaseAdmin.rpc("refund_loyalty_points", {
+        _user_id: userId,
+        _points: points_redeemed,
+      });
+      points_redeemed = 0;
+      points_discount = 0;
+    }
+
+    // Gratuity is added after every discount and is never covered by a voucher.
+    const tip_cents = data.account_code
+      ? 0
+      : Math.max(0, Math.min(TIP_MAX_CENTS, Math.trunc(data.tip_cents ?? 0)));
+    payable = payable + tip_cents;
+
     // Charge to a house-account tab if a valid code is supplied.
     let account_id: string | null = null;
     if (data.account_code) {
@@ -394,11 +448,13 @@ export const createOrder = createServerFn({ method: "POST" })
       });
       if (acctErr) {
         await releaseVoucher();
+        await refundPoints();
         throw new Error(acctErr.message);
       }
       const row = (rows ?? [])[0];
       if (!row) {
         await releaseVoucher();
+        await refundPoints();
         throw new Error("That tab access code isn't valid or is no longer active.");
       }
       account_id = row.id;
@@ -419,6 +475,7 @@ export const createOrder = createServerFn({ method: "POST" })
         const outstanding = (openOrders ?? []).reduce((s, o) => s + o.total_cents, 0);
         if (outstanding + payable > acct.credit_limit_cents) {
           await releaseVoucher();
+          await refundPoints();
           throw new Error(
             `This tab has reached its credit limit of £${(acct.credit_limit_cents / 100).toFixed(2)}. Please settle the outstanding balance first.`,
           );
@@ -451,6 +508,7 @@ export const createOrder = createServerFn({ method: "POST" })
       } catch (e) {
         console.error("[SumUp] checkout create failed", e);
         await releaseVoucher();
+        await refundPoints();
         throw new Error(
           "We couldn't start the card payment. Please try again in a moment, or contact us if it keeps failing.",
         );
@@ -458,7 +516,8 @@ export const createOrder = createServerFn({ method: "POST" })
     }
 
     // Voucher covers the whole order (and it isn't on a tab) — nothing to charge.
-    const fully_covered = !account_id && payable === 0 && voucher_cents > 0;
+    const fully_covered =
+      !account_id && payable === 0 && (voucher_cents > 0 || points_discount > 0);
 
     // Guest checkout: anon can INSERT but not SELECT orders (PII protection), so
     // the row is written with the privileged server client after all validation.
@@ -497,6 +556,9 @@ export const createOrder = createServerFn({ method: "POST" })
         subtotal_cents: subtotal,
         delivery_fee_cents: delivery_fee,
         discount_cents: discount,
+        tip_cents,
+        points_redeemed,
+        points_discount_cents: points_discount,
         voucher_cents,
         voucher_holder_id,
         points_earned,
@@ -517,6 +579,7 @@ export const createOrder = createServerFn({ method: "POST" })
       .single();
     if (orderErr) {
       await releaseVoucher();
+      await refundPoints();
       throw new Error(orderErr.message);
     }
 
@@ -541,6 +604,24 @@ export const createOrder = createServerFn({ method: "POST" })
       .from("order_items")
       .insert(lines.map((l) => ({ ...l, order_id: order.id })));
     if (itemsErr) throw new Error(itemsErr.message);
+
+    // Remember the delivery address for signed-in customers who asked us to.
+    if (userId && data.save_address && data.type === "delivery" && data.address_line1 && data.city) {
+      try {
+        await sbWrite.from("customer_addresses").insert({
+          user_id: userId,
+          label: (data.address_label || data.company_name || "Saved address").slice(0, 40),
+          company_name: data.company_name || null,
+          address_line1: data.address_line1,
+          address_line2: data.address_line2 || null,
+          city: data.city,
+          postcode: data.postcode || "",
+          delivery_notes: data.delivery_notes || null,
+        });
+      } catch (e) {
+        console.error("[addresses] save failed", e);
+      }
+    }
 
     // Promo usage was already claimed atomically above (consume_promo_use).
 
@@ -584,6 +665,9 @@ export const createOrder = createServerFn({ method: "POST" })
       order_number: order.order_number,
       total_cents: payable,
       gross_total_cents: total,
+      tip_cents,
+      points_redeemed,
+      points_discount_cents: points_discount,
       voucher_cents,
       voucher_holder_name,
       checkout_id,

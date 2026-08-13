@@ -1,3 +1,4 @@
+import { REWARD_TIERS } from "@/lib/loyalty-tiers";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useSession } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
@@ -103,7 +104,21 @@ function Account() {
           <div className="rounded-2xl border border-primary/30 bg-primary/5 p-5">
             <p className="text-xs uppercase tracking-wider text-primary/80">Loyalty points</p>
             <p className="mt-1 font-display text-4xl font-bold text-primary">{profile?.loyalty_points ?? 0}</p>
-            <p className="mt-1 text-xs text-muted-foreground">Earn 1 point per £1 spent. Coming soon: redeem for free items.</p>
+            <p className="mt-1 text-xs text-muted-foreground">Earn 1 point per £1 spent, then spend them at checkout.</p>
+            <ul className="mt-3 space-y-1 text-xs">
+              {REWARD_TIERS.map((t) => {
+                const unlocked = (profile?.loyalty_points ?? 0) >= t.points;
+                return (
+                  <li
+                    key={t.points}
+                    className={`flex items-center justify-between rounded-lg px-2 py-1 ${unlocked ? "bg-primary/10 font-semibold text-primary" : "text-muted-foreground"}`}
+                  >
+                    <span>{t.points} points</span>
+                    <span>{unlocked ? `${t.label} — ready` : t.label}</span>
+                  </li>
+                );
+              })}
+            </ul>
           </div>
           <div className="rounded-2xl border border-border bg-card p-5">
             <p className="text-xs uppercase tracking-wider text-muted-foreground">Member perks</p>

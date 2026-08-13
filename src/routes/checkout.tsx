@@ -19,6 +19,8 @@ import { OrderSetupGate } from "@/components/order-setup-gate";
 import { requiresOrderSetup } from "@/lib/menu-intent";
 import { useJurySession } from "@/lib/jury-session";
 import { Settings2 } from "lucide-react";
+import { REWARD_TIERS, rewardDiscountCents } from "@/lib/loyalty-tiers";
+import { listAddresses } from "@/lib/addresses.functions";
 import {
   JUROR_CODE_KEY,
   JUROR_FOOD_DISCOUNT_PERCENT,
@@ -185,21 +187,57 @@ function Checkout() {
     drink_stamps: number;
     free_drinks_available: number;
   } | null>(null);
+  const [pointsBalance, setPointsBalance] = useState(0);
+  const [pointsToRedeem, setPointsToRedeem] = useState(0);
+  const [tipPercent, setTipPercent] = useState<number | "custom" | null>(null);
+  const [customTip, setCustomTip] = useState("");
+  const [savedAddresses, setSavedAddresses] = useState<
+    Array<{
+      id: string;
+      label: string;
+      company_name: string | null;
+      address_line1: string;
+      city: string;
+      postcode: string;
+      delivery_notes: string | null;
+    }>
+  >([]);
+  const [saveThisAddress, setSaveThisAddress] = useState(false);
+  const fetchAddresses = useServerFn(listAddresses);
+  useEffect(() => {
+    if (!user) {
+      setSavedAddresses([]);
+      return;
+    }
+    let cancelled = false;
+    fetchAddresses()
+      .then((rows) => {
+        if (!cancelled) setSavedAddresses(rows as typeof savedAddresses);
+      })
+      .catch(() => {
+        if (!cancelled) setSavedAddresses([]);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [user, fetchAddresses]);
   const [drinkItemIds, setDrinkItemIds] = useState<string[]>([]);
   const cartItemIds = c.items.map((i) => i.menu_item_id).join(",");
   useEffect(() => {
     if (!user) {
       setStamps(null);
+      setPointsBalance(0);
       return;
     }
     let cancelled = false;
     supabase
       .from("profiles")
-      .select("drink_stamps, free_drinks_available")
+      .select("drink_stamps, free_drinks_available, loyalty_points")
       .eq("id", user.id)
       .maybeSingle()
       .then(({ data }) => {
-        if (!cancelled)
+        if (!cancelled) {
+          setPointsBalance(data?.loyalty_points ?? 0);
           setStamps(
             data
               ? {
@@ -208,6 +246,7 @@ function Checkout() {
                 }
               : null,
           );
+        }
       });
     return () => {
       cancelled = true;
@@ -353,6 +392,16 @@ function Checkout() {
     ? jurorFoodDiscount(Math.max(0, grossTotal - voucherApplied), foodSubtotal)
     : 0;
   const total = Math.max(0, grossTotal - voucherApplied - jurorDiscount);
+  const pointsDiscount = user && !onTab ? rewardDiscountCents(pointsToRedeem, total) : 0;
+  const afterPoints = Math.max(0, total - pointsDiscount);
+  const tipCents = onTab
+    ? 0
+    : tipPercent === "custom"
+      ? Math.max(0, Math.min(20000, Math.round(parseFloat(customTip || "0") * 100) || 0))
+      : tipPercent
+        ? Math.round((afterPoints * tipPercent) / 100)
+        : 0;
+  const finalTotal = afterPoints + tipCents;
   const pointsEarn = user && !onTab ? Math.floor(Math.max(0, subtotal - discount) / 100) : 0;
   const minOrder = settings?.min_order_cents ?? 0;
   const belowMin = minOrder > 0 && subtotal < minOrder;
@@ -436,6 +485,10 @@ function Checkout() {
           })),
           account_code: tabSession?.code,
           promo_code: promo?.code,
+          tip_cents: tipCents,
+          points_to_redeem: pointsToRedeem,
+          save_address: saveThisAddress && mode === "delivery",
+          address_label: form.company_name || form.postcode || undefined,
           voucher_code: voucher?.code,
           voucher_pin: voucher?.pin,
           jury_room: voucher && juryRoom.trim() ? juryRoom.trim() : undefined,
@@ -735,6 +788,44 @@ function Checkout() {
                   )}
                 </div>
               ) : (
+                <>
+                {savedAddresses.length > 0 && (
+                  <div className="mt-3 space-y-2">
+                    <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                      Saved addresses
+                    </p>
+                    <div className="grid gap-2 sm:grid-cols-2">
+                      {savedAddresses.map((a) => {
+                        const selected =
+                          form.address_line1 === a.address_line1 && form.postcode === a.postcode;
+                        return (
+                          <button
+                            key={a.id}
+                            type="button"
+                            onClick={() => {
+                              setForm((f) => ({
+                                ...f,
+                                company_name: a.company_name ?? "",
+                                address_line1: a.address_line1,
+                                city: a.city,
+                                postcode: a.postcode,
+                                delivery_notes: a.delivery_notes ?? f.delivery_notes,
+                              }));
+                              setSaveThisAddress(false);
+                              void verifyPostcode(a.postcode);
+                            }}
+                            className={`rounded-xl border px-4 py-3 text-left text-sm ${selected ? "border-primary bg-primary/10 font-semibold text-primary" : "border-border bg-background hover:border-primary"}`}
+                          >
+                            <span className="block font-semibold">{a.label}</span>
+                            <span className="block text-xs text-muted-foreground">
+                              {a.address_line1}, {a.postcode}
+                            </span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
                 <div className="mt-3 grid gap-3 sm:grid-cols-2">
                   <input
                     required
@@ -774,6 +865,19 @@ function Checkout() {
                     className="min-h-20 rounded-xl border border-border bg-background p-3 sm:col-span-2"
                   />
                 </div>
+                <label className="mt-3 flex items-center gap-2 text-xs text-muted-foreground">
+                  <input
+                    type="checkbox"
+                    checked={saveThisAddress}
+                    onChange={(e) => setSaveThisAddress(e.target.checked)}
+                    disabled={!user}
+                    className="h-4 w-4 rounded border-border"
+                  />
+                  {user
+                    ? "Save this address for next time"
+                    : "Sign in to save addresses for next time"}
+                </label>
+                </>
               )}
               <p className="mt-3 text-xs text-muted-foreground">
                 We deliver up to ½ mile from {settings?.delivery_origin_postcode ?? "AL1 3JU"},
@@ -1033,9 +1137,91 @@ function Checkout() {
                 <span>−{money(voucherApplied)}</span>
               </div>
             )}
+            {user && !onTab && (
+              <div className="!mt-3 rounded-xl border border-border bg-background p-3">
+                <div className="flex items-center justify-between text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                  <span>Points rewards</span>
+                  <span>{pointsBalance} pts</span>
+                </div>
+                <div className="mt-2 grid grid-cols-2 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setPointsToRedeem(0)}
+                    className={`h-10 rounded-lg border text-xs font-semibold ${pointsToRedeem === 0 ? "border-primary bg-primary text-primary-foreground" : "border-border bg-background"}`}
+                  >
+                    No reward
+                  </button>
+                  {REWARD_TIERS.map((t) => {
+                    const affordable = pointsBalance >= t.points && total > 0;
+                    return (
+                      <button
+                        key={t.points}
+                        type="button"
+                        disabled={!affordable}
+                        onClick={() => setPointsToRedeem(t.points)}
+                        className={`h-10 rounded-lg border text-xs font-semibold disabled:opacity-40 ${pointsToRedeem === t.points ? "border-primary bg-primary text-primary-foreground" : "border-border bg-background"}`}
+                      >
+                        {t.points} pts · {t.label}
+                      </button>
+                    );
+                  })}
+                </div>
+                <p className="mt-2 text-xs text-muted-foreground">
+                  Earn 1 point per £1 spent. Points are only deducted when the order is placed.
+                </p>
+              </div>
+            )}
+            {pointsDiscount > 0 && (
+              <div className="flex justify-between text-primary">
+                <span>Points reward ({pointsToRedeem} pts)</span>
+                <span>−{money(pointsDiscount)}</span>
+              </div>
+            )}
+            {!onTab && (
+              <div className="!mt-3 rounded-xl border border-border bg-background p-3">
+                <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                  Add a tip for the team
+                </p>
+                <div className="mt-2 grid grid-cols-5 gap-1.5">
+                  {([null, 5, 10, 12.5] as const).map((p) => (
+                    <button
+                      key={String(p)}
+                      type="button"
+                      onClick={() => setTipPercent(p)}
+                      className={`h-10 rounded-lg border text-xs font-semibold ${tipPercent === p ? "border-primary bg-primary text-primary-foreground" : "border-border bg-background"}`}
+                    >
+                      {p === null ? "None" : `${p}%`}
+                    </button>
+                  ))}
+                  <button
+                    type="button"
+                    onClick={() => setTipPercent("custom")}
+                    className={`h-10 rounded-lg border text-xs font-semibold ${tipPercent === "custom" ? "border-primary bg-primary text-primary-foreground" : "border-border bg-background"}`}
+                  >
+                    Other
+                  </button>
+                </div>
+                {tipPercent === "custom" && (
+                  <input
+                    aria-label="Custom tip amount in pounds"
+                    inputMode="decimal"
+                    value={customTip}
+                    onChange={(e) => setCustomTip(e.target.value.replace(/[^\d.]/g, ""))}
+                    placeholder="Tip amount (£)"
+                    className="mt-2 h-10 w-full rounded-lg border border-border bg-background px-3 text-sm"
+                  />
+                )}
+              </div>
+            )}
+            {tipCents > 0 && (
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Tip</span>
+                <span>{money(tipCents)}</span>
+              </div>
+            )}
             <div className="mt-2 flex justify-between border-t border-border pt-2 font-display text-lg font-bold">
               <span>Total</span>
-              <span className="text-primary">{money(total)}</span>
+              <span className="text-primary">{money(finalTotal)}</span>
             </div>
             {belowMin && (
               <p className="mt-2 rounded-lg bg-destructive/10 p-2 text-center text-xs font-semibold text-destructive">
