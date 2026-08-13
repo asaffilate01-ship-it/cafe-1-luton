@@ -409,10 +409,12 @@ export const createOrder = createServerFn({ method: "POST" })
       });
       if (spendErr) {
         await releaseVoucher();
+        await refundPoints();
         throw new Error(spendErr.message);
       }
       if (!spent) {
         await releaseVoucher();
+        await refundPoints();
         throw new Error("You don't have enough points for that reward yet.");
       }
       points_redeemed = tier.points;
@@ -446,11 +448,13 @@ export const createOrder = createServerFn({ method: "POST" })
       });
       if (acctErr) {
         await releaseVoucher();
+        await refundPoints();
         throw new Error(acctErr.message);
       }
       const row = (rows ?? [])[0];
       if (!row) {
         await releaseVoucher();
+        await refundPoints();
         throw new Error("That tab access code isn't valid or is no longer active.");
       }
       account_id = row.id;
@@ -471,6 +475,7 @@ export const createOrder = createServerFn({ method: "POST" })
         const outstanding = (openOrders ?? []).reduce((s, o) => s + o.total_cents, 0);
         if (outstanding + payable > acct.credit_limit_cents) {
           await releaseVoucher();
+          await refundPoints();
           throw new Error(
             `This tab has reached its credit limit of £${(acct.credit_limit_cents / 100).toFixed(2)}. Please settle the outstanding balance first.`,
           );
@@ -503,6 +508,7 @@ export const createOrder = createServerFn({ method: "POST" })
       } catch (e) {
         console.error("[SumUp] checkout create failed", e);
         await releaseVoucher();
+        await refundPoints();
         throw new Error(
           "We couldn't start the card payment. Please try again in a moment, or contact us if it keeps failing.",
         );
@@ -569,6 +575,7 @@ export const createOrder = createServerFn({ method: "POST" })
       .single();
     if (orderErr) {
       await releaseVoucher();
+      await refundPoints();
       throw new Error(orderErr.message);
     }
 
