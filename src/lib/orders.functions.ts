@@ -75,6 +75,13 @@ const CreateOrderSchema = z.object({
     .regex(/^\d{6}$/)
     .optional(),
   jury_room: z.string().max(60).optional(),
+  /** Optional gratuity in pence, added on top of the payable amount. */
+  tip_cents: z.number().int().min(0).max(20000).optional().default(0),
+  /** Loyalty reward tier the customer chose to spend on this order. */
+  points_to_redeem: z.number().int().min(0).max(1000).optional().default(0),
+  /** Signed-in delivery customers can store the address for next time. */
+  save_address: z.boolean().optional().default(false),
+  address_label: z.string().trim().max(40).optional(),
 });
 
 const TIP_MAX_CENTS = 20000;
