@@ -323,7 +323,7 @@ export function SiteFooter() {
             <img
               src={itechloungeLogo}
               alt="iTechLounge"
-              className="h-5 w-auto"
+              className="h-6 w-auto"
               loading="lazy"
             />
             iTechLounge
