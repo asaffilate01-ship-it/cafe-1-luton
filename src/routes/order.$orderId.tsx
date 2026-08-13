@@ -10,6 +10,7 @@ import { toast } from "sonner";
 import { Bell, Navigation, Star } from "lucide-react";
 import { LiveMap } from "@/components/live-map";
 import { orderCode } from "@/lib/order-code";
+import { Skeleton } from "@/components/ui/skeleton";
 
 const STORE = { lat: 51.7486, lng: -0.3345 };
 
@@ -171,8 +172,22 @@ function OrderView() {
     return (
       <div className="min-h-screen bg-background">
         <SiteHeader />
-        <div className="mx-auto max-w-md p-12 text-center text-muted-foreground">
-          Loading order…
+        <div className="mx-auto max-w-2xl px-4 py-12">
+          <span className="sr-only" role="status" aria-live="polite">
+            Loading your order
+          </span>
+          <div aria-hidden="true" className="space-y-4">
+            <Skeleton className="h-4 w-16" />
+            <Skeleton className="h-10 w-40" />
+            <Skeleton className="h-8 w-32" />
+            <Skeleton className="h-3 w-64" />
+            <Skeleton className="h-24 w-full rounded-2xl" />
+            <div className="space-y-3">
+              {Array.from({ length: 3 }, (_, n) => (
+                <Skeleton key={n} className="h-16 w-full rounded-2xl" />
+              ))}
+            </div>
+          </div>
         </div>
       </div>
     );
