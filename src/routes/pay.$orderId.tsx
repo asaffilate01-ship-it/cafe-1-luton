@@ -291,9 +291,12 @@ function PayView() {
           </div>
           {status !== "error" && isGooglePayDemoMode() && (
             <>
-              <div className="mb-4 rounded-xl border border-amber-500/40 bg-amber-500/10 p-3 text-xs font-semibold text-amber-700">
-                Google Pay demo mode — test button for onboarding screenshots only.
-              </div>
+              {!(typeof window !== "undefined" &&
+                window.location.hash.includes("hide-demo-notice")) && (
+                <div className="mb-4 rounded-xl border border-amber-500/40 bg-amber-500/10 p-3 text-xs font-semibold text-amber-700">
+                  Google Pay demo mode — test button for onboarding screenshots only.
+                </div>
+              )}
               <GooglePayDemo
                 amount={order ? (order.total_cents / 100).toFixed(2) : "1.00"}
                 merchantName={GOOGLE_PAY_MERCHANT_NAME}
