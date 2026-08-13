@@ -12,7 +12,7 @@ $ProgressPreference = "SilentlyContinue"
 
 $taskName = "Cafe1 Just Eat Watcher"
 $sourceDir = Split-Path -Parent $MyInvocation.MyCommand.Path
-$installDir = Join-Path $env:LOCALAPPDATA "Cafe1\Just EatWatcher"
+$installDir = Join-Path $env:LOCALAPPDATA "Cafe1\JustEatWatcher"
 $sourceFiles = @(
   "justeat-hub-watcher.mjs",
   "justeat-hub-watcher.cmd",
