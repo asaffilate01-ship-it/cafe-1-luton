@@ -46,7 +46,7 @@ function Stop-Watcher {
 
 Write-Host ""
 Write-Host "========================================================" -ForegroundColor DarkCyan
-Write-Host "     CAFE 1 - DELIVEROO TO KDS ONE-CLICK SETUP" -ForegroundColor White
+Write-Host "     CAFE 1 - JUST EAT TO KDS ONE-CLICK SETUP" -ForegroundColor White
 Write-Host "========================================================" -ForegroundColor DarkCyan
 Write-Host "This keeps the Just Eat tablet unchanged and mirrors accepted orders to KDS."
 Write-Host "No Just Eat password is stored by Cafe 1."
@@ -224,7 +224,7 @@ foreach ($shortcut in @(
 
 Write-Host ""
 Write-Host "========================================================" -ForegroundColor DarkGreen
-Write-Host "  CONNECTED - DELIVEROO ORDERS WILL FLOW TO CAFE 1 KDS" -ForegroundColor Green
+Write-Host "  CONNECTED - JUST EAT ORDERS WILL FLOW TO CAFE 1 KDS" -ForegroundColor Green
 Write-Host "========================================================" -ForegroundColor DarkGreen
 Write-Host "The watcher starts at Windows sign-in, stays hidden and restarts automatically."
 Write-Host "Use the new Cafe 1 Just Eat Status desktop shortcut at any time."
