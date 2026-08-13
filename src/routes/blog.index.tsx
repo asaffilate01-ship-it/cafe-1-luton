@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { SiteHeader, SiteFooter } from "@/components/site-header";
 import { Calendar, ArrowRight } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
 import { breadcrumbJsonLd, canonicalLink, jsonLdScript, seoMeta, webPageJsonLd } from "@/lib/seo";
 
 const title = "St Albans Food Guide | Breakfast, Lunch & Café News";
@@ -90,7 +91,23 @@ function BlogIndex() {
           </nav>
         </header>
 
-        {isLoading && <p className="text-muted-foreground">Loading posts…</p>}
+        {isLoading && (
+          <ul className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3" aria-hidden="true">
+            {Array.from({ length: 6 }, (_, n) => (
+              <li key={n} className="overflow-hidden rounded-2xl border border-border bg-card">
+                <Skeleton className="aspect-[16/10] w-full rounded-none" />
+                <div className="space-y-2 p-4">
+                  <Skeleton className="h-5 w-4/5" />
+                  <Skeleton className="h-4 w-full" />
+                  <Skeleton className="h-4 w-2/3" />
+                </div>
+              </li>
+            ))}
+          </ul>
+        )}
+        <span className="sr-only" role="status" aria-live="polite">
+          {isLoading ? "Loading posts" : ""}
+        </span>
         {!isLoading && (!posts || posts.length === 0) && (
           <div className="rounded-2xl border border-dashed border-border bg-card p-10 text-center text-muted-foreground">
             No posts published yet. Check back soon.

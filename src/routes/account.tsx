@@ -8,6 +8,7 @@ import { useEffect } from "react";
 import { cart } from "@/lib/cart";
 import { toast } from "sonner";
 import { RotateCcw } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export const Route = createFileRoute("/account")({
   head: () => ({
@@ -29,7 +30,7 @@ function Account() {
     if (!loading && !user) navigate({ to: "/auth", search: { next: "/account" } });
   }, [loading, user, navigate]);
 
-  const { data: profile } = useQuery({
+  const { data: profile, isLoading: profileLoading } = useQuery({
     queryKey: ["my-profile", user?.id],
     enabled: !!user,
     queryFn: async () => {
@@ -42,7 +43,7 @@ function Account() {
     },
   });
 
-  const { data: orders } = useQuery({
+  const { data: orders, isLoading: ordersLoading } = useQuery({
     queryKey: ["my-orders", user?.id],
     enabled: !!user,
     queryFn: async () => {
@@ -127,6 +128,28 @@ function Account() {
         </div>
 
         <h2 className="mt-10 font-display text-2xl font-bold">Recent orders</h2>
+        <span className="sr-only" role="status" aria-live="polite">
+          {profileLoading || ordersLoading ? "Loading your account" : ""}
+        </span>
+        {ordersLoading && (
+          <ul className="mt-4 space-y-3" aria-hidden="true">
+            {Array.from({ length: 3 }, (_, n) => (
+              <li
+                key={n}
+                className="flex items-center justify-between rounded-2xl border border-border bg-card p-4"
+              >
+                <div className="space-y-2">
+                  <Skeleton className="h-4 w-40" />
+                  <Skeleton className="h-3 w-28" />
+                </div>
+                <div className="space-y-2 text-right">
+                  <Skeleton className="ml-auto h-4 w-16" />
+                  <Skeleton className="ml-auto h-3 w-20" />
+                </div>
+              </li>
+            ))}
+          </ul>
+        )}
         <ul className="mt-4 space-y-3">
           {(orders ?? []).map((o) => (
             <li key={o.id} className="relative">
@@ -148,7 +171,9 @@ function Account() {
               </button>
             </li>
           ))}
-          {orders && orders.length === 0 && <p className="text-muted-foreground">No orders yet.</p>}
+          {!ordersLoading && orders && orders.length === 0 && (
+            <p className="text-muted-foreground">No orders yet.</p>
+          )}
         </ul>
       </div>
     </div>
