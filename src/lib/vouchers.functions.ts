@@ -182,3 +182,47 @@ export const optInWithJurorId = createServerFn({ method: "POST" })
       valid_until: row?.valid_until ?? null,
     };
   });
+
+/**
+ * Gate for the Jury Only menu. A juror keys in the HMCTS Juror ID they were
+ * issued (no PIN — that is only needed to spend the daily allowance). No name,
+ * email or phone number is involved, and each unlock is written to the audit log.
+ */
+export const verifyJurorIdForMenu = createServerFn({ method: "POST" })
+  .validator((d: unknown) => z.object({ code: z.string().trim().min(3).max(40) }).parse(d))
+  .handler(async ({ data }) => {
+    const { checkThrottle, recordAttempt, requestIdentity } = await import("./rate-limit.server");
+    const ident = requestIdentity();
+    const gate = await checkThrottle("voucher", ident);
+    if (!gate.allowed)
+      return { ok: false as const, message: gate.message, code: null, opted_in: false };
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { callOperationsRpc } = await import("./ops-rpc");
+    let rows: Array<{
+      ok: boolean;
+      message: string;
+      code: string | null;
+      opted_in: boolean;
+      valid_until: string | null;
+    }>;
+    try {
+      rows = await callOperationsRpc(supabaseAdmin, "cafe1_verify_juror_id", { _code: data.code });
+    } catch (error) {
+      console.error("[vouchers] juror id menu check failed", error);
+      await recordAttempt("voucher", ident, false);
+      return {
+        ok: false as const,
+        message: "We couldn't check that Juror ID just now. Please try again.",
+        code: null,
+        opted_in: false,
+      };
+    }
+    const row = rows[0];
+    await recordAttempt("voucher", ident, !!row?.ok);
+    return {
+      ok: !!row?.ok,
+      message: row?.message ?? "That Juror ID is not recognised.",
+      code: row?.code ?? null,
+      opted_in: !!row?.opted_in,
+    };
+  });
