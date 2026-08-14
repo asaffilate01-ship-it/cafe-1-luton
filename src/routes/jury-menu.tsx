@@ -138,10 +138,11 @@ function JuryMenuPage() {
             <p className="text-xs font-black uppercase tracking-[.25em] text-primary">
               Jury only menu
             </p>
-            <h1 className="mt-2 font-display text-3xl font-black">Verify your voucher</h1>
+            <h1 className="mt-2 font-display text-3xl font-black">Confirm you're a juror</h1>
             <p className="mt-2 text-sm text-muted-foreground">
-              This menu is only for jurors serving at St Albans. Enter your HMCTS Juror ID and 6-digit
-              PIN printed on your juror sheet. We never see your name or any personal details.
+              You've scanned the Jury Lounge QR code. This menu is only for jurors serving at St
+              Albans. Enter the HMCTS Juror ID on your summons or jury sheet to open it. We never
+              see your name or any personal details — no PIN is needed just to browse and order.
             </p>
             <form onSubmit={verify} className="mt-6 space-y-3">
               <input
@@ -149,18 +150,8 @@ function JuryMenuPage() {
                 autoFocus
                 value={code}
                 onChange={(e) => setCode(e.target.value.toUpperCase())}
-                placeholder="VOUCHER CODE"
+                placeholder="JUROR ID"
                 className="h-14 w-full rounded-2xl border border-border bg-background px-4 text-center font-mono text-xl tracking-[0.3em]"
-              />
-              <input
-                required
-                inputMode="numeric"
-                pattern="\d{6}"
-                maxLength={6}
-                value={pin}
-                onChange={(e) => setPin(e.target.value.replace(/\D/g, "").slice(0, 6))}
-                placeholder="6-DIGIT PIN"
-                className="h-14 w-full rounded-2xl border border-border bg-background px-4 text-center font-mono text-xl tracking-[0.4em]"
               />
               {error ? <p className="text-sm font-semibold text-destructive">{error}</p> : null}
               <button
@@ -170,26 +161,13 @@ function JuryMenuPage() {
                 {busy ? "Checking…" : "Open the Jury Only menu"}
               </button>
             </form>
-            <div className="mt-5">
-              <button
-                type="button"
-                onClick={() => {
-                  jurySession.set({
-                    code: null,
-                    remaining_cents: 0,
-                    jury_room: roomParam ?? null,
-                    verified_at: Date.now(),
-                  });
-                  toast.success("Jury Only menu open — pay by card, wallet or cash");
-                }}
-                className="h-12 w-full rounded-full border border-primary text-sm font-bold text-primary hover:bg-primary/5"
-              >
-                I haven't opted in — open the menu and I'll just pay
-              </button>
-            </div>
-            <p className="mt-4 text-center text-xs text-muted-foreground">
-              Every juror can order from this menu. Without the voucher scheme there's no daily
-              allowance and no 10% food discount — you simply pay by card, Apple/Google Pay or cash.{" "}
+            <p className="mt-5 text-center text-xs text-muted-foreground">
+              Your Juror ID isn't on the scheme yet?{" "}
+              <Link to="/juror" className="font-semibold text-primary">
+                Opt in here
+              </Link>{" "}
+              for the £5.71 daily allowance and 10% off food. Ordering in the Jury Lounge? You can
+              simply pay at the Café 1 counter.{" "}
               <Link to="/menu" className="font-semibold text-primary">
                 Not a juror? Main menu
               </Link>
