@@ -34,6 +34,7 @@ import { Route as JuryMenuRouteImport } from './routes/jury-menu'
 import { Route as KdsRouteImport } from './routes/kds'
 import { Route as LunchStAlbansRouteImport } from './routes/lunch-st-albans'
 import { Route as MenuRouteImport } from './routes/menu'
+import { Route as OrderDirectRouteImport } from './routes/order-direct'
 import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
@@ -206,6 +207,11 @@ const LunchStAlbansRoute = LunchStAlbansRouteImport.update({
 const MenuRoute = MenuRouteImport.update({
   id: '/menu',
   path: '/menu',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const OrderDirectRoute = OrderDirectRouteImport.update({
+  id: '/order-direct',
+  path: '/order-direct',
   getParentRoute: () => rootRouteImport,
 } as any)
 const PrivacyRoute = PrivacyRouteImport.update({
@@ -480,6 +486,7 @@ export interface FileRoutesByFullPath {
   '/kds': typeof KdsRoute
   '/lunch-st-albans': typeof LunchStAlbansRoute
   '/menu': typeof MenuRoute
+  '/order-direct': typeof OrderDirectRoute
   '/privacy': typeof PrivacyRoute
   '/reset-password': typeof ResetPasswordRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
@@ -555,6 +562,7 @@ export interface FileRoutesByTo {
   '/kds': typeof KdsRoute
   '/lunch-st-albans': typeof LunchStAlbansRoute
   '/menu': typeof MenuRoute
+  '/order-direct': typeof OrderDirectRoute
   '/privacy': typeof PrivacyRoute
   '/reset-password': typeof ResetPasswordRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
@@ -631,6 +639,7 @@ export interface FileRoutesById {
   '/kds': typeof KdsRoute
   '/lunch-st-albans': typeof LunchStAlbansRoute
   '/menu': typeof MenuRoute
+  '/order-direct': typeof OrderDirectRoute
   '/privacy': typeof PrivacyRoute
   '/reset-password': typeof ResetPasswordRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
@@ -708,6 +717,7 @@ export interface FileRouteTypes {
     | '/kds'
     | '/lunch-st-albans'
     | '/menu'
+    | '/order-direct'
     | '/privacy'
     | '/reset-password'
     | '/sitemap.xml'
@@ -783,6 +793,7 @@ export interface FileRouteTypes {
     | '/kds'
     | '/lunch-st-albans'
     | '/menu'
+    | '/order-direct'
     | '/privacy'
     | '/reset-password'
     | '/sitemap.xml'
@@ -858,6 +869,7 @@ export interface FileRouteTypes {
     | '/kds'
     | '/lunch-st-albans'
     | '/menu'
+    | '/order-direct'
     | '/privacy'
     | '/reset-password'
     | '/sitemap.xml'
@@ -934,6 +946,7 @@ export interface RootRouteChildren {
   KdsRoute: typeof KdsRoute
   LunchStAlbansRoute: typeof LunchStAlbansRoute
   MenuRoute: typeof MenuRoute
+  OrderDirectRoute: typeof OrderDirectRoute
   PrivacyRoute: typeof PrivacyRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
@@ -1159,6 +1172,13 @@ declare module '@tanstack/react-router' {
       path: '/menu'
       fullPath: '/menu'
       preLoaderRoute: typeof MenuRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/order-direct': {
+      id: '/order-direct'
+      path: '/order-direct'
+      fullPath: '/order-direct'
+      preLoaderRoute: typeof OrderDirectRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/privacy': {
@@ -1526,6 +1546,7 @@ const rootRouteChildren: RootRouteChildren = {
   KdsRoute: KdsRoute,
   LunchStAlbansRoute: LunchStAlbansRoute,
   MenuRoute: MenuRoute,
+  OrderDirectRoute: OrderDirectRoute,
   PrivacyRoute: PrivacyRoute,
   ResetPasswordRoute: ResetPasswordRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,

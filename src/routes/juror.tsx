@@ -516,7 +516,7 @@ function JurorPage() {
 
           <div className="mt-10 grid gap-4 md:grid-cols-2">
             <Card icon={Leaf} title="Dedicated Juror Menu">
-              Hot meals, cold meals, sandwiches and baguettes, vegetarian options, snacks and hot
+              Hot meals, cold meals, sandwiches and wraps, vegetarian options, snacks and hot
               and cold drinks — with daily and weekly Juror Offers that change regularly. The Juror
               Menu is open to all jurors, whether or not you join the scheme.
             </Card>

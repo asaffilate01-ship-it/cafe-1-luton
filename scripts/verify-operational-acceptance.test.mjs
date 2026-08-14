@@ -8,9 +8,18 @@ import {
 } from "./verify-operational-acceptance.mjs";
 
 function template() {
-  return JSON.parse(
+  const record = JSON.parse(
     readFileSync(new URL("../release/operational-acceptance.json", import.meta.url), "utf8"),
   );
+  // Fixtures must not inherit real sign-offs recorded in the live file.
+  record.gates = record.gates.map((gate) => ({
+    ...gate,
+    status: "pending",
+    evidence: "",
+    checked_by: "",
+    checked_at: "",
+  }));
+  return record;
 }
 
 test("acceptance template has every required gate exactly once", () => {

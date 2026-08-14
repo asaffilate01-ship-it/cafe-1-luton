@@ -7,6 +7,7 @@ import {
   absoluteUrl,
   breadcrumbJsonLd,
   canonicalLink,
+  faqJsonLd,
   jsonLdScript,
   seoMeta,
   webPageJsonLd,
@@ -31,6 +32,7 @@ export const Route = createFileRoute("/breakfast-st-albans")({
           about: ["Breakfast in St Albans", "Halal breakfast", "Desi breakfast"],
         }),
       ),
+      jsonLdScript(faqJsonLd(config.faqs)),
       jsonLdScript(
         breadcrumbJsonLd([
           { name: "Home", path: "/" },
@@ -49,7 +51,7 @@ const config: LocalSearchPageConfig = {
   intro:
     "Start with a cooked breakfast, a Desi favourite, a fresh omelette or something quick with coffee. Café 1 is open to the public inside St Albans Crown Court, Monday to Friday from 8am.",
   imageAlt:
-    "Café 1 breakfast and lunch spread including a cooked breakfast, jacket potato and hot meal",
+    "Café 1 breakfast and lunch spread including a cooked breakfast, hot meal and loaded fries",
   highlights: [
     {
       title: "Cooked breakfast plates",

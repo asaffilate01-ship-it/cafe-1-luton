@@ -7,6 +7,7 @@ const STATIC_LAST_MODIFIED = "2026-08-09";
 const PUBLIC_ROUTES = [
   "/",
   "/menu",
+  "/order-direct",
   "/breakfast-st-albans",
   "/halal-food-st-albans",
   "/lunch-st-albans",

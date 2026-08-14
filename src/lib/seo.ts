@@ -107,6 +107,19 @@ export function websiteJsonLd() {
   };
 }
 
+/** Rich-result markup for a page that answers questions inline. */
+export function faqJsonLd(faqs: Array<{ question: string; answer: string }>) {
+  return {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    mainEntity: faqs.map((faq) => ({
+      "@type": "Question",
+      name: faq.question,
+      acceptedAnswer: { "@type": "Answer", text: faq.answer },
+    })),
+  };
+}
+
 export function articleJsonLd(input: {
   title: string;
   description: string;

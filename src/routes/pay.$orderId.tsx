@@ -187,12 +187,16 @@ function PayView() {
         // Show Apple Pay (Safari/iOS) and Google Pay (Chrome/Android) wallet
         // buttons above the card form when the device + merchant support them.
         applePay: true,
-        googlePay: googlePayMerchantId
+        // Named merchant when configured, otherwise SumUp's own Google Pay
+        // merchant so the wallet button still shows.
+        ...(googlePayMerchantId
           ? {
-              merchantId: googlePayMerchantId,
-              merchantName: GOOGLE_PAY_MERCHANT_NAME,
+              googlePay: {
+                merchantId: googlePayMerchantId,
+                merchantName: GOOGLE_PAY_MERCHANT_NAME,
+              },
             }
-          : true,
+          : { googlePay: true as const }),
         onPaymentMethodsLoad: (methods) => {
           const available = JSON.stringify(methods ?? "").toLowerCase();
           if (
