@@ -1,24 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
-import { createClient } from "@supabase/supabase-js";
-import type { Database } from "@/integrations/supabase/types";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-
-function publicClient() {
-  const key = process.env["SUPABASE_PUBLISHABLE_KEY"]!;
-  return createClient<Database>(process.env["SUPABASE_URL"]!, key, {
-    auth: { persistSession: false, autoRefreshToken: false },
-    global: {
-      fetch: (input, init) => {
-        const h = new Headers(init?.headers);
-        if (key.startsWith("sb_") && h.get("Authorization") === `Bearer ${key}`)
-          h.delete("Authorization");
-        h.set("apikey", key);
-        return fetch(input, { ...init, headers: h });
-      },
-    },
-  });
-}
+import { assertAdmin, publicClient } from "./court-staff.server";
 
 /** Court delivery points (CC Floor 1, MAG Room 1, …) shown at order setup. */
 export const listCourtLocations = createServerFn({ method: "GET" }).handler(async () => {
@@ -120,7 +103,7 @@ export const getMyCourtStaff = createServerFn({ method: "POST" })
 /** Court staff self-registration (a signed-in user claims scheme membership). */
 export const registerCourtStaff = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .validator((d: unknown) =>
+  .inputValidator((d: unknown) =>
     z
       .object({
         full_name: z.string().trim().min(2).max(100),
@@ -198,7 +181,7 @@ export const adminListCourtStaff = createServerFn({ method: "POST" })
 
 export const adminSaveCourtStaff = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .validator((d: unknown) =>
+  .inputValidator((d: unknown) =>
     z
       .object({
         id: z.string().uuid().optional(),
@@ -233,7 +216,7 @@ export const adminSaveCourtStaff = createServerFn({ method: "POST" })
 
 export const adminDeleteCourtStaff = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .validator((d: unknown) => z.object({ id: z.string().uuid() }).parse(d))
+  .inputValidator((d: unknown) => z.object({ id: z.string().uuid() }).parse(d))
   .handler(async ({ data, context }) => {
     await assertAdmin(context as never);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
@@ -243,7 +226,7 @@ export const adminDeleteCourtStaff = createServerFn({ method: "POST" })
 
 export const adminSaveCourtLocation = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .validator((d: unknown) =>
+  .inputValidator((d: unknown) =>
     z
       .object({
         id: z.string().uuid().optional(),
@@ -268,7 +251,7 @@ export const adminSaveCourtLocation = createServerFn({ method: "POST" })
 
 export const adminDeleteCourtLocation = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .validator((d: unknown) => z.object({ id: z.string().uuid() }).parse(d))
+  .inputValidator((d: unknown) => z.object({ id: z.string().uuid() }).parse(d))
   .handler(async ({ data, context }) => {
     await assertAdmin(context as never);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
@@ -278,7 +261,7 @@ export const adminDeleteCourtLocation = createServerFn({ method: "POST" })
 
 export const adminSaveCourtDomain = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .validator((d: unknown) =>
+  .inputValidator((d: unknown) =>
     z
       .object({
         id: z.string().uuid().optional(),
@@ -315,7 +298,7 @@ export const adminSaveCourtDomain = createServerFn({ method: "POST" })
 
 export const adminSetStaffDiscount = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .validator((d: unknown) => z.object({ percent: z.number().min(0).max(100) }).parse(d))
+  .inputValidator((d: unknown) => z.object({ percent: z.number().min(0).max(100) }).parse(d))
   .handler(async ({ data, context }) => {
     await assertAdmin(context as never);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
