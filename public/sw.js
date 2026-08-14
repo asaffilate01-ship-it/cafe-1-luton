@@ -48,3 +48,39 @@ self.addEventListener("fetch", (event) => {
     }),
   );
 });
+
+// --- Order progress push notifications -------------------------------------
+self.addEventListener("push", (event) => {
+  let payload = { title: "Café 1", body: "Your order has an update." };
+  try {
+    if (event.data) payload = { ...payload, ...event.data.json() };
+  } catch (err) {
+    void err;
+  }
+  event.waitUntil(
+    self.registration.showNotification(payload.title, {
+      body: payload.body,
+      icon: "/icons/icon-192.png",
+      badge: "/icons/icon-192.png",
+      tag: payload.tag || "cafe1-order",
+      data: { url: payload.url || "/" },
+      vibrate: [120, 60, 120],
+    }),
+  );
+});
+
+self.addEventListener("notificationclick", (event) => {
+  event.notification.close();
+  const target = (event.notification.data && event.notification.data.url) || "/";
+  event.waitUntil(
+    self.clients.matchAll({ type: "window", includeUncontrolled: true }).then((clients) => {
+      for (const client of clients) {
+        if ("focus" in client) {
+          client.navigate(target);
+          return client.focus();
+        }
+      }
+      return self.clients.openWindow(target);
+    }),
+  );
+});
