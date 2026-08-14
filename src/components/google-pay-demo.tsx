@@ -75,6 +75,7 @@ export function GooglePayDemo({ amount, merchantName }: { amount: string; mercha
           buttonType: "pay",
           buttonSizeMode: "fill",
           onClick: async () => {
+            setError("");
             try {
               await client.loadPaymentData({
                 apiVersion: 2,
@@ -89,8 +90,16 @@ export function GooglePayDemo({ amount, merchantName }: { amount: string; mercha
                 merchantInfo: { merchantName },
                 emailRequired: false,
               });
-            } catch {
-              /* user closed the sheet — expected during screenshots */
+              setError("");
+            } catch (err: any) {
+              // Surface the sheet's own outcome (cancelled / no card available)
+              // instead of failing silently.
+              const reason = err?.statusMessage || err?.statusCode;
+              setError(
+                reason === "CANCELED" || reason === "CANCELLED"
+                  ? "Google Pay was closed before a card was selected."
+                  : `Google Pay could not complete the payment${reason ? ` (${reason})` : ""}.`,
+              );
             }
           },
         });
@@ -105,9 +114,14 @@ export function GooglePayDemo({ amount, merchantName }: { amount: string; mercha
   }, [amount, merchantName]);
 
   return (
-    <div className="mb-4">
+    // Google Pay assets must always sit on a light background.
+    <div className="mb-4 rounded-xl bg-white p-3">
       <div ref={ref} className="min-h-[48px] w-full [&>*]:w-full" />
-      {error && <p className="mt-2 text-xs text-muted-foreground">{error}</p>}
+      {error && (
+        <p role="alert" className="mt-2 text-xs font-medium text-[#c5221f]">
+          {error}
+        </p>
+      )}
     </div>
   );
 }
