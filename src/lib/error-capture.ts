@@ -5,6 +5,7 @@ let lastCapturedError: { error: unknown; at: number } | undefined;
 const TTL_MS = 5_000;
 
 function record(error: unknown) {
+  if (isClientAbort(error)) return;
   lastCapturedError = { error, at: Date.now() };
 }
 
@@ -49,11 +50,26 @@ function isErrorLike(value: unknown): value is Error {
   return value instanceof Error;
 }
 
+// A browser that navigates away (or a cancelled preload) closes the socket
+// mid-response; Node surfaces that as `Error: aborted` from _http_server.
+// It is a client disconnect, not an app fault, so never record or log it.
+export function isClientAbort(value: unknown): boolean {
+  if (!(value instanceof Error)) return false;
+  const code = (value as { code?: unknown }).code;
+  return (
+    value.message === "aborted" ||
+    code === "ECONNRESET" ||
+    code === "ERR_STREAM_PREMATURE_CLOSE" ||
+    value.name === "AbortError"
+  );
+}
+
 // Wrap console.error so errors logged by any layer — including h3's internal
 // unhandled-error logging, which this file cannot hook directly — are both
 // recorded for consumeLastCapturedError and expanded before serialization.
 const originalConsoleError = console.error.bind(console);
 console.error = (...args: unknown[]) => {
+  if (args.some((arg) => isClientAbort(arg))) return;
   const expanded = args.map((arg) => {
     if (!isErrorLike(arg)) return arg;
     record(arg);

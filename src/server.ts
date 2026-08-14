@@ -1,6 +1,6 @@
 import "./lib/error-capture";
 
-import { consumeLastCapturedError } from "./lib/error-capture";
+import { consumeLastCapturedError, isClientAbort } from "./lib/error-capture";
 import { renderErrorPage } from "./lib/error-page";
 import { isPrivatePath, PRIVATE_CACHE_HEADERS } from "./lib/private-cache";
 import { canCachePublicDocument, PUBLIC_DOCUMENT_CACHE_HEADERS } from "./lib/public-cache";
@@ -123,6 +123,8 @@ export default {
       const response = await handler.fetch(request, env, ctx);
       return withProductionHeaders(request, await normalizeCatastrophicSsrResponse(response));
     } catch (error) {
+      // The client went away mid-response — nothing to render, nothing to report.
+      if (isClientAbort(error)) return new Response(null, { status: 499 });
       console.error(error);
       return withProductionHeaders(
         request,
