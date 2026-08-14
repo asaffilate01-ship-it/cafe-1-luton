@@ -521,7 +521,32 @@ export const createOrder = createServerFn({ method: "POST" })
 
     // Create SumUp checkout FIRST — if it fails, don't create a phantom unpaid order.
     let checkout_id: string | null = null;
-    if (!account_id && payable > 0) {
+    // Jury Lounge: a verified juror may order to the lounge and pay at the
+    // Café 1 counter. The Juror ID is re-checked here — the client claim alone
+    // never unlocks it.
+    let pay_at_counter = false;
+    if (data.pay_at_counter && !account_id && data.juror_id && data.jury_room) {
+      try {
+        const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+        const { callOperationsRpc } = await import("./ops-rpc");
+        const rows = await callOperationsRpc<{ ok: boolean }>(
+          supabaseAdmin,
+          "cafe1_verify_juror_id",
+          { _code: data.juror_id },
+        );
+        pay_at_counter = !!(Array.isArray(rows) ? rows[0]?.ok : false);
+      } catch (e) {
+        console.error("[orders] juror counter-pay check failed", e);
+      }
+      if (!pay_at_counter) {
+        await releaseVoucher();
+        await refundPoints();
+        throw new Error(
+          "We couldn't confirm that Juror ID, so this order can't be paid at the counter.",
+        );
+      }
+    }
+    if (!account_id && !pay_at_counter && payable > 0) {
       const { createSumUpCheckout } = await import("./sumup.server");
       const itemSummary = lines
         .map((l) => `${l.qty}x ${l.name}${l.notes ? ` (${l.notes})` : ""}`)
