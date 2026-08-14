@@ -79,10 +79,52 @@ console.error = (...args: unknown[]) => {
 };
 
 if (typeof globalThis.addEventListener === "function") {
-  globalThis.addEventListener("error", (event) => record((event as ErrorEvent).error ?? event));
-  globalThis.addEventListener("unhandledrejection", (event) =>
-    record((event as PromiseRejectionEvent).reason),
+  // Capture phase + stopImmediatePropagation so a client disconnect never
+  // reaches downstream reporters (which would surface it as a runtime error
+  // with a blank-screen flag even though nothing in the app failed).
+  globalThis.addEventListener(
+    "error",
+    (event) => {
+      const error = (event as ErrorEvent).error ?? event;
+      if (isClientAbort(error)) {
+        event.stopImmediatePropagation();
+        event.preventDefault?.();
+        return;
+      }
+      record(error);
+    },
+    true,
   );
+  globalThis.addEventListener(
+    "unhandledrejection",
+    (event) => {
+      const reason = (event as PromiseRejectionEvent).reason;
+      if (isClientAbort(reason)) {
+        event.stopImmediatePropagation();
+        event.preventDefault?.();
+        return;
+      }
+      record(reason);
+    },
+    true,
+  );
+}
+
+// The dev/Node HTTP server emits `Error: aborted` from _http_server when a
+// browser navigates away mid-response. It arrives as a process-level
+// uncaughtException, bypassing the listeners above — swallow just that case.
+const nodeProcess = (globalThis as { process?: NodeJS.Process }).process;
+if (nodeProcess && typeof nodeProcess.on === "function") {
+  nodeProcess.on("uncaughtException", (error: unknown) => {
+    if (isClientAbort(error)) return;
+    record(error);
+    originalConsoleError(describeError(error));
+  });
+  nodeProcess.on("unhandledRejection", (reason: unknown) => {
+    if (isClientAbort(reason)) return;
+    record(reason);
+    originalConsoleError(describeError(reason));
+  });
 }
 
 export function consumeLastCapturedError(): unknown {
