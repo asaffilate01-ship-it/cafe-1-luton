@@ -60,8 +60,8 @@ self.addEventListener("push", (event) => {
   event.waitUntil(
     self.registration.showNotification(payload.title, {
       body: payload.body,
-      icon: "/icons/icon-192.png",
-      badge: "/icons/icon-192.png",
+      icon: "/icon-192.png",
+      badge: "/icon-192.png",
       tag: payload.tag || "cafe1-order",
       data: { url: payload.url || "/" },
       vibrate: [120, 60, 120],
