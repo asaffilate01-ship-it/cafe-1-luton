@@ -300,10 +300,12 @@ function Checkout() {
     mode === "delivery" && !!freeThreshold && subtotal >= (freeThreshold ?? 0);
   const freeDeliveryByPromo = promo?.discount_type === "free_delivery";
   const delivery =
-    mode === "delivery" && !freeDeliveryByThreshold && !freeDeliveryByPromo ? baseDelivery : 0;
+    mode === "delivery" && !freeDeliveryByThreshold && !freeDeliveryByPromo && !staffApproved
+      ? baseDelivery
+      : 0;
   const onTab = !!tabSession;
   // Discounts are only for approved members set up in the admin dashboard.
-  const discountPercent = emailDiscount?.percent ?? 0;
+  const discountPercent = Math.max(emailDiscount?.percent ?? 0, staffDiscountPercent);
   const loyaltyDiscount = Math.round(subtotal * (discountPercent / 100));
   const promoDiscount =
     promo && !freeDeliveryByPromo ? Math.min(promo.discount_cents, subtotal) : 0;
