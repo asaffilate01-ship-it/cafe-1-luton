@@ -553,6 +553,7 @@ function KDS() {
               posLabel ||
               meta.category ||
               guessCategory(item.name) ||
+              (item.category_label ?? "").trim() ||
               "Other items";
             return {
               ...item,
