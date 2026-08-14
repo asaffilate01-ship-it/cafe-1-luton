@@ -251,6 +251,26 @@ export const createOrder = createServerFn({ method: "POST" })
           : baseDeliveryFee
         : 0;
 
+    // Approved court staff: scheme discount and free internal delivery.
+    let staff_member_id: string | null = null;
+    let staff_discount_percent = 0;
+    if (userId) {
+      const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+      const { data: staffRow } = await supabaseAdmin
+        .from("court_staff_members")
+        .select("id,status,discount_percent")
+        .eq("user_id", userId)
+        .eq("status", "approved")
+        .maybeSingle();
+      if (staffRow) {
+        staff_member_id = staffRow.id;
+        staff_discount_percent = Number(
+          staffRow.discount_percent ?? settings?.court_staff_discount_percent ?? 10,
+        );
+        delivery_fee = 0;
+      }
+    }
+
     // Validate and apply promo code (public RPC).
     let promo_discount = 0;
     let applied_promo: string | null = null;
@@ -288,7 +308,9 @@ export const createOrder = createServerFn({ method: "POST" })
       const p = (dRows ?? [])[0]?.percent ?? 0;
       if (p > discount_percent) discount_percent = p;
     }
+    if (staff_discount_percent > discount_percent) discount_percent = staff_discount_percent;
     const loyalty_discount = Math.round(subtotal * (discount_percent / 100));
+    const staff_discount_cents = staff_member_id ? loyalty_discount : 0;
 
     // Coffee/tea loyalty: every 10 drinks earns a free one, auto-redeemed on the
     // next order that contains an eligible drink. Registered customers only.
@@ -556,6 +578,9 @@ export const createOrder = createServerFn({ method: "POST" })
         postcode: data.postcode || null,
         delivery_notes: data.delivery_notes || null,
         jury_room: data.jury_room || null,
+        court_location: data.court_location || null,
+        staff_member_id,
+        staff_discount_cents,
         juror_discount_cents: juror_discount,
         company_name: data.company_name || null,
         table_number: data.table_number || null,
