@@ -496,6 +496,10 @@ function Checkout() {
       toast.error("Voucher deliveries must go to St Albans Crown Court or the Magistrates' Court.");
       return;
     }
+    if (staffApproved && mode === "delivery" && courtLocations.length > 0 && !courtLocation) {
+      toast.error("Choose the court location we should deliver to.");
+      return;
+    }
     setBusy(true);
     try {
       const res = await place({
