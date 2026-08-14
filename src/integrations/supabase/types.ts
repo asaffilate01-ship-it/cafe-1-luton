@@ -354,6 +354,7 @@ export type Database = {
           accepting_orders: boolean
           allow_preorder_when_closed: boolean
           closed_message: string | null
+          court_staff_discount_percent: number
           delivery_close_time: string
           delivery_fee_cents: number
           delivery_minutes: number
@@ -374,6 +375,7 @@ export type Database = {
           accepting_orders?: boolean
           allow_preorder_when_closed?: boolean
           closed_message?: string | null
+          court_staff_discount_percent?: number
           delivery_close_time?: string
           delivery_fee_cents?: number
           delivery_minutes?: number
@@ -394,6 +396,7 @@ export type Database = {
           accepting_orders?: boolean
           allow_preorder_when_closed?: boolean
           closed_message?: string | null
+          court_staff_discount_percent?: number
           delivery_close_time?: string
           delivery_fee_cents?: number
           delivery_minutes?: number
@@ -476,6 +479,105 @@ export type Database = {
           ident?: string
           kind?: string
           ok?: boolean
+        }
+        Relationships: []
+      }
+      court_delivery_locations: {
+        Row: {
+          active: boolean
+          building: string
+          created_at: string
+          id: string
+          label: string
+          postcode: string
+          sort_order: number
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          building?: string
+          created_at?: string
+          id?: string
+          label: string
+          postcode?: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          building?: string
+          created_at?: string
+          id?: string
+          label?: string
+          postcode?: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      court_staff_domains: {
+        Row: {
+          active: boolean
+          created_at: string
+          domain: string
+          id: string
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          domain: string
+          id?: string
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          domain?: string
+          id?: string
+        }
+        Relationships: []
+      }
+      court_staff_members: {
+        Row: {
+          approved_at: string | null
+          approved_by: string | null
+          created_at: string
+          discount_percent: number | null
+          email: string
+          full_name: string
+          id: string
+          notes: string | null
+          phone: string
+          status: string
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          approved_at?: string | null
+          approved_by?: string | null
+          created_at?: string
+          discount_percent?: number | null
+          email: string
+          full_name: string
+          id?: string
+          notes?: string | null
+          phone?: string
+          status?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          approved_at?: string | null
+          approved_by?: string | null
+          created_at?: string
+          discount_percent?: number | null
+          email?: string
+          full_name?: string
+          id?: string
+          notes?: string | null
+          phone?: string
+          status?: string
+          updated_at?: string
+          user_id?: string | null
         }
         Relationships: []
       }
@@ -1395,6 +1497,7 @@ export type Database = {
           address_line2: string | null
           city: string | null
           company_name: string | null
+          court_location: string | null
           created_at: string
           customer_email: string | null
           customer_id: string | null
@@ -1435,6 +1538,8 @@ export type Database = {
           scheduled_for: string | null
           site_id: string
           source: string
+          staff_discount_cents: number
+          staff_member_id: string | null
           status: Database["public"]["Enums"]["order_status"]
           subtotal_cents: number
           sumup_checkout_id: string | null
@@ -1460,6 +1565,7 @@ export type Database = {
           address_line2?: string | null
           city?: string | null
           company_name?: string | null
+          court_location?: string | null
           created_at?: string
           customer_email?: string | null
           customer_id?: string | null
@@ -1500,6 +1606,8 @@ export type Database = {
           scheduled_for?: string | null
           site_id?: string
           source?: string
+          staff_discount_cents?: number
+          staff_member_id?: string | null
           status?: Database["public"]["Enums"]["order_status"]
           subtotal_cents?: number
           sumup_checkout_id?: string | null
@@ -1525,6 +1633,7 @@ export type Database = {
           address_line2?: string | null
           city?: string | null
           company_name?: string | null
+          court_location?: string | null
           created_at?: string
           customer_email?: string | null
           customer_id?: string | null
@@ -1565,6 +1674,8 @@ export type Database = {
           scheduled_for?: string | null
           site_id?: string
           source?: string
+          staff_discount_cents?: number
+          staff_member_id?: string | null
           status?: Database["public"]["Enums"]["order_status"]
           subtotal_cents?: number
           sumup_checkout_id?: string | null
@@ -1596,6 +1707,13 @@ export type Database = {
             columns: ["site_id"]
             isOneToOne: false
             referencedRelation: "sites"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "orders_staff_member_id_fkey"
+            columns: ["staff_member_id"]
+            isOneToOne: false
+            referencedRelation: "court_staff_members"
             referencedColumns: ["id"]
           },
           {
@@ -1981,6 +2099,39 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      push_subscriptions: {
+        Row: {
+          auth: string
+          created_at: string
+          endpoint: string
+          id: string
+          p256dh: string
+          updated_at: string
+          user_agent: string | null
+          user_id: string
+        }
+        Insert: {
+          auth: string
+          created_at?: string
+          endpoint: string
+          id?: string
+          p256dh: string
+          updated_at?: string
+          user_agent?: string | null
+          user_id: string
+        }
+        Update: {
+          auth?: string
+          created_at?: string
+          endpoint?: string
+          id?: string
+          p256dh?: string
+          updated_at?: string
+          user_agent?: string | null
+          user_id?: string
+        }
+        Relationships: []
       }
       recipe_components: {
         Row: {
@@ -2857,6 +3008,7 @@ export type Database = {
           address_line2: string | null
           city: string | null
           company_name: string | null
+          court_location: string | null
           created_at: string
           customer_email: string | null
           customer_id: string | null
@@ -2897,6 +3049,8 @@ export type Database = {
           scheduled_for: string | null
           site_id: string
           source: string
+          staff_discount_cents: number
+          staff_member_id: string | null
           status: Database["public"]["Enums"]["order_status"]
           subtotal_cents: number
           sumup_checkout_id: string | null
@@ -3022,6 +3176,7 @@ export type Database = {
           address_line2: string | null
           city: string | null
           company_name: string | null
+          court_location: string | null
           created_at: string
           customer_email: string | null
           customer_id: string | null
@@ -3062,6 +3217,8 @@ export type Database = {
           scheduled_for: string | null
           site_id: string
           source: string
+          staff_discount_cents: number
+          staff_member_id: string | null
           status: Database["public"]["Enums"]["order_status"]
           subtotal_cents: number
           sumup_checkout_id: string | null
@@ -3168,6 +3325,7 @@ export type Database = {
           address_line2: string | null
           city: string | null
           company_name: string | null
+          court_location: string | null
           created_at: string
           customer_email: string | null
           customer_id: string | null
@@ -3208,6 +3366,8 @@ export type Database = {
           scheduled_for: string | null
           site_id: string
           source: string
+          staff_discount_cents: number
+          staff_member_id: string | null
           status: Database["public"]["Enums"]["order_status"]
           subtotal_cents: number
           sumup_checkout_id: string | null
@@ -3265,6 +3425,7 @@ export type Database = {
           address_line2: string | null
           city: string | null
           company_name: string | null
+          court_location: string | null
           created_at: string
           customer_email: string | null
           customer_id: string | null
@@ -3305,6 +3466,8 @@ export type Database = {
           scheduled_for: string | null
           site_id: string
           source: string
+          staff_discount_cents: number
+          staff_member_id: string | null
           status: Database["public"]["Enums"]["order_status"]
           subtotal_cents: number
           sumup_checkout_id: string | null
@@ -3331,6 +3494,17 @@ export type Database = {
         }
       }
       consume_promo_use: { Args: { _code: string }; Returns: boolean }
+      court_staff_profile: {
+        Args: { _user_id: string }
+        Returns: {
+          discount_percent: number
+          email: string
+          full_name: string
+          id: string
+          phone: string
+          status: string
+        }[]
+      }
       finalize_counter_card: {
         Args: { _order_id: string; _payment_attempt_id: string }
         Returns: {
@@ -3340,6 +3514,7 @@ export type Database = {
           address_line2: string | null
           city: string | null
           company_name: string | null
+          court_location: string | null
           created_at: string
           customer_email: string | null
           customer_id: string | null
@@ -3380,6 +3555,8 @@ export type Database = {
           scheduled_for: string | null
           site_id: string
           source: string
+          staff_discount_cents: number
+          staff_member_id: string | null
           status: Database["public"]["Enums"]["order_status"]
           subtotal_cents: number
           sumup_checkout_id: string | null
@@ -3655,6 +3832,7 @@ export type Database = {
           address_line2: string | null
           city: string | null
           company_name: string | null
+          court_location: string | null
           created_at: string
           customer_email: string | null
           customer_id: string | null
@@ -3695,6 +3873,8 @@ export type Database = {
           scheduled_for: string | null
           site_id: string
           source: string
+          staff_discount_cents: number
+          staff_member_id: string | null
           status: Database["public"]["Enums"]["order_status"]
           subtotal_cents: number
           sumup_checkout_id: string | null
@@ -3736,6 +3916,7 @@ export type Database = {
           address_line2: string | null
           city: string | null
           company_name: string | null
+          court_location: string | null
           created_at: string
           customer_email: string | null
           customer_id: string | null
@@ -3776,6 +3957,8 @@ export type Database = {
           scheduled_for: string | null
           site_id: string
           source: string
+          staff_discount_cents: number
+          staff_member_id: string | null
           status: Database["public"]["Enums"]["order_status"]
           subtotal_cents: number
           sumup_checkout_id: string | null
