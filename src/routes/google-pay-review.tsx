@@ -32,6 +32,20 @@ const MERCHANT = "Cafe 1 St Albans";
 /** Official Google Pay mark for light backgrounds (hosted by Google). */
 const GPAY_MARK_LIGHT = "https://www.gstatic.com/instantbuy/svg/light_gpay.svg";
 
+/**
+ * Google Pay acceptance mark: the wordmark inside the required white capsule
+ * badge (rounded pill, 1px #DADCE0 border) on a light background.
+ */
+function GooglePayAcceptanceMark({ className = "h-10" }: { className?: string }) {
+  return (
+    <span
+      className={`inline-flex items-center justify-center rounded-full border border-[#dadce0] bg-white px-4 ${className}`}
+    >
+      <img src={GPAY_MARK_LIGHT} alt="Google Pay" className="h-5" />
+    </span>
+  );
+}
+
 type Screen = "method" | "sheet" | "success";
 
 function GooglePayReview() {
@@ -130,7 +144,7 @@ function PaymentMethodScreen() {
           />
           <span className="flex items-center gap-2">
             <Plus className="h-4 w-4 text-[#5f6368]" aria-hidden="true" />
-            <img src={GPAY_MARK_LIGHT} alt="Google Pay" className="h-6" />
+            <GooglePayAcceptanceMark />
           </span>
         </label>
 
@@ -163,10 +177,11 @@ function PaymentMethodScreen() {
 }
 
 function PaymentSheetScreen() {
+  const [state, setState] = useState<"selection" | "error">("selection");
   return (
     <ScreenFrame
       title="Google Pay API payment screen"
-      note="Tapping the Google Pay button below calls loadPaymentData and opens the Google Pay payment sheet, where a card can be selected or the sheet reports an error."
+      note="Tapping the Google Pay button calls loadPaymentData and opens the Google Pay payment sheet. The states below show the payment selection returned by the sheet and the error state when no payment method can be used."
     >
       <div className="flex items-center justify-between text-sm">
         <span className="text-[#5f6368]">Café 1 order #9999</span>
@@ -175,6 +190,56 @@ function PaymentSheetScreen() {
       <div className="mt-4">
         <GooglePayDemo amount={AMOUNT} merchantName={MERCHANT} />
       </div>
+
+      <div className="mb-3 flex gap-2">
+        <button
+          onClick={() => setState("selection")}
+          className={`rounded-full border px-3 py-1.5 text-xs font-semibold ${
+            state === "selection" ? "border-[#1a73e8] text-[#1a73e8]" : "border-[#dadce0] text-[#5f6368]"
+          }`}
+        >
+          Payment selection state
+        </button>
+        <button
+          onClick={() => setState("error")}
+          className={`rounded-full border px-3 py-1.5 text-xs font-semibold ${
+            state === "error" ? "border-[#1a73e8] text-[#1a73e8]" : "border-[#dadce0] text-[#5f6368]"
+          }`}
+        >
+          Error state
+        </button>
+      </div>
+
+      {state === "selection" ? (
+        <div className="rounded-xl border border-[#dadce0] bg-white p-4">
+          <p className="text-xs font-semibold uppercase tracking-wide text-[#5f6368]">
+            Payment method selected in Google Pay
+          </p>
+          <div className="mt-3 flex items-center justify-between">
+            <span className="flex items-center gap-3">
+              <GooglePayAcceptanceMark className="h-9" />
+              <span className="text-sm font-semibold">Visa •••• 4242</span>
+            </span>
+            <button className="text-sm font-semibold text-[#1a73e8]">Change</button>
+          </div>
+          <div className="mt-3 flex justify-between border-t border-[#dadce0] pt-3 text-sm">
+            <span className="text-[#5f6368]">Total</span>
+            <span className="font-semibold">£{AMOUNT}</span>
+          </div>
+        </div>
+      ) : (
+        <div
+          role="alert"
+          className="rounded-xl border border-[#c5221f]/40 bg-[#fce8e6] p-4 text-sm text-[#c5221f]"
+        >
+          <p className="font-semibold">Google Pay couldn’t complete this payment</p>
+          <p className="mt-1 text-[#a50e0e]">
+            No payment method is available in the signed-in Google account, or the payment sheet was
+            closed before a card was selected. Choose another payment method or try again.
+          </p>
+        </div>
+      )}
+
       <p className="text-xs text-[#5f6368]">
         The payment sheet is served by Google and shows the cards saved to the signed-in Google
         account, or an error state when no card is available.
@@ -207,7 +272,7 @@ function PostPurchaseScreen() {
         <div className="flex justify-between">
           <dt className="text-[#5f6368]">Paid with</dt>
           <dd className="flex items-center gap-2 font-semibold">
-            <img src={GPAY_MARK_LIGHT} alt="Google Pay" className="h-5" />
+            <GooglePayAcceptanceMark className="h-8" />
             <span>•••• 4242</span>
           </dd>
         </div>
