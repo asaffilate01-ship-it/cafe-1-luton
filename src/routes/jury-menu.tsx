@@ -201,17 +201,15 @@ function JuryMenuPage() {
           </p>
           <div className="mt-4 flex flex-wrap items-center gap-3 text-sm">
             {session.code ? (
-              <>
-                <span className="rounded-full bg-white/15 px-3 py-1 font-mono">{session.code}</span>
-                <span className="rounded-full bg-white/15 px-3 py-1 font-semibold">
-                  {money(session.remaining_cents)} allowance left today
-                </span>
-              </>
-            ) : (
-              <span className="rounded-full bg-white/15 px-3 py-1 font-semibold">
-                Paying as normal — no voucher
-              </span>
-            )}
+              <span className="rounded-full bg-white/15 px-3 py-1 font-mono">{session.code}</span>
+            ) : null}
+            <span className="rounded-full bg-white/15 px-3 py-1 font-semibold">
+              {session.opted_in
+                ? "On the voucher scheme"
+                : session.remaining_cents > 0
+                  ? `${money(session.remaining_cents)} allowance left today`
+                  : "Juror verified"}
+            </span>
             <button
               type="button"
               onClick={() => {
@@ -224,9 +222,9 @@ function JuryMenuPage() {
             </button>
           </div>
           <p className="mt-3 text-xs text-primary-foreground/70">
-            {session.code
-              ? `Daily allowance ${money(JUROR_DAILY_ALLOWANCE_CENTS)} on sitting days. Re-enter your Juror ID and PIN at checkout to apply it.`
-              : "You're not on the voucher scheme, so there's no allowance or 10% food discount — pay by card, Apple/Google Pay or cash. You can opt in any time on the juror page."}
+            {session.opted_in
+              ? `Daily allowance ${money(JUROR_DAILY_ALLOWANCE_CENTS)} on sitting days. Enter your Juror ID and PIN at checkout to apply it.`
+              : "You're verified as a juror, so this menu is open. You're not on the voucher scheme yet, so there's no allowance or 10% food discount — opt in on the juror page, or simply pay at the counter."}
           </p>
         </div>
       </section>
@@ -243,6 +241,16 @@ function JuryMenuPage() {
           {ctx ? "Change how you'd like your order" : "How would you like your order?"}
         </button>
         <div className="mt-3 grid gap-2 sm:grid-cols-3">
+          <button
+            type="button"
+            onClick={() => chooseFulfilment("lounge_counter")}
+            className="rounded-2xl border-2 border-primary bg-primary/5 p-3 text-left text-sm font-semibold hover:bg-primary/10"
+          >
+            Eating in the Jury Lounge
+            <span className="mt-1 block text-xs font-normal text-muted-foreground">
+              Order now, pay at the Café 1 counter
+            </span>
+          </button>
           <button
             type="button"
             onClick={() => chooseFulfilment("collection")}
