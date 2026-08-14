@@ -1,7 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { assertAdmin, publicClient } from "./court-staff.server";
+import { assertAdmin, publicClient } from "./court-staff-helpers";
 
 /** Court delivery points (CC Floor 1, MAG Room 1, …) shown at order setup. */
 export const listCourtLocations = createServerFn({ method: "GET" }).handler(async () => {
