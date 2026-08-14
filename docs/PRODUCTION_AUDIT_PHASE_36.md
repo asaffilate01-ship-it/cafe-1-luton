@@ -34,12 +34,17 @@ the intended surface; the authorisation lives inside the function.
 have RLS enabled with zero policies. That is deliberate deny-all: only the service role,
 through verified server code, may touch them.
 
-## Recommended hardening (non-blocking)
+## Recommended hardening — completed 2026-08-14
 
-1. Remove the 48-hour tokenless legacy fallback in `src/lib/order-access.server.ts` once
-   the release window closes; every live order now carries a tracking token.
-2. Pin GitHub Actions to commit SHAs in `codeql.yml` and `production-promotion.yml`.
-3. Schedule a dependency refresh (`@supabase/supabase-js`, TanStack, `date-fns`).
+1. Done. The 48-hour tokenless legacy fallback is removed from
+   `src/lib/order-access.server.ts`; public order access now requires a matching
+   tracking token or the signed-in owning customer.
+2. Done. Every GitHub Action in `.github/workflows/` is pinned to a commit SHA with the
+   human-readable tag kept as a trailing comment.
+3. Done. Refreshed `@supabase/supabase-js` 2.112.3, `@tanstack/react-query` 5.101.4,
+   `@tanstack/react-router` 1.170.27, `@tanstack/react-start` 1.168.44,
+   `@tanstack/router-plugin` 1.168.30 and `date-fns` 4.4.0; both lockfiles synced,
+   131 tests and the typecheck pass.
 
 ## What is actually left before go-live
 
