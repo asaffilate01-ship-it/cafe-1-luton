@@ -4,7 +4,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { SiteHeader } from "@/components/site-header";
 import { GatedMenuList } from "@/components/gated-menu-list";
 import { OrderSetupGate } from "@/components/order-setup-gate";
-import { lookupVoucher } from "@/lib/vouchers.functions";
+import { verifyJurorIdForMenu } from "@/lib/vouchers.functions";
 import { jurySession, useJurySession } from "@/lib/jury-session";
 import { orderContext, useOrderContext } from "@/lib/order-context";
 import { JUROR_DELIVERY_VENUES, JUROR_DAILY_ALLOWANCE_CENTS } from "@/lib/juror";
@@ -60,10 +60,9 @@ const ROOMS = [
 function JuryMenuPage() {
   const { code: codeParam, room: roomParam } = Route.useSearch();
   const session = useJurySession();
-  const lookup = useServerFn(lookupVoucher);
+  const verifyJurorId = useServerFn(verifyJurorIdForMenu);
 
   const [code, setCode] = useState((codeParam ?? "").toUpperCase());
-  const [pin, setPin] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const ctx = useOrderContext();
@@ -81,33 +80,40 @@ function JuryMenuPage() {
     setBusy(true);
     setError(null);
     try {
-      const res = await lookup({ data: { code: code.trim().toUpperCase(), pin } });
-      if (!res.found) {
-        setError(
-          ("message" in res && res.message) ||
-            "That Juror ID and PIN weren't recognised. Please check them and try again.",
-        );
+      const res = await verifyJurorId({ data: { code: code.trim().toUpperCase() } });
+      if (!res.ok || !res.code) {
+        setError(res.message || "That Juror ID wasn't recognised. Please check it and try again.");
         return;
       }
       jurySession.set({
         code: res.code,
-        remaining_cents: res.remaining_cents,
-        jury_room: res.jury_room ?? roomParam ?? null,
+        juror_id: res.code,
+        opted_in: res.opted_in,
+        remaining_cents: 0,
+        jury_room: roomParam ?? null,
         verified_at: Date.now(),
       });
-      setPin("");
       toast.success("Verified — this is the Jury Only menu");
     } catch {
-      setError("We couldn't check that code just now. Please try again.");
+      setError("We couldn't check that Juror ID just now. Please try again.");
     } finally {
       setBusy(false);
     }
   }
 
-  function chooseFulfilment(kind: "collection" | (typeof ROOMS)[number]["id"]) {
+  function chooseFulfilment(kind: "collection" | "lounge_counter" | (typeof ROOMS)[number]["id"]) {
     if (kind === "collection") {
       orderContext.set({ mode: "collection", schedule_mode: "asap" });
       toast.success("Collection from Café 1");
+      return;
+    }
+    if (kind === "lounge_counter") {
+      orderContext.set({
+        mode: "dine_in",
+        schedule_mode: "asap",
+        jury_room: ROOMS[0].label,
+      });
+      toast.success("Eating in the Jury Lounge — pay at the counter");
       return;
     }
     const room = ROOMS.find((r) => r.id === kind)!;
