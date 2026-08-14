@@ -1797,6 +1797,11 @@ function KDS() {
                 ))}
               </ul>
               <div className="mt-2 flex flex-wrap gap-1.5">
+                {t.status === "ready" && t.type === "delivery" && (
+                  <p className="w-full rounded-lg bg-slate-900 px-2 py-1 text-center text-[11px] font-black uppercase tracking-widest text-white">
+                    Ready for delivery
+                  </p>
+                )}
                 {canCompleteOrders && t.status === "preparing" && (
                   <button
                     onClick={() => set(t.id, "ready", { undoTo: "preparing" })}
