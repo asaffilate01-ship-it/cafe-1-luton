@@ -95,7 +95,7 @@ export const getMyCourtStaff = createServerFn({ method: "POST" })
 /** Court staff self-registration (a signed-in user claims scheme membership). */
 export const registerCourtStaff = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: unknown) =>
+  .validator((d: unknown) =>
     z
       .object({
         full_name: z.string().trim().min(2).max(100),
@@ -173,7 +173,7 @@ export const adminListCourtStaff = createServerFn({ method: "POST" })
 
 export const adminSaveCourtStaff = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: unknown) =>
+  .validator((d: unknown) =>
     z
       .object({
         id: z.string().uuid().optional(),
@@ -208,7 +208,7 @@ export const adminSaveCourtStaff = createServerFn({ method: "POST" })
 
 export const adminDeleteCourtStaff = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: unknown) => z.object({ id: z.string().uuid() }).parse(d))
+  .validator((d: unknown) => z.object({ id: z.string().uuid() }).parse(d))
   .handler(async ({ data, context }) => {
     await assertAdmin(context as never);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
@@ -218,7 +218,7 @@ export const adminDeleteCourtStaff = createServerFn({ method: "POST" })
 
 export const adminSaveCourtLocation = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: unknown) =>
+  .validator((d: unknown) =>
     z
       .object({
         id: z.string().uuid().optional(),
@@ -243,7 +243,7 @@ export const adminSaveCourtLocation = createServerFn({ method: "POST" })
 
 export const adminDeleteCourtLocation = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: unknown) => z.object({ id: z.string().uuid() }).parse(d))
+  .validator((d: unknown) => z.object({ id: z.string().uuid() }).parse(d))
   .handler(async ({ data, context }) => {
     await assertAdmin(context as never);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
@@ -253,7 +253,7 @@ export const adminDeleteCourtLocation = createServerFn({ method: "POST" })
 
 export const adminSaveCourtDomain = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: unknown) =>
+  .validator((d: unknown) =>
     z
       .object({
         id: z.string().uuid().optional(),
@@ -290,7 +290,7 @@ export const adminSaveCourtDomain = createServerFn({ method: "POST" })
 
 export const adminSetStaffDiscount = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: unknown) => z.object({ percent: z.number().min(0).max(100) }).parse(d))
+  .validator((d: unknown) => z.object({ percent: z.number().min(0).max(100) }).parse(d))
   .handler(async ({ data, context }) => {
     await assertAdmin(context as never);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
