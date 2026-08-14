@@ -639,6 +639,13 @@ export const createOrder = createServerFn({ method: "POST" })
         ...(account_id
           ? { payment_status: "on_account" as const, status: "preparing" as const }
           : {}),
+        ...(pay_at_counter && !account_id
+          ? {
+              payment_status: "pending" as const,
+              status: "preparing" as const,
+              payment_method: "counter",
+            }
+          : {}),
         ...(fully_covered ? { payment_status: "paid" as const, status: "paid" as const } : {}),
         ...(account_id || fully_covered ? { loyalty_awarded: true } : {}),
       })
@@ -739,7 +746,8 @@ export const createOrder = createServerFn({ method: "POST" })
       voucher_holder_name,
       checkout_id,
       tracking_token,
-      payment_configured: !!checkout_id || fully_covered,
+      payment_configured: !!checkout_id || fully_covered || pay_at_counter,
+      pay_at_counter,
       on_tab: !!account_id,
       fully_covered,
       free_drinks_used,
