@@ -760,6 +760,16 @@ export const updateOrderStatus = createServerFn({ method: "POST" })
       console.error("[deliveroo] mirror status failed", e);
     }
 
+    // Tell the customer their order is ready to collect / on its way.
+    if (data.status === "ready" || data.status === "out_for_delivery") {
+      try {
+        const { notifyOrderStatus } = await import("./push-notify.server");
+        await notifyOrderStatus(data.order_id, data.status);
+      } catch (e) {
+        console.error("[notify] order status alert failed", e);
+      }
+    }
+
     return { ok: true };
   });
 
