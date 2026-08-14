@@ -1318,6 +1318,23 @@ function Checkout() {
               </p>
             )}
           </div>
+          {counterEligible && (
+            <label className="mt-4 flex cursor-pointer items-start gap-3 rounded-2xl border border-primary/40 bg-primary/5 p-4 text-sm">
+              <input
+                type="checkbox"
+                checked={payAtCounter}
+                onChange={(e) => setPayAtCounter(e.target.checked)}
+                className="mt-0.5 h-4 w-4 accent-[hsl(var(--primary))]"
+              />
+              <span>
+                <span className="font-semibold text-primary">Pay at the Café 1 counter</span>
+                <span className="mt-1 block text-muted-foreground">
+                  Jury Lounge orders only. We start your order straight away and you settle at the
+                  counter by card or cash when you collect it.
+                </span>
+              </span>
+            </label>
+          )}
           <button
             type="submit"
             form="checkout-form"
@@ -1336,7 +1353,9 @@ function Checkout() {
                     ? `Add £${((minOrder - subtotal) / 100).toFixed(2)} more`
                     : onTab
                       ? "Add to tab"
-                      : "Place order & pay"}
+                      : payAtCounter && counterEligible
+                        ? "Place order — pay at the counter"
+                        : "Place order & pay"}
           </button>
           <p className="mt-2 text-center text-xs text-muted-foreground">
             {onTab
