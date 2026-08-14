@@ -48,6 +48,7 @@ import { Route as AdminAccountsRouteImport } from './routes/admin.accounts'
 import { Route as AdminBannersRouteImport } from './routes/admin.banners'
 import { Route as AdminBlogRouteImport } from './routes/admin.blog'
 import { Route as AdminBroadcastsRouteImport } from './routes/admin.broadcasts'
+import { Route as AdminCourtStaffRouteImport } from './routes/admin.court-staff'
 import { Route as AdminCustomerDiscountsRouteImport } from './routes/admin.customer-discounts'
 import { Route as AdminInventoryRouteImport } from './routes/admin.inventory'
 import { Route as AdminJurorAttendanceRouteImport } from './routes/admin.juror-attendance'
@@ -276,6 +277,11 @@ const AdminBroadcastsRoute = AdminBroadcastsRouteImport.update({
   path: '/admin/broadcasts',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminCourtStaffRoute = AdminCourtStaffRouteImport.update({
+  id: '/admin/court-staff',
+  path: '/admin/court-staff',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AdminCustomerDiscountsRoute = AdminCustomerDiscountsRouteImport.update({
   id: '/admin/customer-discounts',
   path: '/admin/customer-discounts',
@@ -481,6 +487,7 @@ export interface FileRoutesByFullPath {
   '/admin/banners': typeof AdminBannersRoute
   '/admin/blog': typeof AdminBlogRoute
   '/admin/broadcasts': typeof AdminBroadcastsRoute
+  '/admin/court-staff': typeof AdminCourtStaffRoute
   '/admin/customer-discounts': typeof AdminCustomerDiscountsRoute
   '/admin/inventory': typeof AdminInventoryRoute
   '/admin/juror-attendance': typeof AdminJurorAttendanceRoute
@@ -554,6 +561,7 @@ export interface FileRoutesByTo {
   '/admin/banners': typeof AdminBannersRoute
   '/admin/blog': typeof AdminBlogRoute
   '/admin/broadcasts': typeof AdminBroadcastsRoute
+  '/admin/court-staff': typeof AdminCourtStaffRoute
   '/admin/customer-discounts': typeof AdminCustomerDiscountsRoute
   '/admin/inventory': typeof AdminInventoryRoute
   '/admin/juror-attendance': typeof AdminJurorAttendanceRoute
@@ -628,6 +636,7 @@ export interface FileRoutesById {
   '/admin/banners': typeof AdminBannersRoute
   '/admin/blog': typeof AdminBlogRoute
   '/admin/broadcasts': typeof AdminBroadcastsRoute
+  '/admin/court-staff': typeof AdminCourtStaffRoute
   '/admin/customer-discounts': typeof AdminCustomerDiscountsRoute
   '/admin/inventory': typeof AdminInventoryRoute
   '/admin/juror-attendance': typeof AdminJurorAttendanceRoute
@@ -703,6 +712,7 @@ export interface FileRouteTypes {
     | '/admin/banners'
     | '/admin/blog'
     | '/admin/broadcasts'
+    | '/admin/court-staff'
     | '/admin/customer-discounts'
     | '/admin/inventory'
     | '/admin/juror-attendance'
@@ -776,6 +786,7 @@ export interface FileRouteTypes {
     | '/admin/banners'
     | '/admin/blog'
     | '/admin/broadcasts'
+    | '/admin/court-staff'
     | '/admin/customer-discounts'
     | '/admin/inventory'
     | '/admin/juror-attendance'
@@ -849,6 +860,7 @@ export interface FileRouteTypes {
     | '/admin/banners'
     | '/admin/blog'
     | '/admin/broadcasts'
+    | '/admin/court-staff'
     | '/admin/customer-discounts'
     | '/admin/inventory'
     | '/admin/juror-attendance'
@@ -923,6 +935,7 @@ export interface RootRouteChildren {
   AdminBannersRoute: typeof AdminBannersRoute
   AdminBlogRoute: typeof AdminBlogRoute
   AdminBroadcastsRoute: typeof AdminBroadcastsRoute
+  AdminCourtStaffRoute: typeof AdminCourtStaffRoute
   AdminCustomerDiscountsRoute: typeof AdminCustomerDiscountsRoute
   AdminInventoryRoute: typeof AdminInventoryRoute
   AdminJurorAttendanceRoute: typeof AdminJurorAttendanceRoute
@@ -1233,6 +1246,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminBroadcastsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin/court-staff': {
+      id: '/admin/court-staff'
+      path: '/admin/court-staff'
+      fullPath: '/admin/court-staff'
+      preLoaderRoute: typeof AdminCourtStaffRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/admin/customer-discounts': {
       id: '/admin/customer-discounts'
       path: '/admin/customer-discounts'
@@ -1499,6 +1519,7 @@ const rootRouteChildren: RootRouteChildren = {
   AdminBannersRoute: AdminBannersRoute,
   AdminBlogRoute: AdminBlogRoute,
   AdminBroadcastsRoute: AdminBroadcastsRoute,
+  AdminCourtStaffRoute: AdminCourtStaffRoute,
   AdminCustomerDiscountsRoute: AdminCustomerDiscountsRoute,
   AdminInventoryRoute: AdminInventoryRoute,
   AdminJurorAttendanceRoute: AdminJurorAttendanceRoute,

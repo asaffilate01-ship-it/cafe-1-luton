@@ -51,6 +51,7 @@ type NavPath =
   | "/admin/banners"
   | "/admin/promos"
   | "/admin/customer-discounts"
+  | "/admin/court-staff"
   | "/admin/vouchers"
   | "/admin/settings"
   | "/admin/accounts"
@@ -87,6 +88,7 @@ const GROUPS: Array<{ label: string; items: Item[] }> = [
     label: "Customers",
     items: [
       { to: "/admin/customer-discounts", label: "Members", icon: BadgePercent },
+      { to: "/admin/court-staff", label: "Court staff", icon: ShieldCheck },
       { to: "/admin/vouchers", label: "Juror vouchers", icon: Ticket },
       { to: "/admin/juror-attendance", label: "Attendance QR", icon: QrCode },
       { to: "/admin/accounts", label: "Accounts & judge tabs", icon: ReceiptText },
