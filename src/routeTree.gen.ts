@@ -19,6 +19,7 @@ import { Route as CheckoutRouteImport } from './routes/checkout'
 import { Route as ComplaintsRouteImport } from './routes/complaints'
 import { Route as ContactRouteImport } from './routes/contact'
 import { Route as CookiesRouteImport } from './routes/cookies'
+import { Route as CourtStaffRouteImport } from './routes/court-staff'
 import { Route as DisplayRouteImport } from './routes/display'
 import { Route as DriverRouteImport } from './routes/driver'
 import { Route as GdprRouteImport } from './routes/gdpr'
@@ -128,6 +129,11 @@ const ContactRoute = ContactRouteImport.update({
 const CookiesRoute = CookiesRouteImport.update({
   id: '/cookies',
   path: '/cookies',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CourtStaffRoute = CourtStaffRouteImport.update({
+  id: '/court-staff',
+  path: '/court-staff',
   getParentRoute: () => rootRouteImport,
 } as any)
 const DisplayRoute = DisplayRouteImport.update({
@@ -447,6 +453,7 @@ export interface FileRoutesByFullPath {
   '/complaints': typeof ComplaintsRoute
   '/contact': typeof ContactRoute
   '/cookies': typeof CookiesRoute
+  '/court-staff': typeof CourtStaffRoute
   '/display': typeof DisplayRoute
   '/driver': typeof DriverRoute
   '/gdpr': typeof GdprRoute
@@ -519,6 +526,7 @@ export interface FileRoutesByTo {
   '/complaints': typeof ComplaintsRoute
   '/contact': typeof ContactRoute
   '/cookies': typeof CookiesRoute
+  '/court-staff': typeof CourtStaffRoute
   '/display': typeof DisplayRoute
   '/driver': typeof DriverRoute
   '/gdpr': typeof GdprRoute
@@ -592,6 +600,7 @@ export interface FileRoutesById {
   '/complaints': typeof ComplaintsRoute
   '/contact': typeof ContactRoute
   '/cookies': typeof CookiesRoute
+  '/court-staff': typeof CourtStaffRoute
   '/display': typeof DisplayRoute
   '/driver': typeof DriverRoute
   '/gdpr': typeof GdprRoute
@@ -666,6 +675,7 @@ export interface FileRouteTypes {
     | '/complaints'
     | '/contact'
     | '/cookies'
+    | '/court-staff'
     | '/display'
     | '/driver'
     | '/gdpr'
@@ -738,6 +748,7 @@ export interface FileRouteTypes {
     | '/complaints'
     | '/contact'
     | '/cookies'
+    | '/court-staff'
     | '/display'
     | '/driver'
     | '/gdpr'
@@ -810,6 +821,7 @@ export interface FileRouteTypes {
     | '/complaints'
     | '/contact'
     | '/cookies'
+    | '/court-staff'
     | '/display'
     | '/driver'
     | '/gdpr'
@@ -883,6 +895,7 @@ export interface RootRouteChildren {
   ComplaintsRoute: typeof ComplaintsRoute
   ContactRoute: typeof ContactRoute
   CookiesRoute: typeof CookiesRoute
+  CourtStaffRoute: typeof CourtStaffRoute
   DisplayRoute: typeof DisplayRoute
   DriverRoute: typeof DriverRoute
   GdprRoute: typeof GdprRoute
@@ -1015,6 +1028,13 @@ declare module '@tanstack/react-router' {
       path: '/cookies'
       fullPath: '/cookies'
       preLoaderRoute: typeof CookiesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/court-staff': {
+      id: '/court-staff'
+      path: '/court-staff'
+      fullPath: '/court-staff'
+      preLoaderRoute: typeof CourtStaffRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/display': {
@@ -1451,6 +1471,7 @@ const rootRouteChildren: RootRouteChildren = {
   ComplaintsRoute: ComplaintsRoute,
   ContactRoute: ContactRoute,
   CookiesRoute: CookiesRoute,
+  CourtStaffRoute: CourtStaffRoute,
   DisplayRoute: DisplayRoute,
   DriverRoute: DriverRoute,
   GdprRoute: GdprRoute,
