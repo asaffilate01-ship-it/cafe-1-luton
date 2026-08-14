@@ -38,9 +38,7 @@ export async function canAccessPublicOrder(
     if (data.user?.id === order.customer_id) return true;
   }
 
-  // Preserve only already-open legacy guest links during the release window.
-  return (
-    !order.tracking_token_hash &&
-    Date.now() - new Date(order.created_at).getTime() < 48 * 60 * 60 * 1000
-  );
+  // No legacy fallback: every order carries a tracking token, so access requires
+  // a matching token or the signed-in customer who owns the order.
+  return false;
 }
