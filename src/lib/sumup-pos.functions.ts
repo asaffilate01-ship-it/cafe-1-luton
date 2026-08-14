@@ -672,16 +672,42 @@ export const syncSumupPos = createServerFn({ method: "POST" })
             .eq("id", existing.id);
         }
         // The note is often only on the detailed transaction, which arrives
-        // after the ticket was first created. Backfill it so the till note
-        // always shows on the kitchen card.
-        if (!existing.delivery_notes) {
+        // after the ticket was first created. Backfill both the ticket note and
+        // any line notes so what the till operator typed always reaches the
+        // kitchen card, not just on the very first sync.
+        {
           const sale = await loadSumupSaleGroup(paymentParts, key);
           const backfill = sumupOrderNote(sale.detailed, sale.products);
-          if (backfill) {
+          if (backfill && backfill !== existing.delivery_notes) {
             await supabaseAdmin
               .from("orders")
               .update({ delivery_notes: backfill })
               .eq("id", existing.id);
+          }
+          const lineNotes = (sale.products ?? [])
+            .map((product) => ({
+              name: (product.name ?? "").trim().toLowerCase(),
+              note: sumupLineNote(product),
+              category: sumupCategory(product) ?? guessCategory(product.name ?? "") ?? null,
+            }))
+            .filter((line) => line.name && (line.note || line.category));
+          if (lineNotes.length) {
+            const { data: existingLines } = await supabaseAdmin
+              .from("order_items")
+              .select("id, name, notes, category_label")
+              .eq("order_id", existing.id);
+            for (const line of existingLines ?? []) {
+              const match = lineNotes.find(
+                (candidate) => candidate.name === (line.name ?? "").trim().toLowerCase(),
+              );
+              if (!match) continue;
+              const patch: { notes?: string; category_label?: string } = {};
+              if (match.note && match.note !== line.notes) patch.notes = match.note;
+              if (match.category && !line.category_label) patch.category_label = match.category;
+              if (Object.keys(patch).length) {
+                await supabaseAdmin.from("order_items").update(patch).eq("id", line.id);
+              }
+            }
           }
         }
         skipped += paymentParts.length;

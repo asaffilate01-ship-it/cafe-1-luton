@@ -35,7 +35,7 @@ const COLD_WORDS = [
 ];
 
 /** Multi-word phrases that are cold, checked as a whole phrase. */
-const COLD_PHRASES = ["hot chocolate", "iced coffee", "cold drink"];
+const COLD_PHRASES = ["hot chocolate", "iced coffee", "iced latte", "iced tea", "cold drink"];
 
 /** Crude singularise so "pancakes"/"paninis" match the singular keyword. */
 const singular = (t: string) =>
@@ -85,6 +85,13 @@ export function fuzzyMenuKey(name: string, keys: string[]): string | null {
  * most specific), then whole-word matches.
  */
 const CATEGORY_RULES: Array<{ category: string; phrases?: string[]; words?: string[] }> = [
+  // Iced drinks before hot drinks: "Iced Matcha Latte" mentions latte/matcha but
+  // is never a hot drink, and the menu keeps them in their own category.
+  {
+    category: "Iced Drinks",
+    phrases: ["iced coffee", "iced latte", "iced matcha", "iced matche", "iced tea", "iced mocha", "cold brew", "ice coffee", "ice latte"],
+    words: ["iced", "frappe", "frappuccino"],
+  },
   // Drinks first — a "chicken shawarma" never mentions coffee, but a
   // "chicken soup latte" style clash would otherwise land in food.
   { category: "Hot Drinks", phrases: ["hot chocolate", "flat white", "white americano"], words: ["tea", "coffee", "latte", "cappuccino", "capuccino", "cappucino", "americano", "mocha", "mochacciano", "espresso", "macchiato", "chai", "matcha", "hotchocolate"] },
@@ -93,7 +100,6 @@ const CATEGORY_RULES: Array<{ category: string; phrases?: string[]; words?: stri
   // bread named. Cafe1 sells those as sandwiches unless the till says otherwise.
   { category: "Sandwiches", phrases: ["mayo sweetcorn", "mayo and sweetcorn", "cheese and tomato", "tuna mayo", "tuna and mayo", "cheese and onion", "cheese and beans", "chicken mayo", "chicken and mayo", "chicken and sweetcorn", "egg mayo", "egg and mayo", "ham and cheese", "cheese and pickle", "coronation chicken"] },
   { category: "Mocktails", phrases: ["redbull mojito"], words: ["mojito", "mocktail"] },
-  { category: "Iced Coffee", phrases: ["iced coffee", "iced latte"] },
   { category: "Drinks", phrases: ["bottled drink", "energy drink", "soft drink", "red bull"], words: ["coke", "pepsi", "water", "juice", "can", "cans", "bottle", "lemonade", "fanta", "sprite", "smoothie", "redbull", "monster", "tango", "irnbru"] },
   // Food
   { category: "Samosas", words: ["samosa", "samosas"] },
