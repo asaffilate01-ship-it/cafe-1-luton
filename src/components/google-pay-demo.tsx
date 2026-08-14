@@ -94,11 +94,11 @@ export function GooglePayDemo({ amount, merchantName }: { amount: string; mercha
             } catch (err: any) {
               // Surface the sheet's own outcome (cancelled / no card available)
               // instead of failing silently.
-              const reason = err?.statusMessage || err?.statusCode;
+              const reason = [err?.statusCode, err?.statusMessage].filter(Boolean).join(" — ");
               setError(
-                reason === "CANCELED" || reason === "CANCELLED"
-                  ? "Google Pay was closed before a card was selected."
-                  : `Google Pay could not complete the payment${reason ? ` (${reason})` : ""}.`,
+                `Something went wrong. Try again or use a different payment method.${
+                  reason ? ` (${reason})` : ""
+                }`,
               );
             }
           },
