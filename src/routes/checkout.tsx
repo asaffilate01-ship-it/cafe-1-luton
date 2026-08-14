@@ -367,6 +367,13 @@ function Checkout() {
   const [beverageIds, setBeverageIds] = useState<string[]>([]);
   const [voucherBusy, setVoucherBusy] = useState(false);
   const [juryRoom, setJuryRoom] = useState(ctx?.jury_room ?? "");
+  // Jury Lounge orders: verified jurors may settle at the Café 1 counter.
+  const jurorMenuId = jurySessionActive?.juror_id ?? jurySessionActive?.code ?? null;
+  const counterEligible = !!jurorMenuId && !onTab && (!!ctx?.jury_room || !!juryRoom.trim());
+  const [payAtCounter, setPayAtCounter] = useState(false);
+  useEffect(() => {
+    if (!counterEligible && payAtCounter) setPayAtCounter(false);
+  }, [counterEligible, payAtCounter]);
   const [voucherError, setVoucherError] = useState<string | null>(null);
   async function applyVoucher() {
     const code = voucherInput.trim().toUpperCase();
@@ -530,7 +537,12 @@ function Checkout() {
           address_label: form.company_name || form.postcode || undefined,
           voucher_code: voucher?.code,
           voucher_pin: voucher?.pin,
-          jury_room: voucher && juryRoom.trim() ? juryRoom.trim() : undefined,
+          jury_room:
+            (voucher || (payAtCounter && counterEligible)) && (juryRoom.trim() || ctx?.jury_room)
+              ? (juryRoom.trim() || ctx?.jury_room)!.slice(0, 60)
+              : undefined,
+          pay_at_counter: payAtCounter && counterEligible,
+          juror_id: payAtCounter && counterEligible ? (jurorMenuId ?? undefined) : undefined,
           court_location: staffApproved && mode === "delivery" ? courtLocation : undefined,
         },
       });
@@ -544,6 +556,13 @@ function Checkout() {
         });
       } else if (res.fully_covered) {
         toast.success(`Paid in full by court voucher (${money(res.voucher_cents)})`);
+        navigate({
+          to: "/order/$orderId",
+          params: { orderId: res.order_id },
+          search: { token: res.tracking_token },
+        });
+      } else if (res.pay_at_counter) {
+        toast.success("Order sent to the kitchen — pay at the Café 1 counter");
         navigate({
           to: "/order/$orderId",
           params: { orderId: res.order_id },
@@ -1299,6 +1318,23 @@ function Checkout() {
               </p>
             )}
           </div>
+          {counterEligible && (
+            <label className="mt-4 flex cursor-pointer items-start gap-3 rounded-2xl border border-primary/40 bg-primary/5 p-4 text-sm">
+              <input
+                type="checkbox"
+                checked={payAtCounter}
+                onChange={(e) => setPayAtCounter(e.target.checked)}
+                className="mt-0.5 h-4 w-4 accent-[hsl(var(--primary))]"
+              />
+              <span>
+                <span className="font-semibold text-primary">Pay at the Café 1 counter</span>
+                <span className="mt-1 block text-muted-foreground">
+                  Jury Lounge orders only. We start your order straight away and you settle at the
+                  counter by card or cash when you collect it.
+                </span>
+              </span>
+            </label>
+          )}
           <button
             type="submit"
             form="checkout-form"
@@ -1317,7 +1353,9 @@ function Checkout() {
                     ? `Add £${((minOrder - subtotal) / 100).toFixed(2)} more`
                     : onTab
                       ? "Add to tab"
-                      : "Place order & pay"}
+                      : payAtCounter && counterEligible
+                        ? "Place order — pay at the counter"
+                        : "Place order & pay"}
           </button>
           <p className="mt-2 text-center text-xs text-muted-foreground">
             {onTab

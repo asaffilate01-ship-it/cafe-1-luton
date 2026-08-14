@@ -11,6 +11,10 @@ export type JurySession = {
   remaining_cents: number;
   jury_room: string | null;
   verified_at: number;
+  /** Verified HMCTS Juror ID that unlocked the gated menu (never a name). */
+  juror_id?: string | null;
+  /** True once the juror has opted into the daily allowance scheme. */
+  opted_in?: boolean;
 } | null;
 
 const KEY = "cafe1-jury-session";

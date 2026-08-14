@@ -4,7 +4,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { SiteHeader } from "@/components/site-header";
 import { GatedMenuList } from "@/components/gated-menu-list";
 import { OrderSetupGate } from "@/components/order-setup-gate";
-import { lookupVoucher } from "@/lib/vouchers.functions";
+import { verifyJurorIdForMenu } from "@/lib/vouchers.functions";
 import { jurySession, useJurySession } from "@/lib/jury-session";
 import { orderContext, useOrderContext } from "@/lib/order-context";
 import { JUROR_DELIVERY_VENUES, JUROR_DAILY_ALLOWANCE_CENTS } from "@/lib/juror";
@@ -60,10 +60,9 @@ const ROOMS = [
 function JuryMenuPage() {
   const { code: codeParam, room: roomParam } = Route.useSearch();
   const session = useJurySession();
-  const lookup = useServerFn(lookupVoucher);
+  const verifyJurorId = useServerFn(verifyJurorIdForMenu);
 
   const [code, setCode] = useState((codeParam ?? "").toUpperCase());
-  const [pin, setPin] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const ctx = useOrderContext();
@@ -81,33 +80,40 @@ function JuryMenuPage() {
     setBusy(true);
     setError(null);
     try {
-      const res = await lookup({ data: { code: code.trim().toUpperCase(), pin } });
-      if (!res.found) {
-        setError(
-          ("message" in res && res.message) ||
-            "That Juror ID and PIN weren't recognised. Please check them and try again.",
-        );
+      const res = await verifyJurorId({ data: { code: code.trim().toUpperCase() } });
+      if (!res.ok || !res.code) {
+        setError(res.message || "That Juror ID wasn't recognised. Please check it and try again.");
         return;
       }
       jurySession.set({
         code: res.code,
-        remaining_cents: res.remaining_cents,
-        jury_room: res.jury_room ?? roomParam ?? null,
+        juror_id: res.code,
+        opted_in: res.opted_in,
+        remaining_cents: 0,
+        jury_room: roomParam ?? null,
         verified_at: Date.now(),
       });
-      setPin("");
       toast.success("Verified — this is the Jury Only menu");
     } catch {
-      setError("We couldn't check that code just now. Please try again.");
+      setError("We couldn't check that Juror ID just now. Please try again.");
     } finally {
       setBusy(false);
     }
   }
 
-  function chooseFulfilment(kind: "collection" | (typeof ROOMS)[number]["id"]) {
+  function chooseFulfilment(kind: "collection" | "lounge_counter" | (typeof ROOMS)[number]["id"]) {
     if (kind === "collection") {
       orderContext.set({ mode: "collection", schedule_mode: "asap" });
       toast.success("Collection from Café 1");
+      return;
+    }
+    if (kind === "lounge_counter") {
+      orderContext.set({
+        mode: "dine_in",
+        schedule_mode: "asap",
+        jury_room: ROOMS[0].label,
+      });
+      toast.success("Eating in the Jury Lounge — pay at the counter");
       return;
     }
     const room = ROOMS.find((r) => r.id === kind)!;
@@ -132,10 +138,11 @@ function JuryMenuPage() {
             <p className="text-xs font-black uppercase tracking-[.25em] text-primary">
               Jury only menu
             </p>
-            <h1 className="mt-2 font-display text-3xl font-black">Verify your voucher</h1>
+            <h1 className="mt-2 font-display text-3xl font-black">Confirm you're a juror</h1>
             <p className="mt-2 text-sm text-muted-foreground">
-              This menu is only for jurors serving at St Albans. Enter your HMCTS Juror ID and 6-digit
-              PIN printed on your juror sheet. We never see your name or any personal details.
+              You've scanned the Jury Lounge QR code. This menu is only for jurors serving at St
+              Albans. Enter the HMCTS Juror ID on your summons or jury sheet to open it. We never
+              see your name or any personal details — no PIN is needed just to browse and order.
             </p>
             <form onSubmit={verify} className="mt-6 space-y-3">
               <input
@@ -143,18 +150,8 @@ function JuryMenuPage() {
                 autoFocus
                 value={code}
                 onChange={(e) => setCode(e.target.value.toUpperCase())}
-                placeholder="VOUCHER CODE"
+                placeholder="JUROR ID"
                 className="h-14 w-full rounded-2xl border border-border bg-background px-4 text-center font-mono text-xl tracking-[0.3em]"
-              />
-              <input
-                required
-                inputMode="numeric"
-                pattern="\d{6}"
-                maxLength={6}
-                value={pin}
-                onChange={(e) => setPin(e.target.value.replace(/\D/g, "").slice(0, 6))}
-                placeholder="6-DIGIT PIN"
-                className="h-14 w-full rounded-2xl border border-border bg-background px-4 text-center font-mono text-xl tracking-[0.4em]"
               />
               {error ? <p className="text-sm font-semibold text-destructive">{error}</p> : null}
               <button
@@ -164,26 +161,17 @@ function JuryMenuPage() {
                 {busy ? "Checking…" : "Open the Jury Only menu"}
               </button>
             </form>
-            <div className="mt-5">
-              <button
-                type="button"
-                onClick={() => {
-                  jurySession.set({
-                    code: null,
-                    remaining_cents: 0,
-                    jury_room: roomParam ?? null,
-                    verified_at: Date.now(),
-                  });
-                  toast.success("Jury Only menu open — pay by card, wallet or cash");
-                }}
-                className="h-12 w-full rounded-full border border-primary text-sm font-bold text-primary hover:bg-primary/5"
+            <p className="mt-5 text-center text-xs text-muted-foreground">
+              Your Juror ID isn't on the scheme yet?{" "}
+              <Link
+                to="/juror"
+                search={{ src: "jury_room", code: undefined, attendance: undefined }}
+                className="font-semibold text-primary"
               >
-                I haven't opted in — open the menu and I'll just pay
-              </button>
-            </div>
-            <p className="mt-4 text-center text-xs text-muted-foreground">
-              Every juror can order from this menu. Without the voucher scheme there's no daily
-              allowance and no 10% food discount — you simply pay by card, Apple/Google Pay or cash.{" "}
+                Opt in here
+              </Link>{" "}
+              for the £5.71 daily allowance and 10% off food. Ordering in the Jury Lounge? You can
+              simply pay at the Café 1 counter.{" "}
               <Link to="/menu" className="font-semibold text-primary">
                 Not a juror? Main menu
               </Link>
@@ -213,17 +201,15 @@ function JuryMenuPage() {
           </p>
           <div className="mt-4 flex flex-wrap items-center gap-3 text-sm">
             {session.code ? (
-              <>
-                <span className="rounded-full bg-white/15 px-3 py-1 font-mono">{session.code}</span>
-                <span className="rounded-full bg-white/15 px-3 py-1 font-semibold">
-                  {money(session.remaining_cents)} allowance left today
-                </span>
-              </>
-            ) : (
-              <span className="rounded-full bg-white/15 px-3 py-1 font-semibold">
-                Paying as normal — no voucher
-              </span>
-            )}
+              <span className="rounded-full bg-white/15 px-3 py-1 font-mono">{session.code}</span>
+            ) : null}
+            <span className="rounded-full bg-white/15 px-3 py-1 font-semibold">
+              {session.opted_in
+                ? "On the voucher scheme"
+                : session.remaining_cents > 0
+                  ? `${money(session.remaining_cents)} allowance left today`
+                  : "Juror verified"}
+            </span>
             <button
               type="button"
               onClick={() => {
@@ -236,9 +222,9 @@ function JuryMenuPage() {
             </button>
           </div>
           <p className="mt-3 text-xs text-primary-foreground/70">
-            {session.code
-              ? `Daily allowance ${money(JUROR_DAILY_ALLOWANCE_CENTS)} on sitting days. Re-enter your Juror ID and PIN at checkout to apply it.`
-              : "You're not on the voucher scheme, so there's no allowance or 10% food discount — pay by card, Apple/Google Pay or cash. You can opt in any time on the juror page."}
+            {session.opted_in
+              ? `Daily allowance ${money(JUROR_DAILY_ALLOWANCE_CENTS)} on sitting days. Enter your Juror ID and PIN at checkout to apply it.`
+              : "You're verified as a juror, so this menu is open. You're not on the voucher scheme yet, so there's no allowance or 10% food discount — opt in on the juror page, or simply pay at the counter."}
           </p>
         </div>
       </section>
@@ -255,6 +241,16 @@ function JuryMenuPage() {
           {ctx ? "Change how you'd like your order" : "How would you like your order?"}
         </button>
         <div className="mt-3 grid gap-2 sm:grid-cols-3">
+          <button
+            type="button"
+            onClick={() => chooseFulfilment("lounge_counter")}
+            className="rounded-2xl border-2 border-primary bg-primary/5 p-3 text-left text-sm font-semibold hover:bg-primary/10"
+          >
+            Eating in the Jury Lounge
+            <span className="mt-1 block text-xs font-normal text-muted-foreground">
+              Order now, pay at the Café 1 counter
+            </span>
+          </button>
           <button
             type="button"
             onClick={() => chooseFulfilment("collection")}

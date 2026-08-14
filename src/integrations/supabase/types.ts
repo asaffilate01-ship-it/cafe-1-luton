@@ -3308,6 +3308,16 @@ export type Database = {
         Args: { _menu_item_id: string }
         Returns: boolean
       }
+      cafe1_verify_juror_id: {
+        Args: { _code: string }
+        Returns: {
+          code: string
+          message: string
+          ok: boolean
+          opted_in: boolean
+          valid_until: string
+        }[]
+      }
       cafe1_void_expense: {
         Args: { _expense_id: string; _reason: string }
         Returns: Json

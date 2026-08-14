@@ -75,6 +75,10 @@ const CreateOrderSchema = z.object({
     .regex(/^\d{6}$/)
     .optional(),
   jury_room: z.string().max(60).optional(),
+  /** Jury Lounge orders: settle at the Café 1 counter instead of paying online. */
+  pay_at_counter: z.boolean().optional().default(false),
+  /** HMCTS Juror ID used to unlock the Jury Only menu (re-verified server side). */
+  juror_id: z.string().trim().max(40).optional(),
   /** Court staff scheme: the internal delivery point (e.g. "CC Floor 1"). */
   court_location: z.string().max(80).optional(),
   /** Optional gratuity in pence, added on top of the payable amount. */
@@ -517,7 +521,32 @@ export const createOrder = createServerFn({ method: "POST" })
 
     // Create SumUp checkout FIRST — if it fails, don't create a phantom unpaid order.
     let checkout_id: string | null = null;
-    if (!account_id && payable > 0) {
+    // Jury Lounge: a verified juror may order to the lounge and pay at the
+    // Café 1 counter. The Juror ID is re-checked here — the client claim alone
+    // never unlocks it.
+    let pay_at_counter = false;
+    if (data.pay_at_counter && !account_id && data.juror_id && data.jury_room) {
+      try {
+        const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+        const { callOperationsRpc } = await import("./ops-rpc");
+        const rows = await callOperationsRpc<{ ok: boolean }>(
+          supabaseAdmin,
+          "cafe1_verify_juror_id",
+          { _code: data.juror_id },
+        );
+        pay_at_counter = !!(Array.isArray(rows) ? rows[0]?.ok : false);
+      } catch (e) {
+        console.error("[orders] juror counter-pay check failed", e);
+      }
+      if (!pay_at_counter) {
+        await releaseVoucher();
+        await refundPoints();
+        throw new Error(
+          "We couldn't confirm that Juror ID, so this order can't be paid at the counter.",
+        );
+      }
+    }
+    if (!account_id && !pay_at_counter && payable > 0) {
       const { createSumUpCheckout } = await import("./sumup.server");
       const itemSummary = lines
         .map((l) => `${l.qty}x ${l.name}${l.notes ? ` (${l.notes})` : ""}`)
@@ -609,6 +638,13 @@ export const createOrder = createServerFn({ method: "POST" })
         promo_discount_cents: free_delivery_promo ? 0 : promo_discount,
         ...(account_id
           ? { payment_status: "on_account" as const, status: "preparing" as const }
+          : {}),
+        ...(pay_at_counter && !account_id
+          ? {
+              payment_status: "pending" as const,
+              status: "preparing" as const,
+              payment_method: "counter",
+            }
           : {}),
         ...(fully_covered ? { payment_status: "paid" as const, status: "paid" as const } : {}),
         ...(account_id || fully_covered ? { loyalty_awarded: true } : {}),
@@ -710,7 +746,8 @@ export const createOrder = createServerFn({ method: "POST" })
       voucher_holder_name,
       checkout_id,
       tracking_token,
-      payment_configured: !!checkout_id || fully_covered,
+      payment_configured: !!checkout_id || fully_covered || pay_at_counter,
+      pay_at_counter,
       on_tab: !!account_id,
       fully_covered,
       free_drinks_used,
