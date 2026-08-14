@@ -208,17 +208,46 @@ function Home() {
         </div>
       </section>
 
-      <section className="border-t border-border bg-soft px-4 py-20 text-center">
-        <h2 className="font-display text-4xl font-bold">Hungry?</h2>
-        <p className="mx-auto mt-3 max-w-xl text-muted-foreground">
-          Browse the menu, drop things in your basket, pay in a tap.
-        </p>
-        <Link
-          to="/menu"
-          className="mt-8 inline-flex h-12 items-center gap-2 rounded-full bg-primary px-6 font-semibold text-primary-foreground shadow-brand transition hover:bg-primary-hover"
-        >
-          Start your order <ArrowRight className="h-4 w-4" />
-        </Link>
+      <section className="relative overflow-hidden border-t border-border bg-soft px-4 py-20">
+        <div className="mx-auto max-w-6xl">
+          <div className="card-3d mx-auto max-w-3xl p-8 text-center sm:p-12">
+            <span className="icon-3d-soft mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-primary/10 text-primary">
+              <UtensilsCrossed className="h-6 w-6" />
+            </span>
+            <h2 className="mt-6 font-display text-4xl font-bold sm:text-5xl">Hungry?</h2>
+            <p className="mx-auto mt-3 max-w-xl text-muted-foreground">
+              Browse the menu, drop things in your basket, pay in a tap.
+            </p>
+            <Link
+              to="/menu"
+              className="mt-8 inline-flex h-12 items-center gap-2 rounded-full bg-primary px-7 font-semibold text-primary-foreground shadow-brand transition hover:bg-primary-hover"
+            >
+              Start your order <ArrowRight className="h-4 w-4" />
+            </Link>
+          </div>
+
+          <div className="mt-10 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-6">
+            {[
+              { icon: Egg, label: "Breakfast", href: "/menu" },
+              { icon: Flame, label: "Desi Breakfast", href: "/menu" },
+              { icon: ChefHat, label: "Chef's Specials", href: "/menu" },
+              { icon: Sandwich, label: "Sandwiches", href: "/menu" },
+              { icon: CupSoda, label: "Drinks", href: "/menu" },
+              { icon: Salad, label: "Salads", href: "/menu" },
+            ].map((cat) => (
+              <Link
+                key={cat.label}
+                to={cat.href}
+                className="card-3d card-3d-hover group flex flex-col items-center gap-3 p-5 text-center"
+              >
+                <span className="icon-3d-soft flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 text-primary transition group-hover:bg-primary group-hover:text-primary-foreground">
+                  <cat.icon className="h-5 w-5" />
+                </span>
+                <span className="text-sm font-semibold">{cat.label}</span>
+              </Link>
+            ))}
+          </div>
+        </div>
       </section>
 
       <SiteFooter />
