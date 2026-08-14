@@ -75,6 +75,8 @@ const CreateOrderSchema = z.object({
     .regex(/^\d{6}$/)
     .optional(),
   jury_room: z.string().max(60).optional(),
+  /** Court staff scheme: the internal delivery point (e.g. "CC Floor 1"). */
+  court_location: z.string().max(80).optional(),
   /** Optional gratuity in pence, added on top of the payable amount. */
   tip_cents: z.number().int().min(0).max(20000).optional().default(0),
   /** Loyalty reward tier the customer chose to spend on this order. */
