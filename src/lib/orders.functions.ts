@@ -215,8 +215,32 @@ export const createOrder = createServerFn({ method: "POST" })
 
     const baseDeliveryFee = settings?.delivery_fee_cents ?? 299;
 
+    // Approved court staff: scheme discount, free internal delivery, and
+    // delivery to a court location instead of a street address.
+    let staff_member_id: string | null = null;
+    let staff_discount_percent = 0;
+    if (userId) {
+      const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+      const { data: staffRow } = await supabaseAdmin
+        .from("court_staff_members")
+        .select("id,status,discount_percent")
+        .eq("user_id", userId)
+        .eq("status", "approved")
+        .maybeSingle();
+      if (staffRow) {
+        staff_member_id = staffRow.id;
+        staff_discount_percent = Number(
+          staffRow.discount_percent ?? settings?.court_staff_discount_percent ?? 10,
+        );
+      }
+    }
+    const courtStaffDelivery = !!staff_member_id && !!data.court_location;
+    if (data.court_location && !staff_member_id) {
+      throw new Error("Court delivery points are only available to approved court staff.");
+    }
+
     // Delivery-only rules: service window + half-mile radius from the shop.
-    if (data.type === "delivery" && settings) {
+    if (data.type === "delivery" && settings && !courtStaffDelivery) {
       const ds = settings as unknown as import("./delivery.server").DeliverySettings;
       const { isWithinDeliveryWindow, formatWindow, checkDeliveryArea } =
         await import("./delivery.server");
@@ -250,26 +274,7 @@ export const createOrder = createServerFn({ method: "POST" })
           ? 0
           : baseDeliveryFee
         : 0;
-
-    // Approved court staff: scheme discount and free internal delivery.
-    let staff_member_id: string | null = null;
-    let staff_discount_percent = 0;
-    if (userId) {
-      const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-      const { data: staffRow } = await supabaseAdmin
-        .from("court_staff_members")
-        .select("id,status,discount_percent")
-        .eq("user_id", userId)
-        .eq("status", "approved")
-        .maybeSingle();
-      if (staffRow) {
-        staff_member_id = staffRow.id;
-        staff_discount_percent = Number(
-          staffRow.discount_percent ?? settings?.court_staff_discount_percent ?? 10,
-        );
-        delivery_fee = 0;
-      }
-    }
+    if (staff_member_id) delivery_fee = 0;
 
     // Validate and apply promo code (public RPC).
     let promo_discount = 0;
