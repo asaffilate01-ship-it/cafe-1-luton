@@ -7,6 +7,12 @@ import {
   MapPin,
   BadgeCheck,
   UtensilsCrossed,
+  ChefHat,
+  Flame,
+  Sandwich,
+  CupSoda,
+  Egg,
+  Salad,
 } from "lucide-react";
 import { SiteHeader, SiteFooter } from "@/components/site-header";
 import { PromoBanner } from "@/components/promo-banner";
