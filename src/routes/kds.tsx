@@ -90,6 +90,7 @@ type Order = {
   delivery_notes: string | null;
   pos_terminal: string | null;
   jury_room: string | null;
+  court_location: string | null;
 };
 type Ticket = Order & { items: Item[]; needsCooking: boolean };
 
@@ -405,7 +406,7 @@ function KDS() {
   useEffect(() => {
     async function load() {
       const COLUMNS =
-        "id, order_number, status, type, customer_name, created_at, schedule_mode, scheduled_for, table_number, source, payment_method, payment_status, customer_phone, company_name, address_line1, address_line2, city, postcode, delivery_notes, pos_terminal, jury_room";
+        "id, order_number, status, type, customer_name, created_at, schedule_mode, scheduled_for, table_number, source, payment_method, payment_status, customer_phone, company_name, address_line1, address_line2, city, postcode, delivery_notes, pos_terminal, jury_room, court_location";
       const { data: orders, error: ordersError } = await supabase
         .from("orders")
         .select(COLUMNS)
@@ -1723,17 +1724,18 @@ function KDS() {
               <p className="mt-1 inline-block self-start rounded bg-slate-900 px-1.5 py-0.5 font-mono text-[11px] font-black tracking-widest text-white">
                 {orderCode(t)}
               </p>
-              {t.jury_room && (t.type === "delivery" || t.type === "dine_in") && (
+              {(t.jury_room ?? t.court_location) &&
+                (t.type === "delivery" || t.type === "dine_in") && (
                 <div className="mt-1.5 rounded-lg border-2 border-red-600 bg-red-50 p-1.5 text-red-900">
                   <p className="text-[9px] font-black uppercase tracking-widest">
                     {t.type === "delivery" ? "Deliver to (court)" : "Serve at (court)"}
                   </p>
                   <p className="font-display text-base font-black uppercase leading-tight">
-                    {t.jury_room}
+                    {t.jury_room ?? t.court_location}
                   </p>
                 </div>
               )}
-              {!t.jury_room &&
+              {!t.jury_room && !t.court_location &&
                 (t.type === "delivery" || t.postcode || t.address_line1 || t.company_name) && (
                   <div className="mt-1.5 rounded-lg border border-slate-900 bg-white p-1.5 text-xs">
                     <p className="text-[9px] font-black uppercase tracking-widest text-slate-500">
