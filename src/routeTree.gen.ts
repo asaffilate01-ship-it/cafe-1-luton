@@ -23,6 +23,7 @@ import { Route as CourtStaffRouteImport } from './routes/court-staff'
 import { Route as DisplayRouteImport } from './routes/display'
 import { Route as DriverRouteImport } from './routes/driver'
 import { Route as GdprRouteImport } from './routes/gdpr'
+import { Route as GooglePayReviewRouteImport } from './routes/google-pay-review'
 import { Route as HalalFoodStAlbansRouteImport } from './routes/halal-food-st-albans'
 import { Route as JudgesRouteImport } from './routes/judges'
 import { Route as JudgesMenuRouteImport } from './routes/judges-menu'
@@ -150,6 +151,11 @@ const DriverRoute = DriverRouteImport.update({
 const GdprRoute = GdprRouteImport.update({
   id: '/gdpr',
   path: '/gdpr',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const GooglePayReviewRoute = GooglePayReviewRouteImport.update({
+  id: '/google-pay-review',
+  path: '/google-pay-review',
   getParentRoute: () => rootRouteImport,
 } as any)
 const HalalFoodStAlbansRoute = HalalFoodStAlbansRouteImport.update({
@@ -463,6 +469,7 @@ export interface FileRoutesByFullPath {
   '/display': typeof DisplayRoute
   '/driver': typeof DriverRoute
   '/gdpr': typeof GdprRoute
+  '/google-pay-review': typeof GooglePayReviewRoute
   '/halal-food-st-albans': typeof HalalFoodStAlbansRoute
   '/judges': typeof JudgesRoute
   '/judges-menu': typeof JudgesMenuRoute
@@ -537,6 +544,7 @@ export interface FileRoutesByTo {
   '/display': typeof DisplayRoute
   '/driver': typeof DriverRoute
   '/gdpr': typeof GdprRoute
+  '/google-pay-review': typeof GooglePayReviewRoute
   '/halal-food-st-albans': typeof HalalFoodStAlbansRoute
   '/judges': typeof JudgesRoute
   '/judges-menu': typeof JudgesMenuRoute
@@ -612,6 +620,7 @@ export interface FileRoutesById {
   '/display': typeof DisplayRoute
   '/driver': typeof DriverRoute
   '/gdpr': typeof GdprRoute
+  '/google-pay-review': typeof GooglePayReviewRoute
   '/halal-food-st-albans': typeof HalalFoodStAlbansRoute
   '/judges': typeof JudgesRoute
   '/judges-menu': typeof JudgesMenuRoute
@@ -688,6 +697,7 @@ export interface FileRouteTypes {
     | '/display'
     | '/driver'
     | '/gdpr'
+    | '/google-pay-review'
     | '/halal-food-st-albans'
     | '/judges'
     | '/judges-menu'
@@ -762,6 +772,7 @@ export interface FileRouteTypes {
     | '/display'
     | '/driver'
     | '/gdpr'
+    | '/google-pay-review'
     | '/halal-food-st-albans'
     | '/judges'
     | '/judges-menu'
@@ -836,6 +847,7 @@ export interface FileRouteTypes {
     | '/display'
     | '/driver'
     | '/gdpr'
+    | '/google-pay-review'
     | '/halal-food-st-albans'
     | '/judges'
     | '/judges-menu'
@@ -911,6 +923,7 @@ export interface RootRouteChildren {
   DisplayRoute: typeof DisplayRoute
   DriverRoute: typeof DriverRoute
   GdprRoute: typeof GdprRoute
+  GooglePayReviewRoute: typeof GooglePayReviewRoute
   HalalFoodStAlbansRoute: typeof HalalFoodStAlbansRoute
   JudgesRoute: typeof JudgesRoute
   JudgesMenuRoute: typeof JudgesMenuRoute
@@ -1069,6 +1082,13 @@ declare module '@tanstack/react-router' {
       path: '/gdpr'
       fullPath: '/gdpr'
       preLoaderRoute: typeof GdprRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/google-pay-review': {
+      id: '/google-pay-review'
+      path: '/google-pay-review'
+      fullPath: '/google-pay-review'
+      preLoaderRoute: typeof GooglePayReviewRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/halal-food-st-albans': {
@@ -1495,6 +1515,7 @@ const rootRouteChildren: RootRouteChildren = {
   DisplayRoute: DisplayRoute,
   DriverRoute: DriverRoute,
   GdprRoute: GdprRoute,
+  GooglePayReviewRoute: GooglePayReviewRoute,
   HalalFoodStAlbansRoute: HalalFoodStAlbansRoute,
   JudgesRoute: JudgesRoute,
   JudgesMenuRoute: JudgesMenuRoute,
