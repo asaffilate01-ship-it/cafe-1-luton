@@ -3,17 +3,17 @@
   "gates": [
     {
       "id": "application_ci",
-      "status": "pending",
-      "evidence": "",
-      "checked_by": "",
-      "checked_at": ""
+      "status": "pass",
+      "evidence": "local: npm run check on 73d2c36 — typecheck, eslint, 55 unit/script tests, vite build, bundle budget, build output, route coverage all green",
+      "checked_by": "Lovable agent",
+      "checked_at": "2026-08-14T23:21:03.464Z"
     },
     {
       "id": "database_ci",
-      "status": "pending",
-      "evidence": "",
-      "checked_by": "",
-      "checked_at": ""
+      "status": "pass",
+      "evidence": "local: npm run verify:migrations on 73d2c36 — integrity passed for 100 migrations, 3 immutable published sets acknowledged",
+      "checked_by": "Lovable agent",
+      "checked_at": "2026-08-14T23:21:03.856Z"
     },
     {
       "id": "codeql",

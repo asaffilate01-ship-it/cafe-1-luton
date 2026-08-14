@@ -7,6 +7,7 @@ import {
   absoluteUrl,
   breadcrumbJsonLd,
   canonicalLink,
+  faqJsonLd,
   jsonLdScript,
   seoMeta,
   webPageJsonLd,
@@ -31,6 +32,7 @@ export const Route = createFileRoute("/halal-food-st-albans")({
           about: ["Halal food in St Albans", "Halal café", "Halal lunch"],
         }),
       ),
+      jsonLdScript(faqJsonLd(config.faqs)),
       jsonLdScript(
         breadcrumbJsonLd([
           { name: "Home", path: "/" },
@@ -57,7 +59,7 @@ const config: LocalSearchPageConfig = {
     },
     {
       title: "British and Desi choices",
-      text: "Move from cooked breakfast plates and jacket potatoes to parathas, chana, kebabs and curries depending on the meal you want.",
+      text: "Move from cooked breakfast plates and omelettes to parathas, chana, kebabs and curries depending on the meal you want.",
     },
     {
       title: "Vegetarian choices too",
@@ -106,7 +108,7 @@ const config: LocalSearchPageConfig = {
     {
       question: "Does Café 1 serve halal breakfast and halal lunch?",
       answer:
-        "Yes. The food offer runs from all-day breakfast and Desi breakfast to sandwiches, paninis, jacket potatoes, wraps, curries and other hot lunch choices, subject to availability.",
+        "Yes. The food offer runs from all-day breakfast and Desi breakfast to sandwiches, paninis, wraps, rolls, curries and other hot lunch choices, subject to availability.",
     },
     {
       question: "Are vegetarian items automatically halal?",

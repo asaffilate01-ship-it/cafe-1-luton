@@ -7,6 +7,7 @@ import {
   absoluteUrl,
   breadcrumbJsonLd,
   canonicalLink,
+  faqJsonLd,
   jsonLdScript,
   seoMeta,
   webPageJsonLd,
@@ -15,7 +16,7 @@ import {
 const path = "/lunch-st-albans";
 const title = "Lunch in St Albans | Halal Café Food | Café 1";
 const description =
-  "Order lunch in St Albans from Café 1: halal curries, sandwiches, paninis, jacket potatoes, wraps and all-day breakfast. Dine in, collect or get local delivery.";
+  "Order lunch in St Albans from Café 1: halal curries, sandwiches, paninis, wraps, salads and all-day breakfast. Dine in, collect or get local delivery.";
 
 export const Route = createFileRoute("/lunch-st-albans")({
   head: () => ({
@@ -31,6 +32,7 @@ export const Route = createFileRoute("/lunch-st-albans")({
           about: ["Lunch in St Albans", "Halal lunch", "Café lunch"],
         }),
       ),
+      jsonLdScript(faqJsonLd(config.faqs)),
       jsonLdScript(
         breadcrumbJsonLd([
           { name: "Home", path: "/" },
@@ -47,7 +49,7 @@ const config: LocalSearchPageConfig = {
   eyebrow: "Lunch in St Albans",
   title: "A St Albans lunch for quick breaks and hungry afternoons.",
   intro:
-    "Choose a hot meal, sandwich, panini, jacket potato, wrap, salad or all-day breakfast from our halal menu. Café 1 is open to the public at St Albans Crown Court, with online ordering and local delivery.",
+    "Choose a hot meal, sandwich, panini, wrap, salad or all-day breakfast from our halal menu. Café 1 is open to the public at St Albans Crown Court, with online ordering and local delivery.",
   imageAlt:
     "Café 1 St Albans lunch spread with fish and chips, jacket potato, breakfast and loaded fries",
   highlights: [
@@ -57,11 +59,11 @@ const config: LocalSearchPageConfig = {
     },
     {
       title: "Sandwiches and paninis",
-      text: "Choose a cold filled sandwich or baguette, or a hot pressed panini when you want lunch that is easy to take back to work.",
+      text: "Choose a cold filled sandwich or a hot pressed panini when you want lunch that is easy to take back to work.",
     },
     {
-      title: "Jackets, wraps and salads",
-      text: "Build a jacket potato with available toppings, choose a wrap, or look for lighter salad and cold-food options on the live menu.",
+      title: "Wraps, rolls and salads",
+      text: "Choose a wrap or filled roll, or look for lighter salad and cold-food options on the live menu.",
     },
     {
       title: "Breakfast for lunch",
@@ -106,7 +108,7 @@ const config: LocalSearchPageConfig = {
     {
       question: "What lunch food does Café 1 serve?",
       answer:
-        "The menu includes hot specials, curries with rice, fish and chips, sandwiches, baguettes, paninis, jacket potatoes, wraps, salads and all-day breakfast. Check the live menu for current availability and prices.",
+        "The menu includes hot specials, curries with rice, fish and chips, sandwiches, paninis, wraps, rolls, salads and all-day breakfast. Check the live menu for current availability and prices.",
     },
     {
       question: "Can I order lunch for collection?",

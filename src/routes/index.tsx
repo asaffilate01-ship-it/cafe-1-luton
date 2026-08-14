@@ -104,7 +104,7 @@ function Home() {
           <div className="relative">
             <img
               src={heroImage}
-              alt="Café 1 spread: full English breakfast, fish and chips, jacket potato, loaded fries and a mug of tea"
+              alt="Café 1 spread: full English breakfast, fish and chips, loaded fries and a mug of tea"
               width={1200}
               height={960}
               loading="eager"
@@ -145,7 +145,7 @@ function Home() {
             {
               icon: Croissant,
               title: "Made fresh daily",
-              body: "Fresh desi food cooked to order, alongside paninis, jackets and all-day breakfasts.",
+              body: "Fresh desi food cooked to order, alongside paninis, wraps and all-day breakfasts.",
             },
             {
               icon: Bike,
@@ -165,6 +165,39 @@ function Home() {
       </section>
 
       <section className="mx-auto max-w-6xl px-4 py-20" aria-labelledby="st-albans-food-guides">
+        <div className="card-3d mb-16 grid gap-6 p-8 sm:p-10 lg:grid-cols-[1.2fr_1fr] lg:items-center">
+          <div>
+            <p className="text-sm font-semibold uppercase tracking-[0.18em] text-primary">
+              Order direct
+            </p>
+            <h2 className="mt-2 font-display text-3xl font-bold sm:text-4xl">
+              Same food, café prices, no app fees.
+            </h2>
+            <p className="mt-3 max-w-xl text-muted-foreground">
+              Ordering here means counter pricing, loyalty points on every order, live driver
+              tracking and support that goes straight to the café — not a delivery platform.
+            </p>
+            <Link
+              to="/order-direct"
+              className="mt-6 inline-flex h-11 items-center gap-2 rounded-full bg-primary px-6 font-semibold text-primary-foreground shadow-brand transition hover:bg-primary-hover"
+            >
+              See why it's better <ArrowRight className="h-4 w-4" />
+            </Link>
+          </div>
+          <ul className="grid gap-3 text-sm">
+            {[
+              "No third-party service fees",
+              "Loyalty points on every direct order",
+              "Live tracking with our own drivers",
+              "Tabs and weekly statements for offices",
+            ].map((point) => (
+              <li key={point} className="flex items-center gap-3 rounded-2xl bg-soft px-4 py-3">
+                <BadgeCheck className="h-4 w-4 shrink-0 text-primary" />
+                <span className="font-medium">{point}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
         <div className="max-w-3xl">
           <p className="text-sm font-semibold uppercase tracking-[0.18em] text-primary">
             Eat in St Albans
@@ -192,7 +225,7 @@ function Home() {
             {
               href: "/lunch-st-albans",
               title: "Lunch in St Albans",
-              body: "Hot lunches, paninis, jackets, wraps and collection for a busy weekday.",
+              body: "Hot lunches, paninis, wraps, rolls and collection for a busy weekday.",
             },
           ].map((guide) => (
             <a key={guide.href} href={guide.href} className="card-3d card-3d-hover group p-6">

@@ -13,9 +13,18 @@ const repository = "asaffilate01-ship-it/cafe1-connect-dash";
 const commit = "6f306e65a90a749ed838e599e95919cc3c36c141";
 
 function freshRecord() {
-  return JSON.parse(
+  const record = JSON.parse(
     readFileSync(new URL("../release/operational-acceptance.json", import.meta.url), "utf8"),
   );
+  // Fixtures must not inherit real sign-offs recorded in the live file.
+  record.gates = record.gates.map((gate) => ({
+    ...gate,
+    status: "pending",
+    evidence: "",
+    checked_by: "",
+    checked_at: "",
+  }));
+  return record;
 }
 
 function run(name, overrides = {}) {
