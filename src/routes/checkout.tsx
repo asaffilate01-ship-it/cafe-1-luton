@@ -538,6 +538,8 @@ function Checkout() {
           voucher_code: voucher?.code,
           voucher_pin: voucher?.pin,
           jury_room: voucher && juryRoom.trim() ? juryRoom.trim() : undefined,
+          pay_at_counter: payAtCounter && counterEligible,
+          juror_id: payAtCounter && counterEligible ? (jurorMenuId ?? undefined) : undefined,
           court_location: staffApproved && mode === "delivery" ? courtLocation : undefined,
         },
       });
@@ -550,6 +552,20 @@ function Checkout() {
           search: { token: res.tracking_token },
         });
       } else if (res.fully_covered) {
+        toast.success(`Paid in full by court voucher (${money(res.voucher_cents)})`);
+        navigate({
+          to: "/order/$orderId",
+          params: { orderId: res.order_id },
+          search: { token: res.tracking_token },
+        });
+      } else if (res.pay_at_counter) {
+        toast.success("Order sent to the kitchen — pay at the Café 1 counter");
+        navigate({
+          to: "/order/$orderId",
+          params: { orderId: res.order_id },
+          search: { token: res.tracking_token },
+        });
+      } else if (false) {
         toast.success(`Paid in full by court voucher (${money(res.voucher_cents)})`);
         navigate({
           to: "/order/$orderId",
