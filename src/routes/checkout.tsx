@@ -781,7 +781,36 @@ function Checkout() {
           {mode === "delivery" && (
             <div className="rounded-2xl border border-border bg-card p-5">
               <p className="font-semibold">Delivery address</p>
-              {voucher ? (
+              {staffApproved && courtLocations.length > 0 ? (
+                <div className="mt-3 space-y-2">
+                  <p className="text-xs text-muted-foreground">
+                    Court staff delivery — choose where we should bring your order. Delivery is free
+                    for scheme members.
+                  </p>
+                  <div className="grid gap-2 sm:grid-cols-2">
+                    {courtLocations.map((l) => (
+                      <button
+                        key={l.id}
+                        type="button"
+                        onClick={() => setCourtLocation(l.label)}
+                        className={`min-h-12 rounded-xl border px-4 py-3 text-left text-sm font-semibold transition ${
+                          courtLocation === l.label
+                            ? "border-primary bg-primary text-primary-foreground"
+                            : "border-border bg-background hover:border-primary"
+                        }`}
+                      >
+                        {l.label}
+                      </button>
+                    ))}
+                  </div>
+                  <input
+                    value={form.delivery_notes}
+                    onChange={(e) => setForm({ ...form, delivery_notes: e.target.value })}
+                    placeholder="Notes for the driver (optional)"
+                    className="h-11 w-full rounded-xl border border-border bg-background px-4"
+                  />
+                </div>
+              ) : voucher ? (
                 <div className="mt-3 space-y-2">
                   <p className="text-xs text-muted-foreground">
                     Voucher orders are delivered inside the court only. Choose the building:
