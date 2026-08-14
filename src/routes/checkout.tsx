@@ -527,6 +527,7 @@ function Checkout() {
           voucher_code: voucher?.code,
           voucher_pin: voucher?.pin,
           jury_room: voucher && juryRoom.trim() ? juryRoom.trim() : undefined,
+          court_location: staffApproved && mode === "delivery" ? courtLocation : undefined,
         },
       });
       cart.clear();
