@@ -163,7 +163,11 @@ function JuryMenuPage() {
             </form>
             <p className="mt-5 text-center text-xs text-muted-foreground">
               Your Juror ID isn't on the scheme yet?{" "}
-              <Link to="/juror" search={{ src: "jury_room" }} className="font-semibold text-primary">
+              <Link
+                to="/juror"
+                search={{ src: "jury_room", code: undefined, attendance: undefined }}
+                className="font-semibold text-primary"
+              >
                 Opt in here
               </Link>{" "}
               for the £5.71 daily allowance and 10% off food. Ordering in the Jury Lounge? You can
