@@ -75,6 +75,10 @@ const CreateOrderSchema = z.object({
     .regex(/^\d{6}$/)
     .optional(),
   jury_room: z.string().max(60).optional(),
+  /** Jury Lounge orders: settle at the Café 1 counter instead of paying online. */
+  pay_at_counter: z.boolean().optional().default(false),
+  /** HMCTS Juror ID used to unlock the Jury Only menu (re-verified server side). */
+  juror_id: z.string().trim().max(40).optional(),
   /** Court staff scheme: the internal delivery point (e.g. "CC Floor 1"). */
   court_location: z.string().max(80).optional(),
   /** Optional gratuity in pence, added on top of the payable amount. */
