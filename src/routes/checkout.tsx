@@ -294,6 +294,38 @@ function Checkout() {
   }, [cartItemIds]);
 
   const subtotal = c.items.reduce((s, i) => s + i.price_cents * i.qty, 0);
+
+  // Court staff scheme: approved members get the staff rate and free
+  // delivery to an internal court location.
+  const fetchMyStaff = useServerFn(getMyCourtStaff);
+  const fetchCourtLocations = useServerFn(listCourtLocations);
+  const [staffDiscountPercent, setStaffDiscountPercent] = useState(0);
+  const [courtLocations, setCourtLocations] = useState<{ id: string; label: string }[]>([]);
+  const [courtLocation, setCourtLocation] = useState("");
+  const staffApproved = staffDiscountPercent > 0;
+  useEffect(() => {
+    if (!user) {
+      setStaffDiscountPercent(0);
+      setCourtLocations([]);
+      return;
+    }
+    let cancelled = false;
+    void (async () => {
+      try {
+        const res = await fetchMyStaff({ data: undefined });
+        if (cancelled || res.member?.status !== "approved") return;
+        setStaffDiscountPercent(res.discount_percent);
+        const locs = await fetchCourtLocations();
+        if (!cancelled) setCourtLocations(locs.locations.map((l) => ({ id: l.id, label: l.label })));
+      } catch {
+        // Not a scheme member — normal pricing applies.
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [user, fetchMyStaff, fetchCourtLocations]);
+
   const baseDelivery = settings?.delivery_fee_cents ?? 299;
   const freeThreshold = settings?.free_delivery_threshold_cents ?? null;
   const freeDeliveryByThreshold =
