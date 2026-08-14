@@ -177,11 +177,10 @@ function PaymentMethodScreen() {
 }
 
 function PaymentSheetScreen() {
-  const [state, setState] = useState<"selection" | "error">("selection");
   return (
     <ScreenFrame
       title="Google Pay API payment screen"
-      note="Tapping the Google Pay button calls loadPaymentData and opens the Google Pay payment sheet. The states below show the payment selection returned by the sheet and the error state when no payment method can be used."
+      note="Tapping the Google Pay button calls loadPaymentData and opens the Google Pay payment sheet. Both required states are shown together: the payment selection returned by the sheet, and the error state with the message returned by the Google Pay API."
     >
       <div className="flex items-center justify-between text-sm">
         <span className="text-[#5f6368]">Café 1 order #9999</span>
@@ -191,27 +190,10 @@ function PaymentSheetScreen() {
         <GooglePayDemo amount={AMOUNT} merchantName={MERCHANT} />
       </div>
 
-      <div className="mb-3 flex gap-2">
-        <button
-          onClick={() => setState("selection")}
-          className={`rounded-full border px-3 py-1.5 text-xs font-semibold ${
-            state === "selection" ? "border-[#1a73e8] text-[#1a73e8]" : "border-[#dadce0] text-[#5f6368]"
-          }`}
-        >
-          Payment selection state
-        </button>
-        <button
-          onClick={() => setState("error")}
-          className={`rounded-full border px-3 py-1.5 text-xs font-semibold ${
-            state === "error" ? "border-[#1a73e8] text-[#1a73e8]" : "border-[#dadce0] text-[#5f6368]"
-          }`}
-        >
-          Error state
-        </button>
-      </div>
-
-      {state === "selection" ? (
-        <div className="rounded-xl border border-[#dadce0] bg-white p-4">
+      <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-[#5f6368]">
+        Payment selection state
+      </p>
+      <div className="rounded-xl border border-[#dadce0] bg-white p-4">
           <p className="text-xs font-semibold uppercase tracking-wide text-[#5f6368]">
             Payment method selected in Google Pay
           </p>
@@ -226,21 +208,23 @@ function PaymentSheetScreen() {
             <span className="text-[#5f6368]">Total</span>
             <span className="font-semibold">£{AMOUNT}</span>
           </div>
-        </div>
-      ) : (
-        <div
-          role="alert"
-          className="rounded-xl border border-[#c5221f]/40 bg-[#fce8e6] p-4 text-sm text-[#c5221f]"
-        >
-          <p className="font-semibold">Google Pay couldn’t complete this payment</p>
-          <p className="mt-1 text-[#a50e0e]">
-            No payment method is available in the signed-in Google account, or the payment sheet was
-            closed before a card was selected. Choose another payment method or try again.
-          </p>
-        </div>
-      )}
+      </div>
 
-      <p className="text-xs text-[#5f6368]">
+      <p className="mb-2 mt-5 text-xs font-semibold uppercase tracking-wide text-[#5f6368]">
+        Error state
+      </p>
+      <div
+        role="alert"
+        className="rounded-xl border border-[#c5221f]/40 bg-[#fce8e6] p-4 text-sm text-[#c5221f]"
+      >
+        <p className="font-semibold">Something went wrong. Try again or use a different payment method.</p>
+        <p className="mt-2 font-mono text-xs text-[#a50e0e]">
+          Google Pay API response — statusCode: CANCELED, statusMessage: “User closed the Payment
+          Request UI.”
+        </p>
+      </div>
+
+      <p className="mt-3 text-xs text-[#5f6368]">
         The payment sheet is served by Google and shows the cards saved to the signed-in Google
         account, or an error state when no card is available.
       </p>
