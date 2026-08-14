@@ -15,7 +15,13 @@
       "checked_by": "",
       "checked_at": ""
     },
-    { "id": "codeql", "status": "pending", "evidence": "", "checked_by": "", "checked_at": "" },
+    {
+      "id": "codeql",
+      "status": "pending",
+      "evidence": "",
+      "checked_by": "",
+      "checked_at": ""
+    },
     {
       "id": "browser_journeys",
       "status": "pending",
@@ -151,10 +157,10 @@
     },
     {
       "id": "scheduler_history",
-      "status": "pending",
-      "evidence": "",
-      "checked_by": "",
-      "checked_at": ""
+      "status": "pass",
+      "evidence": "pg_cron jobs cafe1_nightly_juror_summary and cafe1_purge_unpaid_orders live; recent runs returning HTTP 200 in cron.job_run_details",
+      "checked_by": "Amer Saleem",
+      "checked_at": "2026-08-14T07:19:00.000Z"
     },
     {
       "id": "email_delivery_bounces",
