@@ -79,12 +79,10 @@ console.error = (...args: unknown[]) => {
 };
 
 if (typeof globalThis.addEventListener === "function") {
-  // Capture phase + stopImmediatePropagation so a client disconnect never
-  // reaches downstream reporters (which would surface it as a runtime error
-  // with a blank-screen flag even though nothing in the app failed).
-  globalThis.addEventListener(
-    "error",
-    (event) => {
+  // NOTE: the Workers runtime rejects useCapture=true ("addEventListener():
+  // useCapture must be false"), which crashed every SSR request, so these
+  // listeners must stay on the bubble phase.
+  globalThis.addEventListener("error", (event) => {
       const error = (event as ErrorEvent).error ?? event;
       if (isClientAbort(error)) {
         event.stopImmediatePropagation();
@@ -92,12 +90,8 @@ if (typeof globalThis.addEventListener === "function") {
         return;
       }
       record(error);
-    },
-    true,
-  );
-  globalThis.addEventListener(
-    "unhandledrejection",
-    (event) => {
+  });
+  globalThis.addEventListener("unhandledrejection", (event) => {
       const reason = (event as PromiseRejectionEvent).reason;
       if (isClientAbort(reason)) {
         event.stopImmediatePropagation();
@@ -105,9 +99,7 @@ if (typeof globalThis.addEventListener === "function") {
         return;
       }
       record(reason);
-    },
-    true,
-  );
+  });
 }
 
 // The dev/Node HTTP server emits `Error: aborted` from _http_server when a
