@@ -19,6 +19,7 @@ import { Route as CheckoutRouteImport } from './routes/checkout'
 import { Route as ComplaintsRouteImport } from './routes/complaints'
 import { Route as ContactRouteImport } from './routes/contact'
 import { Route as CookiesRouteImport } from './routes/cookies'
+import { Route as CourtStaffRouteImport } from './routes/court-staff'
 import { Route as DisplayRouteImport } from './routes/display'
 import { Route as DriverRouteImport } from './routes/driver'
 import { Route as GdprRouteImport } from './routes/gdpr'
@@ -47,6 +48,7 @@ import { Route as AdminAccountsRouteImport } from './routes/admin.accounts'
 import { Route as AdminBannersRouteImport } from './routes/admin.banners'
 import { Route as AdminBlogRouteImport } from './routes/admin.blog'
 import { Route as AdminBroadcastsRouteImport } from './routes/admin.broadcasts'
+import { Route as AdminCourtStaffRouteImport } from './routes/admin.court-staff'
 import { Route as AdminCustomerDiscountsRouteImport } from './routes/admin.customer-discounts'
 import { Route as AdminInventoryRouteImport } from './routes/admin.inventory'
 import { Route as AdminJurorAttendanceRouteImport } from './routes/admin.juror-attendance'
@@ -128,6 +130,11 @@ const ContactRoute = ContactRouteImport.update({
 const CookiesRoute = CookiesRouteImport.update({
   id: '/cookies',
   path: '/cookies',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CourtStaffRoute = CourtStaffRouteImport.update({
+  id: '/court-staff',
+  path: '/court-staff',
   getParentRoute: () => rootRouteImport,
 } as any)
 const DisplayRoute = DisplayRouteImport.update({
@@ -268,6 +275,11 @@ const AdminBlogRoute = AdminBlogRouteImport.update({
 const AdminBroadcastsRoute = AdminBroadcastsRouteImport.update({
   id: '/admin/broadcasts',
   path: '/admin/broadcasts',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminCourtStaffRoute = AdminCourtStaffRouteImport.update({
+  id: '/admin/court-staff',
+  path: '/admin/court-staff',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AdminCustomerDiscountsRoute = AdminCustomerDiscountsRouteImport.update({
@@ -447,6 +459,7 @@ export interface FileRoutesByFullPath {
   '/complaints': typeof ComplaintsRoute
   '/contact': typeof ContactRoute
   '/cookies': typeof CookiesRoute
+  '/court-staff': typeof CourtStaffRoute
   '/display': typeof DisplayRoute
   '/driver': typeof DriverRoute
   '/gdpr': typeof GdprRoute
@@ -474,6 +487,7 @@ export interface FileRoutesByFullPath {
   '/admin/banners': typeof AdminBannersRoute
   '/admin/blog': typeof AdminBlogRoute
   '/admin/broadcasts': typeof AdminBroadcastsRoute
+  '/admin/court-staff': typeof AdminCourtStaffRoute
   '/admin/customer-discounts': typeof AdminCustomerDiscountsRoute
   '/admin/inventory': typeof AdminInventoryRoute
   '/admin/juror-attendance': typeof AdminJurorAttendanceRoute
@@ -519,6 +533,7 @@ export interface FileRoutesByTo {
   '/complaints': typeof ComplaintsRoute
   '/contact': typeof ContactRoute
   '/cookies': typeof CookiesRoute
+  '/court-staff': typeof CourtStaffRoute
   '/display': typeof DisplayRoute
   '/driver': typeof DriverRoute
   '/gdpr': typeof GdprRoute
@@ -546,6 +561,7 @@ export interface FileRoutesByTo {
   '/admin/banners': typeof AdminBannersRoute
   '/admin/blog': typeof AdminBlogRoute
   '/admin/broadcasts': typeof AdminBroadcastsRoute
+  '/admin/court-staff': typeof AdminCourtStaffRoute
   '/admin/customer-discounts': typeof AdminCustomerDiscountsRoute
   '/admin/inventory': typeof AdminInventoryRoute
   '/admin/juror-attendance': typeof AdminJurorAttendanceRoute
@@ -592,6 +608,7 @@ export interface FileRoutesById {
   '/complaints': typeof ComplaintsRoute
   '/contact': typeof ContactRoute
   '/cookies': typeof CookiesRoute
+  '/court-staff': typeof CourtStaffRoute
   '/display': typeof DisplayRoute
   '/driver': typeof DriverRoute
   '/gdpr': typeof GdprRoute
@@ -619,6 +636,7 @@ export interface FileRoutesById {
   '/admin/banners': typeof AdminBannersRoute
   '/admin/blog': typeof AdminBlogRoute
   '/admin/broadcasts': typeof AdminBroadcastsRoute
+  '/admin/court-staff': typeof AdminCourtStaffRoute
   '/admin/customer-discounts': typeof AdminCustomerDiscountsRoute
   '/admin/inventory': typeof AdminInventoryRoute
   '/admin/juror-attendance': typeof AdminJurorAttendanceRoute
@@ -666,6 +684,7 @@ export interface FileRouteTypes {
     | '/complaints'
     | '/contact'
     | '/cookies'
+    | '/court-staff'
     | '/display'
     | '/driver'
     | '/gdpr'
@@ -693,6 +712,7 @@ export interface FileRouteTypes {
     | '/admin/banners'
     | '/admin/blog'
     | '/admin/broadcasts'
+    | '/admin/court-staff'
     | '/admin/customer-discounts'
     | '/admin/inventory'
     | '/admin/juror-attendance'
@@ -738,6 +758,7 @@ export interface FileRouteTypes {
     | '/complaints'
     | '/contact'
     | '/cookies'
+    | '/court-staff'
     | '/display'
     | '/driver'
     | '/gdpr'
@@ -765,6 +786,7 @@ export interface FileRouteTypes {
     | '/admin/banners'
     | '/admin/blog'
     | '/admin/broadcasts'
+    | '/admin/court-staff'
     | '/admin/customer-discounts'
     | '/admin/inventory'
     | '/admin/juror-attendance'
@@ -810,6 +832,7 @@ export interface FileRouteTypes {
     | '/complaints'
     | '/contact'
     | '/cookies'
+    | '/court-staff'
     | '/display'
     | '/driver'
     | '/gdpr'
@@ -837,6 +860,7 @@ export interface FileRouteTypes {
     | '/admin/banners'
     | '/admin/blog'
     | '/admin/broadcasts'
+    | '/admin/court-staff'
     | '/admin/customer-discounts'
     | '/admin/inventory'
     | '/admin/juror-attendance'
@@ -883,6 +907,7 @@ export interface RootRouteChildren {
   ComplaintsRoute: typeof ComplaintsRoute
   ContactRoute: typeof ContactRoute
   CookiesRoute: typeof CookiesRoute
+  CourtStaffRoute: typeof CourtStaffRoute
   DisplayRoute: typeof DisplayRoute
   DriverRoute: typeof DriverRoute
   GdprRoute: typeof GdprRoute
@@ -910,6 +935,7 @@ export interface RootRouteChildren {
   AdminBannersRoute: typeof AdminBannersRoute
   AdminBlogRoute: typeof AdminBlogRoute
   AdminBroadcastsRoute: typeof AdminBroadcastsRoute
+  AdminCourtStaffRoute: typeof AdminCourtStaffRoute
   AdminCustomerDiscountsRoute: typeof AdminCustomerDiscountsRoute
   AdminInventoryRoute: typeof AdminInventoryRoute
   AdminJurorAttendanceRoute: typeof AdminJurorAttendanceRoute
@@ -1015,6 +1041,13 @@ declare module '@tanstack/react-router' {
       path: '/cookies'
       fullPath: '/cookies'
       preLoaderRoute: typeof CookiesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/court-staff': {
+      id: '/court-staff'
+      path: '/court-staff'
+      fullPath: '/court-staff'
+      preLoaderRoute: typeof CourtStaffRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/display': {
@@ -1211,6 +1244,13 @@ declare module '@tanstack/react-router' {
       path: '/admin/broadcasts'
       fullPath: '/admin/broadcasts'
       preLoaderRoute: typeof AdminBroadcastsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin/court-staff': {
+      id: '/admin/court-staff'
+      path: '/admin/court-staff'
+      fullPath: '/admin/court-staff'
+      preLoaderRoute: typeof AdminCourtStaffRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/admin/customer-discounts': {
@@ -1451,6 +1491,7 @@ const rootRouteChildren: RootRouteChildren = {
   ComplaintsRoute: ComplaintsRoute,
   ContactRoute: ContactRoute,
   CookiesRoute: CookiesRoute,
+  CourtStaffRoute: CourtStaffRoute,
   DisplayRoute: DisplayRoute,
   DriverRoute: DriverRoute,
   GdprRoute: GdprRoute,
@@ -1478,6 +1519,7 @@ const rootRouteChildren: RootRouteChildren = {
   AdminBannersRoute: AdminBannersRoute,
   AdminBlogRoute: AdminBlogRoute,
   AdminBroadcastsRoute: AdminBroadcastsRoute,
+  AdminCourtStaffRoute: AdminCourtStaffRoute,
   AdminCustomerDiscountsRoute: AdminCustomerDiscountsRoute,
   AdminInventoryRoute: AdminInventoryRoute,
   AdminJurorAttendanceRoute: AdminJurorAttendanceRoute,

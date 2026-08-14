@@ -21,6 +21,7 @@ import { useJurySession } from "@/lib/jury-session";
 import { Settings2 } from "lucide-react";
 import { REWARD_TIERS, rewardDiscountCents } from "@/lib/loyalty-tiers";
 import { listAddresses } from "@/lib/addresses.functions";
+import { getMyCourtStaff, listCourtLocations } from "@/lib/court-staff.functions";
 import {
   JUROR_CODE_KEY,
   JUROR_FOOD_DISCOUNT_PERCENT,
@@ -293,16 +294,50 @@ function Checkout() {
   }, [cartItemIds]);
 
   const subtotal = c.items.reduce((s, i) => s + i.price_cents * i.qty, 0);
+
+  // Court staff scheme: approved members get the staff rate and free
+  // delivery to an internal court location.
+  const fetchMyStaff = useServerFn(getMyCourtStaff);
+  const fetchCourtLocations = useServerFn(listCourtLocations);
+  const [staffDiscountPercent, setStaffDiscountPercent] = useState(0);
+  const [courtLocations, setCourtLocations] = useState<{ id: string; label: string }[]>([]);
+  const [courtLocation, setCourtLocation] = useState("");
+  const staffApproved = staffDiscountPercent > 0;
+  useEffect(() => {
+    if (!user) {
+      setStaffDiscountPercent(0);
+      setCourtLocations([]);
+      return;
+    }
+    let cancelled = false;
+    void (async () => {
+      try {
+        const res = await fetchMyStaff({ data: undefined });
+        if (cancelled || res.member?.status !== "approved") return;
+        setStaffDiscountPercent(res.discount_percent);
+        const locs = await fetchCourtLocations();
+        if (!cancelled) setCourtLocations(locs.locations.map((l) => ({ id: l.id, label: l.label })));
+      } catch {
+        // Not a scheme member — normal pricing applies.
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [user, fetchMyStaff, fetchCourtLocations]);
+
   const baseDelivery = settings?.delivery_fee_cents ?? 299;
   const freeThreshold = settings?.free_delivery_threshold_cents ?? null;
   const freeDeliveryByThreshold =
     mode === "delivery" && !!freeThreshold && subtotal >= (freeThreshold ?? 0);
   const freeDeliveryByPromo = promo?.discount_type === "free_delivery";
   const delivery =
-    mode === "delivery" && !freeDeliveryByThreshold && !freeDeliveryByPromo ? baseDelivery : 0;
+    mode === "delivery" && !freeDeliveryByThreshold && !freeDeliveryByPromo && !staffApproved
+      ? baseDelivery
+      : 0;
   const onTab = !!tabSession;
   // Discounts are only for approved members set up in the admin dashboard.
-  const discountPercent = emailDiscount?.percent ?? 0;
+  const discountPercent = Math.max(emailDiscount?.percent ?? 0, staffDiscountPercent);
   const loyaltyDiscount = Math.round(subtotal * (discountPercent / 100));
   const promoDiscount =
     promo && !freeDeliveryByPromo ? Math.min(promo.discount_cents, subtotal) : 0;
@@ -461,6 +496,10 @@ function Checkout() {
       toast.error("Voucher deliveries must go to St Albans Crown Court or the Magistrates' Court.");
       return;
     }
+    if (staffApproved && mode === "delivery" && courtLocations.length > 0 && !courtLocation) {
+      toast.error("Choose the court location we should deliver to.");
+      return;
+    }
     setBusy(true);
     try {
       const res = await place({
@@ -492,6 +531,7 @@ function Checkout() {
           voucher_code: voucher?.code,
           voucher_pin: voucher?.pin,
           jury_room: voucher && juryRoom.trim() ? juryRoom.trim() : undefined,
+          court_location: staffApproved && mode === "delivery" ? courtLocation : undefined,
         },
       });
       cart.clear();
@@ -746,7 +786,36 @@ function Checkout() {
           {mode === "delivery" && (
             <div className="rounded-2xl border border-border bg-card p-5">
               <p className="font-semibold">Delivery address</p>
-              {voucher ? (
+              {staffApproved && courtLocations.length > 0 ? (
+                <div className="mt-3 space-y-2">
+                  <p className="text-xs text-muted-foreground">
+                    Court staff delivery — choose where we should bring your order. Delivery is free
+                    for scheme members.
+                  </p>
+                  <div className="grid gap-2 sm:grid-cols-2">
+                    {courtLocations.map((l) => (
+                      <button
+                        key={l.id}
+                        type="button"
+                        onClick={() => setCourtLocation(l.label)}
+                        className={`min-h-12 rounded-xl border px-4 py-3 text-left text-sm font-semibold transition ${
+                          courtLocation === l.label
+                            ? "border-primary bg-primary text-primary-foreground"
+                            : "border-border bg-background hover:border-primary"
+                        }`}
+                      >
+                        {l.label}
+                      </button>
+                    ))}
+                  </div>
+                  <input
+                    value={form.delivery_notes}
+                    onChange={(e) => setForm({ ...form, delivery_notes: e.target.value })}
+                    placeholder="Notes for the driver (optional)"
+                    className="h-11 w-full rounded-xl border border-border bg-background px-4"
+                  />
+                </div>
+              ) : voucher ? (
                 <div className="mt-3 space-y-2">
                   <p className="text-xs text-muted-foreground">
                     Voucher orders are delivered inside the court only. Choose the building:

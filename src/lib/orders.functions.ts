@@ -75,6 +75,8 @@ const CreateOrderSchema = z.object({
     .regex(/^\d{6}$/)
     .optional(),
   jury_room: z.string().max(60).optional(),
+  /** Court staff scheme: the internal delivery point (e.g. "CC Floor 1"). */
+  court_location: z.string().max(80).optional(),
   /** Optional gratuity in pence, added on top of the payable amount. */
   tip_cents: z.number().int().min(0).max(20000).optional().default(0),
   /** Loyalty reward tier the customer chose to spend on this order. */
@@ -213,8 +215,32 @@ export const createOrder = createServerFn({ method: "POST" })
 
     const baseDeliveryFee = settings?.delivery_fee_cents ?? 299;
 
+    // Approved court staff: scheme discount, free internal delivery, and
+    // delivery to a court location instead of a street address.
+    let staff_member_id: string | null = null;
+    let staff_discount_percent = 0;
+    if (userId) {
+      const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+      const { data: staffRow } = await supabaseAdmin
+        .from("court_staff_members")
+        .select("id,status,discount_percent")
+        .eq("user_id", userId)
+        .eq("status", "approved")
+        .maybeSingle();
+      if (staffRow) {
+        staff_member_id = staffRow.id;
+        staff_discount_percent = Number(
+          staffRow.discount_percent ?? settings?.court_staff_discount_percent ?? 10,
+        );
+      }
+    }
+    const courtStaffDelivery = !!staff_member_id && !!data.court_location;
+    if (data.court_location && !staff_member_id) {
+      throw new Error("Court delivery points are only available to approved court staff.");
+    }
+
     // Delivery-only rules: service window + half-mile radius from the shop.
-    if (data.type === "delivery" && settings) {
+    if (data.type === "delivery" && settings && !courtStaffDelivery) {
       const ds = settings as unknown as import("./delivery.server").DeliverySettings;
       const { isWithinDeliveryWindow, formatWindow, checkDeliveryArea } =
         await import("./delivery.server");
@@ -248,6 +274,7 @@ export const createOrder = createServerFn({ method: "POST" })
           ? 0
           : baseDeliveryFee
         : 0;
+    if (staff_member_id) delivery_fee = 0;
 
     // Validate and apply promo code (public RPC).
     let promo_discount = 0;
@@ -286,7 +313,9 @@ export const createOrder = createServerFn({ method: "POST" })
       const p = (dRows ?? [])[0]?.percent ?? 0;
       if (p > discount_percent) discount_percent = p;
     }
+    if (staff_discount_percent > discount_percent) discount_percent = staff_discount_percent;
     const loyalty_discount = Math.round(subtotal * (discount_percent / 100));
+    const staff_discount_cents = staff_member_id ? loyalty_discount : 0;
 
     // Coffee/tea loyalty: every 10 drinks earns a free one, auto-redeemed on the
     // next order that contains an eligible drink. Registered customers only.
@@ -554,6 +583,9 @@ export const createOrder = createServerFn({ method: "POST" })
         postcode: data.postcode || null,
         delivery_notes: data.delivery_notes || null,
         jury_room: data.jury_room || null,
+        court_location: data.court_location || null,
+        staff_member_id,
+        staff_discount_cents,
         juror_discount_cents: juror_discount,
         company_name: data.company_name || null,
         table_number: data.table_number || null,
@@ -731,6 +763,16 @@ export const updateOrderStatus = createServerFn({ method: "POST" })
       }
     } catch (e) {
       console.error("[deliveroo] mirror status failed", e);
+    }
+
+    // Tell the customer their order is ready to collect / on its way.
+    if (data.status === "ready" || data.status === "out_for_delivery") {
+      try {
+        const { notifyOrderStatus } = await import("./push-notify.server");
+        await notifyOrderStatus(data.order_id, data.status);
+      } catch (e) {
+        console.error("[notify] order status alert failed", e);
+      }
     }
 
     return { ok: true };
