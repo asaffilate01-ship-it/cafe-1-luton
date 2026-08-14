@@ -367,6 +367,13 @@ function Checkout() {
   const [beverageIds, setBeverageIds] = useState<string[]>([]);
   const [voucherBusy, setVoucherBusy] = useState(false);
   const [juryRoom, setJuryRoom] = useState(ctx?.jury_room ?? "");
+  // Jury Lounge orders: verified jurors may settle at the Café 1 counter.
+  const jurorMenuId = jurySessionActive?.juror_id ?? jurySessionActive?.code ?? null;
+  const counterEligible = !!jurorMenuId && !onTab && (!!ctx?.jury_room || !!juryRoom.trim());
+  const [payAtCounter, setPayAtCounter] = useState(false);
+  useEffect(() => {
+    if (!counterEligible && payAtCounter) setPayAtCounter(false);
+  }, [counterEligible, payAtCounter]);
   const [voucherError, setVoucherError] = useState<string | null>(null);
   async function applyVoucher() {
     const code = voucherInput.trim().toUpperCase();
