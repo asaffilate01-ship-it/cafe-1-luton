@@ -13,14 +13,6 @@ export const listCourtLocations = createServerFn({ method: "GET" }).handler(asyn
   return { locations: data ?? [] };
 });
 
-async function assertAdmin(context: { supabase: ReturnType<typeof publicClient>; userId: string }) {
-  const { data } = await context.supabase.rpc("has_role", {
-    _user_id: context.userId,
-    _role: "admin",
-  });
-  if (!data) throw new Error("Forbidden");
-}
-
 /**
  * Returns the caller's court staff membership, auto-approving a first-time
  * registration when the email is verified AND on an allowlisted court domain.
