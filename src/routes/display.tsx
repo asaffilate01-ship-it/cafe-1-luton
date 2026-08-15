@@ -77,7 +77,7 @@ function DisplayPage() {
   const [jurorUrl, setJurorUrl] = useState<string | null>(null);
   const [banners, setBanners] = useState<Banner[]>([]);
   const [slide, setSlide] = useState(0);
-  const [now, setNow] = useState(() => new Date());
+  const [now, setNow] = useState<Date | null>(null);
   const paidTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const handleDisplayMessage = useCallback((msg: DisplayMessage | RemoteDisplayMessage) => {
@@ -129,6 +129,7 @@ function DisplayPage() {
   }, []);
 
   useEffect(() => {
+    setNow(new Date());
     const t = setInterval(() => setNow(new Date()), 30_000);
     return () => clearInterval(t);
   }, []);
@@ -230,8 +231,8 @@ function DisplayPage() {
             <span className="rounded-full bg-primary px-6 py-2 text-lg font-black uppercase tracking-[0.3em] text-primary-foreground">
               Cafe 1
             </span>
-            <span className="text-2xl font-semibold text-white/70">
-              {now.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" })}
+            <span className="text-2xl font-semibold text-white/70" suppressHydrationWarning>
+              {now ? now.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" }) : ""}
             </span>
           </div>
 
