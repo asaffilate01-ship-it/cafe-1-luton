@@ -785,11 +785,19 @@
         },
         {
           "path": "src/routes/halal-food-st-albans.tsx",
-          "includes": ["Halal food in St Albans", "Every food item served at Café 1 is halal"]
+          "includes": ["Halal food in St Albans", "local-pages/halal-food-st-albans"]
+        },
+        {
+          "path": "src/lib/local-pages/halal-food-st-albans.ts",
+          "includes": ["Every food item served at Café 1 is halal"]
         },
         {
           "path": "src/routes/lunch-st-albans.tsx",
-          "includes": ["Lunch in St Albans", "Local lunch delivery in St Albans"]
+          "includes": ["Lunch in St Albans", "local-pages/lunch-st-albans"]
+        },
+        {
+          "path": "src/lib/local-pages/lunch-st-albans.ts",
+          "includes": ["Local lunch delivery in St Albans"]
         },
         {
           "path": "src/routes/blog.index.tsx",
