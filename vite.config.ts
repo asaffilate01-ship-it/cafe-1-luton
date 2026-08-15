@@ -5,7 +5,7 @@
 //     React/TanStack dedupe, error logger plugins, and sandbox detection (port/host/strictPort).
 // You can pass additional config via defineConfig({ vite: { ... }, etc... }) if needed.
 import { defineConfig } from "@lovable.dev/vite-tanstack-config";
-import { loadEnv } from "vite";
+import { loadEnv, type Plugin } from "vite";
 import path from "node:path";
 import browserslist from "browserslist";
 import { browserslistToTargets } from "lightningcss";
@@ -44,35 +44,23 @@ const isClientAbort = (error: unknown): boolean => {
   );
 };
 
-const ABORT_GUARD = "__cafe1ClientAbortGuard";
-const guarded = globalThis as unknown as Record<string, boolean>;
-if (!guarded[ABORT_GUARD]) {
-  guarded[ABORT_GUARD] = true;
-  // Swallow the event at emit level: adding a listener is not enough because
-  // other listeners (the dev error reporter) still receive it and report a
-  // blank-screen runtime error. Dropping the emit hides it from everyone.
-  const originalEmit = process.emit.bind(process) as (
-    event: string,
-    ...args: unknown[]
-  ) => boolean;
-  (process as unknown as { emit: unknown }).emit = (event: string, ...args: unknown[]) => {
-    if (
-      (event === "uncaughtException" || event === "unhandledRejection") &&
-      isClientAbort(args[0])
-    ) {
-      return true;
-    }
-    return originalEmit(event, ...args);
-  };
-  process.on("uncaughtException", (error) => {
-    if (isClientAbort(error)) return;
-    throw error;
-  });
-  process.on("unhandledRejection", (reason) => {
-    if (isClientAbort(reason)) return;
-    throw reason;
-  });
-}
+// `abortIncoming()` destroys Node's IncomingMessage with `Error: aborted` when
+// the browser closes a socket during navigation. The error is emitted on the
+// request itself, before TanStack's fetch handler can catch it. Handle it at
+// that source so it never becomes an uncaught exception or a blank-screen
+// report. This dev-only hook does not alter global process error semantics.
+const clientAbortGuardPlugin = (): Plugin => ({
+  name: "cafe1-client-abort-guard",
+  apply: "serve",
+  configureServer(server) {
+    server.httpServer?.prependListener("request", (request) => {
+      request.on("error", (error: Error) => {
+        if (isClientAbort(error)) return;
+        console.error(error);
+      });
+    });
+  },
+});
 
 // Fallback backend connection values (publishable, safe to commit). The managed
 // .env has intermittently been generated without these, which breaks the built
@@ -90,6 +78,7 @@ export default defineConfig({
     server: { entry: "server" },
   },
   vite: {
+    plugins: [clientAbortGuardPlugin()],
     css: {
       transformer: "lightningcss",
       lightningcss: { targets: legacyCssTargets },
