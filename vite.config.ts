@@ -53,6 +53,39 @@ const clientAbortGuardPlugin = (): Plugin => ({
   name: "cafe1-client-abort-guard",
   apply: "serve",
   configureServer(server) {
+    // `abortIncoming()` can fire after the request object is gone (socketOnClose),
+    // so the per-request listener below never sees it and Node escalates it to a
+    // process-level uncaughtException that the dev overlay reports as a blank
+    // screen. Patch `process.emit` once to drop only client-abort escalations —
+    // every other error still reaches Vite's normal handlers.
+    const proc = process as NodeJS.Process & { __cafe1AbortGuard?: boolean };
+    if (!proc.__cafe1AbortGuard) {
+      proc.__cafe1AbortGuard = true;
+      const originalEmit = proc.emit.bind(proc);
+      proc.emit = ((event: string, ...args: unknown[]) => {
+        if (
+          (event === "uncaughtException" || event === "unhandledRejection") &&
+          isClientAbort(args[0])
+        ) {
+          return true;
+        }
+        return originalEmit(event as never, ...(args as never[]));
+      }) as typeof proc.emit;
+    }
+
+    server.httpServer?.on("clientError", (error, socket) => {
+      if (isClientAbort(error)) {
+        socket.destroy();
+        return;
+      }
+      console.error(error);
+    });
+    server.httpServer?.on("connection", (socket) => {
+      socket.on("error", (error: Error) => {
+        if (isClientAbort(error)) return;
+        console.error(error);
+      });
+    });
     server.httpServer?.prependListener("request", (request) => {
       request.on("error", (error: Error) => {
         if (isClientAbort(error)) return;
