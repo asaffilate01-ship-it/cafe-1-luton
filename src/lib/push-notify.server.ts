@@ -52,6 +52,14 @@ export async function notifyOrderStatus(orderId: string, status: string): Promis
     body = order.court_location
       ? `Your delivery is on its way — please meet us at ${order.court_location}.`
       : "Your delivery is on its way.";
+  } else if (status === "ready" && isDelivery) {
+    title = `Order #${order.order_number} is ready`;
+    body = "Your order is packed and waiting for a driver.";
+  } else if (status === "delivered" || status === "completed") {
+    title = `Order #${order.order_number} complete`;
+    body = isDelivery
+      ? "Your delivery has arrived — enjoy!"
+      : "Thanks for ordering with Café 1 — enjoy!";
   } else {
     return;
   }

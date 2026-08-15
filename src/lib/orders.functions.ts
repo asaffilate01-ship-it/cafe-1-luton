@@ -802,8 +802,13 @@ export const updateOrderStatus = createServerFn({ method: "POST" })
       console.error("[deliveroo] mirror status failed", e);
     }
 
-    // Tell the customer their order is ready to collect / on its way.
-    if (data.status === "ready" || data.status === "out_for_delivery") {
+    // Tell the customer their order is ready / on its way / complete.
+    if (
+      data.status === "ready" ||
+      data.status === "out_for_delivery" ||
+      data.status === "delivered" ||
+      data.status === "completed"
+    ) {
       try {
         const { notifyOrderStatus } = await import("./push-notify.server");
         await notifyOrderStatus(data.order_id, data.status);
@@ -906,6 +911,12 @@ export const assignDriver = createServerFn({ method: "POST" })
       })
       .eq("id", data.order_id);
     if (error) throw new Error(error.message);
+    try {
+      const { notifyOrderStatus } = await import("./push-notify.server");
+      await notifyOrderStatus(data.order_id, "out_for_delivery");
+    } catch (e) {
+      console.error("[notify] driver assignment alert failed", e);
+    }
     return { ok: true };
   });
 
@@ -953,5 +964,11 @@ export const claimDeliveryJob = createServerFn({ method: "POST" })
       .select("id");
     if (error) throw new Error(error.message);
     if (!rows?.length) throw new Error("Another driver already took that job.");
+    try {
+      const { notifyOrderStatus } = await import("./push-notify.server");
+      await notifyOrderStatus(data.order_id, "out_for_delivery");
+    } catch (e) {
+      console.error("[notify] driver claim alert failed", e);
+    }
     return { ok: true };
   });
