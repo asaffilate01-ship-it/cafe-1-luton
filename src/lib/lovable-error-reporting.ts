@@ -23,8 +23,40 @@ declare global {
   }
 }
 
+/**
+ * Browsers routinely cancel route preloads and document requests when the user
+ * navigates, refreshes, or closes a tab. These are control-flow events rather
+ * than application failures and must not reach the preview runtime overlay.
+ */
+export function isExpectedCancellation(value: unknown): boolean {
+  let current: unknown = value;
+  for (let depth = 0; depth < 4 && current != null; depth += 1) {
+    if (current instanceof DOMException && current.name === "AbortError") return true;
+    if (current instanceof Error) {
+      const code = (current as Error & { code?: unknown }).code;
+      const message = current.message.trim().toLowerCase();
+      if (
+        current.name === "AbortError" ||
+        code === "ABORT_ERR" ||
+        code === "ECONNRESET" ||
+        code === "ERR_STREAM_PREMATURE_CLOSE" ||
+        message === "aborted" ||
+        message === "the operation was aborted" ||
+        message.includes("signal is aborted")
+      ) {
+        return true;
+      }
+      current = current.cause;
+      continue;
+    }
+    break;
+  }
+  return false;
+}
+
 export function reportLovableError(error: unknown, context: Record<string, unknown> = {}) {
   if (typeof window === "undefined") return;
+  if (isExpectedCancellation(error)) return;
   window.__lovableEvents?.captureException?.(
     error,
     {
