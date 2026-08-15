@@ -54,7 +54,7 @@ const clientAbortGuardPlugin = (): Plugin => ({
   apply: "serve",
   configureServer(server) {
     server.httpServer?.prependListener("request", (request) => {
-      request.on("error", (error) => {
+      request.on("error", (error: Error) => {
         if (isClientAbort(error)) return;
         console.error(error);
       });
