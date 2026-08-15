@@ -302,6 +302,9 @@ export function SiteFooter() {
           <Link to="/contact" className="hover:text-primary">
             Contact
           </Link>
+          <Link to="/faq" className="hover:text-primary">
+            FAQ
+          </Link>
           <Link to="/privacy" className="hover:text-primary">
             Privacy Policy
           </Link>
