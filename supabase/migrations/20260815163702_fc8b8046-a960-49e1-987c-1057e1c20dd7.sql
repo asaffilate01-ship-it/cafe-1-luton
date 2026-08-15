@@ -1,0 +1,1 @@
+UPDATE public.blog_posts SET body_md = replace(replace(body_md, 'chef''s specials', 'Cafe 1 Classics'), 'chef''s choices', 'Cafe 1 Classics') WHERE body_md ILIKE '%chef%';
