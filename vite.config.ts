@@ -48,6 +48,22 @@ const ABORT_GUARD = "__cafe1ClientAbortGuard";
 const guarded = globalThis as unknown as Record<string, boolean>;
 if (!guarded[ABORT_GUARD]) {
   guarded[ABORT_GUARD] = true;
+  // Swallow the event at emit level: adding a listener is not enough because
+  // other listeners (the dev error reporter) still receive it and report a
+  // blank-screen runtime error. Dropping the emit hides it from everyone.
+  const originalEmit = process.emit.bind(process) as (
+    event: string,
+    ...args: unknown[]
+  ) => boolean;
+  (process as unknown as { emit: unknown }).emit = (event: string, ...args: unknown[]) => {
+    if (
+      (event === "uncaughtException" || event === "unhandledRejection") &&
+      isClientAbort(args[0])
+    ) {
+      return true;
+    }
+    return originalEmit(event, ...args);
+  };
   process.on("uncaughtException", (error) => {
     if (isClientAbort(error)) return;
     throw error;
