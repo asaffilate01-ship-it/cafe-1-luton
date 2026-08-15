@@ -28,6 +28,36 @@ const legacyJsTarget = ["chrome71", "edge79", "firefox68", "safari13"];
 // so server routes such as the email webhook can read LOVABLE_API_KEY.
 Object.assign(process.env, loadEnv(process.env.NODE_ENV ?? "development", process.cwd(), ""));
 
+// When a browser navigates away or cancels a preload mid-response, Node's HTTP
+// server aborts the incoming request and emits an unhandled `Error: aborted`
+// from `abortIncoming`. That is a client disconnect, not an app fault, but the
+// dev process surfaces it as a runtime error (and a blank-screen report).
+// Swallow just that case in the dev server process.
+const isClientAbort = (error: unknown): boolean => {
+  if (!(error instanceof Error)) return false;
+  const code = (error as { code?: unknown }).code;
+  return (
+    error.message === "aborted" ||
+    code === "ECONNRESET" ||
+    code === "ERR_STREAM_PREMATURE_CLOSE" ||
+    error.name === "AbortError"
+  );
+};
+
+const ABORT_GUARD = "__cafe1ClientAbortGuard";
+const guarded = globalThis as unknown as Record<string, boolean>;
+if (!guarded[ABORT_GUARD]) {
+  guarded[ABORT_GUARD] = true;
+  process.on("uncaughtException", (error) => {
+    if (isClientAbort(error)) return;
+    throw error;
+  });
+  process.on("unhandledRejection", (reason) => {
+    if (isClientAbort(reason)) return;
+    throw reason;
+  });
+}
+
 // Fallback backend connection values (publishable, safe to commit). The managed
 // .env has intermittently been generated without these, which breaks the built
 // client with "Missing Supabase environment variable(s)". Keep the build green.
