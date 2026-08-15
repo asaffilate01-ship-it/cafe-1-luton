@@ -1,0 +1,1 @@
+REVOKE SELECT (barcode) ON public.menu_items FROM anon, authenticated;
