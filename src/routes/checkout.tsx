@@ -1046,7 +1046,22 @@ function Checkout() {
               )}
             </div>
           )}
-          {!onTab && (
+          {!onTab && !jurySessionActive && (
+            <div className="mt-4 border-t border-border pt-4">
+              <p className="text-xs text-muted-foreground">
+                Juror or court scheme?{" "}
+                <Link
+                  to="/jury-menu"
+                  search={{} as never}
+                  className="font-semibold text-primary underline"
+                >
+                  Verify your Juror ID
+                </Link>{" "}
+                to use your daily allowance — voucher codes cannot be entered here.
+              </p>
+            </div>
+          )}
+          {!onTab && jurySessionActive && (
             <div className="mt-4 border-t border-border pt-4">
               <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                 HMCTS Juror ID / voucher code
