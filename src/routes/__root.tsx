@@ -16,7 +16,7 @@ import "@fontsource/fraunces/latin-600.css";
 import "@fontsource/fraunces/latin-700.css";
 
 import appCss from "../styles.css?url";
-import { reportLovableError } from "../lib/lovable-error-reporting";
+import { isExpectedCancellation, reportLovableError } from "../lib/lovable-error-reporting";
 import { CookieBanner } from "../components/cookie-banner";
 import { ConsentIntegrations } from "../components/consent-integrations";
 import { MobileTabBar } from "../components/mobile-tabbar";
@@ -50,11 +50,20 @@ function NotFoundComponent() {
 }
 
 function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
-  console.error(error);
   const router = useRouter();
+  const cancelled = isExpectedCancellation(error);
   useEffect(() => {
+    if (cancelled) {
+      // A superseded preload/navigation should leave the current route intact,
+      // never become a fatal page or an editor blank-screen runtime report.
+      reset();
+      return;
+    }
+    console.error(error);
     reportLovableError(error, { boundary: "tanstack_root_error_component" });
-  }, [error]);
+  }, [cancelled, error, reset]);
+
+  if (cancelled) return null;
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
