@@ -13,7 +13,7 @@ export const config: LocalSearchPageConfig = {
   highlights: [
     {
       title: "Hot lunches",
-      text: "The menu includes choices such as chicken curry with rice, lamb curry with rice, fish and chips and rotating chef’s specials.",
+      text: "The menu includes choices such as chicken curry with rice, lamb curry with rice, fish and chips and rotating Cafe 1 Classics.",
     },
     {
       title: "Sandwiches and paninis",

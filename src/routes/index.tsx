@@ -263,7 +263,7 @@ function Home() {
             {[
               { icon: Egg, label: "Breakfast", href: "/menu" },
               { icon: Flame, label: "Desi Breakfast", href: "/menu" },
-              { icon: ChefHat, label: "Chef's Specials", href: "/menu" },
+              { icon: ChefHat, label: "Cafe 1 Classics", href: "/menu" },
               { icon: Sandwich, label: "Sandwiches", href: "/menu" },
               { icon: CupSoda, label: "Drinks", href: "/menu" },
               { icon: Salad, label: "Salads", href: "/menu" },
