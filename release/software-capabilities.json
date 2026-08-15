@@ -460,6 +460,24 @@
             "reports how many commits production is behind",
             "fails closed for missing or unrelated release identities"
           ]
+        },
+        {
+          "path": ".github/workflows/live-release-drift.yml",
+          "includes": [
+            "15 6 * * *",
+            "fetch-depth: 0",
+            "scripts/compare-live-release.mjs",
+            "--strict",
+            "release-evidence/live-release-drift.json",
+            "retention-days: 90"
+          ]
+        },
+        {
+          "path": "scripts/live-release-drift-workflow.test.mjs",
+          "includes": [
+            "scheduled release drift guard compares exact production and main commits",
+            "release drift evidence is retained even when comparison fails"
+          ]
         }
       ]
     },

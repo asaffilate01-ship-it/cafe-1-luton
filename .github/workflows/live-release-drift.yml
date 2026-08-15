@@ -1,0 +1,72 @@
+name: Live release drift
+
+on:
+  schedule:
+    - cron: "15 6 * * *"
+  workflow_dispatch:
+    inputs:
+      expected_release:
+        description: Optional 40-character candidate SHA; defaults to the checked-out main SHA
+        required: false
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: cafe1-live-release-drift
+  cancel-in-progress: true
+
+jobs:
+  compare:
+    name: Compare production with main
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Check out complete release history
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+
+      - name: Resolve expected release
+        id: release
+        env:
+          REQUESTED_RELEASE: ${{ inputs.expected_release }}
+        run: |
+          expected="${REQUESTED_RELEASE:-$GITHUB_SHA}"
+          if [[ ! "$expected" =~ ^[0-9a-fA-F]{40}$ ]]; then
+            echo "expected_release must be a 40-character Git commit."
+            exit 1
+          fi
+          git cat-file -e "${expected}^{commit}"
+          echo "sha=${expected,,}" >> "$GITHUB_OUTPUT"
+
+      - name: Compare deployed release
+        env:
+          PRODUCTION_BASE_URL: https://cafe1stalbans.co.uk
+          EXPECTED_RELEASE_SHA: ${{ steps.release.outputs.sha }}
+        run: |
+          mkdir -p release-evidence
+          node scripts/compare-live-release.mjs \
+            --base-url "$PRODUCTION_BASE_URL" \
+            --expected "$EXPECTED_RELEASE_SHA" \
+            --json release-evidence/live-release-drift.json \
+            --strict
+
+      - name: Publish comparison summary
+        if: always()
+        run: |
+          if [[ -f release-evidence/live-release-drift.json ]]; then
+            node -e 'const r=require("./release-evidence/live-release-drift.json"); console.log(`## Live release drift\n\n| Status | Expected | Deployed | Behind | Ahead |\n|---|---|---|---:|---:|\n| ${r.status} | \`${r.expected_release}\` | \`${r.deployed_release}\` | ${r.commits_behind ?? "n/a"} | ${r.commits_ahead ?? "n/a"} |`)' >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "## Live release drift\n\nComparison evidence was not produced." >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+      - name: Upload drift evidence
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: cafe1-live-release-drift-${{ github.sha }}-${{ github.run_id }}
+          path: release-evidence/live-release-drift.json
+          if-no-files-found: warn
+          retention-days: 90
