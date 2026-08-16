@@ -144,10 +144,12 @@ function PlatformHome() {
           <div className="pointer-events-none absolute -left-24 top-6 h-72 w-72 rounded-full bg-primary/15 blur-3xl" />
           <div className="pointer-events-none absolute -right-32 -top-20 h-96 w-96 rounded-full bg-primary/10 blur-3xl" />
           <div className="mx-auto max-w-6xl px-4 py-16 lg:py-24">
+            <div className="grid items-center gap-12 lg:grid-cols-[1.05fr_0.95fr]">
+              <div>
             <p className="inline-flex items-center gap-2 rounded-full border border-primary/25 bg-primary/10 px-4 py-1.5 text-xs font-semibold uppercase tracking-[0.18em] text-primary">
               <Sparkles className="h-3.5 w-3.5" /> White-label ordering for independents
             </p>
-            <h1 className="mt-4 max-w-4xl font-display text-5xl font-bold leading-[1.02] sm:text-6xl">
+            <h1 className="mt-4 max-w-4xl font-display text-4xl font-bold leading-[1.05] sm:text-5xl lg:text-[3.4rem]">
               Everything a food business needs to sell direct — website, ordering, kitchen, till and books.
             </h1>
             <p className="mt-6 max-w-2xl text-lg text-muted-foreground">
@@ -168,7 +170,25 @@ function PlatformHome() {
                 See what's included
               </a>
             </div>
-            <dl className="mt-12 grid gap-4 sm:grid-cols-3">
+              </div>
+              <div className="relative">
+                <div className="pointer-events-none absolute -inset-4 rounded-[2rem] bg-primary/10 blur-2xl" />
+                <div className="relative overflow-hidden rounded-[1.75rem] border border-border bg-card shadow-2xl shadow-primary/15">
+                  <img
+                    src={heroImage}
+                    alt="Café counter with EPOS till, card reader and kitchen display screen in use during service"
+                    width={1600}
+                    height={1104}
+                    className="h-full w-full object-cover"
+                  />
+                  <div className="pointer-events-none absolute inset-x-0 bottom-0 bg-gradient-to-t from-background/85 to-transparent p-5">
+                    <p className="font-display text-sm font-bold">Live at Café 1 St Albans</p>
+                    <p className="text-xs text-muted-foreground">Web, app, KDS, till and drivers on one system</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <dl className="mt-14 grid gap-4 sm:grid-cols-3">
               {[
                 ["0%", "commission on your own direct orders"],
                 ["1 system", "web, app, KDS, EPOS, drivers and finance"],
