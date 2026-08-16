@@ -1078,6 +1078,24 @@ export type Database = {
           },
         ]
       }
+      landlord_admins: {
+        Row: {
+          created_at: string
+          email: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          email?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          email?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       menu_categories: {
         Row: {
           active: boolean
@@ -2575,6 +2593,207 @@ export type Database = {
           },
         ]
       }
+      tenant_invoices: {
+        Row: {
+          amount_cents: number
+          created_at: string
+          id: string
+          paid_on: string | null
+          period_end: string
+          period_start: string
+          reference: string | null
+          status: string
+          tenant_id: string
+          updated_at: string
+        }
+        Insert: {
+          amount_cents?: number
+          created_at?: string
+          id?: string
+          paid_on?: string | null
+          period_end: string
+          period_start: string
+          reference?: string | null
+          status?: string
+          tenant_id: string
+          updated_at?: string
+        }
+        Update: {
+          amount_cents?: number
+          created_at?: string
+          id?: string
+          paid_on?: string | null
+          period_end?: string
+          period_start?: string
+          reference?: string | null
+          status?: string
+          tenant_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tenant_invoices_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tenant_metric_snapshots: {
+        Row: {
+          active_users: number
+          created_at: string
+          gross_revenue_cents: number
+          id: string
+          orders_count: number
+          snapshot_date: string
+          tenant_id: string
+        }
+        Insert: {
+          active_users?: number
+          created_at?: string
+          gross_revenue_cents?: number
+          id?: string
+          orders_count?: number
+          snapshot_date: string
+          tenant_id: string
+        }
+        Update: {
+          active_users?: number
+          created_at?: string
+          gross_revenue_cents?: number
+          id?: string
+          orders_count?: number
+          snapshot_date?: string
+          tenant_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tenant_metric_snapshots_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tenant_plans: {
+        Row: {
+          active: boolean
+          code: string
+          created_at: string
+          features: Json
+          id: string
+          included_orders: number
+          max_sites: number
+          monthly_price_cents: number
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          code: string
+          created_at?: string
+          features?: Json
+          id?: string
+          included_orders?: number
+          max_sites?: number
+          monthly_price_cents?: number
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          code?: string
+          created_at?: string
+          features?: Json
+          id?: string
+          included_orders?: number
+          max_sites?: number
+          monthly_price_cents?: number
+          name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      tenants: {
+        Row: {
+          brand_accent: string
+          brand_primary: string
+          contact_email: string | null
+          contact_name: string | null
+          contact_phone: string | null
+          created_at: string
+          deployment_url: string | null
+          id: string
+          is_self: boolean
+          legal_name: string
+          logo_url: string | null
+          name: string
+          notes: string | null
+          plan_code: string | null
+          primary_domain: string | null
+          reporting_key: string
+          slug: string
+          status: string
+          trial_ends_on: string | null
+          updated_at: string
+        }
+        Insert: {
+          brand_accent?: string
+          brand_primary?: string
+          contact_email?: string | null
+          contact_name?: string | null
+          contact_phone?: string | null
+          created_at?: string
+          deployment_url?: string | null
+          id?: string
+          is_self?: boolean
+          legal_name?: string
+          logo_url?: string | null
+          name: string
+          notes?: string | null
+          plan_code?: string | null
+          primary_domain?: string | null
+          reporting_key?: string
+          slug: string
+          status?: string
+          trial_ends_on?: string | null
+          updated_at?: string
+        }
+        Update: {
+          brand_accent?: string
+          brand_primary?: string
+          contact_email?: string | null
+          contact_name?: string | null
+          contact_phone?: string | null
+          created_at?: string
+          deployment_url?: string | null
+          id?: string
+          is_self?: boolean
+          legal_name?: string
+          logo_url?: string | null
+          name?: string
+          notes?: string | null
+          plan_code?: string | null
+          primary_domain?: string | null
+          reporting_key?: string
+          slug?: string
+          status?: string
+          trial_ends_on?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tenants_plan_code_fkey"
+            columns: ["plan_code"]
+            isOneToOne: false
+            referencedRelation: "tenant_plans"
+            referencedColumns: ["code"]
+          },
+        ]
+      }
       till_cash_events: {
         Row: {
           actor_id: string
@@ -2995,6 +3214,7 @@ export type Database = {
         Returns: string
       }
       cafe1_assert_finance_manager: { Args: never; Returns: string }
+      cafe1_assert_landlord: { Args: never; Returns: undefined }
       cafe1_assert_operator: {
         Args: { _admin_only?: boolean }
         Returns: string
@@ -3076,6 +3296,7 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      cafe1_claim_landlord: { Args: never; Returns: boolean }
       cafe1_clock_staff: {
         Args: {
           _action: string
@@ -3131,6 +3352,7 @@ export type Database = {
         Returns: Json
       }
       cafe1_inventory_dashboard: { Args: { _site_id: string }; Returns: Json }
+      cafe1_is_landlord: { Args: { _user_id: string }; Returns: boolean }
       cafe1_issue_juror_batch: {
         Args: {
           _batch: string
@@ -3145,6 +3367,7 @@ export type Database = {
           valid_until: string
         }[]
       }
+      cafe1_landlord_dashboard: { Args: never; Returns: Json }
       cafe1_list_sites: { Args: never; Returns: Json }
       cafe1_manage_juror_voucher: {
         Args: {
@@ -3268,6 +3491,10 @@ export type Database = {
         Returns: Json
       }
       cafe1_resolve_alert: { Args: { _alert_id: string }; Returns: boolean }
+      cafe1_reveal_tenant_key: {
+        Args: { _rotate?: boolean; _tenant_id: string }
+        Returns: string
+      }
       cafe1_save_expense: {
         Args: { _payload: Json; _site_id: string }
         Returns: Json
@@ -3282,6 +3509,9 @@ export type Database = {
         Args: { _payload: Json; _site_id: string }
         Returns: Json
       }
+      cafe1_save_tenant: { Args: { _payload: Json }; Returns: Json }
+      cafe1_save_tenant_invoice: { Args: { _payload: Json }; Returns: Json }
+      cafe1_save_tenant_plan: { Args: { _payload: Json }; Returns: Json }
       cafe1_security_dashboard: { Args: { _site_id: string }; Returns: Json }
       cafe1_set_juror_daily_allowance: {
         Args: {
@@ -3290,6 +3520,10 @@ export type Database = {
           _holder_id: string
           _reason: string
         }
+        Returns: Json
+      }
+      cafe1_set_tenant_status: {
+        Args: { _status: string; _tenant_id: string }
         Returns: Json
       }
       cafe1_staff_dashboard: {
