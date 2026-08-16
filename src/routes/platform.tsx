@@ -252,10 +252,6 @@ function PlatformHome() {
           </div>
         </section>
 
-        <section id="how" className="border-y border-border bg-secondary/40">
-          <div className="hidden" />
-        </section>
-
         <section id="tour" className="border-y border-border bg-secondary/30">
           <div className="mx-auto max-w-6xl px-4 py-16 lg:py-20">
             <p className="text-xs font-semibold uppercase tracking-[0.18em] text-primary">Product tour</p>
@@ -314,7 +310,7 @@ function PlatformHome() {
           </div>
         </section>
 
-        <section className="border-y border-border bg-secondary/40">
+        <section id="how" className="border-y border-border bg-secondary/40">
           <div className="mx-auto max-w-6xl px-4 py-16 lg:py-20">
             <p className="text-xs font-semibold uppercase tracking-[0.18em] text-primary">Onboarding</p>
             <h2 className="mt-2 font-display text-4xl font-bold">How it works</h2>
