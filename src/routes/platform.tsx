@@ -1,18 +1,22 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { PlatformShell } from "@/components/platform-layout";
 import {
   ArrowRight,
   BarChart3,
   Bike,
   ChefHat,
+  Cookie,
   CreditCard,
+  FileCheck,
   Globe2,
-  LayoutDashboard,
+  Lock,
   Mail,
   MonitorSmartphone,
   Package,
   Phone,
   QrCode,
   Receipt,
+  Server,
   ShieldCheck,
   Ticket,
   Truck,
@@ -131,30 +135,7 @@ const steps = [
 
 function PlatformHome() {
   return (
-    <div className="min-h-screen bg-background text-foreground">
-      <header className="sticky top-0 z-40 border-b border-border/70 bg-background/90 backdrop-blur">
-        <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-3">
-          <Link to="/platform" className="flex items-center gap-2 font-display text-lg font-bold">
-            <span className="grid h-8 w-8 place-items-center rounded-lg bg-primary text-primary-foreground">
-              <LayoutDashboard className="h-4 w-4" />
-            </span>
-            Cafe 1 Platform
-          </Link>
-          <nav className="hidden items-center gap-6 text-sm font-medium text-muted-foreground md:flex">
-            <a href="#services" className="hover:text-foreground">Services</a>
-            <a href="#how" className="hover:text-foreground">How it works</a>
-            <a href="#pricing" className="hover:text-foreground">Pricing</a>
-            <a href="#contact" className="hover:text-foreground">Contact</a>
-          </nav>
-          <a
-            href="#contact"
-            className="inline-flex h-10 items-center rounded-full bg-primary px-5 text-sm font-semibold text-primary-foreground"
-          >
-            Book a demo
-          </a>
-        </div>
-      </header>
-
+    <PlatformShell>
       <main>
         <section className="relative overflow-hidden border-b border-border bg-secondary/40">
           <div className="pointer-events-none absolute -left-24 top-6 h-72 w-72 rounded-full bg-primary/10 blur-3xl" />
@@ -271,6 +252,62 @@ function PlatformHome() {
           </div>
         </section>
 
+        <section id="trust" className="border-y border-border bg-secondary/40">
+          <div className="mx-auto max-w-6xl px-4 py-16 lg:py-20">
+            <h2 className="font-display text-4xl font-bold">Built to be trusted</h2>
+            <p className="mt-3 max-w-2xl text-muted-foreground">
+              Every part of the platform follows compliance-minded defaults: secure payments, transparent
+              data handling, audit trails and accessibility from the start.
+            </p>
+            <div className="mt-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+              {[
+                {
+                  Icon: Lock,
+                  title: "Encrypted & secure",
+                  text: "HTTPS in transit, role-based access, row-level database security and audit logs for sensitive changes.",
+                },
+                {
+                  Icon: CreditCard,
+                  title: "Payment-safe",
+                  text: "Card payments are handled by SumUp. The platform never stores full card numbers, CVV or PIN data.",
+                },
+                {
+                  Icon: Cookie,
+                  title: "Cookie consent",
+                  text: "Granular consent for analytics and marketing, with strictly-necessary storage only until a choice is made.",
+                },
+                {
+                  Icon: FileCheck,
+                  title: "GDPR-ready",
+                  text: "Data request workflows, purpose limitation and clear privacy, terms and cookie policies for every tenant.",
+                },
+              ].map(({ Icon, title: t, text }) => (
+                <article key={t} className="rounded-2xl border border-border bg-card p-6 shadow-sm">
+                  <span className="grid h-11 w-11 place-items-center rounded-xl bg-primary/10 text-primary">
+                    <Icon className="h-5 w-5" />
+                  </span>
+                  <h3 className="mt-4 font-display text-lg font-bold">{t}</h3>
+                  <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{text}</p>
+                </article>
+              ))}
+            </div>
+            <div className="mt-8 flex flex-wrap gap-3">
+              <Link
+                to="/platform/compliance"
+                className="inline-flex h-11 items-center gap-2 rounded-full bg-primary px-5 text-sm font-semibold text-primary-foreground"
+              >
+                <Server className="h-4 w-4" /> Read full compliance details
+              </Link>
+              <Link
+                to="/privacy"
+                className="inline-flex h-11 items-center rounded-full border border-border bg-card px-5 text-sm font-semibold"
+              >
+                Privacy policy
+              </Link>
+            </div>
+          </div>
+        </section>
+
         <section id="contact" className="border-t border-border bg-secondary/40">
           <div className="mx-auto max-w-6xl px-4 py-16 lg:py-20">
             <div className="grid gap-8 lg:grid-cols-[1.1fr_0.9fr] lg:items-center">
@@ -317,17 +354,6 @@ function PlatformHome() {
           </div>
         </section>
       </main>
-
-      <footer className="border-t border-border bg-background">
-        <div className="mx-auto flex max-w-6xl flex-col gap-3 px-4 py-8 text-sm text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
-          <p>© {new Date().getFullYear()} Cafe 1 Platform. All rights reserved.</p>
-          <div className="flex gap-5">
-            <Link to="/privacy" className="hover:text-foreground">Privacy</Link>
-            <Link to="/terms" className="hover:text-foreground">Terms</Link>
-            <Link to="/landlord" className="hover:text-foreground">Operator sign in</Link>
-          </div>
-        </div>
-      </footer>
-    </div>
+    </PlatformShell>
   );
 }

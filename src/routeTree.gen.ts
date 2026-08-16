@@ -73,6 +73,7 @@ import { Route as BlogIndexRouteImport } from './routes/blog.index'
 import { Route as BlogSlugRouteImport } from './routes/blog.$slug'
 import { Route as OrderOrderIdRouteImport } from './routes/order.$orderId'
 import { Route as PayOrderIdRouteImport } from './routes/pay.$orderId'
+import { Route as PlatformComplianceRouteImport } from './routes/platform_.compliance'
 import { Route as PrintOrderIdRouteImport } from './routes/print.$orderId'
 import { Route as ApiPublicCleanupUnpaidRouteImport } from './routes/api/public/cleanup-unpaid'
 import { Route as ApiPublicHealthRouteImport } from './routes/api/public/health'
@@ -408,6 +409,11 @@ const PayOrderIdRoute = PayOrderIdRouteImport.update({
   path: '/pay/$orderId',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PlatformComplianceRoute = PlatformComplianceRouteImport.update({
+  id: '/platform_/compliance',
+  path: '/platform/compliance',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const PrintOrderIdRoute = PrintOrderIdRouteImport.update({
   id: '/print/$orderId',
   path: '/print/$orderId',
@@ -547,6 +553,7 @@ export interface FileRoutesByFullPath {
   '/blog/$slug': typeof BlogSlugRoute
   '/order/$orderId': typeof OrderOrderIdRoute
   '/pay/$orderId': typeof PayOrderIdRoute
+  '/platform/compliance': typeof PlatformComplianceRoute
   '/print/$orderId': typeof PrintOrderIdRoute
   '/admin/': typeof AdminIndexRoute
   '/blog/': typeof BlogIndexRoute
@@ -627,6 +634,7 @@ export interface FileRoutesByTo {
   '/blog/$slug': typeof BlogSlugRoute
   '/order/$orderId': typeof OrderOrderIdRoute
   '/pay/$orderId': typeof PayOrderIdRoute
+  '/platform/compliance': typeof PlatformComplianceRoute
   '/print/$orderId': typeof PrintOrderIdRoute
   '/admin': typeof AdminIndexRoute
   '/blog': typeof BlogIndexRoute
@@ -708,6 +716,7 @@ export interface FileRoutesById {
   '/blog/$slug': typeof BlogSlugRoute
   '/order/$orderId': typeof OrderOrderIdRoute
   '/pay/$orderId': typeof PayOrderIdRoute
+  '/platform_/compliance': typeof PlatformComplianceRoute
   '/print/$orderId': typeof PrintOrderIdRoute
   '/admin/': typeof AdminIndexRoute
   '/blog/': typeof BlogIndexRoute
@@ -790,6 +799,7 @@ export interface FileRouteTypes {
     | '/blog/$slug'
     | '/order/$orderId'
     | '/pay/$orderId'
+    | '/platform/compliance'
     | '/print/$orderId'
     | '/admin/'
     | '/blog/'
@@ -870,6 +880,7 @@ export interface FileRouteTypes {
     | '/blog/$slug'
     | '/order/$orderId'
     | '/pay/$orderId'
+    | '/platform/compliance'
     | '/print/$orderId'
     | '/admin'
     | '/blog'
@@ -950,6 +961,7 @@ export interface FileRouteTypes {
     | '/blog/$slug'
     | '/order/$orderId'
     | '/pay/$orderId'
+    | '/platform_/compliance'
     | '/print/$orderId'
     | '/admin/'
     | '/blog/'
@@ -1031,6 +1043,7 @@ export interface RootRouteChildren {
   BlogSlugRoute: typeof BlogSlugRoute
   OrderOrderIdRoute: typeof OrderOrderIdRoute
   PayOrderIdRoute: typeof PayOrderIdRoute
+  PlatformComplianceRoute: typeof PlatformComplianceRoute
   PrintOrderIdRoute: typeof PrintOrderIdRoute
   AdminIndexRoute: typeof AdminIndexRoute
   BlogIndexRoute: typeof BlogIndexRoute
@@ -1499,6 +1512,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PayOrderIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/platform_/compliance': {
+      id: '/platform_/compliance'
+      path: '/platform/compliance'
+      fullPath: '/platform/compliance'
+      preLoaderRoute: typeof PlatformComplianceRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/print/$orderId': {
       id: '/print/$orderId'
       path: '/print/$orderId'
@@ -1663,6 +1683,7 @@ const rootRouteChildren: RootRouteChildren = {
   BlogSlugRoute: BlogSlugRoute,
   OrderOrderIdRoute: OrderOrderIdRoute,
   PayOrderIdRoute: PayOrderIdRoute,
+  PlatformComplianceRoute: PlatformComplianceRoute,
   PrintOrderIdRoute: PrintOrderIdRoute,
   AdminIndexRoute: AdminIndexRoute,
   BlogIndexRoute: BlogIndexRoute,
