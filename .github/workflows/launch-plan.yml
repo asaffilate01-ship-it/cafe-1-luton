@@ -1,0 +1,50 @@
+name: Launch execution plan
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "release/operational-acceptance.json"
+      - "scripts/generate-launch-plan.mjs"
+      - ".github/workflows/launch-plan.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: cafe1-launch-plan-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  plan:
+    name: Generate auditable field plan
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Use Node.js 22
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 22
+
+      - name: Validate acceptance record and generate plan
+        run: |
+          mkdir -p release-evidence
+          npm run operational:status
+          npm run operational:plan
+
+      - name: Publish launch summary
+        run: cat release-evidence/launch-plan.md >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Retain field plan
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: cafe1-launch-plan-${{ github.sha }}-${{ github.run_id }}
+          path: |
+            release-evidence/launch-plan.json
+            release-evidence/launch-plan.md
+          if-no-files-found: error
+          retention-days: 90
