@@ -1,6 +1,10 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { PlatformShell } from "@/components/platform-layout";
 import heroImage from "@/assets/platform-hero.jpg";
+import shotHome from "@/assets/platform/shot-home.webp.asset.json";
+import shotMenu from "@/assets/platform/shot-menu.webp.asset.json";
+import shotDirect from "@/assets/platform/shot-direct.webp.asset.json";
+import shotMobile from "@/assets/platform/shot-mobile.webp.asset.json";
 import {
   ArrowRight,
   BarChart3,
@@ -134,6 +138,27 @@ const steps = [
   { n: "02", title: "Build & brand", text: "Your own deployment, colours, logo, domain and content — live in days, not months." },
   { n: "03", title: "Hardware & payments", text: "Card reader, printers and drawer configured, payouts connected and tested end to end." },
   { n: "04", title: "Go live & support", text: "Staff training, launch checklist, monitoring and ongoing updates from one team." },
+];
+
+const screenshots = [
+  {
+    src: shotHome.url,
+    alt: "Venue homepage with promotional carousel, live open/closed status and order call-to-action",
+    label: "Marketing site",
+    caption: "Promo banners, live opening status and prep-time estimates.",
+  },
+  {
+    src: shotMenu.url,
+    alt: "Menu browsing screen with category sidebar, search, dietary filters and item cards",
+    label: "Menu & ordering",
+    caption: "Category rail, instant search, dietary filters and one-tap add.",
+  },
+  {
+    src: shotDirect.url,
+    alt: "Order-direct marketing page listing loyalty, live tracking and payment benefits",
+    label: "Order-direct funnel",
+    caption: "Conversion page that pulls customers off aggregator apps.",
+  },
 ];
 
 function PlatformHome() {
