@@ -37,6 +37,7 @@ import { Route as LandlordRouteImport } from './routes/landlord'
 import { Route as LunchStAlbansRouteImport } from './routes/lunch-st-albans'
 import { Route as MenuRouteImport } from './routes/menu'
 import { Route as OrderDirectRouteImport } from './routes/order-direct'
+import { Route as PlatformRouteImport } from './routes/platform'
 import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
@@ -225,6 +226,11 @@ const MenuRoute = MenuRouteImport.update({
 const OrderDirectRoute = OrderDirectRouteImport.update({
   id: '/order-direct',
   path: '/order-direct',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PlatformRoute = PlatformRouteImport.update({
+  id: '/platform',
+  path: '/platform',
   getParentRoute: () => rootRouteImport,
 } as any)
 const PrivacyRoute = PrivacyRouteImport.update({
@@ -507,6 +513,7 @@ export interface FileRoutesByFullPath {
   '/lunch-st-albans': typeof LunchStAlbansRoute
   '/menu': typeof MenuRoute
   '/order-direct': typeof OrderDirectRoute
+  '/platform': typeof PlatformRoute
   '/privacy': typeof PrivacyRoute
   '/reset-password': typeof ResetPasswordRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
@@ -586,6 +593,7 @@ export interface FileRoutesByTo {
   '/lunch-st-albans': typeof LunchStAlbansRoute
   '/menu': typeof MenuRoute
   '/order-direct': typeof OrderDirectRoute
+  '/platform': typeof PlatformRoute
   '/privacy': typeof PrivacyRoute
   '/reset-password': typeof ResetPasswordRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
@@ -666,6 +674,7 @@ export interface FileRoutesById {
   '/lunch-st-albans': typeof LunchStAlbansRoute
   '/menu': typeof MenuRoute
   '/order-direct': typeof OrderDirectRoute
+  '/platform': typeof PlatformRoute
   '/privacy': typeof PrivacyRoute
   '/reset-password': typeof ResetPasswordRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
@@ -747,6 +756,7 @@ export interface FileRouteTypes {
     | '/lunch-st-albans'
     | '/menu'
     | '/order-direct'
+    | '/platform'
     | '/privacy'
     | '/reset-password'
     | '/sitemap.xml'
@@ -826,6 +836,7 @@ export interface FileRouteTypes {
     | '/lunch-st-albans'
     | '/menu'
     | '/order-direct'
+    | '/platform'
     | '/privacy'
     | '/reset-password'
     | '/sitemap.xml'
@@ -905,6 +916,7 @@ export interface FileRouteTypes {
     | '/lunch-st-albans'
     | '/menu'
     | '/order-direct'
+    | '/platform'
     | '/privacy'
     | '/reset-password'
     | '/sitemap.xml'
@@ -985,6 +997,7 @@ export interface RootRouteChildren {
   LunchStAlbansRoute: typeof LunchStAlbansRoute
   MenuRoute: typeof MenuRoute
   OrderDirectRoute: typeof OrderDirectRoute
+  PlatformRoute: typeof PlatformRoute
   PrivacyRoute: typeof PrivacyRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
@@ -1232,6 +1245,13 @@ declare module '@tanstack/react-router' {
       path: '/order-direct'
       fullPath: '/order-direct'
       preLoaderRoute: typeof OrderDirectRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/platform': {
+      id: '/platform'
+      path: '/platform'
+      fullPath: '/platform'
+      preLoaderRoute: typeof PlatformRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/privacy': {
@@ -1609,6 +1629,7 @@ const rootRouteChildren: RootRouteChildren = {
   LunchStAlbansRoute: LunchStAlbansRoute,
   MenuRoute: MenuRoute,
   OrderDirectRoute: OrderDirectRoute,
+  PlatformRoute: PlatformRoute,
   PrivacyRoute: PrivacyRoute,
   ResetPasswordRoute: ResetPasswordRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
