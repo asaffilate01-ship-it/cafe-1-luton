@@ -355,10 +355,22 @@ function PlatformHome() {
                   Café 1 St Albans runs the full stack every trading day: online ordering, KDS, EPOS, drivers, vouchers
                   and nightly financial reporting.
                 </p>
-                <ul className="mt-4 space-y-2 text-sm text-muted-foreground">
-                  <li className="flex gap-2"><Receipt className="mt-0.5 h-4 w-4 text-primary" /> Live orders across web, till and marketplaces</li>
-                  <li className="flex gap-2"><ChefHat className="mt-0.5 h-4 w-4 text-primary" /> Kitchen tickets printed automatically</li>
-                  <li className="flex gap-2"><BarChart3 className="mt-0.5 h-4 w-4 text-primary" /> Daily P&L without spreadsheets</li>
+                <ul className="mt-4 space-y-3 text-sm text-muted-foreground">
+                  {[
+                    [Receipt, "Live orders across web, till and marketplaces"],
+                    [ChefHat, "Kitchen tickets printed automatically"],
+                    [BarChart3, "Daily P&L without spreadsheets"],
+                  ].map(([I, label]) => {
+                    const Ico = I as typeof Receipt;
+                    return (
+                      <li key={label as string} className="flex items-center gap-3">
+                        <span className="grid h-8 w-8 shrink-0 place-items-center rounded-xl border border-primary/15 bg-primary/10 text-primary">
+                          <Ico className="h-4 w-4" strokeWidth={1.9} />
+                        </span>
+                        {label as string}
+                      </li>
+                    );
+                  })}
                 </ul>
                 <a
                   href="https://cafe1stalbans.co.uk"
