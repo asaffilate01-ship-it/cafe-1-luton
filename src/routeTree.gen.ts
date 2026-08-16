@@ -33,6 +33,7 @@ import { Route as JurorDemoRouteImport } from './routes/juror-demo'
 import { Route as JurorQrRouteImport } from './routes/juror-qr'
 import { Route as JuryMenuRouteImport } from './routes/jury-menu'
 import { Route as KdsRouteImport } from './routes/kds'
+import { Route as LandlordRouteImport } from './routes/landlord'
 import { Route as LunchStAlbansRouteImport } from './routes/lunch-st-albans'
 import { Route as MenuRouteImport } from './routes/menu'
 import { Route as OrderDirectRouteImport } from './routes/order-direct'
@@ -204,6 +205,11 @@ const JuryMenuRoute = JuryMenuRouteImport.update({
 const KdsRoute = KdsRouteImport.update({
   id: '/kds',
   path: '/kds',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LandlordRoute = LandlordRouteImport.update({
+  id: '/landlord',
+  path: '/landlord',
   getParentRoute: () => rootRouteImport,
 } as any)
 const LunchStAlbansRoute = LunchStAlbansRouteImport.update({
@@ -497,6 +503,7 @@ export interface FileRoutesByFullPath {
   '/juror-qr': typeof JurorQrRoute
   '/jury-menu': typeof JuryMenuRoute
   '/kds': typeof KdsRoute
+  '/landlord': typeof LandlordRoute
   '/lunch-st-albans': typeof LunchStAlbansRoute
   '/menu': typeof MenuRoute
   '/order-direct': typeof OrderDirectRoute
@@ -575,6 +582,7 @@ export interface FileRoutesByTo {
   '/juror-qr': typeof JurorQrRoute
   '/jury-menu': typeof JuryMenuRoute
   '/kds': typeof KdsRoute
+  '/landlord': typeof LandlordRoute
   '/lunch-st-albans': typeof LunchStAlbansRoute
   '/menu': typeof MenuRoute
   '/order-direct': typeof OrderDirectRoute
@@ -654,6 +662,7 @@ export interface FileRoutesById {
   '/juror-qr': typeof JurorQrRoute
   '/jury-menu': typeof JuryMenuRoute
   '/kds': typeof KdsRoute
+  '/landlord': typeof LandlordRoute
   '/lunch-st-albans': typeof LunchStAlbansRoute
   '/menu': typeof MenuRoute
   '/order-direct': typeof OrderDirectRoute
@@ -734,6 +743,7 @@ export interface FileRouteTypes {
     | '/juror-qr'
     | '/jury-menu'
     | '/kds'
+    | '/landlord'
     | '/lunch-st-albans'
     | '/menu'
     | '/order-direct'
@@ -812,6 +822,7 @@ export interface FileRouteTypes {
     | '/juror-qr'
     | '/jury-menu'
     | '/kds'
+    | '/landlord'
     | '/lunch-st-albans'
     | '/menu'
     | '/order-direct'
@@ -890,6 +901,7 @@ export interface FileRouteTypes {
     | '/juror-qr'
     | '/jury-menu'
     | '/kds'
+    | '/landlord'
     | '/lunch-st-albans'
     | '/menu'
     | '/order-direct'
@@ -969,6 +981,7 @@ export interface RootRouteChildren {
   JurorQrRoute: typeof JurorQrRoute
   JuryMenuRoute: typeof JuryMenuRoute
   KdsRoute: typeof KdsRoute
+  LandlordRoute: typeof LandlordRoute
   LunchStAlbansRoute: typeof LunchStAlbansRoute
   MenuRoute: typeof MenuRoute
   OrderDirectRoute: typeof OrderDirectRoute
@@ -1191,6 +1204,13 @@ declare module '@tanstack/react-router' {
       path: '/kds'
       fullPath: '/kds'
       preLoaderRoute: typeof KdsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/landlord': {
+      id: '/landlord'
+      path: '/landlord'
+      fullPath: '/landlord'
+      preLoaderRoute: typeof LandlordRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/lunch-st-albans': {
@@ -1585,6 +1605,7 @@ const rootRouteChildren: RootRouteChildren = {
   JurorQrRoute: JurorQrRoute,
   JuryMenuRoute: JuryMenuRoute,
   KdsRoute: KdsRoute,
+  LandlordRoute: LandlordRoute,
   LunchStAlbansRoute: LunchStAlbansRoute,
   MenuRoute: MenuRoute,
   OrderDirectRoute: OrderDirectRoute,
