@@ -204,7 +204,8 @@ function PlatformHome() {
         </section>
 
         <section id="services" className="mx-auto max-w-6xl px-4 py-16 lg:py-20">
-          <h2 className="font-display text-4xl font-bold">What we provide</h2>
+          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-primary">Modules</p>
+          <h2 className="mt-2 font-display text-4xl font-bold">What we provide</h2>
           <p className="mt-3 max-w-2xl text-muted-foreground">
             Every module below is already live in production — not a roadmap. Take the whole platform or the parts you
             need.
@@ -228,7 +229,8 @@ function PlatformHome() {
 
         <section id="how" className="border-y border-border bg-secondary/40">
           <div className="mx-auto max-w-6xl px-4 py-16 lg:py-20">
-            <h2 className="font-display text-4xl font-bold">How it works</h2>
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-primary">Onboarding</p>
+            <h2 className="mt-2 font-display text-4xl font-bold">How it works</h2>
             <div className="mt-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
               {steps.map((s) => (
                 <div
@@ -247,7 +249,8 @@ function PlatformHome() {
         </section>
 
         <section id="pricing" className="mx-auto max-w-6xl px-4 py-16 lg:py-20">
-          <h2 className="font-display text-4xl font-bold">Simple monthly plans</h2>
+          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-primary">Pricing</p>
+          <h2 className="mt-2 font-display text-4xl font-bold">Simple monthly plans</h2>
           <p className="mt-3 text-muted-foreground">Per venue, billed monthly. Card processing is charged by your payment provider.</p>
           <div className="mt-10 grid gap-5 lg:grid-cols-3">
             {plans.map((p) => (
@@ -289,7 +292,8 @@ function PlatformHome() {
 
         <section id="trust" className="border-y border-border bg-secondary/40">
           <div className="mx-auto max-w-6xl px-4 py-16 lg:py-20">
-            <h2 className="font-display text-4xl font-bold">Built to be trusted</h2>
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-primary">Trust</p>
+            <h2 className="mt-2 font-display text-4xl font-bold">Built to be trusted</h2>
             <p className="mt-3 max-w-2xl text-muted-foreground">
               Every part of the platform follows compliance-minded defaults: secure payments, transparent
               data handling, audit trails and accessibility from the start.
