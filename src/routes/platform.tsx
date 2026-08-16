@@ -1,5 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { PlatformShell } from "@/components/platform-layout";
+import heroImage from "@/assets/platform-hero.jpg";
 import {
   ArrowRight,
   BarChart3,
@@ -143,10 +144,12 @@ function PlatformHome() {
           <div className="pointer-events-none absolute -left-24 top-6 h-72 w-72 rounded-full bg-primary/15 blur-3xl" />
           <div className="pointer-events-none absolute -right-32 -top-20 h-96 w-96 rounded-full bg-primary/10 blur-3xl" />
           <div className="mx-auto max-w-6xl px-4 py-16 lg:py-24">
+            <div className="grid items-center gap-12 lg:grid-cols-[1.05fr_0.95fr]">
+              <div>
             <p className="inline-flex items-center gap-2 rounded-full border border-primary/25 bg-primary/10 px-4 py-1.5 text-xs font-semibold uppercase tracking-[0.18em] text-primary">
               <Sparkles className="h-3.5 w-3.5" /> White-label ordering for independents
             </p>
-            <h1 className="mt-4 max-w-4xl font-display text-5xl font-bold leading-[1.02] sm:text-6xl">
+            <h1 className="mt-4 max-w-4xl font-display text-4xl font-bold leading-[1.05] sm:text-5xl lg:text-[3.4rem]">
               Everything a food business needs to sell direct — website, ordering, kitchen, till and books.
             </h1>
             <p className="mt-6 max-w-2xl text-lg text-muted-foreground">
@@ -167,7 +170,25 @@ function PlatformHome() {
                 See what's included
               </a>
             </div>
-            <dl className="mt-12 grid gap-4 sm:grid-cols-3">
+              </div>
+              <div className="relative">
+                <div className="pointer-events-none absolute -inset-4 rounded-[2rem] bg-primary/10 blur-2xl" />
+                <div className="relative overflow-hidden rounded-[1.75rem] border border-border bg-card shadow-2xl shadow-primary/15">
+                  <img
+                    src={heroImage}
+                    alt="Café counter with EPOS till, card reader and kitchen display screen in use during service"
+                    width={1600}
+                    height={1104}
+                    className="h-full w-full object-cover"
+                  />
+                  <div className="pointer-events-none absolute inset-x-0 bottom-0 bg-gradient-to-t from-background/85 to-transparent p-5">
+                    <p className="font-display text-sm font-bold">Live at Café 1 St Albans</p>
+                    <p className="text-xs text-muted-foreground">Web, app, KDS, till and drivers on one system</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <dl className="mt-14 grid gap-4 sm:grid-cols-3">
               {[
                 ["0%", "commission on your own direct orders"],
                 ["1 system", "web, app, KDS, EPOS, drivers and finance"],
@@ -183,7 +204,8 @@ function PlatformHome() {
         </section>
 
         <section id="services" className="mx-auto max-w-6xl px-4 py-16 lg:py-20">
-          <h2 className="font-display text-4xl font-bold">What we provide</h2>
+          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-primary">Modules</p>
+          <h2 className="mt-2 font-display text-4xl font-bold">What we provide</h2>
           <p className="mt-3 max-w-2xl text-muted-foreground">
             Every module below is already live in production — not a roadmap. Take the whole platform or the parts you
             need.
@@ -207,7 +229,8 @@ function PlatformHome() {
 
         <section id="how" className="border-y border-border bg-secondary/40">
           <div className="mx-auto max-w-6xl px-4 py-16 lg:py-20">
-            <h2 className="font-display text-4xl font-bold">How it works</h2>
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-primary">Onboarding</p>
+            <h2 className="mt-2 font-display text-4xl font-bold">How it works</h2>
             <div className="mt-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
               {steps.map((s) => (
                 <div
@@ -226,7 +249,8 @@ function PlatformHome() {
         </section>
 
         <section id="pricing" className="mx-auto max-w-6xl px-4 py-16 lg:py-20">
-          <h2 className="font-display text-4xl font-bold">Simple monthly plans</h2>
+          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-primary">Pricing</p>
+          <h2 className="mt-2 font-display text-4xl font-bold">Simple monthly plans</h2>
           <p className="mt-3 text-muted-foreground">Per venue, billed monthly. Card processing is charged by your payment provider.</p>
           <div className="mt-10 grid gap-5 lg:grid-cols-3">
             {plans.map((p) => (
@@ -268,7 +292,8 @@ function PlatformHome() {
 
         <section id="trust" className="border-y border-border bg-secondary/40">
           <div className="mx-auto max-w-6xl px-4 py-16 lg:py-20">
-            <h2 className="font-display text-4xl font-bold">Built to be trusted</h2>
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-primary">Trust</p>
+            <h2 className="mt-2 font-display text-4xl font-bold">Built to be trusted</h2>
             <p className="mt-3 max-w-2xl text-muted-foreground">
               Every part of the platform follows compliance-minded defaults: secure payments, transparent
               data handling, audit trails and accessibility from the start.
