@@ -33,6 +33,7 @@ import { Route as JurorDemoRouteImport } from './routes/juror-demo'
 import { Route as JurorQrRouteImport } from './routes/juror-qr'
 import { Route as JuryMenuRouteImport } from './routes/jury-menu'
 import { Route as KdsRouteImport } from './routes/kds'
+import { Route as LandlordRouteImport } from './routes/landlord'
 import { Route as LunchStAlbansRouteImport } from './routes/lunch-st-albans'
 import { Route as MenuRouteImport } from './routes/menu'
 import { Route as OrderDirectRouteImport } from './routes/order-direct'
@@ -82,6 +83,7 @@ import { Route as ApiPublicDeliverooPrintBridgeRouteImport } from './routes/api/
 import { Route as ApiPublicDeliverooWebhookRouteImport } from './routes/api/public/deliveroo/webhook'
 import { Route as ApiPublicJusteatHubIngestRouteImport } from './routes/api/public/justeat/hub-ingest'
 import { Route as ApiPublicJusteatWebhookRouteImport } from './routes/api/public/justeat/webhook'
+import { Route as ApiPublicLandlordReportRouteImport } from './routes/api/public/landlord/report'
 import { Route as LovableEmailAuthPreviewRouteImport } from './routes/lovable/email/auth/preview'
 import { Route as LovableEmailAuthWebhookRouteImport } from './routes/lovable/email/auth/webhook'
 
@@ -203,6 +205,11 @@ const JuryMenuRoute = JuryMenuRouteImport.update({
 const KdsRoute = KdsRouteImport.update({
   id: '/kds',
   path: '/kds',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LandlordRoute = LandlordRouteImport.update({
+  id: '/landlord',
+  path: '/landlord',
   getParentRoute: () => rootRouteImport,
 } as any)
 const LunchStAlbansRoute = LunchStAlbansRouteImport.update({
@@ -455,6 +462,11 @@ const ApiPublicJusteatWebhookRoute = ApiPublicJusteatWebhookRouteImport.update({
   path: '/api/public/justeat/webhook',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicLandlordReportRoute = ApiPublicLandlordReportRouteImport.update({
+  id: '/api/public/landlord/report',
+  path: '/api/public/landlord/report',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const LovableEmailAuthPreviewRoute = LovableEmailAuthPreviewRouteImport.update({
   id: '/lovable/email/auth/preview',
   path: '/lovable/email/auth/preview',
@@ -491,6 +503,7 @@ export interface FileRoutesByFullPath {
   '/juror-qr': typeof JurorQrRoute
   '/jury-menu': typeof JuryMenuRoute
   '/kds': typeof KdsRoute
+  '/landlord': typeof LandlordRoute
   '/lunch-st-albans': typeof LunchStAlbansRoute
   '/menu': typeof MenuRoute
   '/order-direct': typeof OrderDirectRoute
@@ -540,6 +553,7 @@ export interface FileRoutesByFullPath {
   '/api/public/deliveroo/webhook': typeof ApiPublicDeliverooWebhookRoute
   '/api/public/justeat/hub-ingest': typeof ApiPublicJusteatHubIngestRoute
   '/api/public/justeat/webhook': typeof ApiPublicJusteatWebhookRoute
+  '/api/public/landlord/report': typeof ApiPublicLandlordReportRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
   '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
 }
@@ -568,6 +582,7 @@ export interface FileRoutesByTo {
   '/juror-qr': typeof JurorQrRoute
   '/jury-menu': typeof JuryMenuRoute
   '/kds': typeof KdsRoute
+  '/landlord': typeof LandlordRoute
   '/lunch-st-albans': typeof LunchStAlbansRoute
   '/menu': typeof MenuRoute
   '/order-direct': typeof OrderDirectRoute
@@ -617,6 +632,7 @@ export interface FileRoutesByTo {
   '/api/public/deliveroo/webhook': typeof ApiPublicDeliverooWebhookRoute
   '/api/public/justeat/hub-ingest': typeof ApiPublicJusteatHubIngestRoute
   '/api/public/justeat/webhook': typeof ApiPublicJusteatWebhookRoute
+  '/api/public/landlord/report': typeof ApiPublicLandlordReportRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
   '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
 }
@@ -646,6 +662,7 @@ export interface FileRoutesById {
   '/juror-qr': typeof JurorQrRoute
   '/jury-menu': typeof JuryMenuRoute
   '/kds': typeof KdsRoute
+  '/landlord': typeof LandlordRoute
   '/lunch-st-albans': typeof LunchStAlbansRoute
   '/menu': typeof MenuRoute
   '/order-direct': typeof OrderDirectRoute
@@ -695,6 +712,7 @@ export interface FileRoutesById {
   '/api/public/deliveroo/webhook': typeof ApiPublicDeliverooWebhookRoute
   '/api/public/justeat/hub-ingest': typeof ApiPublicJusteatHubIngestRoute
   '/api/public/justeat/webhook': typeof ApiPublicJusteatWebhookRoute
+  '/api/public/landlord/report': typeof ApiPublicLandlordReportRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
   '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
 }
@@ -725,6 +743,7 @@ export interface FileRouteTypes {
     | '/juror-qr'
     | '/jury-menu'
     | '/kds'
+    | '/landlord'
     | '/lunch-st-albans'
     | '/menu'
     | '/order-direct'
@@ -774,6 +793,7 @@ export interface FileRouteTypes {
     | '/api/public/deliveroo/webhook'
     | '/api/public/justeat/hub-ingest'
     | '/api/public/justeat/webhook'
+    | '/api/public/landlord/report'
     | '/lovable/email/auth/preview'
     | '/lovable/email/auth/webhook'
   fileRoutesByTo: FileRoutesByTo
@@ -802,6 +822,7 @@ export interface FileRouteTypes {
     | '/juror-qr'
     | '/jury-menu'
     | '/kds'
+    | '/landlord'
     | '/lunch-st-albans'
     | '/menu'
     | '/order-direct'
@@ -851,6 +872,7 @@ export interface FileRouteTypes {
     | '/api/public/deliveroo/webhook'
     | '/api/public/justeat/hub-ingest'
     | '/api/public/justeat/webhook'
+    | '/api/public/landlord/report'
     | '/lovable/email/auth/preview'
     | '/lovable/email/auth/webhook'
   id:
@@ -879,6 +901,7 @@ export interface FileRouteTypes {
     | '/juror-qr'
     | '/jury-menu'
     | '/kds'
+    | '/landlord'
     | '/lunch-st-albans'
     | '/menu'
     | '/order-direct'
@@ -928,6 +951,7 @@ export interface FileRouteTypes {
     | '/api/public/deliveroo/webhook'
     | '/api/public/justeat/hub-ingest'
     | '/api/public/justeat/webhook'
+    | '/api/public/landlord/report'
     | '/lovable/email/auth/preview'
     | '/lovable/email/auth/webhook'
   fileRoutesById: FileRoutesById
@@ -957,6 +981,7 @@ export interface RootRouteChildren {
   JurorQrRoute: typeof JurorQrRoute
   JuryMenuRoute: typeof JuryMenuRoute
   KdsRoute: typeof KdsRoute
+  LandlordRoute: typeof LandlordRoute
   LunchStAlbansRoute: typeof LunchStAlbansRoute
   MenuRoute: typeof MenuRoute
   OrderDirectRoute: typeof OrderDirectRoute
@@ -1006,6 +1031,7 @@ export interface RootRouteChildren {
   ApiPublicDeliverooWebhookRoute: typeof ApiPublicDeliverooWebhookRoute
   ApiPublicJusteatHubIngestRoute: typeof ApiPublicJusteatHubIngestRoute
   ApiPublicJusteatWebhookRoute: typeof ApiPublicJusteatWebhookRoute
+  ApiPublicLandlordReportRoute: typeof ApiPublicLandlordReportRoute
   LovableEmailAuthPreviewRoute: typeof LovableEmailAuthPreviewRoute
   LovableEmailAuthWebhookRoute: typeof LovableEmailAuthWebhookRoute
 }
@@ -1178,6 +1204,13 @@ declare module '@tanstack/react-router' {
       path: '/kds'
       fullPath: '/kds'
       preLoaderRoute: typeof KdsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/landlord': {
+      id: '/landlord'
+      path: '/landlord'
+      fullPath: '/landlord'
+      preLoaderRoute: typeof LandlordRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/lunch-st-albans': {
@@ -1523,6 +1556,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicJusteatWebhookRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/landlord/report': {
+      id: '/api/public/landlord/report'
+      path: '/api/public/landlord/report'
+      fullPath: '/api/public/landlord/report'
+      preLoaderRoute: typeof ApiPublicLandlordReportRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/lovable/email/auth/preview': {
       id: '/lovable/email/auth/preview'
       path: '/lovable/email/auth/preview'
@@ -1565,6 +1605,7 @@ const rootRouteChildren: RootRouteChildren = {
   JurorQrRoute: JurorQrRoute,
   JuryMenuRoute: JuryMenuRoute,
   KdsRoute: KdsRoute,
+  LandlordRoute: LandlordRoute,
   LunchStAlbansRoute: LunchStAlbansRoute,
   MenuRoute: MenuRoute,
   OrderDirectRoute: OrderDirectRoute,
@@ -1614,6 +1655,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicDeliverooWebhookRoute: ApiPublicDeliverooWebhookRoute,
   ApiPublicJusteatHubIngestRoute: ApiPublicJusteatHubIngestRoute,
   ApiPublicJusteatWebhookRoute: ApiPublicJusteatWebhookRoute,
+  ApiPublicLandlordReportRoute: ApiPublicLandlordReportRoute,
   LovableEmailAuthPreviewRoute: LovableEmailAuthPreviewRoute,
   LovableEmailAuthWebhookRoute: LovableEmailAuthWebhookRoute,
 }
