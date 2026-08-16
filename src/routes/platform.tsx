@@ -4,6 +4,7 @@ import {
   ArrowRight,
   BarChart3,
   Bike,
+  Check,
   ChefHat,
   Cookie,
   CreditCard,
@@ -17,6 +18,7 @@ import {
   QrCode,
   Receipt,
   Server,
+  Sparkles,
   ShieldCheck,
   Ticket,
   Truck,
@@ -138,10 +140,11 @@ function PlatformHome() {
     <PlatformShell>
       <main>
         <section className="relative overflow-hidden border-b border-border bg-secondary/40">
-          <div className="pointer-events-none absolute -left-24 top-6 h-72 w-72 rounded-full bg-primary/10 blur-3xl" />
+          <div className="pointer-events-none absolute -left-24 top-6 h-72 w-72 rounded-full bg-primary/15 blur-3xl" />
+          <div className="pointer-events-none absolute -right-32 -top-20 h-96 w-96 rounded-full bg-primary/10 blur-3xl" />
           <div className="mx-auto max-w-6xl px-4 py-16 lg:py-24">
-            <p className="text-sm font-semibold uppercase tracking-[0.2em] text-primary">
-              White-label ordering for independents
+            <p className="inline-flex items-center gap-2 rounded-full border border-primary/25 bg-primary/10 px-4 py-1.5 text-xs font-semibold uppercase tracking-[0.18em] text-primary">
+              <Sparkles className="h-3.5 w-3.5" /> White-label ordering for independents
             </p>
             <h1 className="mt-4 max-w-4xl font-display text-5xl font-bold leading-[1.02] sm:text-6xl">
               Everything a food business needs to sell direct — website, ordering, kitchen, till and books.
@@ -153,13 +156,13 @@ function PlatformHome() {
             <div className="mt-8 flex flex-wrap gap-3">
               <a
                 href="#contact"
-                className="inline-flex h-12 items-center gap-2 rounded-full bg-primary px-6 text-sm font-semibold text-primary-foreground"
+                className="group inline-flex h-12 items-center gap-2 rounded-full bg-primary px-6 text-sm font-semibold text-primary-foreground shadow-lg shadow-primary/25 transition hover:-translate-y-0.5 hover:shadow-xl hover:shadow-primary/30"
               >
-                Get your venue live <ArrowRight className="h-4 w-4" />
+                Get your venue live <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
               </a>
               <a
                 href="#services"
-                className="inline-flex h-12 items-center rounded-full border border-border bg-card px-6 text-sm font-semibold"
+                className="inline-flex h-12 items-center rounded-full border border-border bg-card px-6 text-sm font-semibold shadow-sm transition hover:-translate-y-0.5 hover:border-primary/40 hover:text-primary"
               >
                 See what's included
               </a>
@@ -170,7 +173,7 @@ function PlatformHome() {
                 ["1 system", "web, app, KDS, EPOS, drivers and finance"],
                 ["Days", "typical time from kick-off to going live"],
               ].map(([k, v]) => (
-                <div key={v} className="rounded-2xl border border-border bg-card p-5 shadow-sm">
+                <div key={v} className="rounded-2xl border border-border bg-card p-5 shadow-sm transition hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-md">
                   <dt className="font-display text-3xl font-bold text-primary">{k}</dt>
                   <dd className="mt-1 text-sm text-muted-foreground">{v}</dd>
                 </div>
@@ -187,9 +190,13 @@ function PlatformHome() {
           </p>
           <div className="mt-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
             {services.map(({ Icon, title: t, text }) => (
-              <article key={t} className="rounded-2xl border border-border bg-card p-6 shadow-sm transition hover:shadow-md">
-                <span className="grid h-11 w-11 place-items-center rounded-xl bg-primary/10 text-primary">
-                  <Icon className="h-5 w-5" />
+              <article
+                key={t}
+                className="group relative overflow-hidden rounded-2xl border border-border bg-card p-6 shadow-sm transition duration-200 hover:-translate-y-1 hover:border-primary/40 hover:shadow-lg"
+              >
+                <span className="pointer-events-none absolute -right-10 -top-10 h-24 w-24 rounded-full bg-primary/5 opacity-0 transition group-hover:opacity-100" />
+                <span className="grid h-12 w-12 place-items-center rounded-2xl border border-primary/15 bg-primary/10 text-primary shadow-sm transition group-hover:bg-primary group-hover:text-primary-foreground">
+                  <Icon className="h-5 w-5" strokeWidth={1.9} />
                 </span>
                 <h3 className="mt-4 font-display text-xl font-bold">{t}</h3>
                 <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{text}</p>
@@ -203,9 +210,14 @@ function PlatformHome() {
             <h2 className="font-display text-4xl font-bold">How it works</h2>
             <div className="mt-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
               {steps.map((s) => (
-                <div key={s.n} className="rounded-2xl border border-border bg-card p-6 shadow-sm">
-                  <p className="font-display text-3xl font-bold text-primary/40">{s.n}</p>
-                  <h3 className="mt-2 font-display text-lg font-bold">{s.title}</h3>
+                <div
+                  key={s.n}
+                  className="relative rounded-2xl border border-border bg-card p-6 shadow-sm transition hover:-translate-y-1 hover:border-primary/40 hover:shadow-lg"
+                >
+                  <span className="grid h-11 w-11 place-items-center rounded-full bg-primary text-sm font-bold text-primary-foreground shadow-md shadow-primary/25">
+                    {s.n}
+                  </span>
+                  <h3 className="mt-4 font-display text-lg font-bold">{s.title}</h3>
                   <p className="mt-2 text-sm text-muted-foreground">{s.text}</p>
                 </div>
               ))}
@@ -220,7 +232,7 @@ function PlatformHome() {
             {plans.map((p) => (
               <div
                 key={p.name}
-                className={`rounded-2xl border bg-card p-6 shadow-sm ${p.featured ? "border-primary ring-2 ring-primary/20" : "border-border"}`}
+                className={`relative flex flex-col rounded-2xl border bg-card p-6 transition hover:-translate-y-1 hover:shadow-lg ${p.featured ? "border-primary shadow-lg shadow-primary/10 ring-2 ring-primary/20 lg:-mt-2 lg:pb-8" : "border-border shadow-sm"}`}
               >
                 {p.featured ? (
                   <span className="inline-flex rounded-full bg-primary px-3 py-1 text-xs font-semibold text-primary-foreground">
@@ -233,19 +245,21 @@ function PlatformHome() {
                   {p.price}
                   {p.price.startsWith("£") ? <span className="text-base font-medium text-muted-foreground">/month</span> : null}
                 </p>
-                <ul className="mt-5 space-y-2 text-sm">
+                <ul className="mt-5 flex-1 space-y-2.5 text-sm">
                   {p.items.map((i) => (
-                    <li key={i} className="flex gap-2">
-                      <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
+                    <li key={i} className="flex items-start gap-2.5">
+                      <span className="mt-0.5 grid h-5 w-5 shrink-0 place-items-center rounded-full bg-primary/10 text-primary">
+                        <Check className="h-3 w-3" strokeWidth={3} />
+                      </span>
                       <span className="text-muted-foreground">{i}</span>
                     </li>
                   ))}
                 </ul>
                 <a
                   href="#contact"
-                  className="mt-6 inline-flex h-11 w-full items-center justify-center rounded-full bg-primary text-sm font-semibold text-primary-foreground"
+                  className={`mt-6 inline-flex h-11 w-full items-center justify-center gap-2 rounded-full text-sm font-semibold transition ${p.featured ? "bg-primary text-primary-foreground shadow-md shadow-primary/25 hover:brightness-110" : "border border-border bg-card hover:border-primary/40 hover:text-primary"}`}
                 >
-                  Enquire
+                  Enquire <ArrowRight className="h-4 w-4" />
                 </a>
               </div>
             ))}
@@ -282,9 +296,12 @@ function PlatformHome() {
                   text: "Data request workflows, purpose limitation and clear privacy, terms and cookie policies for every tenant.",
                 },
               ].map(({ Icon, title: t, text }) => (
-                <article key={t} className="rounded-2xl border border-border bg-card p-6 shadow-sm">
-                  <span className="grid h-11 w-11 place-items-center rounded-xl bg-primary/10 text-primary">
-                    <Icon className="h-5 w-5" />
+                <article
+                  key={t}
+                  className="group rounded-2xl border border-border bg-card p-6 shadow-sm transition hover:-translate-y-1 hover:border-primary/40 hover:shadow-lg"
+                >
+                  <span className="grid h-12 w-12 place-items-center rounded-2xl border border-primary/15 bg-primary/10 text-primary transition group-hover:bg-primary group-hover:text-primary-foreground">
+                    <Icon className="h-5 w-5" strokeWidth={1.9} />
                   </span>
                   <h3 className="mt-4 font-display text-lg font-bold">{t}</h3>
                   <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{text}</p>
@@ -338,10 +355,22 @@ function PlatformHome() {
                   Café 1 St Albans runs the full stack every trading day: online ordering, KDS, EPOS, drivers, vouchers
                   and nightly financial reporting.
                 </p>
-                <ul className="mt-4 space-y-2 text-sm text-muted-foreground">
-                  <li className="flex gap-2"><Receipt className="mt-0.5 h-4 w-4 text-primary" /> Live orders across web, till and marketplaces</li>
-                  <li className="flex gap-2"><ChefHat className="mt-0.5 h-4 w-4 text-primary" /> Kitchen tickets printed automatically</li>
-                  <li className="flex gap-2"><BarChart3 className="mt-0.5 h-4 w-4 text-primary" /> Daily P&L without spreadsheets</li>
+                <ul className="mt-4 space-y-3 text-sm text-muted-foreground">
+                  {[
+                    [Receipt, "Live orders across web, till and marketplaces"],
+                    [ChefHat, "Kitchen tickets printed automatically"],
+                    [BarChart3, "Daily P&L without spreadsheets"],
+                  ].map(([I, label]) => {
+                    const Ico = I as typeof Receipt;
+                    return (
+                      <li key={label as string} className="flex items-center gap-3">
+                        <span className="grid h-8 w-8 shrink-0 place-items-center rounded-xl border border-primary/15 bg-primary/10 text-primary">
+                          <Ico className="h-4 w-4" strokeWidth={1.9} />
+                        </span>
+                        {label as string}
+                      </li>
+                    );
+                  })}
                 </ul>
                 <a
                   href="https://cafe1stalbans.co.uk"
