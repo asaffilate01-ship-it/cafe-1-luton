@@ -24,6 +24,7 @@ export function PlatformHeader() {
         </Link>
         <nav className="hidden items-center gap-6 text-sm font-medium text-muted-foreground md:flex">
           <a href="/platform#services" className="hover:text-foreground">Services</a>
+          <a href="/platform#tour" className="hover:text-foreground">Product tour</a>
           <a href="/platform#how" className="hover:text-foreground">How it works</a>
           <a href="/platform#pricing" className="hover:text-foreground">Pricing</a>
           <Link to="/platform/compliance" className="hover:text-foreground">Compliance</Link>
