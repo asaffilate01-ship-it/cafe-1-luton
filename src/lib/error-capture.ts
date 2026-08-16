@@ -1,11 +1,12 @@
 // Captures the original Error out-of-band so server.ts can recover the stack
 // when h3 has already swallowed the throw into a generic 500 Response.
+import { isRequestCancellation } from "./request-cancellation";
 
 let lastCapturedError: { error: unknown; at: number } | undefined;
 const TTL_MS = 5_000;
 
 function record(error: unknown) {
-  if (isClientAbort(error)) return;
+  if (isRequestCancellation(error)) return;
   lastCapturedError = { error, at: Date.now() };
 }
 
@@ -53,23 +54,12 @@ function isErrorLike(value: unknown): value is Error {
 // A browser that navigates away (or a cancelled preload) closes the socket
 // mid-response; Node surfaces that as `Error: aborted` from _http_server.
 // It is a client disconnect, not an app fault, so never record or log it.
-export function isClientAbort(value: unknown): boolean {
-  if (!(value instanceof Error)) return false;
-  const code = (value as { code?: unknown }).code;
-  return (
-    value.message === "aborted" ||
-    code === "ECONNRESET" ||
-    code === "ERR_STREAM_PREMATURE_CLOSE" ||
-    value.name === "AbortError"
-  );
-}
-
 // Wrap console.error so errors logged by any layer — including h3's internal
 // unhandled-error logging, which this file cannot hook directly — are both
 // recorded for consumeLastCapturedError and expanded before serialization.
 const originalConsoleError = console.error.bind(console);
 console.error = (...args: unknown[]) => {
-  if (args.some((arg) => isClientAbort(arg))) return;
+  if (args.some((arg) => isRequestCancellation(arg))) return;
   const expanded = args.map((arg) => {
     if (!isErrorLike(arg)) return arg;
     record(arg);
@@ -84,7 +74,7 @@ if (typeof globalThis.addEventListener === "function") {
   // listeners must stay on the bubble phase.
   globalThis.addEventListener("error", (event) => {
       const error = (event as ErrorEvent).error ?? event;
-      if (isClientAbort(error)) {
+      if (isRequestCancellation(error)) {
         event.stopImmediatePropagation();
         event.preventDefault?.();
         return;
@@ -93,7 +83,7 @@ if (typeof globalThis.addEventListener === "function") {
   });
   globalThis.addEventListener("unhandledrejection", (event) => {
       const reason = (event as PromiseRejectionEvent).reason;
-      if (isClientAbort(reason)) {
+      if (isRequestCancellation(reason)) {
         event.stopImmediatePropagation();
         event.preventDefault?.();
         return;
@@ -108,12 +98,12 @@ if (typeof globalThis.addEventListener === "function") {
 const nodeProcess = (globalThis as { process?: NodeJS.Process }).process;
 if (nodeProcess && typeof nodeProcess.on === "function") {
   nodeProcess.on("uncaughtException", (error: unknown) => {
-    if (isClientAbort(error)) return;
+    if (isRequestCancellation(error)) return;
     record(error);
     originalConsoleError(describeError(error));
   });
   nodeProcess.on("unhandledRejection", (reason: unknown) => {
-    if (isClientAbort(reason)) return;
+    if (isRequestCancellation(reason)) return;
     record(reason);
     originalConsoleError(describeError(reason));
   });

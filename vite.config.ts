@@ -9,6 +9,7 @@ import { loadEnv, type Plugin } from "vite";
 import path from "node:path";
 import browserslist from "browserslist";
 import { browserslistToTargets } from "lightningcss";
+import { isRequestCancellation } from "./src/lib/request-cancellation";
 
 // The kitchen runs on an Android 8 tablet whose Chrome predates oklch(),
 // color-mix() and modern JS syntax. Compiling CSS through Lightning CSS with
@@ -33,17 +34,6 @@ Object.assign(process.env, loadEnv(process.env.NODE_ENV ?? "development", proces
 // from `abortIncoming`. That is a client disconnect, not an app fault, but the
 // dev process surfaces it as a runtime error (and a blank-screen report).
 // Swallow just that case in the dev server process.
-const isClientAbort = (error: unknown): boolean => {
-  if (!(error instanceof Error)) return false;
-  const code = (error as { code?: unknown }).code;
-  return (
-    error.message === "aborted" ||
-    code === "ECONNRESET" ||
-    code === "ERR_STREAM_PREMATURE_CLOSE" ||
-    error.name === "AbortError"
-  );
-};
-
 // `abortIncoming()` destroys Node's IncomingMessage with `Error: aborted` when
 // the browser closes a socket during navigation. The error is emitted on the
 // request itself, before TanStack's fetch handler can catch it. Handle it at
@@ -65,7 +55,7 @@ const clientAbortGuardPlugin = (): Plugin => ({
       proc.emit = ((event: string, ...args: unknown[]) => {
         if (
           (event === "uncaughtException" || event === "unhandledRejection") &&
-          isClientAbort(args[0])
+          isRequestCancellation(args[0])
         ) {
           return true;
         }
@@ -74,7 +64,7 @@ const clientAbortGuardPlugin = (): Plugin => ({
     }
 
     server.httpServer?.on("clientError", (error, socket) => {
-      if (isClientAbort(error)) {
+      if (isRequestCancellation(error)) {
         socket.destroy();
         return;
       }
@@ -82,13 +72,13 @@ const clientAbortGuardPlugin = (): Plugin => ({
     });
     server.httpServer?.on("connection", (socket) => {
       socket.on("error", (error: Error) => {
-        if (isClientAbort(error)) return;
+        if (isRequestCancellation(error)) return;
         console.error(error);
       });
     });
     server.httpServer?.prependListener("request", (request) => {
       request.on("error", (error: Error) => {
-        if (isClientAbort(error)) return;
+        if (isRequestCancellation(error)) return;
         console.error(error);
       });
     });
