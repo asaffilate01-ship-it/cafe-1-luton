@@ -33,6 +33,7 @@
     "verify:routes": "node scripts/verify-routes.mjs",
     "smoke:production": "node scripts/verify-production.mjs",
     "operational:status": "node scripts/verify-operational-acceptance.mjs",
+    "operational:plan": "node scripts/generate-launch-plan.mjs",
     "operational:record": "node scripts/record-operational-gate.mjs",
     "operational:check": "node scripts/verify-operational-acceptance.mjs --strict",
     "operational:record-github": "node scripts/record-github-release-evidence.mjs"
