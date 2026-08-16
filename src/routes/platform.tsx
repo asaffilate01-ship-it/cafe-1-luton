@@ -1,5 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { PlatformShell } from "@/components/platform-layout";
+import heroImage from "@/assets/platform-hero.jpg";
 import {
   ArrowRight,
   BarChart3,
