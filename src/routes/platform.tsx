@@ -1,6 +1,10 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { PlatformShell } from "@/components/platform-layout";
 import heroImage from "@/assets/platform-hero.jpg";
+import shotHome from "@/assets/platform/shot-home.webp.asset.json";
+import shotMenu from "@/assets/platform/shot-menu.webp.asset.json";
+import shotDirect from "@/assets/platform/shot-direct.webp.asset.json";
+import shotMobile from "@/assets/platform/shot-mobile.webp.asset.json";
 import {
   ArrowRight,
   BarChart3,
@@ -136,6 +140,27 @@ const steps = [
   { n: "04", title: "Go live & support", text: "Staff training, launch checklist, monitoring and ongoing updates from one team." },
 ];
 
+const screenshots = [
+  {
+    src: shotHome.url,
+    alt: "Venue homepage with promotional carousel, live open/closed status and order call-to-action",
+    label: "Marketing site",
+    caption: "Promo banners, live opening status and prep-time estimates.",
+  },
+  {
+    src: shotMenu.url,
+    alt: "Menu browsing screen with category sidebar, search, dietary filters and item cards",
+    label: "Menu & ordering",
+    caption: "Category rail, instant search, dietary filters and one-tap add.",
+  },
+  {
+    src: shotDirect.url,
+    alt: "Order-direct marketing page listing loyalty, live tracking and payment benefits",
+    label: "Order-direct funnel",
+    caption: "Conversion page that pulls customers off aggregator apps.",
+  },
+];
+
 function PlatformHome() {
   return (
     <PlatformShell>
@@ -224,6 +249,64 @@ function PlatformHome() {
                 <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{text}</p>
               </article>
             ))}
+          </div>
+        </section>
+
+        <section id="tour" className="border-y border-border bg-secondary/30">
+          <div className="mx-auto max-w-6xl px-4 py-16 lg:py-20">
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-primary">Product tour</p>
+            <h2 className="mt-2 font-display text-4xl font-bold">Screens from a live venue</h2>
+            <p className="mt-3 max-w-2xl text-muted-foreground">
+              Real screens from the production system running every trading day — rebranded to your venue, not a
+              stock mockup.
+            </p>
+            <div className="mt-10 grid gap-6 lg:grid-cols-[1.35fr_0.65fr] lg:items-start">
+              <div className="grid gap-6 sm:grid-cols-2">
+                {screenshots.map((s, i) => (
+                  <figure
+                    key={s.label}
+                    className={`group overflow-hidden rounded-2xl border border-border bg-card shadow-sm transition duration-200 hover:-translate-y-1 hover:border-primary/40 hover:shadow-xl ${i === 0 ? "sm:col-span-2" : ""}`}
+                  >
+                    <div className="relative overflow-hidden border-b border-border/70 bg-secondary/50">
+                      <div className="flex items-center gap-1.5 px-4 py-2.5">
+                        <span className="h-2.5 w-2.5 rounded-full bg-destructive/60" />
+                        <span className="h-2.5 w-2.5 rounded-full bg-primary/40" />
+                        <span className="h-2.5 w-2.5 rounded-full bg-muted-foreground/30" />
+                        <span className="ml-3 truncate rounded-full bg-background/80 px-3 py-0.5 text-[11px] font-medium text-muted-foreground">
+                          yourvenue.co.uk
+                        </span>
+                      </div>
+                      <img
+                        src={s.src}
+                        alt={s.alt}
+                        loading="lazy"
+                        className="w-full origin-top object-cover object-top transition duration-500 group-hover:scale-[1.02]"
+                      />
+                    </div>
+                    <figcaption className="p-5">
+                      <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-primary">{s.label}</p>
+                      <p className="mt-1.5 text-sm text-muted-foreground">{s.caption}</p>
+                    </figcaption>
+                  </figure>
+                ))}
+              </div>
+              <div className="relative mx-auto w-full max-w-[280px]">
+                <div className="pointer-events-none absolute -inset-6 rounded-[3rem] bg-primary/10 blur-2xl" />
+                <div className="relative rounded-[2.25rem] border-[10px] border-foreground/85 bg-foreground/85 shadow-2xl shadow-primary/20">
+                  <div className="overflow-hidden rounded-[1.5rem] bg-card">
+                    <img
+                      src={shotMobile.url}
+                      alt="Mobile ordering app showing category chips, menu items with prices and bottom tab bar"
+                      loading="lazy"
+                      className="w-full object-cover object-top"
+                    />
+                  </div>
+                </div>
+                <p className="mt-5 text-center text-sm text-muted-foreground">
+                  Installable PWA — same system on the customer's phone.
+                </p>
+              </div>
+            </div>
           </div>
         </section>
 
