@@ -1,9 +1,10 @@
 import "./lib/error-capture";
 
-import { consumeLastCapturedError, isClientAbort } from "./lib/error-capture";
+import { consumeLastCapturedError } from "./lib/error-capture";
 import { renderErrorPage } from "./lib/error-page";
 import { isPrivatePath, PRIVATE_CACHE_HEADERS } from "./lib/private-cache";
 import { canCachePublicDocument, PUBLIC_DOCUMENT_CACHE_HEADERS } from "./lib/public-cache";
+import { isRequestCancellation } from "./lib/request-cancellation";
 
 type ServerEntry = {
   fetch: (request: Request, env: unknown, ctx: unknown) => Promise<Response> | Response;
@@ -100,7 +101,9 @@ async function normalizeCatastrophicSsrResponse(response: Response): Promise<Res
   const body = await response.clone().text();
   if (!isH3SwallowedErrorBody(body)) return response;
 
-  console.error(consumeLastCapturedError() ?? new Error(`h3 swallowed SSR error: ${body}`));
+  const captured = consumeLastCapturedError();
+  if (isRequestCancellation(captured)) return new Response(null, { status: 499 });
+  console.error(captured ?? new Error(`h3 swallowed SSR error: ${body}`));
   return new Response(renderErrorPage(), {
     status: 500,
     headers: { "content-type": "text/html; charset=utf-8" },
@@ -119,12 +122,16 @@ export function isH3SwallowedErrorBody(body: string): boolean {
 export default {
   async fetch(request: Request, env: unknown, ctx: unknown) {
     try {
+      if (request.signal.aborted) return new Response(null, { status: 499 });
       const handler = await getServerEntry();
       const response = await handler.fetch(request, env, ctx);
+      if (request.signal.aborted) return new Response(null, { status: 499 });
       return withProductionHeaders(request, await normalizeCatastrophicSsrResponse(response));
     } catch (error) {
       // The client went away mid-response — nothing to render, nothing to report.
-      if (isClientAbort(error)) return new Response(null, { status: 499 });
+      if (request.signal.aborted || isRequestCancellation(error)) {
+        return new Response(null, { status: 499 });
+      }
       console.error(error);
       return withProductionHeaders(
         request,
