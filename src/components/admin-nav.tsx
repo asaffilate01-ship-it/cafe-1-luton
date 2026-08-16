@@ -56,6 +56,7 @@ type NavPath =
   | "/admin/settings"
   | "/admin/accounts"
   | "/admin/users"
+  | "/landlord"
   | "/kds"
   | "/driver";
 
@@ -110,6 +111,7 @@ const GROUPS: Array<{ label: string; items: Item[] }> = [
       { to: "/admin/settings", label: "Settings", icon: Settings },
       { to: "/admin/security", label: "Security & alerts", icon: ShieldCheck, need: "admin" },
       { to: "/admin/locations", label: "Sites & legal entities", icon: Building2, need: "admin" },
+      { to: "/landlord", label: "Landlord & tenants", icon: Building2, need: "admin" },
       { to: "/admin/users", label: "Users & roles", icon: UserCog, need: "admin" },
     ],
   },
