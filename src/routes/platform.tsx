@@ -229,9 +229,9 @@ function PlatformContent() {
               {t.how.steps.map(([title, text], i) => (
                 <div
                   key={title}
-                  className="relative rounded-2xl border border-border bg-card p-6 shadow-sm transition hover:-translate-y-1 hover:border-primary/40 hover:shadow-lg"
+                  className="card-3d card-3d-hover p-6"
                 >
-                  <span className="grid h-11 w-11 place-items-center rounded-full bg-primary text-sm font-bold text-primary-foreground shadow-md shadow-primary/25">
+                  <span className="icon-3d h-11 w-11 text-sm font-bold">
                     {stepNumbers[i]}
                   </span>
                   <h3 className="mt-4 font-display text-lg font-bold">{title}</h3>
