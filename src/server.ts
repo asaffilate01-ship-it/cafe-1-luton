@@ -26,7 +26,9 @@ export function isPreviewHost(hostname: string): boolean {
 
 function permissionsPolicy(pathname: string): string {
   const geolocation = /^\/driver(?:\/|$)/.test(pathname) ? "geolocation=(self)" : "geolocation=()";
-  const payment = /^(?:\/checkout(?:\/|$)|\/pay(?:\/|$))/.test(pathname)
+  const payment = /^(?:\/checkout(?:\/|$)|\/pay(?:\/|$)|\/google-pay-test(?:\/|$)|\/google-pay-review(?:\/|$))/.test(
+    pathname,
+  )
     ? "payment=(self)"
     : "payment=()";
   return ["camera=()", geolocation, "microphone=()", payment, "usb=()"].join(", ");
