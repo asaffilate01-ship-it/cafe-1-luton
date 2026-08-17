@@ -748,6 +748,22 @@ export const syncSumupPos = createServerFn({ method: "POST" })
         tabAccountId = account?.id ?? null;
       }
 
+      // A settled SumUp open order already has a kitchen ticket; mark that one
+      // paid rather than sending the same food through a second time.
+      const { claimSettledOpenOrder } = await import("./sumup-open-orders.server");
+      const claimed = await claimSettledOpenOrder(supabaseAdmin, {
+        totalCents,
+        name: tab?.kind === "open" ? tab.name : null,
+        paymentMethod,
+        saleKey,
+        transactionId: primary.id,
+        reference: primary.transaction_code ?? null,
+      });
+      if (claimed) {
+        skipped += paymentParts.length;
+        continue;
+      }
+
       const { data: inserted, error: insErr } = await supabaseAdmin
         .from("orders")
         .insert({
@@ -876,5 +892,22 @@ export const syncSumupPos = createServerFn({ method: "POST" })
       }
     }
 
-    return { imported, skipped, voided, error: null };
+    // Unpaid POS tabs ("open orders") never appear in the transaction history,
+    // so they are pulled separately and pushed to the kitchen straight away.
+    let openImported = 0;
+    try {
+      const { importSumupOpenOrders } = await import("./sumup-open-orders.server");
+      const openResult = await importSumupOpenOrders({
+        key,
+        merchantCode: items.map((t) => merchantCode(t)).find(Boolean) ?? null,
+        supabaseAdmin,
+        menuByNameIndex,
+      });
+      openImported = openResult.imported;
+      imported += openResult.imported;
+    } catch (e) {
+      console.error("[pos-sync] open orders failed", e);
+    }
+
+    return { imported, skipped, voided, openImported, error: null };
   });
