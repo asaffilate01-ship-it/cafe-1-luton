@@ -348,7 +348,7 @@ function PlatformContent() {
                   </a>
                 </div>
               </div>
-              <div className="rounded-2xl border border-border bg-card p-6 shadow-sm">
+              <div className="card-3d card-3d-hover p-6">
                 <h3 className="font-display text-xl font-bold">{t.contact.cardHeading}</h3>
                 <p className="mt-2 text-sm text-muted-foreground">{t.contact.cardLead}</p>
                 <ul className="mt-4 space-y-3 text-sm text-muted-foreground">
@@ -356,7 +356,7 @@ function PlatformContent() {
                     const Ico = contactIcons[i] ?? Receipt;
                     return (
                       <li key={label} className="flex items-center gap-3">
-                        <span className="grid h-8 w-8 shrink-0 place-items-center rounded-xl border border-primary/15 bg-primary/10 text-primary">
+                        <span className="icon-3d h-8 w-8">
                           <Ico className="h-4 w-4" strokeWidth={1.9} />
                         </span>
                         {label}
