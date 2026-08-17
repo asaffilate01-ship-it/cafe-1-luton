@@ -36,6 +36,7 @@ import {
   Shuffle,
   Pencil,
   X,
+  Clock,
 } from "lucide-react";
 import { ManualOrderDialog } from "@/components/manual-order-dialog";
 import { EditOrderDialog } from "@/components/edit-order-dialog";
