@@ -253,7 +253,7 @@ function PlatformContent() {
               return (
                 <div
                   key={p.name}
-                  className={`relative flex flex-col rounded-2xl border bg-card p-6 transition hover:-translate-y-1 hover:shadow-lg ${featured ? "border-primary shadow-lg shadow-primary/10 ring-2 ring-primary/20 lg:-mt-2 lg:pb-8" : "border-border shadow-sm"}`}
+                  className={`relative flex flex-col card-3d card-3d-hover p-6 ${featured ? "border-primary shadow-lg shadow-primary/10 ring-2 ring-primary/20 lg:-mt-2 lg:pb-8" : ""}`}
                 >
                   {featured ? (
                     <span className="inline-flex rounded-full bg-primary px-3 py-1 text-xs font-semibold text-primary-foreground">
@@ -269,7 +269,7 @@ function PlatformContent() {
                   <ul className="mt-5 flex-1 space-y-2.5 text-sm">
                     {p.items.map((item) => (
                       <li key={item} className="flex items-start gap-2.5">
-                        <span className="mt-0.5 grid h-5 w-5 shrink-0 place-items-center rounded-full bg-primary/10 text-primary">
+                        <span className="icon-3d-soft h-5 w-5 shrink-0 text-[10px]">
                           <Check className="h-3 w-3" strokeWidth={3} />
                         </span>
                         <span className="text-muted-foreground">{item}</span>
