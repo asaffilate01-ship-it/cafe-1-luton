@@ -135,7 +135,7 @@ function PlatformContent() {
             </div>
             <dl className="mt-14 grid gap-4 sm:grid-cols-3">
               {t.hero.stats.map(([k, v]) => (
-                <div key={v} className="rounded-2xl border border-border bg-card p-5 shadow-sm transition hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-md">
+                <div key={v} className="card-3d card-3d-hover p-5">
                   <dt className="font-display text-3xl font-bold text-primary">{k}</dt>
                   <dd className="mt-1 text-sm text-muted-foreground">{v}</dd>
                 </div>
@@ -154,10 +154,10 @@ function PlatformContent() {
               return (
                 <article
                   key={title}
-                  className="group relative overflow-hidden rounded-2xl border border-border bg-card p-6 shadow-sm transition duration-200 hover:-translate-y-1 hover:border-primary/40 hover:shadow-lg"
+                  className="group relative card-3d card-3d-hover p-6"
                 >
                   <span className="pointer-events-none absolute -right-10 -top-10 h-24 w-24 rounded-full bg-primary/5 opacity-0 transition group-hover:opacity-100" />
-                  <span className="grid h-12 w-12 place-items-center rounded-2xl border border-primary/15 bg-primary/10 text-primary shadow-sm transition group-hover:bg-primary group-hover:text-primary-foreground">
+                  <span className="icon-3d h-12 w-12">
                     <Icon className="h-5 w-5" strokeWidth={1.9} />
                   </span>
                   <h3 className="mt-4 font-display text-xl font-bold">{title}</h3>
@@ -178,7 +178,7 @@ function PlatformContent() {
                 {t.tour.shots.map(([label, caption, alt], i) => (
                   <figure
                     key={label}
-                    className={`group overflow-hidden rounded-2xl border border-border bg-card shadow-sm transition duration-200 hover:-translate-y-1 hover:border-primary/40 hover:shadow-xl ${i === 0 ? "sm:col-span-2" : ""}`}
+                    className={`group card-3d card-3d-hover overflow-hidden ${i === 0 ? "sm:col-span-2" : ""}`}
                   >
                     <div className="relative overflow-hidden border-b border-border/70 bg-secondary/50">
                       <div className="flex items-center gap-1.5 px-4 py-2.5">
@@ -229,9 +229,9 @@ function PlatformContent() {
               {t.how.steps.map(([title, text], i) => (
                 <div
                   key={title}
-                  className="relative rounded-2xl border border-border bg-card p-6 shadow-sm transition hover:-translate-y-1 hover:border-primary/40 hover:shadow-lg"
+                  className="card-3d card-3d-hover p-6"
                 >
-                  <span className="grid h-11 w-11 place-items-center rounded-full bg-primary text-sm font-bold text-primary-foreground shadow-md shadow-primary/25">
+                  <span className="icon-3d h-11 w-11 text-sm font-bold">
                     {stepNumbers[i]}
                   </span>
                   <h3 className="mt-4 font-display text-lg font-bold">{title}</h3>
@@ -253,7 +253,7 @@ function PlatformContent() {
               return (
                 <div
                   key={p.name}
-                  className={`relative flex flex-col rounded-2xl border bg-card p-6 transition hover:-translate-y-1 hover:shadow-lg ${featured ? "border-primary shadow-lg shadow-primary/10 ring-2 ring-primary/20 lg:-mt-2 lg:pb-8" : "border-border shadow-sm"}`}
+                  className={`relative flex flex-col card-3d card-3d-hover p-6 ${featured ? "border-primary shadow-lg shadow-primary/10 ring-2 ring-primary/20 lg:-mt-2 lg:pb-8" : ""}`}
                 >
                   {featured ? (
                     <span className="inline-flex rounded-full bg-primary px-3 py-1 text-xs font-semibold text-primary-foreground">
@@ -269,7 +269,7 @@ function PlatformContent() {
                   <ul className="mt-5 flex-1 space-y-2.5 text-sm">
                     {p.items.map((item) => (
                       <li key={item} className="flex items-start gap-2.5">
-                        <span className="mt-0.5 grid h-5 w-5 shrink-0 place-items-center rounded-full bg-primary/10 text-primary">
+                        <span className="icon-3d-soft h-5 w-5 shrink-0 text-[10px]">
                           <Check className="h-3 w-3" strokeWidth={3} />
                         </span>
                         <span className="text-muted-foreground">{item}</span>
@@ -299,9 +299,9 @@ function PlatformContent() {
                 return (
                   <article
                     key={title}
-                    className="group rounded-2xl border border-border bg-card p-6 shadow-sm transition hover:-translate-y-1 hover:border-primary/40 hover:shadow-lg"
+                    className="group card-3d card-3d-hover p-6"
                   >
-                    <span className="grid h-12 w-12 place-items-center rounded-2xl border border-primary/15 bg-primary/10 text-primary transition group-hover:bg-primary group-hover:text-primary-foreground">
+                    <span className="icon-3d h-12 w-12">
                       <Icon className="h-5 w-5" strokeWidth={1.9} />
                     </span>
                     <h3 className="mt-4 font-display text-lg font-bold">{title}</h3>
@@ -348,7 +348,7 @@ function PlatformContent() {
                   </a>
                 </div>
               </div>
-              <div className="rounded-2xl border border-border bg-card p-6 shadow-sm">
+              <div className="card-3d card-3d-hover p-6">
                 <h3 className="font-display text-xl font-bold">{t.contact.cardHeading}</h3>
                 <p className="mt-2 text-sm text-muted-foreground">{t.contact.cardLead}</p>
                 <ul className="mt-4 space-y-3 text-sm text-muted-foreground">
@@ -356,7 +356,7 @@ function PlatformContent() {
                     const Ico = contactIcons[i] ?? Receipt;
                     return (
                       <li key={label} className="flex items-center gap-3">
-                        <span className="grid h-8 w-8 shrink-0 place-items-center rounded-xl border border-primary/15 bg-primary/10 text-primary">
+                        <span className="icon-3d h-8 w-8">
                           <Ico className="h-4 w-4" strokeWidth={1.9} />
                         </span>
                         {label}
