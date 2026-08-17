@@ -5,7 +5,7 @@ import { signOutAndRedirect } from "@/lib/sign-out";
 import { useEffect, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useServerFn } from "@tanstack/react-start";
-import { updateOrderStatus, setOrderFulfilment, setOrderChannel } from "@/lib/orders.functions";
+import { updateOrderStatus, setOrderFulfilment, setOrderChannel, setOrderPreparedBy } from "@/lib/orders.functions";
 import { toast } from "sonner";
 import { useSession, useRoles } from "@/hooks/use-auth";
 import { useAlertOnIncrease, useNotificationPermission, playChime } from "@/hooks/use-order-alerts";
@@ -89,6 +89,7 @@ type Order = {
   postcode: string | null;
   delivery_notes: string | null;
   pos_terminal: string | null;
+  prepared_by: string | null;
   jury_room: string | null;
   court_location: string | null;
 };
@@ -360,6 +361,7 @@ function KDS() {
   const update = useServerFn(updateOrderStatus);
   const setFulfil = useServerFn(setOrderFulfilment);
   const setChannel = useServerFn(setOrderChannel);
+  const allocate = useServerFn(setOrderPreparedBy);
   // Which ticket currently has its "move to another area" picker open.
   const [reassignFor, setReassignFor] = useState<string | null>(null);
   /** Per-ticket move state so the card itself shows progress and failures. */
@@ -406,7 +408,7 @@ function KDS() {
   useEffect(() => {
     async function load() {
       const COLUMNS =
-        "id, order_number, status, type, customer_name, created_at, schedule_mode, scheduled_for, table_number, source, payment_method, payment_status, customer_phone, company_name, address_line1, address_line2, city, postcode, delivery_notes, pos_terminal, jury_room, court_location";
+        "id, order_number, status, type, customer_name, created_at, schedule_mode, scheduled_for, table_number, source, payment_method, payment_status, customer_phone, company_name, address_line1, address_line2, city, postcode, delivery_notes, pos_terminal, prepared_by, jury_room, court_location";
       const { data: orders, error: ordersError } = await supabase
         .from("orders")
         .select(COLUMNS)

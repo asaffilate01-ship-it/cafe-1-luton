@@ -878,6 +878,29 @@ export const setOrderChannel = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
+/**
+ * Let a kitchen chef self-allocate an active ticket so the whole kitchen
+ * knows who is preparing it. Stored as short initials (e.g. "KS").
+ */
+export const setOrderPreparedBy = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .validator((d: unknown) =>
+    z
+      .object({
+        order_id: z.string().uuid(),
+        initials: z.string().max(3).nullable(),
+      })
+      .parse(d),
+  )
+  .handler(async ({ data, context }) => {
+    const { error } = await context.supabase.rpc("cafe1_set_prepared_by", {
+      _order_id: data.order_id,
+      _initials: data.initials,
+    });
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
+
 export const markPaidManually = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .validator((d: unknown) =>
