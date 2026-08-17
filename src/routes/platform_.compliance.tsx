@@ -51,7 +51,7 @@ function PlatformCompliance() {
         <h1 className="font-display text-3xl font-bold sm:text-4xl">Compliance &amp; Trust</h1>
         <p className="mt-2 text-sm text-muted-foreground">Last updated: 26 July 2026</p>
         <p className="mt-4 text-muted-foreground">
-          The dishbee is built for hospitality venues that need to protect customer data, prove
+          dishbee is built for hospitality venues that need to protect customer data, prove
           payment security and stay accessible to every guest.
         </p>
         <div className="mt-8 space-y-6 text-sm leading-relaxed text-foreground/90">
