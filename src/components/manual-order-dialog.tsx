@@ -215,13 +215,35 @@ export function ManualOrderDialog({
     if (isMarketplace && !reference.trim()) return toast.error("Enter the order reference");
     if (!items.length) return toast.error("Add at least one item");
 
+    // Staff often type the judge's name and hit send without pressing "Add",
+    // which used to lose the name and the tab. Create it for them.
+    let tabId = accountId;
+    let tabName = accounts.find((a) => a.id === accountId)?.name ?? "";
+    if (paymentMethod === "account" && !tabId && newAccountName.trim().length >= 2) {
+      try {
+        const row = await addAccount({ data: { name: newAccountName.trim() } });
+        tabId = row.id;
+        tabName = row.name;
+        setAccounts((current) =>
+          current.some((a) => a.id === row.id) ? current : [...current, { id: row.id, name: row.name }],
+        );
+        setAccountId(row.id);
+        setNewAccountName("");
+      } catch (cause) {
+        return toast.error(cause instanceof Error ? cause.message : "Could not add the account");
+      }
+    }
+    if (paymentMethod === "account" && !tabId) {
+      return toast.error("Select or add the tab account (judge / advocate name)");
+    }
+
     // A judge often re-orders the same lunch — warn before a second unpaid
     // charge lands on the same tab.
-    if (paymentMethod === "account" && accountId) {
+    if (paymentMethod === "account" && tabId) {
       try {
         const { match } = await findSimilar({
           data: {
-            account_id: accountId,
+            account_id: tabId,
             item_names: items.flatMap((line) => Array(line.qty).fill(line.name) as string[]),
           },
         });
@@ -255,15 +277,13 @@ export function ManualOrderDialog({
           reference: reference.trim() || undefined,
           customer_name:
             customerName.trim() ||
-            (paymentMethod === "account"
-              ? accounts.find((a) => a.id === accountId)?.name
-              : undefined) ||
+            (paymentMethod === "account" ? tabName : undefined) ||
             undefined,
           // "Judges' room" is a dine-in ticket served to a specific room.
           type: type === "dine_in_judges" ? "dine_in" : type,
           total_cents: Math.round((Number(total) || 0) * 100),
           payment_method: paymentMethod,
-          account_id: paymentMethod === "account" && accountId ? accountId : undefined,
+          account_id: paymentMethod === "account" && tabId ? tabId : undefined,
           paid,
           notes: notes.trim() || undefined,
           table_number: table.trim() || undefined,
