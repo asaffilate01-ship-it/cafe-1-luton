@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import { Link } from "@tanstack/react-router";
+import { Home, LayoutGrid, ShieldCheck, Mail } from "lucide-react";
 import dishbeeLogo from "@/assets/dishbee-logo.png.asset.json";
 
 export const DISHBEE_TAGLINE = "Sell. Serve. Grow.";
@@ -8,25 +9,26 @@ export function PlatformShell({ children }: { children: ReactNode }) {
   return (
     <div className="dishbee-theme min-h-screen bg-background text-foreground">
       <PlatformHeader />
-      {children}
+      <div className="pb-[calc(4.5rem+env(safe-area-inset-bottom))] md:pb-0">{children}</div>
       <PlatformFooter />
+      <PlatformTabBar />
     </div>
   );
 }
 
 export function PlatformHeader() {
   return (
-    <header className="sticky top-0 z-40 border-b border-border/70 bg-background/90 backdrop-blur">
-      <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-3">
-        <Link to="/platform" className="flex items-center gap-3">
+    <header className="sticky top-0 z-40 border-b border-border/70 bg-background/90 pt-[env(safe-area-inset-top)] backdrop-blur">
+      <div className="mx-auto grid max-w-6xl grid-cols-[minmax(0,1fr)_auto] items-center gap-4 px-4 py-2.5 md:flex md:justify-between md:py-3">
+        <Link to="/platform" className="flex min-w-0 items-center gap-3">
           <img
             src={dishbeeLogo.url}
             alt="dishbee"
-            width={160}
-            height={64}
-            className="h-9 w-auto"
+            width={240}
+            height={96}
+            className="h-12 w-auto shrink-0 sm:h-14 md:h-16"
           />
-          <span className="hidden text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground sm:inline">
+          <span className="hidden truncate text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground lg:inline">
             {DISHBEE_TAGLINE}
           </span>
         </Link>
@@ -40,12 +42,42 @@ export function PlatformHeader() {
         </nav>
         <a
           href="/platform#contact"
-          className="inline-flex h-10 items-center rounded-full bg-primary px-5 text-sm font-semibold text-primary-foreground"
+          className="inline-flex h-10 shrink-0 items-center rounded-full bg-primary px-4 text-sm font-semibold text-primary-foreground sm:px-5"
         >
           Book a demo
         </a>
       </div>
     </header>
+  );
+}
+
+function PlatformTabBar() {
+  const tabs = [
+    { href: "/platform", label: "Home", Icon: Home },
+    { href: "/platform#services", label: "Services", Icon: LayoutGrid },
+    { href: "/platform/compliance", label: "Trust", Icon: ShieldCheck },
+    { href: "/platform#contact", label: "Contact", Icon: Mail },
+  ];
+  return (
+    <nav
+      aria-label="Platform"
+      className="fixed inset-x-0 bottom-0 z-50 border-t border-border bg-background/95 backdrop-blur md:hidden"
+      style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
+    >
+      <ul className="mx-auto flex max-w-md items-stretch justify-between px-1">
+        {tabs.map(({ href, label, Icon }) => (
+          <li key={label} className="flex-1">
+            <a
+              href={href}
+              className="flex h-16 flex-col items-center justify-center gap-1 text-[11px] font-semibold text-muted-foreground transition active:text-primary"
+            >
+              <Icon className="h-[22px] w-[22px]" />
+              {label}
+            </a>
+          </li>
+        ))}
+      </ul>
+    </nav>
   );
 }
 
