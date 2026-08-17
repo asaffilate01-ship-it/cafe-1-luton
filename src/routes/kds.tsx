@@ -640,20 +640,29 @@ function KDS() {
             playChime();
           }
         }
-        // Status changes from another till/phone apply straight away so every
-        // connected screen shows the same board within a second.
-        if (!dropId && o?.id && liveIds.current.has(o.id) && o.status) {
-          const next = o.status as Order["status"];
-          const stillLive = next === "preparing" || next === "ready" || next === "paid";
-          if (!stillLive && !recall) {
+        // Status changes and chef allocation from another terminal apply straight
+        // away so every connected screen shows the same board within a second.
+        if (!dropId && o?.id && liveIds.current.has(o.id) && (o.status || "prepared_by" in o)) {
+          const next = o.status ? (o.status as Order["status"]) : undefined;
+          const prep = "prepared_by" in o ? ((o as Order).prepared_by ?? null) : undefined;
+          const stillLive = next ? next === "preparing" || next === "ready" || next === "paid" : true;
+          if (next && !stillLive && !recall) {
             liveIds.current.delete(o.id);
             clearedIds.current.set(o.id, Date.now());
             setTickets((prev) => prev.filter((t) => t.id !== o.id));
             return;
           }
           clearedIds.current.delete(o.id);
-          setTickets((prev) => prev.map((t) => (t.id === o.id ? { ...t, status: next } : t)));
-          return;
+          setTickets((prev) =>
+            prev.map((t) => {
+              if (t.id !== o.id) return t;
+              const patch: Partial<Ticket> = {};
+              if (next) patch.status = next;
+              if (prep !== undefined) patch.prepared_by = prep;
+              return { ...t, ...patch };
+            }),
+          );
+          if (next) return;
         }
         scheduleLoad();
       })
