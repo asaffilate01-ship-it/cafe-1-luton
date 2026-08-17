@@ -15,22 +15,22 @@ import {
 export const Route = createFileRoute("/platform_/compliance")({
   head: () => ({
     meta: [
-      { title: "Compliance & Trust — Cafe 1 Platform" },
+      { title: "Compliance & Trust — dishbee" },
       {
         name: "description",
         content:
-          "How the Cafe 1 Platform handles security, privacy, payments, accessibility and regulatory compliance for independent hospitality venues.",
+          "How the dishbee handles security, privacy, payments, accessibility and regulatory compliance for independent hospitality venues.",
       },
-      { property: "og:title", content: "Compliance & Trust — Cafe 1 Platform" },
+      { property: "og:title", content: "Compliance & Trust — dishbee" },
       {
         property: "og:description",
-        content: "Security, privacy, payments, accessibility and compliance information for the Cafe 1 Platform.",
+        content: "Security, privacy, payments, accessibility and compliance information for the dishbee.",
       },
       { property: "og:type", content: "article" },
-      { property: "og:url", content: "https://cafe1platform.co.uk/platform/compliance" },
+      { property: "og:url", content: "https://dishbee.co.uk/platform/compliance" },
       { name: "twitter:card", content: "summary" },
     ],
-    links: [{ rel: "canonical", href: "https://cafe1platform.co.uk/platform/compliance" }],
+    links: [{ rel: "canonical", href: "https://dishbee.co.uk/platform/compliance" }],
   }),
   component: PlatformCompliance,
 });
@@ -51,7 +51,7 @@ function PlatformCompliance() {
         <h1 className="font-display text-3xl font-bold sm:text-4xl">Compliance &amp; Trust</h1>
         <p className="mt-2 text-sm text-muted-foreground">Last updated: 26 July 2026</p>
         <p className="mt-4 text-muted-foreground">
-          The Cafe 1 Platform is built for hospitality venues that need to protect customer data, prove
+          The dishbee is built for hospitality venues that need to protect customer data, prove
           payment security and stay accessible to every guest.
         </p>
         <div className="mt-8 space-y-6 text-sm leading-relaxed text-foreground/90">
