@@ -36,7 +36,6 @@ import {
   Shuffle,
   Pencil,
   X,
-  Clock,
 } from "lucide-react";
 import { ManualOrderDialog } from "@/components/manual-order-dialog";
 import { EditOrderDialog } from "@/components/edit-order-dialog";
@@ -323,24 +322,6 @@ function noteText(o: {
   return parts.join(" · ");
 }
 
-function TimePill({ now }: { now: number }) {
-  const time = new Date(now).toLocaleTimeString("en-GB", {
-    hour: "2-digit",
-    minute: "2-digit",
-    second: "2-digit",
-    hour12: false,
-  });
-  return (
-    <span
-      className="flex items-center gap-1 rounded-full bg-primary-foreground/15 px-2.5 py-1 text-[11px] font-bold tabular-nums"
-      title="Current time"
-    >
-      <Clock className="h-3.5 w-3.5" />
-      <span className="sm:hidden">{time.slice(0, 5)}</span>
-      <span className="hidden sm:inline">{time}</span>
-    </span>
-  );
-}
 
 export const Route = createFileRoute("/kds")({
   head: () => ({
@@ -1190,7 +1171,6 @@ function KDS() {
               <span className="hidden text-sm font-semibold opacity-80 sm:inline">
                 {visibleTickets.length} active
               </span>
-              <TimePill now={now} />
               <span
                 className={`flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-bold ${
                   linkDown ? "bg-red-600 text-white" : "bg-emerald-500 text-black"
@@ -1677,12 +1657,34 @@ function KDS() {
                 <p className="truncate font-display text-lg font-bold leading-none">
                   #{t.order_number}
                 </p>
-                <span
-                  className={`shrink-0 rounded-full px-2 py-0.5 font-mono text-xs font-black tabular-nums ${timerTone}`}
-                  title={`Time in kitchen · target ${Math.ceil(targetSeconds / 60)} minutes`}
-                >
-                  {clock}
-                </span>
+                <div className="flex items-center gap-1.5">
+                  <span
+                    className={`shrink-0 rounded-full px-2 py-0.5 font-mono text-xs font-black tabular-nums ${timerTone}`}
+                    title={`Time in kitchen · target ${Math.ceil(targetSeconds / 60)} minutes`}
+                  >
+                    {clock}
+                  </span>
+                  <span
+                    className="shrink-0 rounded-full bg-primary px-2 py-0.5 font-mono text-[11px] font-black tabular-nums text-white"
+                    title="Current time"
+                  >
+                    <span className="sm:hidden">
+                      {new Date(now).toLocaleTimeString("en-GB", {
+                        hour: "2-digit",
+                        minute: "2-digit",
+                        hour12: false,
+                      })}
+                    </span>
+                    <span className="hidden sm:inline">
+                      {new Date(now).toLocaleTimeString("en-GB", {
+                        hour: "2-digit",
+                        minute: "2-digit",
+                        second: "2-digit",
+                        hour12: false,
+                      })}
+                    </span>
+                  </span>
+                </div>
                 <div className="col-span-2 flex flex-wrap items-center gap-1">
                   {t.payment_method === "account" ||
                   t.payment_status === "on_account" ||
