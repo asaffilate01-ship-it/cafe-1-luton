@@ -1,10 +1,12 @@
 import type { ReactNode } from "react";
 import { Link } from "@tanstack/react-router";
-import { LayoutDashboard } from "lucide-react";
+import dishbeeLogo from "@/assets/dishbee-logo.png.asset.json";
+
+export const DISHBEE_TAGLINE = "Sell. Serve. Grow.";
 
 export function PlatformShell({ children }: { children: ReactNode }) {
   return (
-    <div className="min-h-screen bg-background text-foreground">
+    <div className="dishbee-theme min-h-screen bg-background text-foreground">
       <PlatformHeader />
       {children}
       <PlatformFooter />
@@ -16,11 +18,17 @@ export function PlatformHeader() {
   return (
     <header className="sticky top-0 z-40 border-b border-border/70 bg-background/90 backdrop-blur">
       <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-3">
-        <Link to="/platform" className="flex items-center gap-2 font-display text-lg font-bold">
-          <span className="grid h-8 w-8 place-items-center rounded-lg bg-primary text-primary-foreground">
-            <LayoutDashboard className="h-4 w-4" />
+        <Link to="/platform" className="flex items-center gap-3">
+          <img
+            src={dishbeeLogo.url}
+            alt="dishbee"
+            width={160}
+            height={64}
+            className="h-9 w-auto"
+          />
+          <span className="hidden text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground sm:inline">
+            {DISHBEE_TAGLINE}
           </span>
-          Cafe 1 Platform
         </Link>
         <nav className="hidden items-center gap-6 text-sm font-medium text-muted-foreground md:flex">
           <a href="/platform#services" className="hover:text-foreground">Services</a>
@@ -45,7 +53,10 @@ export function PlatformFooter() {
   return (
     <footer className="border-t border-border bg-background">
       <div className="mx-auto flex max-w-6xl flex-col gap-3 px-4 py-8 text-sm text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
-        <p>© {new Date().getFullYear()} Cafe 1 Platform. All rights reserved.</p>
+        <div className="flex items-center gap-3">
+          <img src={dishbeeLogo.url} alt="dishbee" width={140} height={56} className="h-7 w-auto" />
+          <p>© {new Date().getFullYear()} dishbee — {DISHBEE_TAGLINE}</p>
+        </div>
         <div className="flex flex-wrap gap-5">
           <Link to="/platform/compliance" className="hover:text-foreground">Compliance</Link>
           <Link to="/privacy" className="hover:text-foreground">Privacy</Link>
