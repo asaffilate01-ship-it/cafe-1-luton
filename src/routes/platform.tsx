@@ -173,15 +173,15 @@ function PlatformHome() {
           <div className="mx-auto max-w-6xl px-4 py-16 lg:py-24">
             <div className="grid items-center gap-12 lg:grid-cols-[1.05fr_0.95fr]">
               <div>
-            <p className="inline-flex items-center gap-2 rounded-full border border-primary/25 bg-primary/10 px-4 py-1.5 text-xs font-semibold uppercase tracking-[0.18em] text-primary">
-              <Sparkles className="h-3.5 w-3.5" /> White-label ordering for independents
+            <p className="inline-flex items-center gap-2 rounded-full border border-primary/40 bg-primary/20 px-4 py-1.5 text-xs font-semibold uppercase tracking-[0.18em] text-foreground">
+              <Sparkles className="h-3.5 w-3.5" /> Sell. Serve. Grow.
             </p>
             <h1 className="mt-4 max-w-4xl font-display text-4xl font-bold leading-[1.05] sm:text-5xl lg:text-[3.4rem]">
               Everything a food business needs to sell direct — website, ordering, kitchen, till and books.
             </h1>
             <p className="mt-6 max-w-2xl text-lg text-muted-foreground">
-              We build and run the complete system behind Café 1 St Albans, and we clone it for your venue under your
-              own brand and domain. No aggregator commission, no six suppliers to manage.
+              dishbee builds and runs the complete system behind Café 1 St Albans, and clones it for your venue under
+              your own brand and domain. No aggregator commission, no six suppliers to manage.
             </p>
             <div className="mt-8 flex flex-wrap gap-3">
               <a
@@ -441,12 +441,12 @@ function PlatformHome() {
               <div>
                 <h2 className="font-display text-4xl font-bold">Let's get your venue selling direct</h2>
                 <p className="mt-3 max-w-xl text-muted-foreground">
-                  Tell us about your site and we'll show you the live system running at Café 1 St Albans, then scope
+                  Tell us about your site and we'll show you the live dishbee system running at Café 1 St Albans, then scope
                   your build.
                 </p>
                 <div className="mt-6 flex flex-wrap gap-3">
                   <a
-                    href="mailto:hello@cafe1stalbans.co.uk?subject=Platform%20demo%20request"
+                    href="mailto:hello@dishbee.co.uk?subject=dishbee%20demo%20request"
                     className="inline-flex h-12 items-center gap-2 rounded-full bg-primary px-6 text-sm font-semibold text-primary-foreground"
                   >
                     <Mail className="h-4 w-4" /> Email us
