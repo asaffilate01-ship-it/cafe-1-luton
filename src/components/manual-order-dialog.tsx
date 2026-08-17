@@ -1,7 +1,9 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
+import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { Plus, Trash2, X } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 import { createManualOrder, type ManualChannel } from "@/lib/manual-order.functions";
 import { listAccounts, quickAddAccount } from "@/lib/accounts.functions";
 import { findSimilarAccountOrder } from "@/lib/judge-tab.functions";
@@ -9,8 +11,10 @@ import { askConfirm } from "@/lib/confirm";
 import { money } from "@/lib/format";
 import { JURY_DELIVERY_ROOMS } from "@/components/order-setup-gate";
 
-type Line = { name: string; qty: number; notes: string };
-const emptyLine = (): Line => ({ name: "", qty: 1, notes: "" });
+type Line = { name: string; qty: number; notes: string; price_cents: number | null };
+const emptyLine = (): Line => ({ name: "", qty: 1, notes: "", price_cents: null });
+
+type MenuChoice = { id: string; name: string; price_cents: number; category: string | null };
 
 const CHANNELS: { value: ManualChannel; label: string; hint: string }[] = [
   { value: "deliveroo", label: "Deliveroo", hint: "Key in what the Deliveroo tablet shows" },
