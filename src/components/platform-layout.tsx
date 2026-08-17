@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 import { Link, useRouterState } from "@tanstack/react-router";
 import { Home, LayoutGrid, ShieldCheck, Mail, Languages } from "lucide-react";
-import dishbeeLogo from "@/assets/dishbee-logo-slogan-transparent.png.asset.json";
+import dishbeeLogo from "@/assets/dishbee-logo.png.asset.json";
 import { PlatformI18nProvider, usePlatformI18n } from "@/components/platform-i18n-provider";
 
 
@@ -39,17 +39,14 @@ export function PlatformHeader() {
   return (
     <header className="sticky top-0 z-40 border-b border-border/70 bg-background/90 pt-[env(safe-area-inset-top)] backdrop-blur">
       <div className="mx-auto grid max-w-6xl grid-cols-[minmax(0,1fr)_auto] items-center gap-3 px-4 py-2.5 md:flex md:justify-between md:py-3">
-        <Link to="/platform" className="flex min-w-0 items-center gap-3">
+        <Link to="/platform" className="flex min-w-0 items-center">
           <img
             src={dishbeeLogo.url}
-            alt="dishbee — Sell. Serve. Grow."
-            width={240}
-            height={100}
-            className="h-12 w-auto shrink-0 sm:h-14 md:h-16"
+            alt="dishbee"
+            width={180}
+            height={64}
+            className="h-10 w-auto shrink-0 sm:h-11 md:h-12"
           />
-          <span className="hidden truncate text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground lg:inline">
-            {t.hero.badge}
-          </span>
         </Link>
         <nav className="hidden items-center gap-6 text-sm font-medium text-muted-foreground md:flex">
           <a href="/platform#services" className="hover:text-foreground">{t.nav.services}</a>
@@ -124,12 +121,12 @@ export function PlatformFooter() {
         <div className="flex items-center gap-3">
           <img
             src={dishbeeLogo.url}
-            alt="dishbee — Sell. Serve. Grow."
-            width={140}
-            height={58}
-            className="h-8 w-auto"
+            alt="dishbee"
+            width={112}
+            height={40}
+            className="h-7 w-auto"
           />
-          <p>© {new Date().getFullYear()} dishbee — {t.hero.badge}</p>
+          <p>© {new Date().getFullYear()} dishbee</p>
         </div>
         <div className="flex flex-wrap gap-5">
           <Link to="/platform/compliance" className="hover:text-foreground">{t.nav.compliance}</Link>
