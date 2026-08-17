@@ -114,8 +114,8 @@ function PlatformCompliance() {
 
           <Section heading="Legal documents">
             <p>
-              The live venue site, Café 1 St Albans, publishes its own legal pages. We recommend every tenant
-              adapts and hosts equivalent documents for their own business:
+              Each live venue publishes its own legal pages. We recommend every tenant adapts and hosts equivalent
+              documents for their own business:
             </p>
             <ul className="mt-2 list-disc space-y-1 pl-5">
               <li>
@@ -163,9 +163,8 @@ function PlatformCompliance() {
         <div className="mt-12 rounded-2xl border border-border bg-secondary/40 p-5 text-sm">
           <p className="font-semibold">Contact us</p>
           <p className="mt-1 text-muted-foreground">
-            Cafe 1, St Albans Crown Court, AL1 3JU ·{" "}
-            <a className="text-primary underline underline-offset-2" href="mailto:info@cafe1stalbans.co.uk">
-              info@cafe1stalbans.co.uk
+            <a className="text-primary underline underline-offset-2" href="mailto:hello@dishbee.co.uk">
+              hello@dishbee.co.uk
             </a>
           </p>
         </div>
