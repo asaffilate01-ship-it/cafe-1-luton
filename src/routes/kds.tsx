@@ -1171,7 +1171,6 @@ function KDS() {
               <span className="hidden text-sm font-semibold opacity-80 sm:inline">
                 {visibleTickets.length} active
               </span>
-              
               <span
                 className={`flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-bold ${
                   linkDown ? "bg-red-600 text-white" : "bg-emerald-500 text-black"
