@@ -4,7 +4,6 @@ import { Home, LayoutGrid, ShieldCheck, Mail, Languages } from "lucide-react";
 import dishbeeLogo from "@/assets/dishbee-logo.png.asset.json";
 import { PlatformI18nProvider, usePlatformI18n } from "@/components/platform-i18n-provider";
 
-export const DISHBEE_TAGLINE = "Sell. Serve. Grow.";
 
 export function PlatformShell({ children }: { children: ReactNode }) {
   return (
@@ -49,7 +48,7 @@ export function PlatformHeader() {
             className="h-12 w-auto shrink-0 sm:h-14 md:h-16"
           />
           <span className="hidden truncate text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground lg:inline">
-            {DISHBEE_TAGLINE}
+            {t.hero.badge}
           </span>
         </Link>
         <nav className="hidden items-center gap-6 text-sm font-medium text-muted-foreground md:flex">
