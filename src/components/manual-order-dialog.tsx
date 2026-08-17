@@ -77,6 +77,56 @@ export function ManualOrderDialog({
   const [notes, setNotes] = useState("");
   const [lines, setLines] = useState<Line[]>([emptyLine()]);
   const [saving, setSaving] = useState(false);
+  /** Staff can still type a free-text line, so the total is only auto-filled
+   *  while every line was picked from the menu. */
+  const [totalTouched, setTotalTouched] = useState(false);
+
+  const { data: menu = [] } = useQuery({
+    queryKey: ["manual-order-menu"],
+    enabled: open,
+    staleTime: 5 * 60_000,
+    queryFn: async (): Promise<MenuChoice[]> => {
+      const [{ data: items }, { data: cats }] = await Promise.all([
+        supabase
+          .from("menu_items")
+          .select("id, name, price_cents, category_id, active, sort_order")
+          .eq("active", true)
+          .order("sort_order"),
+        supabase.from("menu_categories").select("id, name"),
+      ]);
+      const catName = new Map((cats ?? []).map((c) => [c.id, c.name as string]));
+      return (items ?? []).map((i) => ({
+        id: i.id as string,
+        name: i.name as string,
+        price_cents: i.price_cents as number,
+        category: i.category_id ? (catName.get(i.category_id as string) ?? null) : null,
+      }));
+    },
+  });
+
+  const menuGroups = useMemo(() => {
+    const groups = new Map<string, MenuChoice[]>();
+    for (const item of menu) {
+      const key = item.category ?? "Other items";
+      groups.set(key, [...(groups.get(key) ?? []), item]);
+    }
+    return [...groups.entries()];
+  }, [menu]);
+
+  const pricedTotal = useMemo(
+    () =>
+      lines
+        .filter((l) => l.name.trim())
+        .reduce((sum, l) => sum + (l.price_cents ?? 0) * Math.max(1, Number(l.qty) || 1), 0),
+    [lines],
+  );
+  const allPriced = lines.filter((l) => l.name.trim()).every((l) => l.price_cents !== null);
+
+  // Keep the money box in step with the picked menu lines until staff edit it.
+  useEffect(() => {
+    if (totalTouched || !allPriced || pricedTotal <= 0) return;
+    setTotal((pricedTotal / 100).toFixed(2));
+  }, [pricedTotal, allPriced, totalTouched]);
 
   useEffect(() => {
     if (!open || paymentMethod !== "account" || accounts.length) return;
@@ -148,6 +198,7 @@ export function ManualOrderDialog({
     setPostcode("");
     setPhone("");
     setTotal("");
+    setTotalTouched(false);
     setNotes("");
     setLines([emptyLine()]);
   }
