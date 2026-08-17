@@ -5,7 +5,7 @@ import { signOutAndRedirect } from "@/lib/sign-out";
 import { useEffect, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useServerFn } from "@tanstack/react-start";
-import { updateOrderStatus, setOrderFulfilment, setOrderChannel } from "@/lib/orders.functions";
+import { updateOrderStatus, setOrderFulfilment, setOrderChannel, setOrderPreparedBy } from "@/lib/orders.functions";
 import { toast } from "sonner";
 import { useSession, useRoles } from "@/hooks/use-auth";
 import { useAlertOnIncrease, useNotificationPermission, playChime } from "@/hooks/use-order-alerts";
@@ -89,6 +89,7 @@ type Order = {
   postcode: string | null;
   delivery_notes: string | null;
   pos_terminal: string | null;
+  prepared_by: string | null;
   jury_room: string | null;
   court_location: string | null;
 };
@@ -360,6 +361,7 @@ function KDS() {
   const update = useServerFn(updateOrderStatus);
   const setFulfil = useServerFn(setOrderFulfilment);
   const setChannel = useServerFn(setOrderChannel);
+  const allocate = useServerFn(setOrderPreparedBy);
   // Which ticket currently has its "move to another area" picker open.
   const [reassignFor, setReassignFor] = useState<string | null>(null);
   /** Per-ticket move state so the card itself shows progress and failures. */
@@ -406,7 +408,7 @@ function KDS() {
   useEffect(() => {
     async function load() {
       const COLUMNS =
-        "id, order_number, status, type, customer_name, created_at, schedule_mode, scheduled_for, table_number, source, payment_method, payment_status, customer_phone, company_name, address_line1, address_line2, city, postcode, delivery_notes, pos_terminal, jury_room, court_location";
+        "id, order_number, status, type, customer_name, created_at, schedule_mode, scheduled_for, table_number, source, payment_method, payment_status, customer_phone, company_name, address_line1, address_line2, city, postcode, delivery_notes, pos_terminal, prepared_by, jury_room, court_location";
       const { data: orders, error: ordersError } = await supabase
         .from("orders")
         .select(COLUMNS)
@@ -638,20 +640,29 @@ function KDS() {
             playChime();
           }
         }
-        // Status changes from another till/phone apply straight away so every
-        // connected screen shows the same board within a second.
-        if (!dropId && o?.id && liveIds.current.has(o.id) && o.status) {
-          const next = o.status as Order["status"];
-          const stillLive = next === "preparing" || next === "ready" || next === "paid";
-          if (!stillLive && !recall) {
+        // Status changes and chef allocation from another terminal apply straight
+        // away so every connected screen shows the same board within a second.
+        if (!dropId && o?.id && liveIds.current.has(o.id) && (o.status || "prepared_by" in o)) {
+          const next = o.status ? (o.status as Order["status"]) : undefined;
+          const prep = "prepared_by" in o ? ((o as Order).prepared_by ?? null) : undefined;
+          const stillLive = next ? next === "preparing" || next === "ready" || next === "paid" : true;
+          if (next && !stillLive && !recall) {
             liveIds.current.delete(o.id);
             clearedIds.current.set(o.id, Date.now());
             setTickets((prev) => prev.filter((t) => t.id !== o.id));
             return;
           }
           clearedIds.current.delete(o.id);
-          setTickets((prev) => prev.map((t) => (t.id === o.id ? { ...t, status: next } : t)));
-          return;
+          setTickets((prev) =>
+            prev.map((t) => {
+              if (t.id !== o.id) return t;
+              const patch: Partial<Ticket> = {};
+              if (next) patch.status = next;
+              if (prep !== undefined) patch.prepared_by = prep;
+              return { ...t, ...patch };
+            }),
+          );
+          if (next) return;
         }
         scheduleLoad();
       })
@@ -759,6 +770,19 @@ function KDS() {
       setTickets(previous);
       clearedIds.current.delete(id);
       toast.error(e instanceof Error ? e.message : "Failed");
+    }
+  }
+
+  async function assignPrep(id: string, initials: string) {
+    const previous = tickets;
+    setTickets((prev) =>
+      prev.map((t) => (t.id === id ? { ...t, prepared_by: initials || null } : t)),
+    );
+    try {
+      await allocate({ data: { order_id: id, initials: initials || null } });
+    } catch (e) {
+      setTickets(previous);
+      toast.error(e instanceof Error ? e.message : "Could not claim ticket");
     }
   }
 
@@ -1796,6 +1820,30 @@ function KDS() {
                   </li>
                 ))}
               </ul>
+              {/* Chef self-allocation: KS / SD / FA — compact, prominent, inside the card */}
+              <div className="mt-2 flex items-center gap-1.5">
+                <span className="text-[10px] font-bold uppercase tracking-wide text-muted-foreground">
+                  Prep by
+                </span>
+                {["KS", "SD", "FA"].map((initials) => {
+                  const active = t.prepared_by === initials;
+                  return (
+                    <button
+                      key={initials}
+                      type="button"
+                      onClick={() => assignPrep(t.id, active ? "" : initials)}
+                      className={`h-9 flex-1 rounded-full text-xs font-black uppercase tracking-wide active:scale-[0.98] sm:h-8 ${
+                        active
+                          ? "bg-primary text-primary-foreground shadow-sm"
+                          : "border-2 border-slate-300 bg-white text-slate-700 hover:border-primary hover:text-primary"
+                      }`}
+                      title={active ? "Tap to clear" : `I am preparing this order (${initials})`}
+                    >
+                      {initials}
+                    </button>
+                  );
+                })}
+              </div>
               <div className="mt-2 flex flex-wrap gap-1.5">
                 {t.status === "ready" && t.type === "delivery" && (
                   <p className="w-full rounded-lg bg-slate-900 px-2 py-1 text-center text-[11px] font-black uppercase tracking-widest text-white">

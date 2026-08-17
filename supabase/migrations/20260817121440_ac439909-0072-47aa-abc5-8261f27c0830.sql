@@ -1,0 +1,1 @@
+REVOKE EXECUTE ON FUNCTION public.cafe1_set_prepared_by(uuid, text) FROM anon;

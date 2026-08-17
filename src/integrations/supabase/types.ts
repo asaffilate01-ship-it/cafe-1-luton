@@ -1547,6 +1547,7 @@ export type Database = {
           points_redeemed: number
           pos_terminal: string | null
           postcode: string | null
+          prepared_by: string | null
           promo_code: string | null
           promo_discount_cents: number
           ready_at: string | null
@@ -1615,6 +1616,7 @@ export type Database = {
           points_redeemed?: number
           pos_terminal?: string | null
           postcode?: string | null
+          prepared_by?: string | null
           promo_code?: string | null
           promo_discount_cents?: number
           ready_at?: string | null
@@ -1683,6 +1685,7 @@ export type Database = {
           points_redeemed?: number
           pos_terminal?: string | null
           postcode?: string | null
+          prepared_by?: string | null
           promo_code?: string | null
           promo_discount_cents?: number
           ready_at?: string | null
@@ -3260,6 +3263,7 @@ export type Database = {
           points_redeemed: number
           pos_terminal: string | null
           postcode: string | null
+          prepared_by: string | null
           promo_code: string | null
           promo_discount_cents: number
           ready_at: string | null
@@ -3431,6 +3435,7 @@ export type Database = {
           points_redeemed: number
           pos_terminal: string | null
           postcode: string | null
+          prepared_by: string | null
           promo_code: string | null
           promo_discount_cents: number
           ready_at: string | null
@@ -3522,6 +3527,10 @@ export type Database = {
         }
         Returns: Json
       }
+      cafe1_set_prepared_by: {
+        Args: { _initials: string; _order_id: string }
+        Returns: undefined
+      }
       cafe1_set_tenant_status: {
         Args: { _status: string; _tenant_id: string }
         Returns: Json
@@ -3601,6 +3610,7 @@ export type Database = {
           points_redeemed: number
           pos_terminal: string | null
           postcode: string | null
+          prepared_by: string | null
           promo_code: string | null
           promo_discount_cents: number
           ready_at: string | null
@@ -3701,6 +3711,7 @@ export type Database = {
           points_redeemed: number
           pos_terminal: string | null
           postcode: string | null
+          prepared_by: string | null
           promo_code: string | null
           promo_discount_cents: number
           ready_at: string | null
@@ -3790,6 +3801,7 @@ export type Database = {
           points_redeemed: number
           pos_terminal: string | null
           postcode: string | null
+          prepared_by: string | null
           promo_code: string | null
           promo_discount_cents: number
           ready_at: string | null
@@ -4108,6 +4120,7 @@ export type Database = {
           points_redeemed: number
           pos_terminal: string | null
           postcode: string | null
+          prepared_by: string | null
           promo_code: string | null
           promo_discount_cents: number
           ready_at: string | null
@@ -4192,6 +4205,7 @@ export type Database = {
           points_redeemed: number
           pos_terminal: string | null
           postcode: string | null
+          prepared_by: string | null
           promo_code: string | null
           promo_discount_cents: number
           ready_at: string | null
