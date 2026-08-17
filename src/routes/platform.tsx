@@ -178,7 +178,7 @@ function PlatformContent() {
                 {t.tour.shots.map(([label, caption, alt], i) => (
                   <figure
                     key={label}
-                    className={`group overflow-hidden rounded-2xl border border-border bg-card shadow-sm transition duration-200 hover:-translate-y-1 hover:border-primary/40 hover:shadow-xl ${i === 0 ? "sm:col-span-2" : ""}`}
+                    className={`group card-3d card-3d-hover overflow-hidden ${i === 0 ? "sm:col-span-2" : ""}`}
                   >
                     <div className="relative overflow-hidden border-b border-border/70 bg-secondary/50">
                       <div className="flex items-center gap-1.5 px-4 py-2.5">
