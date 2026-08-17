@@ -30,9 +30,9 @@ import {
   Users,
 } from "lucide-react";
 
-const title = "Hospitality ordering platform for independent venues | Cafe 1 Platform";
+const title = "dishbee — Sell. Serve. Grow. | Ordering platform for independent venues";
 const description =
-  "One white-label platform for cafés and restaurants: branded website, direct ordering, kitchen display, EPOS, delivery driver app, voucher and code schemes, plus full financial reporting.";
+  "dishbee is one white-label platform for cafés and restaurants: branded website, direct ordering, kitchen display, EPOS, delivery driver app, voucher and code schemes, plus full financial reporting.";
 
 export const Route = createFileRoute("/platform")({
   head: () => ({
@@ -42,8 +42,10 @@ export const Route = createFileRoute("/platform")({
       { property: "og:title", content: title },
       { property: "og:description", content: description },
       { property: "og:type", content: "website" },
+      { property: "og:url", content: "https://dishbee.co.uk/platform" },
       { name: "twitter:card", content: "summary_large_image" },
     ],
+    links: [{ rel: "canonical", href: "https://dishbee.co.uk/platform" }],
   }),
   component: PlatformHome,
 });
