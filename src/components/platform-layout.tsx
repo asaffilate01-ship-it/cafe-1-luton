@@ -75,8 +75,10 @@ export function PlatformHeader() {
 
 function PlatformTabBar() {
   const { t } = usePlatformI18n();
+  const path = useRouterState({ select: (s) => s.location.pathname });
+  const hash = useRouterState({ select: (s) => s.location.hash ?? "" });
   const tabs = [
-    { href: "/platform", label: t.nav.home, Icon: Home },
+    { href: "/platform", label: t.nav.home, Icon: Home, exact: true },
     { href: "/platform#services", label: t.nav.services, Icon: LayoutGrid },
     { href: "/platform/compliance", label: t.nav.trust, Icon: ShieldCheck },
     { href: "/platform#contact", label: t.nav.contact, Icon: Mail },
@@ -88,17 +90,27 @@ function PlatformTabBar() {
       style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
     >
       <ul className="mx-auto flex max-w-md items-stretch justify-between px-1">
-        {tabs.map(({ href, label, Icon }) => (
-          <li key={label} className="flex-1">
-            <a
-              href={href}
-              className="flex h-16 flex-col items-center justify-center gap-1 text-[11px] font-semibold text-muted-foreground transition active:text-primary"
-            >
-              <Icon className="h-[22px] w-[22px]" />
-              {label}
-            </a>
-          </li>
-        ))}
+        {tabs.map(({ href, label, Icon, exact }) => {
+          const isHash = href.includes("#");
+          const basePath = isHash ? href.split("#")[0] : href;
+          const active = exact
+            ? path === basePath && (!isHash || hash === href.split("#")[1])
+            : path === basePath || path.startsWith(`${basePath}/`);
+          return (
+            <li key={label} className="flex-1">
+              <a
+                href={href}
+                className={`relative flex h-16 flex-col items-center justify-center gap-1 text-[11px] font-semibold transition ${active ? "text-primary" : "text-muted-foreground"}`}
+              >
+                <Icon className={`h-[22px] w-[22px] transition-transform ${active ? "scale-110" : ""}`} />
+                {label}
+                {active && (
+                  <span aria-hidden className="absolute inset-x-5 top-0 h-0.5 rounded-full bg-primary" />
+                )}
+              </a>
+            </li>
+          );
+        })}
       </ul>
     </nav>
   );
