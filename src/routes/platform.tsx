@@ -135,7 +135,7 @@ function PlatformContent() {
             </div>
             <dl className="mt-14 grid gap-4 sm:grid-cols-3">
               {t.hero.stats.map(([k, v]) => (
-                <div key={v} className="rounded-2xl border border-border bg-card p-5 shadow-sm transition hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-md">
+                <div key={v} className="card-3d card-3d-hover p-5">
                   <dt className="font-display text-3xl font-bold text-primary">{k}</dt>
                   <dd className="mt-1 text-sm text-muted-foreground">{v}</dd>
                 </div>
