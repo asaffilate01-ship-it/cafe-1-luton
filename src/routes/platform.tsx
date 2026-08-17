@@ -5,6 +5,7 @@ import shotHome from "@/assets/platform/shot-home.webp.asset.json";
 import shotMenu from "@/assets/platform/shot-menu.webp.asset.json";
 import shotDirect from "@/assets/platform/shot-direct.webp.asset.json";
 import shotMobile from "@/assets/platform/shot-mobile.webp.asset.json";
+import { usePlatformI18n } from "@/components/platform-i18n-provider";
 import {
   ArrowRight,
   BarChart3,
@@ -50,122 +51,38 @@ export const Route = createFileRoute("/platform")({
   component: PlatformHome,
 });
 
-const services = [
-  {
-    Icon: Globe2,
-    title: "Branded website & SEO",
-    text: "Fast, mobile-first marketing site with local SEO pages, blog, structured data, sitemap and social feeds — built per venue, not a template page.",
-  },
-  {
-    Icon: MonitorSmartphone,
-    title: "Direct ordering app (PWA)",
-    text: "Dine-in, collection and delivery with time slots, live menu search, allergen info, saved baskets and installable app on iOS and Android.",
-  },
-  {
-    Icon: ChefHat,
-    title: "Kitchen Display System",
-    text: "Colour-coded KDS by channel and fulfilment type, cooked/not-cooked banners, area moves, audible alerts and dual ticket printing.",
-  },
-  {
-    Icon: CreditCard,
-    title: "EPOS & card payments",
-    text: "Till app with SumUp Solo card reader, cash drawer, customer display, receipt printing and online card checkout — one ledger for every channel.",
-  },
-  {
-    Icon: Ticket,
-    title: "Vouchers & code schemes",
-    text: "Built-in voucher issuing, gated access codes, single-use redemption, automatic email-based discounts and secure server-side promo validation.",
-  },
-  {
-    Icon: Bike,
-    title: "Driver app & live tracking",
-    text: "Assign or claim jobs, turn-by-turn routing, live map tracking for customers and automatic status notifications end to end.",
-  },
-  {
-    Icon: BarChart3,
-    title: "Financials & reporting",
-    text: "Sales, gross margin, food cost, expenses, supplier invoices, payment mix, settlement imports and daily P&L snapshots.",
-  },
-  {
-    Icon: Package,
-    title: "Stock & suppliers",
-    text: "Inventory items, purchase receipts, waste and staff-meal tracking, low-stock alerts and cost-price control per recipe line.",
-  },
-  {
-    Icon: Users,
-    title: "House accounts & tabs",
-    text: "Company tabs with credit limits, weekly billing runs, statements and MFA-protected account management.",
-  },
-  {
-    Icon: Truck,
-    title: "Marketplace integrations",
-    text: "Deliveroo and Just Eat orders pulled into the same KDS and reports, so every channel is visible in one place.",
-  },
-  {
-    Icon: QrCode,
-    title: "QR & on-site journeys",
-    text: "Table and counter QR ordering, gated menus for specific groups, attendance codes and printable signage.",
-  },
-  {
-    Icon: ShieldCheck,
-    title: "Security & compliance",
-    text: "Role-based access, row-level database security, audit trails, GDPR-safe data handling, cookie consent and MFA for sensitive areas.",
-  },
+const serviceIcons = [
+  Globe2,
+  MonitorSmartphone,
+  ChefHat,
+  CreditCard,
+  Ticket,
+  Bike,
+  BarChart3,
+  Package,
+  Users,
+  Truck,
+  QrCode,
+  ShieldCheck,
 ];
 
-const plans = [
-  {
-    name: "Starter",
-    price: "£99",
-    blurb: "Single site getting off the marketplaces.",
-    items: ["Branded website & SEO", "Direct ordering + card payments", "KDS with ticket printing", "Email support"],
-  },
-  {
-    name: "Growth",
-    price: "£199",
-    blurb: "Busy venues running delivery and tabs.",
-    items: ["Everything in Starter", "EPOS till, drawer & customer display", "Driver app + live tracking", "Vouchers, promos & house accounts"],
-    featured: true,
-  },
-  {
-    name: "Enterprise",
-    price: "Talk to us",
-    blurb: "Multi-site groups and bespoke workflows.",
-    items: ["Everything in Growth", "Multi-site reporting & rollups", "Marketplace integrations", "Custom features & priority SLA"],
-  },
-];
-
-const steps = [
-  { n: "01", title: "Discovery", text: "We map your menu, opening hours, service types, delivery radius and pricing rules." },
-  { n: "02", title: "Build & brand", text: "Your own deployment, colours, logo, domain and content — live in days, not months." },
-  { n: "03", title: "Hardware & payments", text: "Card reader, printers and drawer configured, payouts connected and tested end to end." },
-  { n: "04", title: "Go live & support", text: "Staff training, launch checklist, monitoring and ongoing updates from one team." },
-];
-
-const screenshots = [
-  {
-    src: shotHome.url,
-    alt: "Venue homepage with promotional carousel, live open/closed status and order call-to-action",
-    label: "Marketing site",
-    caption: "Promo banners, live opening status and prep-time estimates.",
-  },
-  {
-    src: shotMenu.url,
-    alt: "Menu browsing screen with category sidebar, search, dietary filters and item cards",
-    label: "Menu & ordering",
-    caption: "Category rail, instant search, dietary filters and one-tap add.",
-  },
-  {
-    src: shotDirect.url,
-    alt: "Order-direct marketing page listing loyalty, live tracking and payment benefits",
-    label: "Order-direct funnel",
-    caption: "Conversion page that pulls customers off aggregator apps.",
-  },
-];
+const trustIcons = [Lock, CreditCard, Cookie, FileCheck];
+const contactIcons = [Receipt, ChefHat, BarChart3];
+const stepNumbers = ["01", "02", "03", "04"];
+const planPrices = ["\u00a399", "\u00a3199", null] as const;
+const shotSources = [shotHome.url, shotMenu.url, shotDirect.url];
 
 function PlatformHome() {
   return (
     <PlatformShell>
+      <PlatformContent />
+    </PlatformShell>
+  );
+}
+
+function PlatformContent() {
+  const { t } = usePlatformI18n();
+  return (
       <main>
         <section className="relative overflow-hidden border-b border-border bg-secondary/40">
           <div className="pointer-events-none absolute -left-24 top-6 h-72 w-72 rounded-full bg-primary/15 blur-3xl" />
@@ -173,55 +90,47 @@ function PlatformHome() {
           <div className="mx-auto max-w-6xl px-4 py-16 lg:py-24">
             <div className="grid items-center gap-12 lg:grid-cols-[1.05fr_0.95fr]">
               <div>
-            <p className="inline-flex items-center gap-2 rounded-full border border-primary/40 bg-primary/20 px-4 py-1.5 text-xs font-semibold uppercase tracking-[0.18em] text-foreground">
-              <Sparkles className="h-3.5 w-3.5" /> Sell. Serve. Grow.
-            </p>
-            <h1 className="mt-4 max-w-4xl font-display text-4xl font-bold leading-[1.05] sm:text-5xl lg:text-[3.4rem]">
-              Everything a hospitality business needs to sell direct — website, ordering, kitchen, till and books.
-            </h1>
-            <p className="mt-6 max-w-2xl text-lg text-muted-foreground">
-              dishbee is a complete, white-label hospitality platform for independent cafés, restaurants and
-              food-service businesses. Your own brand, domain and menu — with direct ordering, EPOS, kitchen display,
-              driver app, voucher schemes and financial reporting in one connected system.
-            </p>
-            <div className="mt-8 flex flex-wrap gap-3">
-              <a
-                href="#contact"
-                className="group inline-flex h-12 items-center gap-2 rounded-full bg-primary px-6 text-sm font-semibold text-primary-foreground shadow-lg shadow-primary/25 transition hover:-translate-y-0.5 hover:shadow-xl hover:shadow-primary/30"
-              >
-                Get your venue live <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
-              </a>
-              <a
-                href="#services"
-                className="inline-flex h-12 items-center rounded-full border border-border bg-card px-6 text-sm font-semibold shadow-sm transition hover:-translate-y-0.5 hover:border-primary/40 hover:text-primary"
-              >
-                See what's included
-              </a>
-            </div>
+                <p className="inline-flex items-center gap-2 rounded-full border border-primary/40 bg-primary/20 px-4 py-1.5 text-xs font-semibold uppercase tracking-[0.18em] text-foreground">
+                  <Sparkles className="h-3.5 w-3.5" /> {t.hero.badge}
+                </p>
+                <h1 className="mt-4 max-w-4xl font-display text-4xl font-bold leading-[1.05] sm:text-5xl lg:text-[3.4rem]">
+                  {t.hero.h1}
+                </h1>
+                <p className="mt-6 max-w-2xl text-lg text-muted-foreground">{t.hero.lead}</p>
+                <div className="mt-8 flex flex-wrap gap-3">
+                  <a
+                    href="#contact"
+                    className="group inline-flex h-12 items-center gap-2 rounded-full bg-primary px-6 text-sm font-semibold text-primary-foreground shadow-lg shadow-primary/25 transition hover:-translate-y-0.5 hover:shadow-xl hover:shadow-primary/30"
+                  >
+                    {t.hero.ctaPrimary} <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+                  </a>
+                  <a
+                    href="#services"
+                    className="inline-flex h-12 items-center rounded-full border border-border bg-card px-6 text-sm font-semibold shadow-sm transition hover:-translate-y-0.5 hover:border-primary/40 hover:text-primary"
+                  >
+                    {t.hero.ctaSecondary}
+                  </a>
+                </div>
               </div>
               <div className="relative">
                 <div className="pointer-events-none absolute -inset-4 rounded-[2rem] bg-primary/10 blur-2xl" />
                 <div className="relative overflow-hidden rounded-[1.75rem] border border-border bg-card shadow-2xl shadow-primary/15">
                   <img
                     src={heroImage}
-                    alt="Café counter with EPOS till, card reader and kitchen display screen in use during service"
+                    alt={t.hero.imageAlt}
                     width={1600}
                     height={1104}
                     className="h-full w-full object-cover"
                   />
                   <div className="pointer-events-none absolute inset-x-0 bottom-0 bg-gradient-to-t from-background/85 to-transparent p-5">
-                    <p className="font-display text-sm font-bold">A live production venue</p>
-                    <p className="text-xs text-muted-foreground">Web, app, KDS, till and drivers on one system</p>
+                    <p className="font-display text-sm font-bold">{t.hero.imageTitle}</p>
+                    <p className="text-xs text-muted-foreground">{t.hero.imageSub}</p>
                   </div>
                 </div>
               </div>
             </div>
             <dl className="mt-14 grid gap-4 sm:grid-cols-3">
-              {[
-                ["0%", "commission on your own direct orders"],
-                ["1 system", "web, app, KDS, EPOS, drivers and finance"],
-                ["Days", "typical time from kick-off to going live"],
-              ].map(([k, v]) => (
+              {t.hero.stats.map(([k, v]) => (
                 <div key={v} className="rounded-2xl border border-border bg-card p-5 shadow-sm transition hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-md">
                   <dt className="font-display text-3xl font-bold text-primary">{k}</dt>
                   <dd className="mt-1 text-sm text-muted-foreground">{v}</dd>
@@ -232,42 +141,39 @@ function PlatformHome() {
         </section>
 
         <section id="services" className="mx-auto max-w-6xl px-4 py-16 lg:py-20">
-          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-primary">Modules</p>
-          <h2 className="mt-2 font-display text-4xl font-bold">What we provide</h2>
-          <p className="mt-3 max-w-2xl text-muted-foreground">
-            Every module below is already live in production — not a roadmap. Take the whole platform or the parts you
-            need.
-          </p>
+          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-primary">{t.services.eyebrow}</p>
+          <h2 className="mt-2 font-display text-4xl font-bold">{t.services.heading}</h2>
+          <p className="mt-3 max-w-2xl text-muted-foreground">{t.services.lead}</p>
           <div className="mt-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-            {services.map(({ Icon, title: t, text }) => (
-              <article
-                key={t}
-                className="group relative overflow-hidden rounded-2xl border border-border bg-card p-6 shadow-sm transition duration-200 hover:-translate-y-1 hover:border-primary/40 hover:shadow-lg"
-              >
-                <span className="pointer-events-none absolute -right-10 -top-10 h-24 w-24 rounded-full bg-primary/5 opacity-0 transition group-hover:opacity-100" />
-                <span className="grid h-12 w-12 place-items-center rounded-2xl border border-primary/15 bg-primary/10 text-primary shadow-sm transition group-hover:bg-primary group-hover:text-primary-foreground">
-                  <Icon className="h-5 w-5" strokeWidth={1.9} />
-                </span>
-                <h3 className="mt-4 font-display text-xl font-bold">{t}</h3>
-                <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{text}</p>
-              </article>
-            ))}
+            {t.services.items.map(([title, text], i) => {
+              const Icon = serviceIcons[i] ?? Sparkles;
+              return (
+                <article
+                  key={title}
+                  className="group relative overflow-hidden rounded-2xl border border-border bg-card p-6 shadow-sm transition duration-200 hover:-translate-y-1 hover:border-primary/40 hover:shadow-lg"
+                >
+                  <span className="pointer-events-none absolute -right-10 -top-10 h-24 w-24 rounded-full bg-primary/5 opacity-0 transition group-hover:opacity-100" />
+                  <span className="grid h-12 w-12 place-items-center rounded-2xl border border-primary/15 bg-primary/10 text-primary shadow-sm transition group-hover:bg-primary group-hover:text-primary-foreground">
+                    <Icon className="h-5 w-5" strokeWidth={1.9} />
+                  </span>
+                  <h3 className="mt-4 font-display text-xl font-bold">{title}</h3>
+                  <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{text}</p>
+                </article>
+              );
+            })}
           </div>
         </section>
 
         <section id="tour" className="border-y border-border bg-secondary/30">
           <div className="mx-auto max-w-6xl px-4 py-16 lg:py-20">
-            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-primary">Product tour</p>
-            <h2 className="mt-2 font-display text-4xl font-bold">Screens from a live venue</h2>
-            <p className="mt-3 max-w-2xl text-muted-foreground">
-              Real screens from the production system running every trading day — rebranded to your venue, not a
-              stock mockup.
-            </p>
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-primary">{t.tour.eyebrow}</p>
+            <h2 className="mt-2 font-display text-4xl font-bold">{t.tour.heading}</h2>
+            <p className="mt-3 max-w-2xl text-muted-foreground">{t.tour.lead}</p>
             <div className="mt-10 grid gap-6 lg:grid-cols-[1.35fr_0.65fr] lg:items-start">
               <div className="grid gap-6 sm:grid-cols-2">
-                {screenshots.map((s, i) => (
+                {t.tour.shots.map(([label, caption, alt], i) => (
                   <figure
-                    key={s.label}
+                    key={label}
                     className={`group overflow-hidden rounded-2xl border border-border bg-card shadow-sm transition duration-200 hover:-translate-y-1 hover:border-primary/40 hover:shadow-xl ${i === 0 ? "sm:col-span-2" : ""}`}
                   >
                     <div className="relative overflow-hidden border-b border-border/70 bg-secondary/50">
@@ -280,15 +186,15 @@ function PlatformHome() {
                         </span>
                       </div>
                       <img
-                        src={s.src}
-                        alt={s.alt}
+                        src={shotSources[i]}
+                        alt={alt}
                         loading="lazy"
                         className="w-full origin-top object-cover object-top transition duration-500 group-hover:scale-[1.02]"
                       />
                     </div>
                     <figcaption className="p-5">
-                      <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-primary">{s.label}</p>
-                      <p className="mt-1.5 text-sm text-muted-foreground">{s.caption}</p>
+                      <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-primary">{label}</p>
+                      <p className="mt-1.5 text-sm text-muted-foreground">{caption}</p>
                     </figcaption>
                   </figure>
                 ))}
@@ -299,15 +205,13 @@ function PlatformHome() {
                   <div className="overflow-hidden rounded-[1.5rem] bg-card">
                     <img
                       src={shotMobile.url}
-                      alt="Mobile ordering app showing category chips, menu items with prices and bottom tab bar"
+                      alt={t.tour.mobileAlt}
                       loading="lazy"
                       className="w-full object-cover object-top"
                     />
                   </div>
                 </div>
-                <p className="mt-5 text-center text-sm text-muted-foreground">
-                  Installable PWA — same system on the customer's phone.
-                </p>
+                <p className="mt-5 text-center text-sm text-muted-foreground">{t.tour.mobileCaption}</p>
               </div>
             </div>
           </div>
@@ -315,19 +219,19 @@ function PlatformHome() {
 
         <section id="how" className="border-y border-border bg-secondary/40">
           <div className="mx-auto max-w-6xl px-4 py-16 lg:py-20">
-            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-primary">Onboarding</p>
-            <h2 className="mt-2 font-display text-4xl font-bold">How it works</h2>
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-primary">{t.how.eyebrow}</p>
+            <h2 className="mt-2 font-display text-4xl font-bold">{t.how.heading}</h2>
             <div className="mt-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
-              {steps.map((s) => (
+              {t.how.steps.map(([title, text], i) => (
                 <div
-                  key={s.n}
+                  key={title}
                   className="relative rounded-2xl border border-border bg-card p-6 shadow-sm transition hover:-translate-y-1 hover:border-primary/40 hover:shadow-lg"
                 >
                   <span className="grid h-11 w-11 place-items-center rounded-full bg-primary text-sm font-bold text-primary-foreground shadow-md shadow-primary/25">
-                    {s.n}
+                    {stepNumbers[i]}
                   </span>
-                  <h3 className="mt-4 font-display text-lg font-bold">{s.title}</h3>
-                  <p className="mt-2 text-sm text-muted-foreground">{s.text}</p>
+                  <h3 className="mt-4 font-display text-lg font-bold">{title}</h3>
+                  <p className="mt-2 text-sm text-muted-foreground">{text}</p>
                 </div>
               ))}
             </div>
@@ -335,102 +239,85 @@ function PlatformHome() {
         </section>
 
         <section id="pricing" className="mx-auto max-w-6xl px-4 py-16 lg:py-20">
-          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-primary">Pricing</p>
-          <h2 className="mt-2 font-display text-4xl font-bold">Simple monthly plans</h2>
-          <p className="mt-3 text-muted-foreground">Per venue, billed monthly. Card processing is charged by your payment provider.</p>
+          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-primary">{t.pricing.eyebrow}</p>
+          <h2 className="mt-2 font-display text-4xl font-bold">{t.pricing.heading}</h2>
+          <p className="mt-3 text-muted-foreground">{t.pricing.lead}</p>
           <div className="mt-10 grid gap-5 lg:grid-cols-3">
-            {plans.map((p) => (
-              <div
-                key={p.name}
-                className={`relative flex flex-col rounded-2xl border bg-card p-6 transition hover:-translate-y-1 hover:shadow-lg ${p.featured ? "border-primary shadow-lg shadow-primary/10 ring-2 ring-primary/20 lg:-mt-2 lg:pb-8" : "border-border shadow-sm"}`}
-              >
-                {p.featured ? (
-                  <span className="inline-flex rounded-full bg-primary px-3 py-1 text-xs font-semibold text-primary-foreground">
-                    Most popular
-                  </span>
-                ) : null}
-                <h3 className="mt-3 font-display text-2xl font-bold">{p.name}</h3>
-                <p className="mt-1 text-sm text-muted-foreground">{p.blurb}</p>
-                <p className="mt-4 font-display text-4xl font-bold">
-                  {p.price}
-                  {p.price.startsWith("£") ? <span className="text-base font-medium text-muted-foreground">/month</span> : null}
-                </p>
-                <ul className="mt-5 flex-1 space-y-2.5 text-sm">
-                  {p.items.map((i) => (
-                    <li key={i} className="flex items-start gap-2.5">
-                      <span className="mt-0.5 grid h-5 w-5 shrink-0 place-items-center rounded-full bg-primary/10 text-primary">
-                        <Check className="h-3 w-3" strokeWidth={3} />
-                      </span>
-                      <span className="text-muted-foreground">{i}</span>
-                    </li>
-                  ))}
-                </ul>
-                <a
-                  href="#contact"
-                  className={`mt-6 inline-flex h-11 w-full items-center justify-center gap-2 rounded-full text-sm font-semibold transition ${p.featured ? "bg-primary text-primary-foreground shadow-md shadow-primary/25 hover:brightness-110" : "border border-border bg-card hover:border-primary/40 hover:text-primary"}`}
+            {t.pricing.plans.map((p, i) => {
+              const price = planPrices[i];
+              const featured = i === 1;
+              return (
+                <div
+                  key={p.name}
+                  className={`relative flex flex-col rounded-2xl border bg-card p-6 transition hover:-translate-y-1 hover:shadow-lg ${featured ? "border-primary shadow-lg shadow-primary/10 ring-2 ring-primary/20 lg:-mt-2 lg:pb-8" : "border-border shadow-sm"}`}
                 >
-                  Enquire <ArrowRight className="h-4 w-4" />
-                </a>
-              </div>
-            ))}
+                  {featured ? (
+                    <span className="inline-flex rounded-full bg-primary px-3 py-1 text-xs font-semibold text-primary-foreground">
+                      {t.pricing.popular}
+                    </span>
+                  ) : null}
+                  <h3 className="mt-3 font-display text-2xl font-bold">{p.name}</h3>
+                  <p className="mt-1 text-sm text-muted-foreground">{p.blurb}</p>
+                  <p className="mt-4 font-display text-4xl font-bold">
+                    {price ?? t.pricing.talkToUs}
+                    {price ? <span className="text-base font-medium text-muted-foreground">{t.pricing.perMonth}</span> : null}
+                  </p>
+                  <ul className="mt-5 flex-1 space-y-2.5 text-sm">
+                    {p.items.map((item) => (
+                      <li key={item} className="flex items-start gap-2.5">
+                        <span className="mt-0.5 grid h-5 w-5 shrink-0 place-items-center rounded-full bg-primary/10 text-primary">
+                          <Check className="h-3 w-3" strokeWidth={3} />
+                        </span>
+                        <span className="text-muted-foreground">{item}</span>
+                      </li>
+                    ))}
+                  </ul>
+                  <a
+                    href="#contact"
+                    className={`mt-6 inline-flex h-11 w-full items-center justify-center gap-2 rounded-full text-sm font-semibold transition ${featured ? "bg-primary text-primary-foreground shadow-md shadow-primary/25 hover:brightness-110" : "border border-border bg-card hover:border-primary/40 hover:text-primary"}`}
+                  >
+                    {t.pricing.enquire} <ArrowRight className="h-4 w-4" />
+                  </a>
+                </div>
+              );
+            })}
           </div>
         </section>
 
         <section id="trust" className="border-y border-border bg-secondary/40">
           <div className="mx-auto max-w-6xl px-4 py-16 lg:py-20">
-            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-primary">Trust</p>
-            <h2 className="mt-2 font-display text-4xl font-bold">Built to be trusted</h2>
-            <p className="mt-3 max-w-2xl text-muted-foreground">
-              Every part of the platform follows compliance-minded defaults: secure payments, transparent
-              data handling, audit trails and accessibility from the start.
-            </p>
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-primary">{t.trust.eyebrow}</p>
+            <h2 className="mt-2 font-display text-4xl font-bold">{t.trust.heading}</h2>
+            <p className="mt-3 max-w-2xl text-muted-foreground">{t.trust.lead}</p>
             <div className="mt-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
-              {[
-                {
-                  Icon: Lock,
-                  title: "Encrypted & secure",
-                  text: "HTTPS in transit, role-based access, row-level database security and audit logs for sensitive changes.",
-                },
-                {
-                  Icon: CreditCard,
-                  title: "Payment-safe",
-                  text: "Card payments are handled by SumUp. The platform never stores full card numbers, CVV or PIN data.",
-                },
-                {
-                  Icon: Cookie,
-                  title: "Cookie consent",
-                  text: "Granular consent for analytics and marketing, with strictly-necessary storage only until a choice is made.",
-                },
-                {
-                  Icon: FileCheck,
-                  title: "GDPR-ready",
-                  text: "Data request workflows, purpose limitation and clear privacy, terms and cookie policies for every tenant.",
-                },
-              ].map(({ Icon, title: t, text }) => (
-                <article
-                  key={t}
-                  className="group rounded-2xl border border-border bg-card p-6 shadow-sm transition hover:-translate-y-1 hover:border-primary/40 hover:shadow-lg"
-                >
-                  <span className="grid h-12 w-12 place-items-center rounded-2xl border border-primary/15 bg-primary/10 text-primary transition group-hover:bg-primary group-hover:text-primary-foreground">
-                    <Icon className="h-5 w-5" strokeWidth={1.9} />
-                  </span>
-                  <h3 className="mt-4 font-display text-lg font-bold">{t}</h3>
-                  <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{text}</p>
-                </article>
-              ))}
+              {t.trust.items.map(([title, text], i) => {
+                const Icon = trustIcons[i] ?? ShieldCheck;
+                return (
+                  <article
+                    key={title}
+                    className="group rounded-2xl border border-border bg-card p-6 shadow-sm transition hover:-translate-y-1 hover:border-primary/40 hover:shadow-lg"
+                  >
+                    <span className="grid h-12 w-12 place-items-center rounded-2xl border border-primary/15 bg-primary/10 text-primary transition group-hover:bg-primary group-hover:text-primary-foreground">
+                      <Icon className="h-5 w-5" strokeWidth={1.9} />
+                    </span>
+                    <h3 className="mt-4 font-display text-lg font-bold">{title}</h3>
+                    <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{text}</p>
+                  </article>
+                );
+              })}
             </div>
             <div className="mt-8 flex flex-wrap gap-3">
               <Link
                 to="/platform/compliance"
                 className="inline-flex h-11 items-center gap-2 rounded-full bg-primary px-5 text-sm font-semibold text-primary-foreground"
               >
-                <Server className="h-4 w-4" /> Read full compliance details
+                <Server className="h-4 w-4" /> {t.trust.ctaCompliance}
               </Link>
               <Link
                 to="/privacy"
                 className="inline-flex h-11 items-center rounded-full border border-border bg-card px-5 text-sm font-semibold"
               >
-                Privacy policy
+                {t.trust.ctaPrivacy}
               </Link>
             </div>
           </div>
@@ -440,45 +327,35 @@ function PlatformHome() {
           <div className="mx-auto max-w-6xl px-4 py-16 lg:py-20">
             <div className="grid gap-8 lg:grid-cols-[1.1fr_0.9fr] lg:items-center">
               <div>
-                <h2 className="font-display text-4xl font-bold">Let's get your venue selling direct</h2>
-                <p className="mt-3 max-w-xl text-muted-foreground">
-                  Tell us about your site and we'll show you the live dishbee system, then scope your build and
-                  brand.
-                </p>
+                <h2 className="font-display text-4xl font-bold">{t.contact.heading}</h2>
+                <p className="mt-3 max-w-xl text-muted-foreground">{t.contact.lead}</p>
                 <div className="mt-6 flex flex-wrap gap-3">
                   <a
                     href="mailto:hello@dishbee.co.uk?subject=dishbee%20demo%20request"
                     className="inline-flex h-12 items-center gap-2 rounded-full bg-primary px-6 text-sm font-semibold text-primary-foreground"
                   >
-                    <Mail className="h-4 w-4" /> Email us
+                    <Mail className="h-4 w-4" /> {t.contact.email}
                   </a>
                   <a
                     href="tel:+441727000000"
                     className="inline-flex h-12 items-center gap-2 rounded-full border border-border bg-card px-6 text-sm font-semibold"
                   >
-                    <Phone className="h-4 w-4" /> Call us
+                    <Phone className="h-4 w-4" /> {t.contact.call}
                   </a>
                 </div>
               </div>
               <div className="rounded-2xl border border-border bg-card p-6 shadow-sm">
-                <h3 className="font-display text-xl font-bold">See it in the wild</h3>
-                <p className="mt-2 text-sm text-muted-foreground">
-                  A live hospitality venue runs the full stack every trading day: online ordering, KDS, EPOS, drivers,
-                  vouchers and nightly financial reporting.
-                </p>
+                <h3 className="font-display text-xl font-bold">{t.contact.cardHeading}</h3>
+                <p className="mt-2 text-sm text-muted-foreground">{t.contact.cardLead}</p>
                 <ul className="mt-4 space-y-3 text-sm text-muted-foreground">
-                  {[
-                    [Receipt, "Live orders across web, till and marketplaces"],
-                    [ChefHat, "Kitchen tickets printed automatically"],
-                    [BarChart3, "Daily P&L without spreadsheets"],
-                  ].map(([I, label]) => {
-                    const Ico = I as typeof Receipt;
+                  {t.contact.cardItems.map((label, i) => {
+                    const Ico = contactIcons[i] ?? Receipt;
                     return (
-                      <li key={label as string} className="flex items-center gap-3">
+                      <li key={label} className="flex items-center gap-3">
                         <span className="grid h-8 w-8 shrink-0 place-items-center rounded-xl border border-primary/15 bg-primary/10 text-primary">
                           <Ico className="h-4 w-4" strokeWidth={1.9} />
                         </span>
-                        {label as string}
+                        {label}
                       </li>
                     );
                   })}
@@ -487,13 +364,12 @@ function PlatformHome() {
                   href="https://cafe1stalbans.co.uk"
                   className="mt-6 inline-flex items-center gap-2 text-sm font-semibold text-primary"
                 >
-                  View a live venue example <ArrowRight className="h-4 w-4" />
+                  {t.contact.cardLink} <ArrowRight className="h-4 w-4" />
                 </a>
               </div>
             </div>
           </div>
         </section>
       </main>
-    </PlatformShell>
   );
 }

@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { PlatformShell } from "@/components/platform-layout";
 import { Section } from "@/components/legal-layout";
+import { usePlatformI18n } from "@/components/platform-i18n-provider";
 import {
   ShieldCheck,
   Lock,
@@ -44,124 +45,92 @@ function Badge({ icon: Icon, label }: { icon: typeof ShieldCheck; label: string 
   );
 }
 
+const securityIcons = [Lock, Server, Eye, ShieldCheck];
+const privacyIcons = [Cookie, FileCheck, ShieldCheck];
+const paymentIcons = [CreditCard, Lock];
+const legalHrefs = ["/privacy", "/terms", "/cookies", "/gdpr", "/complaints"] as const;
+
 function PlatformCompliance() {
   return (
     <PlatformShell>
+      <ComplianceContent />
+    </PlatformShell>
+  );
+}
+
+function ComplianceContent() {
+  const { t } = usePlatformI18n();
+  const c = t.compliance;
+  return (
       <main className="mx-auto max-w-3xl px-4 py-12">
-        <h1 className="font-display text-3xl font-bold sm:text-4xl">Compliance &amp; Trust</h1>
-        <p className="mt-2 text-sm text-muted-foreground">Last updated: 26 July 2026</p>
-        <p className="mt-4 text-muted-foreground">
-          dishbee is built for hospitality venues that need to protect customer data, prove
-          payment security and stay accessible to every guest.
-        </p>
+        <h1 className="font-display text-3xl font-bold sm:text-4xl">{c.heading}</h1>
+        <p className="mt-2 text-sm text-muted-foreground">{c.updated}</p>
+        <p className="mt-4 text-muted-foreground">{c.lead}</p>
         <div className="mt-8 space-y-6 text-sm leading-relaxed text-foreground/90">
-          <Section heading="Security by design">
+          <Section heading={c.security.heading}>
             <div className="flex flex-wrap gap-2">
-              <Badge icon={Lock} label="HTTPS in transit" />
-              <Badge icon={Server} label="Role-based access control" />
-              <Badge icon={Eye} label="Audit logging" />
-              <Badge icon={ShieldCheck} label="Row-level database security" />
+              {c.security.badges.map((label, i) => (
+                <Badge key={label} icon={securityIcons[i] ?? ShieldCheck} label={label} />
+              ))}
             </div>
-            <p className="mt-4">
-              Every tenant is deployed with its own database isolation, role-based access, and row-level
-              security policies. Staff, drivers, kitchen and admin roles each see only the data they need.
-              Changes to sensitive settings are logged and can be reviewed in the operator dashboard.
-            </p>
+            <p className="mt-4">{c.security.body}</p>
           </Section>
 
-          <Section heading="Privacy &amp; GDPR">
+          <Section heading={c.privacy.heading}>
             <div className="flex flex-wrap gap-2">
-              <Badge icon={Cookie} label="Cookie consent" />
-              <Badge icon={FileCheck} label="Data request workflows" />
-              <Badge icon={ShieldCheck} label="Lawful-basis purpose limiting" />
+              {c.privacy.badges.map((label, i) => (
+                <Badge key={label} icon={privacyIcons[i] ?? ShieldCheck} label={label} />
+              ))}
             </div>
-            <p className="mt-4">
-              We collect the minimum data needed to take, prepare and deliver an order. Card details are
-              handled by SumUp and never stored by us. Cookie consent is required before any analytics or
-              marketing storage loads, and customers can request data deletion or export through the venue
-              contact. Each tenant's own privacy notice explains their specific data use.
-            </p>
+            <p className="mt-4">{c.privacy.body}</p>
           </Section>
 
-          <Section heading="Payments">
+          <Section heading={c.payments.heading}>
             <div className="flex flex-wrap gap-2">
-              <Badge icon={CreditCard} label="SumUp card processing" />
-              <Badge icon={Lock} label="No card data stored" />
+              {c.payments.badges.map((label, i) => (
+                <Badge key={label} icon={paymentIcons[i] ?? CreditCard} label={label} />
+              ))}
             </div>
-            <p className="mt-4">
-              Online, till and card-reader payments are processed by SumUp, which maintains its own PCI DSS
-              compliance programme. The platform stores only a payment reference and status, never the full
-              card number, CVV or PIN.
-            </p>
+            <p className="mt-4">{c.payments.body}</p>
           </Section>
 
-          <Section heading="Accessibility">
-            <p>
-              The ordering interface is designed for touch, keyboard and screen-reader use, with semantic
-              headings, ARIA labels, skip links, and contrast-checked colour schemes. We keep legacy browser
-              compatibility in mind for older hospitality hardware and tablets.
-            </p>
+          <Section heading={c.accessibility.heading}>
+            <p>{c.accessibility.body}</p>
           </Section>
 
-          <Section heading="Food safety &amp; allergens">
-            <p>
-              The menu system supports allergen tagging, item-level notes, and clear customer-facing warnings.
-              Orders print to the kitchen with the same notes that the customer sees, so staff can act on
-              dietary requests consistently. Venue-specific food hygiene procedures remain the responsibility
-              of the operator.
-            </p>
+          <Section heading={c.food.heading}>
+            <p>{c.food.body}</p>
           </Section>
 
-          <Section heading="Legal documents">
-            <p>
-              Each live venue publishes its own legal pages. We recommend every tenant adapts and hosts equivalent
-              documents for their own business:
-            </p>
+          <Section heading={c.legal.heading}>
+            <p>{c.legal.body}</p>
             <ul className="mt-2 list-disc space-y-1 pl-5">
-              <li>
-                <Link to="/privacy" className="text-primary hover:underline">
-                  Privacy Policy
-                </Link>
-              </li>
-              <li>
-                <Link to="/terms" className="text-primary hover:underline">
-                  Terms &amp; Conditions
-                </Link>
-              </li>
-              <li>
-                <Link to="/cookies" className="text-primary hover:underline">
-                  Cookie Policy
-                </Link>
-              </li>
-              <li>
-                <Link to="/gdpr" className="text-primary hover:underline">
-                  GDPR &amp; Data Rights
-                </Link>
-              </li>
-              <li>
-                <Link to="/complaints" className="text-primary hover:underline">
-                  Complaints
-                </Link>
-              </li>
+              {c.legal.links.map((label, i) => (
+                <li key={label}>
+                  <Link to={legalHrefs[i]} className="text-primary hover:underline">
+                    {label}
+                  </Link>
+                </li>
+              ))}
             </ul>
           </Section>
 
-          <Section heading="Questions">
+          <Section heading={c.questions.heading}>
             <p>
-              If you need a security questionnaire, DPA or compliance review for your business, email us at{" "}
+              {c.questions.bodyBefore}
               <a
-                href="mailto:hello@cafe1stalbans.co.uk?subject=Platform%20compliance%20question"
+                href="mailto:hello@dishbee.co.uk?subject=Platform%20compliance%20question"
                 className="inline-flex items-center gap-1.5 text-primary hover:underline"
               >
                 <Mail className="h-4 w-4" />
-                hello@cafe1stalbans.co.uk
+                hello@dishbee.co.uk
               </a>
-              .
+              {c.questions.bodyAfter}
             </p>
           </Section>
         </div>
         <div className="mt-12 rounded-2xl border border-border bg-secondary/40 p-5 text-sm">
-          <p className="font-semibold">Contact us</p>
+          <p className="font-semibold">{c.contactBox}</p>
           <p className="mt-1 text-muted-foreground">
             <a className="text-primary underline underline-offset-2" href="mailto:hello@dishbee.co.uk">
               hello@dishbee.co.uk
@@ -169,6 +138,5 @@ function PlatformCompliance() {
           </p>
         </div>
       </main>
-    </PlatformShell>
   );
 }
