@@ -1841,12 +1841,12 @@ function KDS() {
                   </li>
                 ))}
               </ul>
-              {/* Chef self-allocation: KS / SD / FA — compact, prominent, inside the card */}
+              {/* Chef self-allocation: KS / SD / SA / OT — compact, prominent, inside the card */}
               <div className="mt-2 flex items-center gap-1.5">
                 <span className="text-[10px] font-bold uppercase tracking-wide text-muted-foreground">
                   Prep by
                 </span>
-                {["KS", "SD", "FA"].map((initials) => {
+                {["KS", "SD", "SA", "OT"].map((initials) => {
                   const active = t.prepared_by === initials;
                   return (
                     <button
