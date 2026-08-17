@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { PlatformShell } from "@/components/platform-layout";
 import heroImage from "@/assets/platform-hero.jpg";
@@ -82,6 +83,9 @@ function PlatformHome() {
 
 function PlatformContent() {
   const { t } = usePlatformI18n();
+  useEffect(() => {
+    document.title = t.hero.pageTitle;
+  }, [t.hero.pageTitle]);
   return (
       <main>
         <section className="relative overflow-hidden border-b border-border bg-secondary/40">
