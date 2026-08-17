@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 import { Link, useRouterState } from "@tanstack/react-router";
 import { Home, LayoutGrid, ShieldCheck, Mail, Languages } from "lucide-react";
-import dishbeeLogo from "@/assets/dishbee-logo-slogan.png.asset.json";
+import dishbeeLogo from "@/assets/dishbee-logo-slogan-transparent.png.asset.json";
 import { PlatformI18nProvider, usePlatformI18n } from "@/components/platform-i18n-provider";
 
 
