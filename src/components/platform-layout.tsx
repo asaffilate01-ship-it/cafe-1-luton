@@ -111,7 +111,7 @@ export function PlatformFooter() {
       <div className="mx-auto flex max-w-6xl flex-col gap-3 px-4 py-8 text-sm text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-3">
           <img src={dishbeeLogo.url} alt="dishbee" width={140} height={56} className="h-7 w-auto" />
-          <p>© {new Date().getFullYear()} dishbee — {DISHBEE_TAGLINE}</p>
+          <p>© {new Date().getFullYear()} dishbee — {t.hero.badge}</p>
         </div>
         <div className="flex flex-wrap gap-5">
           <Link to="/platform/compliance" className="hover:text-foreground">{t.nav.compliance}</Link>

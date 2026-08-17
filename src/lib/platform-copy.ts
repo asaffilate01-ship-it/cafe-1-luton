@@ -23,6 +23,7 @@ const en = {
   hero: {
     badge: "Sell. Serve. Grow.",
     pageTitle: "dishbee — Sell. Serve. Grow. | Ordering platform for independent venues",
+    h1: "Everything a hospitality business needs to sell direct — website, ordering, kitchen, till and books.",
     lead: "dishbee is a complete, white-label hospitality platform for independent cafés, restaurants and food-service businesses. Your own brand, domain and menu — with direct ordering, EPOS, kitchen display, driver app, voucher schemes and financial reporting in one connected system.",
     ctaPrimary: "Get your venue live",
     ctaSecondary: "See what's included",
@@ -191,6 +192,7 @@ const de: PlatformCopy = {
   hero: {
     badge: "Verkaufen. Servieren. Wachsen.",
     pageTitle: "dishbee — Verkaufen. Servieren. Wachsen. | Bestellplattform für unabhängige Betriebe",
+    h1: "Alles, was ein Gastronomiebetrieb braucht, um direkt zu verkaufen — Website, Bestellung, Küche, Kasse und Buchhaltung.",
     lead: "dishbee ist eine vollständige White-Label-Plattform für unabhängige Cafés, Restaurants und Food-Service-Betriebe. Eigene Marke, eigene Domain, eigene Speisekarte — mit Direktbestellung, Kassensystem, Küchendisplay, Fahrer-App, Gutscheinsystemen und Finanzauswertungen in einem verbundenen System.",
     ctaPrimary: "Betrieb live schalten",
     ctaSecondary: "Alle Leistungen ansehen",
