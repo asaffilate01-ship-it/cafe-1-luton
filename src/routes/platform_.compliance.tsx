@@ -19,12 +19,12 @@ export const Route = createFileRoute("/platform_/compliance")({
       {
         name: "description",
         content:
-          "How the dishbee handles security, privacy, payments, accessibility and regulatory compliance for independent hospitality venues.",
+          "How dishbee handles security, privacy, payments, accessibility and regulatory compliance for independent hospitality venues.",
       },
       { property: "og:title", content: "Compliance & Trust — dishbee" },
       {
         property: "og:description",
-        content: "Security, privacy, payments, accessibility and compliance information for the dishbee.",
+        content: "Security, privacy, payments, accessibility and compliance information for dishbee.",
       },
       { property: "og:type", content: "article" },
       { property: "og:url", content: "https://dishbee.co.uk/platform/compliance" },
