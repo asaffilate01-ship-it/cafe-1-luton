@@ -154,10 +154,10 @@ function PlatformContent() {
               return (
                 <article
                   key={title}
-                  className="group relative overflow-hidden rounded-2xl border border-border bg-card p-6 shadow-sm transition duration-200 hover:-translate-y-1 hover:border-primary/40 hover:shadow-lg"
+                  className="group relative card-3d card-3d-hover p-6"
                 >
                   <span className="pointer-events-none absolute -right-10 -top-10 h-24 w-24 rounded-full bg-primary/5 opacity-0 transition group-hover:opacity-100" />
-                  <span className="grid h-12 w-12 place-items-center rounded-2xl border border-primary/15 bg-primary/10 text-primary shadow-sm transition group-hover:bg-primary group-hover:text-primary-foreground">
+                  <span className="icon-3d-soft h-12 w-12 transition duration-300 group-hover:icon-3d group-hover:text-primary-foreground">
                     <Icon className="h-5 w-5" strokeWidth={1.9} />
                   </span>
                   <h3 className="mt-4 font-display text-xl font-bold">{title}</h3>
