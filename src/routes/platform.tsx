@@ -157,7 +157,7 @@ function PlatformContent() {
                   className="group relative card-3d card-3d-hover p-6"
                 >
                   <span className="pointer-events-none absolute -right-10 -top-10 h-24 w-24 rounded-full bg-primary/5 opacity-0 transition group-hover:opacity-100" />
-                  <span className="icon-3d-soft h-12 w-12 transition duration-300 group-hover:icon-3d group-hover:text-primary-foreground">
+                  <span className="icon-3d h-12 w-12">
                     <Icon className="h-5 w-5" strokeWidth={1.9} />
                   </span>
                   <h3 className="mt-4 font-display text-xl font-bold">{title}</h3>
