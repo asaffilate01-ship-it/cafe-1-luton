@@ -416,11 +416,31 @@ export function ManualOrderDialog({
             Order total (£)
             <input
               value={total}
-              onChange={(event) => setTotal(event.target.value)}
+              onChange={(event) => {
+                setTotalTouched(true);
+                setTotal(event.target.value);
+              }}
               inputMode="decimal"
               placeholder="0.00"
               className={field}
             />
+            {allPriced && pricedTotal > 0 ? (
+              <span className="mt-1 block text-xs font-normal text-muted-foreground">
+                Menu price total {money(pricedTotal)}
+                {totalTouched ? (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setTotalTouched(false);
+                      setTotal((pricedTotal / 100).toFixed(2));
+                    }}
+                    className="ml-2 font-semibold text-primary underline"
+                  >
+                    Use it
+                  </button>
+                ) : null}
+              </span>
+            ) : null}
           </label>
 
           {(type === "dine_in" || type === "dine_in_judges") && (
@@ -574,10 +594,37 @@ export function ManualOrderDialog({
                   className="h-11 w-16 rounded-xl border border-border bg-background px-2 text-center"
                 />
                 <div className="flex-1 space-y-2">
+                  <select
+                    value={menu.some((m) => m.name === line.name) ? line.name : ""}
+                    onChange={(event) => {
+                      const picked = menu.find((m) => m.name === event.target.value);
+                      update(
+                        index,
+                        picked
+                          ? { name: picked.name, price_cents: picked.price_cents }
+                          : { price_cents: null },
+                      );
+                    }}
+                    aria-label="Choose from the menu"
+                    className="h-11 w-full rounded-xl border border-border bg-background px-3 text-sm"
+                  >
+                    <option value="">Choose from the menu…</option>
+                    {menuGroups.map(([group, groupItems]) => (
+                      <optgroup key={group} label={group}>
+                        {groupItems.map((item) => (
+                          <option key={item.id} value={item.name}>
+                            {item.name} — {money(item.price_cents)}
+                          </option>
+                        ))}
+                      </optgroup>
+                    ))}
+                  </select>
                   <input
                     value={line.name}
-                    onChange={(event) => update(index, { name: event.target.value })}
-                    placeholder="Item name"
+                    onChange={(event) =>
+                      update(index, { name: event.target.value, price_cents: null })
+                    }
+                    placeholder="Or type the item name"
                     aria-label="Item name"
                     className="h-11 w-full rounded-xl border border-border bg-background px-3"
                   />
