@@ -31,7 +31,21 @@ function loadPayJs(): Promise<void> {
  * environment. Used only for Google's onboarding screenshots (screens 3 and 4)
  * — no funds move and no merchant ID is required in TEST.
  */
-export function GooglePayDemo({ amount, merchantName }: { amount: string; merchantName: string }) {
+export function GooglePayDemo({
+  amount,
+  merchantName,
+  environment = "TEST",
+  merchantId,
+  gatewayMerchantId = "TEST_MERCHANT",
+  onResult,
+}: {
+  amount: string;
+  merchantName: string;
+  environment?: "TEST" | "PRODUCTION";
+  merchantId?: string;
+  gatewayMerchantId?: string;
+  onResult?: (payload: unknown) => void;
+}) {
   const ref = useRef<HTMLDivElement>(null);
   const [error, setError] = useState<string>("");
 
@@ -43,7 +57,7 @@ export function GooglePayDemo({ amount, merchantName }: { amount: string; mercha
         if (cancelled || !ref.current || ref.current.childElementCount > 0) return;
         const api = gpayApi();
         if (!api) throw new Error("Google Pay unavailable");
-        const client = new api.PaymentsClient({ environment: "TEST" });
+        const client = new api.PaymentsClient({ environment });
 
         const baseCardPaymentMethod = {
           type: "CARD",
@@ -54,9 +68,9 @@ export function GooglePayDemo({ amount, merchantName }: { amount: string; mercha
         };
         const cardPaymentMethod = {
           ...baseCardPaymentMethod,
-          tokenizationSpecification: {
+            tokenizationSpecification: {
             type: "PAYMENT_GATEWAY",
-            parameters: { gateway: "sumup", gatewayMerchantId: "TEST_MERCHANT" },
+            parameters: { gateway: "sumup", gatewayMerchantId },
           },
         };
 
@@ -77,7 +91,7 @@ export function GooglePayDemo({ amount, merchantName }: { amount: string; mercha
           onClick: async () => {
             setError("");
             try {
-              await client.loadPaymentData({
+              const result = await client.loadPaymentData({
                 apiVersion: 2,
                 apiVersionMinor: 0,
                 allowedPaymentMethods: [cardPaymentMethod],
@@ -87,10 +101,11 @@ export function GooglePayDemo({ amount, merchantName }: { amount: string; mercha
                   currencyCode: "GBP",
                   countryCode: "GB",
                 },
-                merchantInfo: { merchantName },
+                merchantInfo: merchantId ? { merchantId, merchantName } : { merchantName },
                 emailRequired: false,
               });
               setError("");
+              onResult?.(result);
             } catch (err: any) {
               // Surface the sheet's own outcome (cancelled / no card available)
               // instead of failing silently.
@@ -111,7 +126,7 @@ export function GooglePayDemo({ amount, merchantName }: { amount: string; mercha
     return () => {
       cancelled = true;
     };
-  }, [amount, merchantName]);
+  }, [amount, merchantName, environment, merchantId, gatewayMerchantId, onResult]);
 
   return (
     // Google Pay assets must always sit on a light background.
