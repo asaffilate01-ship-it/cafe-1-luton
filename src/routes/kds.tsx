@@ -1820,6 +1820,30 @@ function KDS() {
                   </li>
                 ))}
               </ul>
+              {/* Chef self-allocation: KS / SD / FA — compact, prominent, inside the card */}
+              <div className="mt-2 flex items-center gap-1.5">
+                <span className="text-[10px] font-bold uppercase tracking-wide text-muted-foreground">
+                  Prep by
+                </span>
+                {["KS", "SD", "FA"].map((initials) => {
+                  const active = t.prepared_by === initials;
+                  return (
+                    <button
+                      key={initials}
+                      type="button"
+                      onClick={() => assignPrep(t.id, active ? "" : initials)}
+                      className={`h-9 flex-1 rounded-full text-xs font-black uppercase tracking-wide active:scale-[0.98] sm:h-8 ${
+                        active
+                          ? "bg-primary text-primary-foreground shadow-sm"
+                          : "border-2 border-slate-300 bg-white text-slate-700 hover:border-primary hover:text-primary"
+                      }`}
+                      title={active ? "Tap to clear" : `I am preparing this order (${initials})`}
+                    >
+                      {initials}
+                    </button>
+                  );
+                })}
+              </div>
               <div className="mt-2 flex flex-wrap gap-1.5">
                 {t.status === "ready" && t.type === "delivery" && (
                   <p className="w-full rounded-lg bg-slate-900 px-2 py-1 text-center text-[11px] font-black uppercase tracking-widest text-white">
