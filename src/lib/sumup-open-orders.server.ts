@@ -81,7 +81,11 @@ export async function importSumupOpenOrders({
     if (prior) {
       // The operator can keep adding to an open order; keep the ticket and its
       // note in step with the till instead of creating a second one.
-      const patch: Record<string, unknown> = {};
+      const patch: {
+        delivery_notes?: string;
+        subtotal_cents?: number;
+        total_cents?: number;
+      } = {};
       if (order.note && order.note !== prior.delivery_notes) patch.delivery_notes = order.note;
       if (order.totalCents && order.totalCents !== prior.total_cents) {
         patch.subtotal_cents = order.totalCents;
