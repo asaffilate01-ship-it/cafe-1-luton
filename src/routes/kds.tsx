@@ -322,24 +322,6 @@ function noteText(o: {
   return parts.join(" · ");
 }
 
-function TimePill({ now }: { now: number }) {
-  const time = new Date(now).toLocaleTimeString("en-GB", {
-    hour: "2-digit",
-    minute: "2-digit",
-    second: "2-digit",
-    hour12: false,
-  });
-  return (
-    <span
-      className="flex items-center gap-1 rounded-full bg-primary-foreground/15 px-2.5 py-1 text-[11px] font-bold tabular-nums"
-      title="Current time"
-    >
-      <Clock className="h-3.5 w-3.5" />
-      <span className="sm:hidden">{time.slice(0, 5)}</span>
-      <span className="hidden sm:inline">{time}</span>
-    </span>
-  );
-}
 
 export const Route = createFileRoute("/kds")({
   head: () => ({
