@@ -177,11 +177,12 @@ function PlatformHome() {
               <Sparkles className="h-3.5 w-3.5" /> Sell. Serve. Grow.
             </p>
             <h1 className="mt-4 max-w-4xl font-display text-4xl font-bold leading-[1.05] sm:text-5xl lg:text-[3.4rem]">
-              Everything a food business needs to sell direct — website, ordering, kitchen, till and books.
+              Everything a hospitality business needs to sell direct — website, ordering, kitchen, till and books.
             </h1>
             <p className="mt-6 max-w-2xl text-lg text-muted-foreground">
-              dishbee builds and runs the complete system behind Café 1 St Albans, and clones it for your venue under
-              your own brand and domain. No aggregator commission, no six suppliers to manage.
+              dishbee is a complete, white-label hospitality platform for independent cafés, restaurants and
+              food-service businesses. Your own brand, domain and menu — with direct ordering, EPOS, kitchen display,
+              driver app, voucher schemes and financial reporting in one connected system.
             </p>
             <div className="mt-8 flex flex-wrap gap-3">
               <a
@@ -209,7 +210,7 @@ function PlatformHome() {
                     className="h-full w-full object-cover"
                   />
                   <div className="pointer-events-none absolute inset-x-0 bottom-0 bg-gradient-to-t from-background/85 to-transparent p-5">
-                    <p className="font-display text-sm font-bold">Live at Café 1 St Albans</p>
+                    <p className="font-display text-sm font-bold">A live production venue</p>
                     <p className="text-xs text-muted-foreground">Web, app, KDS, till and drivers on one system</p>
                   </div>
                 </div>
@@ -441,8 +442,8 @@ function PlatformHome() {
               <div>
                 <h2 className="font-display text-4xl font-bold">Let's get your venue selling direct</h2>
                 <p className="mt-3 max-w-xl text-muted-foreground">
-                  Tell us about your site and we'll show you the live dishbee system running at Café 1 St Albans, then scope
-                  your build.
+                  Tell us about your site and we'll show you the live dishbee system, then scope your build and
+                  brand.
                 </p>
                 <div className="mt-6 flex flex-wrap gap-3">
                   <a
@@ -462,8 +463,8 @@ function PlatformHome() {
               <div className="rounded-2xl border border-border bg-card p-6 shadow-sm">
                 <h3 className="font-display text-xl font-bold">See it in the wild</h3>
                 <p className="mt-2 text-sm text-muted-foreground">
-                  Café 1 St Albans runs the full stack every trading day: online ordering, KDS, EPOS, drivers, vouchers
-                  and nightly financial reporting.
+                  A live hospitality venue runs the full stack every trading day: online ordering, KDS, EPOS, drivers,
+                  vouchers and nightly financial reporting.
                 </p>
                 <ul className="mt-4 space-y-3 text-sm text-muted-foreground">
                   {[
@@ -486,7 +487,7 @@ function PlatformHome() {
                   href="https://cafe1stalbans.co.uk"
                   className="mt-6 inline-flex items-center gap-2 text-sm font-semibold text-primary"
                 >
-                  View the live venue site <ArrowRight className="h-4 w-4" />
+                  View a live venue example <ArrowRight className="h-4 w-4" />
                 </a>
               </div>
             </div>
