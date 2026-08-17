@@ -748,6 +748,22 @@ export const syncSumupPos = createServerFn({ method: "POST" })
         tabAccountId = account?.id ?? null;
       }
 
+      // A settled SumUp open order already has a kitchen ticket; mark that one
+      // paid rather than sending the same food through a second time.
+      const { claimSettledOpenOrder } = await import("./sumup-open-orders.server");
+      const claimed = await claimSettledOpenOrder(supabaseAdmin, {
+        totalCents,
+        name: tab?.kind === "open" ? tab.name : null,
+        paymentMethod,
+        saleKey,
+        transactionId: primary.id,
+        reference: primary.transaction_code ?? null,
+      });
+      if (claimed) {
+        skipped += paymentParts.length;
+        continue;
+      }
+
       const { data: inserted, error: insErr } = await supabaseAdmin
         .from("orders")
         .insert({
