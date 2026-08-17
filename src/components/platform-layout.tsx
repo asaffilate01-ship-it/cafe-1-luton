@@ -42,10 +42,10 @@ export function PlatformHeader() {
         <Link to="/platform" className="flex min-w-0 items-center gap-3">
           <img
             src={dishbeeLogo.url}
-            alt="dishbee — Sell. Serve. Grow."
-            width={240}
-            height={100}
-            className="h-12 w-auto shrink-0 sm:h-14 md:h-16"
+            alt="dishbee"
+            width={180}
+            height={64}
+            className="h-10 w-auto shrink-0 sm:h-11 md:h-12"
           />
           <span className="hidden truncate text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground lg:inline">
             {t.hero.badge}
@@ -124,10 +124,10 @@ export function PlatformFooter() {
         <div className="flex items-center gap-3">
           <img
             src={dishbeeLogo.url}
-            alt="dishbee — Sell. Serve. Grow."
-            width={140}
-            height={58}
-            className="h-8 w-auto"
+            alt="dishbee"
+            width={112}
+            height={40}
+            className="h-7 w-auto"
           />
           <p>© {new Date().getFullYear()} dishbee — {t.hero.badge}</p>
         </div>
