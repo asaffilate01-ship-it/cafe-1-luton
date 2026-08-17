@@ -1,7 +1,9 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
+import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { Plus, Trash2, X } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 import { createManualOrder, type ManualChannel } from "@/lib/manual-order.functions";
 import { listAccounts, quickAddAccount } from "@/lib/accounts.functions";
 import { findSimilarAccountOrder } from "@/lib/judge-tab.functions";
@@ -9,8 +11,10 @@ import { askConfirm } from "@/lib/confirm";
 import { money } from "@/lib/format";
 import { JURY_DELIVERY_ROOMS } from "@/components/order-setup-gate";
 
-type Line = { name: string; qty: number; notes: string };
-const emptyLine = (): Line => ({ name: "", qty: 1, notes: "" });
+type Line = { name: string; qty: number; notes: string; price_cents: number | null };
+const emptyLine = (): Line => ({ name: "", qty: 1, notes: "", price_cents: null });
+
+type MenuChoice = { id: string; name: string; price_cents: number; category: string | null };
 
 const CHANNELS: { value: ManualChannel; label: string; hint: string }[] = [
   { value: "deliveroo", label: "Deliveroo", hint: "Key in what the Deliveroo tablet shows" },
@@ -73,6 +77,56 @@ export function ManualOrderDialog({
   const [notes, setNotes] = useState("");
   const [lines, setLines] = useState<Line[]>([emptyLine()]);
   const [saving, setSaving] = useState(false);
+  /** Staff can still type a free-text line, so the total is only auto-filled
+   *  while every line was picked from the menu. */
+  const [totalTouched, setTotalTouched] = useState(false);
+
+  const { data: menu = [] } = useQuery({
+    queryKey: ["manual-order-menu"],
+    enabled: open,
+    staleTime: 5 * 60_000,
+    queryFn: async (): Promise<MenuChoice[]> => {
+      const [{ data: items }, { data: cats }] = await Promise.all([
+        supabase
+          .from("menu_items")
+          .select("id, name, price_cents, category_id, active, sort_order")
+          .eq("active", true)
+          .order("sort_order"),
+        supabase.from("menu_categories").select("id, name"),
+      ]);
+      const catName = new Map((cats ?? []).map((c) => [c.id, c.name as string]));
+      return (items ?? []).map((i) => ({
+        id: i.id as string,
+        name: i.name as string,
+        price_cents: i.price_cents as number,
+        category: i.category_id ? (catName.get(i.category_id as string) ?? null) : null,
+      }));
+    },
+  });
+
+  const menuGroups = useMemo(() => {
+    const groups = new Map<string, MenuChoice[]>();
+    for (const item of menu) {
+      const key = item.category ?? "Other items";
+      groups.set(key, [...(groups.get(key) ?? []), item]);
+    }
+    return [...groups.entries()];
+  }, [menu]);
+
+  const pricedTotal = useMemo(
+    () =>
+      lines
+        .filter((l) => l.name.trim())
+        .reduce((sum, l) => sum + (l.price_cents ?? 0) * Math.max(1, Number(l.qty) || 1), 0),
+    [lines],
+  );
+  const allPriced = lines.filter((l) => l.name.trim()).every((l) => l.price_cents !== null);
+
+  // Keep the money box in step with the picked menu lines until staff edit it.
+  useEffect(() => {
+    if (totalTouched || !allPriced || pricedTotal <= 0) return;
+    setTotal((pricedTotal / 100).toFixed(2));
+  }, [pricedTotal, allPriced, totalTouched]);
 
   useEffect(() => {
     if (!open || paymentMethod !== "account" || accounts.length) return;
@@ -144,6 +198,7 @@ export function ManualOrderDialog({
     setPostcode("");
     setPhone("");
     setTotal("");
+    setTotalTouched(false);
     setNotes("");
     setLines([emptyLine()]);
   }
@@ -160,13 +215,35 @@ export function ManualOrderDialog({
     if (isMarketplace && !reference.trim()) return toast.error("Enter the order reference");
     if (!items.length) return toast.error("Add at least one item");
 
+    // Staff often type the judge's name and hit send without pressing "Add",
+    // which used to lose the name and the tab. Create it for them.
+    let tabId = accountId;
+    let tabName = accounts.find((a) => a.id === accountId)?.name ?? "";
+    if (paymentMethod === "account" && !tabId && newAccountName.trim().length >= 2) {
+      try {
+        const row = await addAccount({ data: { name: newAccountName.trim() } });
+        tabId = row.id;
+        tabName = row.name;
+        setAccounts((current) =>
+          current.some((a) => a.id === row.id) ? current : [...current, { id: row.id, name: row.name }],
+        );
+        setAccountId(row.id);
+        setNewAccountName("");
+      } catch (cause) {
+        return toast.error(cause instanceof Error ? cause.message : "Could not add the account");
+      }
+    }
+    if (paymentMethod === "account" && !tabId) {
+      return toast.error("Select or add the tab account (judge / advocate name)");
+    }
+
     // A judge often re-orders the same lunch — warn before a second unpaid
     // charge lands on the same tab.
-    if (paymentMethod === "account" && accountId) {
+    if (paymentMethod === "account" && tabId) {
       try {
         const { match } = await findSimilar({
           data: {
-            account_id: accountId,
+            account_id: tabId,
             item_names: items.flatMap((line) => Array(line.qty).fill(line.name) as string[]),
           },
         });
@@ -200,15 +277,13 @@ export function ManualOrderDialog({
           reference: reference.trim() || undefined,
           customer_name:
             customerName.trim() ||
-            (paymentMethod === "account"
-              ? accounts.find((a) => a.id === accountId)?.name
-              : undefined) ||
+            (paymentMethod === "account" ? tabName : undefined) ||
             undefined,
           // "Judges' room" is a dine-in ticket served to a specific room.
           type: type === "dine_in_judges" ? "dine_in" : type,
           total_cents: Math.round((Number(total) || 0) * 100),
           payment_method: paymentMethod,
-          account_id: paymentMethod === "account" && accountId ? accountId : undefined,
+          account_id: paymentMethod === "account" && tabId ? tabId : undefined,
           paid,
           notes: notes.trim() || undefined,
           table_number: table.trim() || undefined,
@@ -341,11 +416,31 @@ export function ManualOrderDialog({
             Order total (£)
             <input
               value={total}
-              onChange={(event) => setTotal(event.target.value)}
+              onChange={(event) => {
+                setTotalTouched(true);
+                setTotal(event.target.value);
+              }}
               inputMode="decimal"
               placeholder="0.00"
               className={field}
             />
+            {allPriced && pricedTotal > 0 ? (
+              <span className="mt-1 block text-xs font-normal text-muted-foreground">
+                Menu price total {money(pricedTotal)}
+                {totalTouched ? (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setTotalTouched(false);
+                      setTotal((pricedTotal / 100).toFixed(2));
+                    }}
+                    className="ml-2 font-semibold text-primary underline"
+                  >
+                    Use it
+                  </button>
+                ) : null}
+              </span>
+            ) : null}
           </label>
 
           {(type === "dine_in" || type === "dine_in_judges") && (
@@ -499,10 +594,37 @@ export function ManualOrderDialog({
                   className="h-11 w-16 rounded-xl border border-border bg-background px-2 text-center"
                 />
                 <div className="flex-1 space-y-2">
+                  <select
+                    value={menu.some((m) => m.name === line.name) ? line.name : ""}
+                    onChange={(event) => {
+                      const picked = menu.find((m) => m.name === event.target.value);
+                      update(
+                        index,
+                        picked
+                          ? { name: picked.name, price_cents: picked.price_cents }
+                          : { price_cents: null },
+                      );
+                    }}
+                    aria-label="Choose from the menu"
+                    className="h-11 w-full rounded-xl border border-border bg-background px-3 text-sm"
+                  >
+                    <option value="">Choose from the menu…</option>
+                    {menuGroups.map(([group, groupItems]) => (
+                      <optgroup key={group} label={group}>
+                        {groupItems.map((item) => (
+                          <option key={item.id} value={item.name}>
+                            {item.name} — {money(item.price_cents)}
+                          </option>
+                        ))}
+                      </optgroup>
+                    ))}
+                  </select>
                   <input
                     value={line.name}
-                    onChange={(event) => update(index, { name: event.target.value })}
-                    placeholder="Item name"
+                    onChange={(event) =>
+                      update(index, { name: event.target.value, price_cents: null })
+                    }
+                    placeholder="Or type the item name"
                     aria-label="Item name"
                     className="h-11 w-full rounded-xl border border-border bg-background px-3"
                   />
