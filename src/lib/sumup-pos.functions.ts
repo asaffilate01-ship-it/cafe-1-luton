@@ -892,5 +892,22 @@ export const syncSumupPos = createServerFn({ method: "POST" })
       }
     }
 
-    return { imported, skipped, voided, error: null };
+    // Unpaid POS tabs ("open orders") never appear in the transaction history,
+    // so they are pulled separately and pushed to the kitchen straight away.
+    let openImported = 0;
+    try {
+      const { importSumupOpenOrders } = await import("./sumup-open-orders.server");
+      const openResult = await importSumupOpenOrders({
+        key,
+        merchantCode: items.map((t) => merchantCode(t)).find(Boolean) ?? null,
+        supabaseAdmin,
+        menuByNameIndex,
+      });
+      openImported = openResult.imported;
+      imported += openResult.imported;
+    } catch (e) {
+      console.error("[pos-sync] open orders failed", e);
+    }
+
+    return { imported, skipped, voided, openImported, error: null };
   });
