@@ -299,9 +299,9 @@ function PlatformContent() {
                 return (
                   <article
                     key={title}
-                    className="group rounded-2xl border border-border bg-card p-6 shadow-sm transition hover:-translate-y-1 hover:border-primary/40 hover:shadow-lg"
+                    className="group card-3d card-3d-hover p-6"
                   >
-                    <span className="grid h-12 w-12 place-items-center rounded-2xl border border-primary/15 bg-primary/10 text-primary transition group-hover:bg-primary group-hover:text-primary-foreground">
+                    <span className="icon-3d h-12 w-12">
                       <Icon className="h-5 w-5" strokeWidth={1.9} />
                     </span>
                     <h3 className="mt-4 font-display text-lg font-bold">{title}</h3>
