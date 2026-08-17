@@ -895,7 +895,7 @@ export const setOrderPreparedBy = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const { error } = await context.supabase.rpc("cafe1_set_prepared_by", {
       _order_id: data.order_id,
-      _initials: data.initials,
+      _initials: data.initials ?? "",
     });
     if (error) throw new Error(error.message);
     return { ok: true };
