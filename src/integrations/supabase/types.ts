@@ -1513,6 +1513,8 @@ export type Database = {
           account_id: string | null
           address_line1: string | null
           address_line2: string | null
+          cancellation_reason: string | null
+          cancelled_at: string | null
           city: string | null
           company_name: string | null
           court_location: string | null
@@ -1582,6 +1584,8 @@ export type Database = {
           account_id?: string | null
           address_line1?: string | null
           address_line2?: string | null
+          cancellation_reason?: string | null
+          cancelled_at?: string | null
           city?: string | null
           company_name?: string | null
           court_location?: string | null
@@ -1651,6 +1655,8 @@ export type Database = {
           account_id?: string | null
           address_line1?: string | null
           address_line2?: string | null
+          cancellation_reason?: string | null
+          cancelled_at?: string | null
           city?: string | null
           company_name?: string | null
           court_location?: string | null
@@ -3229,6 +3235,8 @@ export type Database = {
           account_id: string | null
           address_line1: string | null
           address_line2: string | null
+          cancellation_reason: string | null
+          cancelled_at: string | null
           city: string | null
           company_name: string | null
           court_location: string | null
@@ -3307,6 +3315,8 @@ export type Database = {
           account_id: string | null
           address_line1: string | null
           address_line2: string | null
+          cancellation_reason: string | null
+          cancelled_at: string | null
           city: string | null
           company_name: string | null
           court_location: string | null
@@ -3479,6 +3489,8 @@ export type Database = {
           account_id: string | null
           address_line1: string | null
           address_line2: string | null
+          cancellation_reason: string | null
+          cancelled_at: string | null
           city: string | null
           company_name: string | null
           court_location: string | null
@@ -3654,6 +3666,8 @@ export type Database = {
           account_id: string | null
           address_line1: string | null
           address_line2: string | null
+          cancellation_reason: string | null
+          cancelled_at: string | null
           city: string | null
           company_name: string | null
           court_location: string | null
@@ -3755,6 +3769,8 @@ export type Database = {
           account_id: string | null
           address_line1: string | null
           address_line2: string | null
+          cancellation_reason: string | null
+          cancelled_at: string | null
           city: string | null
           company_name: string | null
           court_location: string | null
@@ -3845,6 +3861,8 @@ export type Database = {
           account_id: string | null
           address_line1: string | null
           address_line2: string | null
+          cancellation_reason: string | null
+          cancelled_at: string | null
           city: string | null
           company_name: string | null
           court_location: string | null
@@ -4164,6 +4182,8 @@ export type Database = {
           account_id: string | null
           address_line1: string | null
           address_line2: string | null
+          cancellation_reason: string | null
+          cancelled_at: string | null
           city: string | null
           company_name: string | null
           court_location: string | null
@@ -4249,6 +4269,8 @@ export type Database = {
           account_id: string | null
           address_line1: string | null
           address_line2: string | null
+          cancellation_reason: string | null
+          cancelled_at: string | null
           city: string | null
           company_name: string | null
           court_location: string | null
