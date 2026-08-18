@@ -788,6 +788,41 @@ function KDS() {
     }
   }
 
+  /** Cancel an unpaid house-tab ticket and take the charge off the tab. */
+  async function cancelTabTicket(t: Ticket) {
+    const reason = await askPrompt({
+      title: `Cancel tab order #${t.order_number}?`,
+      description: "The charge comes off the house tab and the ticket leaves the board.",
+      label: "Reason",
+      placeholder: "e.g. ordered by mistake",
+      confirmLabel: "Cancel order",
+    });
+    if (!reason || reason.trim().length < 3) return;
+    const previous = tickets;
+    setTickets((prev) => prev.filter((x) => x.id !== t.id));
+    try {
+      await cancelTab({ data: { order_id: t.id, reason: reason.trim() } });
+      clearedIds.current.set(t.id, Date.now());
+      toast.success(`#${t.order_number} cancelled — removed from the tab`);
+    } catch (e) {
+      setTickets(previous);
+      toast.error(e instanceof Error ? e.message : "Could not cancel that order");
+    }
+  }
+
+  async function assignPrepLegacy(id: string, initials: string) {
+    const previous = tickets;
+    setTickets((prev) =>
+      prev.map((t) => (t.id === id ? { ...t, prepared_by: initials || null } : t)),
+    );
+    try {
+      await allocate({ data: { order_id: id, initials: initials || null } });
+    } catch (e) {
+      setTickets(previous);
+      toast.error(e instanceof Error ? e.message : "Could not claim ticket");
+    }
+  }
+
   const [bulking, setBulking] = useState(false);
   const [chromeHidden, setChromeHidden] = useState(false);
   // 10" Android tablet in landscape (e.g. 1280x800). Width alone can't tell it
