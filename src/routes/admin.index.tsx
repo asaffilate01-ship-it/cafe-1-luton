@@ -10,6 +10,7 @@ import {
   markPaidManually,
   assignDriver,
   listDrivers,
+  cancelTabOrder,
 } from "@/lib/orders.functions";
 import { refundOrder } from "@/lib/payments.functions";
 import { money } from "@/lib/format";
@@ -68,6 +69,31 @@ function Admin() {
   const assign = useServerFn(assignDriver);
   const fetchDrivers = useServerFn(listDrivers);
   const refund = useServerFn(refundOrder);
+  const cancelTab = useServerFn(cancelTabOrder);
+
+  async function doCancelTab(o: OrderRow) {
+    const reason = await askPrompt({
+      title: `Cancel tab order #${o.order_number}?`,
+      description: "The charge is removed from the house tab and the ticket is cancelled.",
+      label: "Reason",
+      placeholder: "e.g. ordered by mistake",
+      confirmLabel: "Cancel order",
+    });
+    if (!reason || reason.trim().length < 3) return;
+    try {
+      await cancelTab({ data: { order_id: o.id, reason: reason.trim() } });
+      setOrders((prev) =>
+        prev.map((row) =>
+          row.id === o.id
+            ? { ...row, status: "cancelled", payment_status: "pending", account_id: null }
+            : row,
+        ),
+      );
+      toast.success("Tab order cancelled");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Could not cancel that order");
+    }
+  }
 
   useEffect(() => {
     if (!loading && !user) navigate({ to: "/admin/login", search: { next: "/admin" } });
@@ -419,6 +445,14 @@ function Admin() {
                           className="rounded-full border border-border px-3 py-1 text-xs font-semibold text-muted-foreground hover:border-primary hover:text-primary"
                         >
                           Refund
+                        </button>
+                      )}
+                      {o.payment_status === "on_account" && o.status !== "cancelled" && (
+                        <button
+                          onClick={() => void doCancelTab(o)}
+                          className="rounded-full border border-destructive px-3 py-1 text-xs font-semibold text-destructive hover:bg-destructive hover:text-destructive-foreground"
+                        >
+                          Cancel tab order
                         </button>
                       )}
                       <a

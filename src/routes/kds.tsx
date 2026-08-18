@@ -5,7 +5,7 @@ import { signOutAndRedirect } from "@/lib/sign-out";
 import { useEffect, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useServerFn } from "@tanstack/react-start";
-import { updateOrderStatus, setOrderFulfilment, setOrderChannel, setOrderPreparedBy } from "@/lib/orders.functions";
+import { updateOrderStatus, setOrderFulfilment, setOrderChannel, setOrderPreparedBy, cancelTabOrder } from "@/lib/orders.functions";
 import { toast } from "sonner";
 import { useSession, useRoles } from "@/hooks/use-auth";
 import { useAlertOnIncrease, useNotificationPermission, playChime } from "@/hooks/use-order-alerts";
@@ -363,6 +363,7 @@ function KDS() {
   const setFulfil = useServerFn(setOrderFulfilment);
   const setChannel = useServerFn(setOrderChannel);
   const allocate = useServerFn(setOrderPreparedBy);
+  const cancelTab = useServerFn(cancelTabOrder);
   // Which ticket currently has its "move to another area" picker open.
   const [reassignFor, setReassignFor] = useState<string | null>(null);
   /** Per-ticket move state so the card itself shows progress and failures. */
@@ -784,6 +785,28 @@ function KDS() {
     } catch (e) {
       setTickets(previous);
       toast.error(e instanceof Error ? e.message : "Could not claim ticket");
+    }
+  }
+
+  /** Cancel an unpaid house-tab ticket and take the charge off the tab. */
+  async function cancelTabTicket(t: Ticket) {
+    const reason = await askPrompt({
+      title: `Cancel tab order #${t.order_number}?`,
+      description: "The charge comes off the house tab and the ticket leaves the board.",
+      label: "Reason",
+      placeholder: "e.g. ordered by mistake",
+      confirmLabel: "Cancel order",
+    });
+    if (!reason || reason.trim().length < 3) return;
+    const previous = tickets;
+    setTickets((prev) => prev.filter((x) => x.id !== t.id));
+    try {
+      await cancelTab({ data: { order_id: t.id, reason: reason.trim() } });
+      clearedIds.current.set(t.id, Date.now());
+      toast.success(`#${t.order_number} cancelled — removed from the tab`);
+    } catch (e) {
+      setTickets(previous);
+      toast.error(e instanceof Error ? e.message : "Could not cancel that order");
     }
   }
 
@@ -1606,6 +1629,16 @@ function KDS() {
                     Edit ticket
                   </button>
                 </div>
+                {(t.payment_method === "account" || t.payment_status === "on_account") && (
+                  <button
+                    type="button"
+                    onClick={() => void cancelTabTicket(t)}
+                    className="mt-1.5 w-full rounded-full border border-red-600 py-1 text-[10px] font-bold uppercase tracking-wide text-red-700 hover:bg-red-600 hover:text-white"
+                    title="Cancel this unpaid tab order and take it off the house tab"
+                  >
+                    Cancel tab order
+                  </button>
+                )}
                 {moveState[t.id] === "saving" && (
                   <p className="mt-1 text-center text-[10px] font-bold uppercase tracking-wide text-muted-foreground">
                     Moving…
