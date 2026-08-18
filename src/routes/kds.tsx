@@ -5,7 +5,7 @@ import { signOutAndRedirect } from "@/lib/sign-out";
 import { useEffect, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useServerFn } from "@tanstack/react-start";
-import { updateOrderStatus, setOrderFulfilment, setOrderChannel, setOrderPreparedBy, cancelTabOrder } from "@/lib/orders.functions";
+import { updateOrderStatus, setOrderFulfilment, setOrderChannel, setOrderPreparedBy, cancelTabOrder, settleTabOrder } from "@/lib/orders.functions";
 import { toast } from "sonner";
 import { useSession, useRoles } from "@/hooks/use-auth";
 import { useAlertOnIncrease, useNotificationPermission, playChime } from "@/hooks/use-order-alerts";
@@ -364,6 +364,7 @@ function KDS() {
   const setChannel = useServerFn(setOrderChannel);
   const allocate = useServerFn(setOrderPreparedBy);
   const cancelTab = useServerFn(cancelTabOrder);
+  const settleTab = useServerFn(settleTabOrder);
   // Which ticket currently has its "move to another area" picker open.
   const [reassignFor, setReassignFor] = useState<string | null>(null);
   /** Per-ticket move state so the card itself shows progress and failures. */
@@ -811,6 +812,23 @@ function KDS() {
   }
 
   const [bulking, setBulking] = useState(false);
+  /** Mark an unpaid house-tab ticket as paid instead of cancelling it. */
+  async function settleTabTicket(t: Ticket, method: "cash" | "card") {
+    const previous = tickets;
+    setTickets((prev) =>
+      prev.map((x) =>
+        x.id === t.id ? { ...x, payment_status: "paid", payment_method: method } : x,
+      ),
+    );
+    try {
+      await settleTab({ data: { order_id: t.id, method } });
+      toast.success(`#${t.order_number} marked paid by ${method}`);
+    } catch (e) {
+      setTickets(previous);
+      toast.error(e instanceof Error ? e.message : "Could not mark that order paid");
+    }
+  }
+
   const [chromeHidden, setChromeHidden] = useState(false);
   // 10" Android tablet in landscape (e.g. 1280x800). Width alone can't tell it
   // apart from a laptop, so we look at a short landscape viewport plus touch
@@ -1629,16 +1647,6 @@ function KDS() {
                     Edit ticket
                   </button>
                 </div>
-                {(t.payment_method === "account" || t.payment_status === "on_account") && (
-                  <button
-                    type="button"
-                    onClick={() => void cancelTabTicket(t)}
-                    className="mt-1.5 w-full rounded-full border border-red-600 py-1 text-[10px] font-bold uppercase tracking-wide text-red-700 hover:bg-red-600 hover:text-white"
-                    title="Cancel this unpaid tab order and take it off the house tab"
-                  >
-                    Cancel tab order
-                  </button>
-                )}
                 {moveState[t.id] === "saving" && (
                   <p className="mt-1 text-center text-[10px] font-bold uppercase tracking-wide text-muted-foreground">
                     Moving…
@@ -1733,6 +1741,34 @@ function KDS() {
                       className={`rounded-full px-1.5 py-px text-[9px] font-black uppercase tracking-wide ${t.payment_method === "cash" ? "bg-emerald-600 text-white" : "bg-slate-800 text-white"}`}
                     >
                       {t.payment_method === "cash" ? "Cash" : "Card"}
+                    </span>
+                  )}
+                  {(t.payment_method === "account" || t.payment_status === "on_account") && (
+                    <span className="flex items-center gap-1">
+                      <button
+                        type="button"
+                        onClick={() => void settleTabTicket(t, "cash")}
+                        className="rounded-full bg-emerald-600 px-1.5 py-px text-[9px] font-black uppercase tracking-wide text-white hover:bg-emerald-700"
+                        title="Mark this tab order as paid in cash"
+                      >
+                        Paid cash
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => void settleTabTicket(t, "card")}
+                        className="rounded-full bg-slate-800 px-1.5 py-px text-[9px] font-black uppercase tracking-wide text-white hover:bg-slate-900"
+                        title="Mark this tab order as paid by card"
+                      >
+                        Paid card
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => void cancelTabTicket(t)}
+                        className="rounded-full border border-red-600 px-1.5 py-px text-[9px] font-black uppercase tracking-wide text-red-700 hover:bg-red-600 hover:text-white"
+                        title="Cancel this unpaid tab order and take it off the house tab"
+                      >
+                        Cancel
+                      </button>
                     </span>
                   )}
                   <span className="truncate text-[10px] font-semibold text-muted-foreground">
