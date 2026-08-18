@@ -810,19 +810,6 @@ function KDS() {
     }
   }
 
-  async function assignPrepLegacy(id: string, initials: string) {
-    const previous = tickets;
-    setTickets((prev) =>
-      prev.map((t) => (t.id === id ? { ...t, prepared_by: initials || null } : t)),
-    );
-    try {
-      await allocate({ data: { order_id: id, initials: initials || null } });
-    } catch (e) {
-      setTickets(previous);
-      toast.error(e instanceof Error ? e.message : "Could not claim ticket");
-    }
-  }
-
   const [bulking, setBulking] = useState(false);
   const [chromeHidden, setChromeHidden] = useState(false);
   // 10" Android tablet in landscape (e.g. 1280x800). Width alone can't tell it
