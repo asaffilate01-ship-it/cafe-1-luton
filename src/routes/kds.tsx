@@ -6,7 +6,6 @@ import { useEffect, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useServerFn } from "@tanstack/react-start";
 import { updateOrderStatus, setOrderFulfilment, setOrderChannel, setOrderPreparedBy, cancelTabOrder } from "@/lib/orders.functions";
-import { askPrompt } from "@/lib/confirm";
 import { toast } from "sonner";
 import { useSession, useRoles } from "@/hooks/use-auth";
 import { useAlertOnIncrease, useNotificationPermission, playChime } from "@/hooks/use-order-alerts";
