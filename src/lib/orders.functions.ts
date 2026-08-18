@@ -868,6 +868,29 @@ export const cancelTabOrder = createServerFn({ method: "POST" })
   });
 
 /**
+ * Marks a single house-tab order as paid (cash, card, bank transfer or other)
+ * so it leaves the unpaid tab balance instead of being cancelled.
+ */
+export const settleTabOrder = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .validator((d: unknown) =>
+    z
+      .object({
+        order_id: z.string().uuid(),
+        method: z.enum(["cash", "card", "bank_transfer", "other"]),
+      })
+      .parse(d),
+  )
+  .handler(async ({ data, context }) => {
+    const { error } = await context.supabase.rpc("cafe1_settle_tab_order", {
+      _order_id: data.order_id,
+      _method: data.method,
+    });
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
+
+/**
  * Move a ticket to a different area (jury / judges / public / web / a delivery
  * partner) when it landed on the wrong side. Staff cannot update orders
  * directly under RLS, so this goes through the audited database function.
