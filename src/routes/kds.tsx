@@ -5,7 +5,7 @@ import { signOutAndRedirect } from "@/lib/sign-out";
 import { useEffect, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useServerFn } from "@tanstack/react-start";
-import { updateOrderStatus, setOrderFulfilment, setOrderChannel, setOrderPreparedBy, cancelTabOrder } from "@/lib/orders.functions";
+import { updateOrderStatus, setOrderFulfilment, setOrderChannel, setOrderPreparedBy, cancelTabOrder, settleTabOrder } from "@/lib/orders.functions";
 import { toast } from "sonner";
 import { useSession, useRoles } from "@/hooks/use-auth";
 import { useAlertOnIncrease, useNotificationPermission, playChime } from "@/hooks/use-order-alerts";
@@ -364,6 +364,7 @@ function KDS() {
   const setChannel = useServerFn(setOrderChannel);
   const allocate = useServerFn(setOrderPreparedBy);
   const cancelTab = useServerFn(cancelTabOrder);
+  const settleTab = useServerFn(settleTabOrder);
   // Which ticket currently has its "move to another area" picker open.
   const [reassignFor, setReassignFor] = useState<string | null>(null);
   /** Per-ticket move state so the card itself shows progress and failures. */
@@ -1629,16 +1630,6 @@ function KDS() {
                     Edit ticket
                   </button>
                 </div>
-                {(t.payment_method === "account" || t.payment_status === "on_account") && (
-                  <button
-                    type="button"
-                    onClick={() => void cancelTabTicket(t)}
-                    className="mt-1.5 w-full rounded-full border border-red-600 py-1 text-[10px] font-bold uppercase tracking-wide text-red-700 hover:bg-red-600 hover:text-white"
-                    title="Cancel this unpaid tab order and take it off the house tab"
-                  >
-                    Cancel tab order
-                  </button>
-                )}
                 {moveState[t.id] === "saving" && (
                   <p className="mt-1 text-center text-[10px] font-bold uppercase tracking-wide text-muted-foreground">
                     Moving…
