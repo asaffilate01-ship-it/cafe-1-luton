@@ -867,29 +867,6 @@ export const cancelTabOrder = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
-const _setOrderFulfilmentLegacy = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
-  .validator((d: unknown) =>
-    z
-      .object({
-        order_id: z.string().uuid(),
-        type: z.enum(["dine_in", "collection", "delivery"]),
-        table_number: z.string().max(10).nullable().optional(),
-      })
-      .parse(d),
-  )
-  .handler(async ({ data, context }) => {
-    const { error } = await context.supabase
-      .from("orders")
-      .update({
-        type: data.type,
-        table_number: data.type === "dine_in" ? (data.table_number ?? null) : null,
-      })
-      .eq("id", data.order_id);
-    if (error) throw new Error(error.message);
-    return { ok: true };
-  });
-
 /**
  * Move a ticket to a different area (jury / judges / public / web / a delivery
  * partner) when it landed on the wrong side. Staff cannot update orders
