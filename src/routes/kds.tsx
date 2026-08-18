@@ -1743,6 +1743,34 @@ function KDS() {
                       {t.payment_method === "cash" ? "Cash" : "Card"}
                     </span>
                   )}
+                  {(t.payment_method === "account" || t.payment_status === "on_account") && (
+                    <span className="flex items-center gap-1">
+                      <button
+                        type="button"
+                        onClick={() => void settleTabTicket(t, "cash")}
+                        className="rounded-full bg-emerald-600 px-1.5 py-px text-[9px] font-black uppercase tracking-wide text-white hover:bg-emerald-700"
+                        title="Mark this tab order as paid in cash"
+                      >
+                        Paid cash
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => void settleTabTicket(t, "card")}
+                        className="rounded-full bg-slate-800 px-1.5 py-px text-[9px] font-black uppercase tracking-wide text-white hover:bg-slate-900"
+                        title="Mark this tab order as paid by card"
+                      >
+                        Paid card
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => void cancelTabTicket(t)}
+                        className="rounded-full border border-red-600 px-1.5 py-px text-[9px] font-black uppercase tracking-wide text-red-700 hover:bg-red-600 hover:text-white"
+                        title="Cancel this unpaid tab order and take it off the house tab"
+                      >
+                        Cancel
+                      </button>
+                    </span>
+                  )}
                   <span className="truncate text-[10px] font-semibold text-muted-foreground">
                     {new Date(t.created_at).toLocaleString([], {
                       weekday: "short",
