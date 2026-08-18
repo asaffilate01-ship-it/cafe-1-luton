@@ -447,6 +447,14 @@ function Admin() {
                           Refund
                         </button>
                       )}
+                      {o.payment_status === "on_account" && o.status !== "cancelled" && (
+                        <button
+                          onClick={() => void doCancelTab(o)}
+                          className="rounded-full border border-destructive px-3 py-1 text-xs font-semibold text-destructive hover:bg-destructive hover:text-destructive-foreground"
+                        >
+                          Cancel tab order
+                        </button>
+                      )}
                       <a
                         href={`/print/${o.id}`}
                         target="_blank"
