@@ -1629,6 +1629,16 @@ function KDS() {
                     Edit ticket
                   </button>
                 </div>
+                {(t.payment_method === "account" || t.payment_status === "on_account") && (
+                  <button
+                    type="button"
+                    onClick={() => void cancelTabTicket(t)}
+                    className="mt-1.5 w-full rounded-full border border-red-600 py-1 text-[10px] font-bold uppercase tracking-wide text-red-700 hover:bg-red-600 hover:text-white"
+                    title="Cancel this unpaid tab order and take it off the house tab"
+                  >
+                    Cancel tab order
+                  </button>
+                )}
                 {moveState[t.id] === "saving" && (
                   <p className="mt-1 text-center text-[10px] font-bold uppercase tracking-wide text-muted-foreground">
                     Moving…
