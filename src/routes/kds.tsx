@@ -812,6 +812,23 @@ function KDS() {
   }
 
   const [bulking, setBulking] = useState(false);
+  /** Mark an unpaid house-tab ticket as paid instead of cancelling it. */
+  async function settleTabTicket(t: Ticket, method: "cash" | "card") {
+    const previous = tickets;
+    setTickets((prev) =>
+      prev.map((x) =>
+        x.id === t.id ? { ...x, payment_status: "paid", payment_method: method } : x,
+      ),
+    );
+    try {
+      await settleTab({ data: { order_id: t.id, method } });
+      toast.success(`#${t.order_number} marked paid by ${method}`);
+    } catch (e) {
+      setTickets(previous);
+      toast.error(e instanceof Error ? e.message : "Could not mark that order paid");
+    }
+  }
+
   const [chromeHidden, setChromeHidden] = useState(false);
   // 10" Android tablet in landscape (e.g. 1280x800). Width alone can't tell it
   // apart from a laptop, so we look at a short landscape viewport plus touch
