@@ -41,7 +41,8 @@ async function codeHash(code: string): Promise<string> {
   return createHash("sha256").update(code.trim().toUpperCase()).digest("hex");
 }
 
-async function requireAdmin(context: {
+async function requireAdmin(
+  context: {
   userId: string;
   claims: unknown;
   supabase: {
@@ -50,12 +51,15 @@ async function requireAdmin(context: {
       args: { _user_id: string; _role: "admin" },
     ) => PromiseLike<{ data: unknown }>;
   };
-}) {
+  },
+  options: { mfa?: boolean } = {},
+) {
   const { data } = await context.supabase.rpc("has_role", {
     _user_id: context.userId,
     _role: "admin",
   });
   if (!data) throw new Error("Manager approval required");
+  if (options.mfa === false) return;
   const { requireManagerMfa } = await import("./elevated-auth.server");
   requireManagerMfa(context.claims);
 }
@@ -144,7 +148,9 @@ export const quickAddAccount = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .validator((d: unknown) => z.object({ name: z.string().min(2).max(120) }).parse(d))
   .handler(async ({ data, context }) => {
-    await requireAdmin(context);
+    // Quick-add during a manual/KDS order is a low-risk, high-frequency counter
+    // action, so it stays admin-gated but does not demand step-up MFA.
+    await requireAdmin(context, { mfa: false });
     const name = data.name.trim();
     const { data: rows, error } = await context.supabase.rpc("cafe1_quick_add_account", {
       _name: name,
