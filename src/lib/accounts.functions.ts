@@ -149,8 +149,13 @@ export const quickAddAccount = createServerFn({ method: "POST" })
   .validator((d: unknown) => z.object({ name: z.string().min(2).max(120) }).parse(d))
   .handler(async ({ data, context }) => {
     // Quick-add during a manual/KDS order is a low-risk, high-frequency counter
-    // action, so it stays admin-gated but does not demand step-up MFA.
-    await requireAdmin(context, { mfa: false });
+    // action, so any signed-in operator (kitchen staff or manager) may do it
+    // without step-up MFA. The RPC re-checks the operator role server-side.
+    const [{ data: isAdmin }, { data: isStaff }] = await Promise.all([
+      context.supabase.rpc("has_role", { _user_id: context.userId, _role: "admin" }),
+      context.supabase.rpc("has_role", { _user_id: context.userId, _role: "staff" }),
+    ]);
+    if (!isAdmin && !isStaff) throw new Error("Kitchen or manager access required");
     const name = data.name.trim();
     const { data: rows, error } = await context.supabase.rpc("cafe1_quick_add_account", {
       _name: name,
