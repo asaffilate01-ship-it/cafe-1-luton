@@ -11,8 +11,21 @@ import { askConfirm } from "@/lib/confirm";
 import { money } from "@/lib/format";
 import { JURY_DELIVERY_ROOMS } from "@/components/order-setup-gate";
 
-type Line = { name: string; qty: number; notes: string; price_cents: number | null };
-const emptyLine = (): Line => ({ name: "", qty: 1, notes: "", price_cents: null });
+type Line = {
+  name: string;
+  qty: number;
+  notes: string;
+  price_cents: number | null;
+  /** Which exact menu row was picked — several dishes share a name. */
+  menu_item_id: string | null;
+};
+const emptyLine = (): Line => ({
+  name: "",
+  qty: 1,
+  notes: "",
+  price_cents: null,
+  menu_item_id: null,
+});
 
 type MenuChoice = { id: string; name: string; price_cents: number; category: string | null };
 
@@ -595,14 +608,22 @@ export function ManualOrderDialog({
                 />
                 <div className="flex-1 space-y-2">
                   <select
-                    value={menu.some((m) => m.name === line.name) ? line.name : ""}
+                    // Menu names repeat across categories (a sandwich and an
+                    // omelette can both be "Cheese and onion"), so the id is
+                    // the only safe key — matching on the name picked the
+                    // wrong dish and the wrong price.
+                    value={line.menu_item_id ?? ""}
                     onChange={(event) => {
-                      const picked = menu.find((m) => m.name === event.target.value);
+                      const picked = menu.find((m) => m.id === event.target.value);
                       update(
                         index,
                         picked
-                          ? { name: picked.name, price_cents: picked.price_cents }
-                          : { price_cents: null },
+                          ? {
+                              name: picked.name,
+                              price_cents: picked.price_cents,
+                              menu_item_id: picked.id,
+                            }
+                          : { price_cents: null, menu_item_id: null },
                       );
                     }}
                     aria-label="Choose from the menu"
@@ -612,7 +633,7 @@ export function ManualOrderDialog({
                     {menuGroups.map(([group, groupItems]) => (
                       <optgroup key={group} label={group}>
                         {groupItems.map((item) => (
-                          <option key={item.id} value={item.name}>
+                          <option key={item.id} value={item.id}>
                             {item.name} — {money(item.price_cents)}
                           </option>
                         ))}
@@ -622,7 +643,11 @@ export function ManualOrderDialog({
                   <input
                     value={line.name}
                     onChange={(event) =>
-                      update(index, { name: event.target.value, price_cents: null })
+                      update(index, {
+                        name: event.target.value,
+                        price_cents: null,
+                        menu_item_id: null,
+                      })
                     }
                     placeholder="Or type the item name"
                     aria-label="Item name"
