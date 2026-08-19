@@ -7,6 +7,7 @@ const LineSchema = z.object({
   name: z.string().min(1).max(120),
   qty: z.number().int().min(1).max(50),
   notes: z.string().max(200).optional(),
+  menu_item_id: z.string().uuid().optional(),
 });
 
 /** Every order origin the kitchen may need to key in by hand. */
@@ -158,6 +159,7 @@ export const createManualOrder = createServerFn({ method: "POST" })
     const { error: lineError } = await supabaseAdmin.from("order_items").insert(
       data.items.map((line) => ({
         order_id: inserted.id,
+        menu_item_id: line.menu_item_id ?? null,
         name: line.name.trim(),
         qty: line.qty,
         unit_price_cents: unit,
@@ -243,6 +245,7 @@ export const updateManualOrder = createServerFn({ method: "POST" })
     const { error: lineError } = await supabaseAdmin.from("order_items").insert(
       data.items.map((line) => ({
         order_id: data.order_id,
+        menu_item_id: line.menu_item_id ?? null,
         name: line.name.trim(),
         qty: line.qty,
         unit_price_cents: unit,

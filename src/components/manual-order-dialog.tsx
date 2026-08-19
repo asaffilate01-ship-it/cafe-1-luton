@@ -224,6 +224,7 @@ export function ManualOrderDialog({
         name: line.name.trim(),
         qty: Math.max(1, Number(line.qty) || 1),
         notes: line.notes.trim() || undefined,
+        menu_item_id: line.menu_item_id ?? undefined,
       }));
     if (isMarketplace && !reference.trim()) return toast.error("Enter the order reference");
     if (!items.length) return toast.error("Add at least one item");
