@@ -1771,6 +1771,16 @@ function KDS() {
                       </button>
                     </span>
                   )}
+                  {t.payment_method !== "account" && t.payment_status !== "on_account" && (
+                    <button
+                      type="button"
+                      onClick={() => void cancelTabTicket(t)}
+                      className="rounded-full border border-red-600 px-1.5 py-px text-[9px] font-black uppercase tracking-wide text-red-700 hover:bg-red-600 hover:text-white"
+                      title="Cancel this ticket and take it off the board"
+                    >
+                      Cancel
+                    </button>
+                  )}
                   <span className="truncate text-[10px] font-semibold text-muted-foreground">
                     {new Date(t.created_at).toLocaleString([], {
                       weekday: "short",
