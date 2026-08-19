@@ -133,6 +133,13 @@ export function PlatformFooter() {
           <Link to="/privacy" className="hover:text-foreground">{t.nav.privacy}</Link>
           <Link to="/terms" className="hover:text-foreground">{t.nav.terms}</Link>
           <Link to="/cookies" className="hover:text-foreground">{t.nav.cookies}</Link>
+          <button
+            type="button"
+            onClick={openCookieSettings}
+            className="text-left hover:text-foreground"
+          >
+            Cookie preferences
+          </button>
           <Link to="/landlord" className="hover:text-foreground">{t.nav.operatorSignIn}</Link>
         </div>
       </div>
