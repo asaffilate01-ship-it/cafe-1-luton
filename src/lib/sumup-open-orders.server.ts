@@ -65,7 +65,7 @@ export async function importSumupOpenOrders({
   const saleKeys = orders.map((order) => sumupOpenOrderSaleKey(order.id));
   const { data: existingRows } = await supabaseAdmin
     .from("orders")
-    .select("id, delivery_notes, total_cents, sumup_sale_key, status")
+    .select("id, delivery_notes, notes_manual, total_cents, sumup_sale_key, status")
     .in("sumup_sale_key", saleKeys);
   const existing = new Map((existingRows ?? []).map((row) => [row.sumup_sale_key as string, row]));
 
@@ -86,7 +86,11 @@ export async function importSumupOpenOrders({
         subtotal_cents?: number;
         total_cents?: number;
       } = {};
-      if (order.note && order.note !== prior.delivery_notes) patch.delivery_notes = order.note;
+      // A note typed on the KDS wins — otherwise the next sweep (seconds later)
+      // would overwrite it with whatever the till holds.
+      if (!prior.notes_manual && order.note && order.note !== prior.delivery_notes) {
+        patch.delivery_notes = order.note;
+      }
       if (order.totalCents && order.totalCents !== prior.total_cents) {
         patch.subtotal_cents = order.totalCents;
         patch.total_cents = order.totalCents;
@@ -95,7 +99,9 @@ export async function importSumupOpenOrders({
         await supabaseAdmin.from("orders").update(patch).eq("id", prior.id);
         updated++;
       }
-      await syncOpenOrderLines(supabaseAdmin, prior.id as string, order, menuByNameIndex);
+      if (!prior.notes_manual) {
+        await syncOpenOrderLines(supabaseAdmin, prior.id as string, order, menuByNameIndex);
+      }
       continue;
     }
 
