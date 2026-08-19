@@ -578,7 +578,7 @@ export const syncSumupPos = createServerFn({ method: "POST" })
       .map((transaction) => transaction.transaction_code)
       .filter((value): value is string => Boolean(value));
     const existingFields =
-      "id, delivery_notes, source, total_cents, payment_method, sumup_sale_key, sumup_transaction_id, sumup_order_ref";
+      "id, delivery_notes, notes_manual, source, total_cents, payment_method, sumup_sale_key, sumup_transaction_id, sumup_order_ref";
     const [bySaleKey, byTransaction, byReference, recentAttempts] = await Promise.all([
       saleKeys.length
         ? supabaseAdmin.from("orders").select(existingFields).in("sumup_sale_key", saleKeys)
@@ -675,7 +675,7 @@ export const syncSumupPos = createServerFn({ method: "POST" })
         // after the ticket was first created. Backfill both the ticket note and
         // any line notes so what the till operator typed always reaches the
         // kitchen card, not just on the very first sync.
-        {
+        if (!existing.notes_manual) {
           const sale = await loadSumupSaleGroup(paymentParts, key);
           const backfill = sumupOrderNote(sale.detailed, sale.products);
           if (backfill && backfill !== existing.delivery_notes) {
