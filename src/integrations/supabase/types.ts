@@ -1538,6 +1538,7 @@ export type Database = {
           loyalty_awarded: boolean
           loyalty_free_drinks_used: number
           loyalty_stamps_pending: number
+          notes_manual: boolean
           operator_id: string | null
           order_number: number
           partner_order_id: string | null
@@ -1609,6 +1610,7 @@ export type Database = {
           loyalty_awarded?: boolean
           loyalty_free_drinks_used?: number
           loyalty_stamps_pending?: number
+          notes_manual?: boolean
           operator_id?: string | null
           order_number?: number
           partner_order_id?: string | null
@@ -1680,6 +1682,7 @@ export type Database = {
           loyalty_awarded?: boolean
           loyalty_free_drinks_used?: number
           loyalty_stamps_pending?: number
+          notes_manual?: boolean
           operator_id?: string | null
           order_number?: number
           partner_order_id?: string | null
@@ -3260,6 +3263,7 @@ export type Database = {
           loyalty_awarded: boolean
           loyalty_free_drinks_used: number
           loyalty_stamps_pending: number
+          notes_manual: boolean
           operator_id: string | null
           order_number: number
           partner_order_id: string | null
@@ -3340,6 +3344,7 @@ export type Database = {
           loyalty_awarded: boolean
           loyalty_free_drinks_used: number
           loyalty_stamps_pending: number
+          notes_manual: boolean
           operator_id: string | null
           order_number: number
           partner_order_id: string | null
@@ -3514,6 +3519,7 @@ export type Database = {
           loyalty_awarded: boolean
           loyalty_free_drinks_used: number
           loyalty_stamps_pending: number
+          notes_manual: boolean
           operator_id: string | null
           order_number: number
           partner_order_id: string | null
@@ -3657,6 +3663,7 @@ export type Database = {
           loyalty_awarded: boolean
           loyalty_free_drinks_used: number
           loyalty_stamps_pending: number
+          notes_manual: boolean
           operator_id: string | null
           order_number: number
           partner_order_id: string | null
@@ -3771,6 +3778,7 @@ export type Database = {
           loyalty_awarded: boolean
           loyalty_free_drinks_used: number
           loyalty_stamps_pending: number
+          notes_manual: boolean
           operator_id: string | null
           order_number: number
           partner_order_id: string | null
@@ -3874,6 +3882,7 @@ export type Database = {
           loyalty_awarded: boolean
           loyalty_free_drinks_used: number
           loyalty_stamps_pending: number
+          notes_manual: boolean
           operator_id: string | null
           order_number: number
           partner_order_id: string | null
@@ -3966,6 +3975,7 @@ export type Database = {
           loyalty_awarded: boolean
           loyalty_free_drinks_used: number
           loyalty_stamps_pending: number
+          notes_manual: boolean
           operator_id: string | null
           order_number: number
           partner_order_id: string | null
@@ -4287,6 +4297,7 @@ export type Database = {
           loyalty_awarded: boolean
           loyalty_free_drinks_used: number
           loyalty_stamps_pending: number
+          notes_manual: boolean
           operator_id: string | null
           order_number: number
           partner_order_id: string | null
@@ -4374,6 +4385,7 @@ export type Database = {
           loyalty_awarded: boolean
           loyalty_free_drinks_used: number
           loyalty_stamps_pending: number
+          notes_manual: boolean
           operator_id: string | null
           order_number: number
           partner_order_id: string | null
