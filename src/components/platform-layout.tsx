@@ -3,6 +3,7 @@ import { Link, useRouterState } from "@tanstack/react-router";
 import { Home, LayoutGrid, ShieldCheck, Mail, Languages } from "lucide-react";
 import dishbeeLogo from "@/assets/dishbee-logo.png.asset.json";
 import { PlatformI18nProvider, usePlatformI18n } from "@/components/platform-i18n-provider";
+import { openCookieSettings } from "@/lib/cookie-consent";
 
 
 export function PlatformShell({ children }: { children: ReactNode }) {
@@ -133,6 +134,13 @@ export function PlatformFooter() {
           <Link to="/privacy" className="hover:text-foreground">{t.nav.privacy}</Link>
           <Link to="/terms" className="hover:text-foreground">{t.nav.terms}</Link>
           <Link to="/cookies" className="hover:text-foreground">{t.nav.cookies}</Link>
+          <button
+            type="button"
+            onClick={openCookieSettings}
+            className="text-left hover:text-foreground"
+          >
+            Cookie preferences
+          </button>
           <Link to="/landlord" className="hover:text-foreground">{t.nav.operatorSignIn}</Link>
         </div>
       </div>
