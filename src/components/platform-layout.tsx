@@ -3,6 +3,7 @@ import { Link, useRouterState } from "@tanstack/react-router";
 import { Home, LayoutGrid, ShieldCheck, Mail, Languages } from "lucide-react";
 import dishbeeLogo from "@/assets/dishbee-logo.png.asset.json";
 import { PlatformI18nProvider, usePlatformI18n } from "@/components/platform-i18n-provider";
+import { openCookieSettings } from "@/lib/cookie-consent";
 
 
 export function PlatformShell({ children }: { children: ReactNode }) {
