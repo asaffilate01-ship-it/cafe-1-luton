@@ -8,7 +8,6 @@ import {
   ShoppingBag,
   HandPlatter,
   Bike,
-  UtensilsCrossed,
   Delete,
   Loader2,
   ShieldCheck,
@@ -75,6 +74,11 @@ function DisplayPage() {
   const [fulfilment, setFulfilment] = useState("dine_in");
   const [paid, setPaid] = useState<null | { order_number: number; total: number }>(null);
   const [jurorUrl, setJurorUrl] = useState<string | null>(null);
+  const [qrScreen, setQrScreen] = useState<{
+    url: string;
+    title: string | null;
+    subtitle: string | null;
+  } | null>(null);
   const [banners, setBanners] = useState<Banner[]>([]);
   const [slide, setSlide] = useState(0);
   const [now, setNow] = useState<Date | null>(null);
@@ -82,11 +86,17 @@ function DisplayPage() {
 
   const handleDisplayMessage = useCallback((msg: DisplayMessage | RemoteDisplayMessage) => {
     if (msg.type === "juror") {
+      setQrScreen(null);
       setJurorUrl(msg.url);
       return;
     }
     if (msg.type === "juror_applied") return;
     setJurorUrl(null);
+    if (msg.type === "qr") {
+      setQrScreen({ url: msg.url, title: msg.title ?? null, subtitle: msg.subtitle ?? null });
+      return;
+    }
+    setQrScreen(null);
     if (msg.type === "order") {
       setPaid(null);
       setLines(msg.lines);
@@ -135,10 +145,12 @@ function DisplayPage() {
   }, []);
 
   useEffect(() => {
-    if (banners.length < 2) return;
+    // Adverts only cycle while the screen is idle, so the customer's order
+    // never moves or flickers underneath them mid-sale.
+    if (banners.length < 2 || lines.length > 0 || paid || jurorUrl || qrScreen) return;
     const t = setInterval(() => setSlide((s) => (s + 1) % banners.length), 9000);
     return () => clearInterval(t);
-  }, [banners.length]);
+  }, [banners.length, lines.length, paid, jurorUrl, qrScreen]);
 
   useEffect(() => {
     const unsubscribe = subscribeToDisplay(handleDisplayMessage);
@@ -164,6 +176,28 @@ function DisplayPage() {
   const count = useMemo(() => lines.reduce((s, l) => s + l.qty, 0), [lines]);
   const banner = banners[slide] ?? null;
   const Icon = FULFIL_ICON[fulfilment] ?? HandPlatter;
+
+  /* ---- staff-triggered QR takeover ---- */
+  if (qrScreen) {
+    return (
+      <div className="grid h-screen place-items-center bg-white px-10 py-8 text-center text-neutral-900">
+        <div>
+          <span className="inline-flex items-center gap-2 rounded-full bg-primary px-5 py-1.5 text-sm font-black uppercase tracking-[0.25em] text-primary-foreground">
+            Scan with your phone
+          </span>
+          <h1 className="mt-5 font-display text-5xl font-black">
+            {qrScreen.title ?? "Scan this code"}
+          </h1>
+          {qrScreen.subtitle && (
+            <p className="mt-3 text-2xl text-neutral-500">{qrScreen.subtitle}</p>
+          )}
+          <div className="mx-auto mt-8 w-fit rounded-3xl border-4 border-neutral-900 p-5">
+            <QrCode value={qrScreen.url} size={320} alt={qrScreen.title ?? "Scan this QR code"} />
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   /* ---- juror voucher QR ---- */
   if (jurorUrl) {
@@ -276,10 +310,10 @@ function DisplayPage() {
     );
   }
 
-  /* ---- live order + advert side panel ---- */
+  /* ---- live order (items only — adverts pause so the screen never jumps) ---- */
   return (
-    <div className="grid h-screen grid-cols-1 overflow-hidden bg-neutral-950 text-white lg:grid-cols-[1fr_38%]">
-      <section className="flex min-h-0 flex-col p-8">
+    <div className="h-screen overflow-hidden bg-neutral-950 text-white">
+      <section className="mx-auto flex h-full min-h-0 max-w-5xl flex-col p-8">
         <div className="flex items-center justify-between">
           <span className="rounded-full bg-primary px-5 py-1.5 text-base font-black uppercase tracking-[0.25em] text-primary-foreground">
             Your order
@@ -334,31 +368,6 @@ function DisplayPage() {
           </div>
         </div>
       </section>
-
-      <aside className="relative hidden overflow-hidden border-l border-white/10 lg:block">
-        {banner?.image_url ? (
-          <img src={banner.image_url} alt={banner.title} className="h-full w-full object-cover" />
-        ) : (
-          <div className="h-full w-full bg-gradient-to-br from-primary via-red-800 to-neutral-950" />
-        )}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent" />
-        <div className="absolute inset-x-0 bottom-0 p-8">
-          {banner?.badge && (
-            <span className="inline-block rounded-full bg-white/15 px-4 py-1 text-sm font-bold uppercase tracking-widest">
-              {banner.badge}
-            </span>
-          )}
-          <p className="mt-3 font-display text-4xl font-black leading-tight">
-            {banner?.title ?? "Made fresh at Cafe 1"}
-          </p>
-          {banner?.subtitle && <p className="mt-2 text-xl text-white/70">{banner.subtitle}</p>}
-          {!banner && (
-            <p className="mt-2 inline-flex items-center gap-2 text-xl text-white/70">
-              <UtensilsCrossed className="h-5 w-5" /> Ask about today&apos;s specials
-            </p>
-          )}
-        </div>
-      </aside>
     </div>
   );
 }

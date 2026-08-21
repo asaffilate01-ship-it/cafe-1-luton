@@ -6,7 +6,7 @@ const MAX_CLOCK_SKEW_MS = 2 * 60_000;
 
 export type RemoteDisplayMessage = Extract<
   DisplayMessage,
-  { type: "order" | "paid" | "idle" }
+  { type: "order" | "paid" | "idle" | "qr" }
 >;
 
 export type DisplayRelayPayload =
@@ -100,6 +100,18 @@ export function isRemoteDisplayMessage(value: unknown): value is RemoteDisplayMe
       isSafeInteger(message.order_number, 100_000_000) &&
       isSafeInteger(message.total) &&
       ["cash", "card", "split", "voucher", "account"].includes(String(message.method))
+    );
+  }
+  if (message.type === "qr") {
+    const url = typeof message.url === "string" ? message.url : "";
+    const okText = (value: unknown) =>
+      value === undefined || (typeof value === "string" && value.length <= 120);
+    return (
+      url.length > 0 &&
+      url.length <= 400 &&
+      (url.startsWith("https://") || url.startsWith("/")) &&
+      okText(message.title) &&
+      okText(message.subtitle)
     );
   }
   if (message.type !== "order" || !Array.isArray(message.lines) || message.lines.length > 100) {

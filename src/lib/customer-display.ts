@@ -25,6 +25,13 @@ export type DisplayMessage =
     }
   | { type: "juror"; url: string }
   | {
+      /** Staff-triggered QR takeover (voucher scheme, judges menu, order online…). */
+      type: "qr";
+      url: string;
+      title?: string;
+      subtitle?: string;
+    }
+  | {
       type: "juror_applied";
       code: string;
       pin: string;
@@ -39,9 +46,14 @@ export type DisplayPresenceMessage = {
   at: number;
 };
 
+export type RemoteSafeDisplayMessage = Extract<
+  DisplayMessage,
+  { type: "order" | "paid" | "idle" | "qr" }
+>;
+
 type CachedDisplayState = {
   saved_at: number;
-  message: Extract<DisplayMessage, { type: "order" | "paid" | "idle" }>;
+  message: RemoteSafeDisplayMessage;
 };
 
 function openChannel(): BroadcastChannel | null {
@@ -51,8 +63,13 @@ function openChannel(): BroadcastChannel | null {
 
 export function isRemoteSafeDisplayMessage(
   message: DisplayMessage,
-): message is Extract<DisplayMessage, { type: "order" | "paid" | "idle" }> {
-  return message.type === "order" || message.type === "paid" || message.type === "idle";
+): message is RemoteSafeDisplayMessage {
+  return (
+    message.type === "order" ||
+    message.type === "paid" ||
+    message.type === "idle" ||
+    message.type === "qr"
+  );
 }
 
 function parseCachedState(raw: string | null): CachedDisplayState | null {
@@ -94,10 +111,7 @@ export function postToDisplay(message: DisplayMessage) {
   channel?.close();
 }
 
-export function readCachedDisplayMessage(): Extract<
-  DisplayMessage,
-  { type: "order" | "paid" | "idle" }
-> | null {
+export function readCachedDisplayMessage(): RemoteSafeDisplayMessage | null {
   if (typeof window === "undefined") return null;
   return parseCachedState(window.localStorage.getItem(DISPLAY_STATE_KEY))?.message ?? null;
 }
