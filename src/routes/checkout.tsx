@@ -333,14 +333,27 @@ function Checkout() {
   const freeDeliveryByThreshold =
     mode === "delivery" && !!freeThreshold && subtotal >= (freeThreshold ?? 0);
   const freeDeliveryByPromo = promo?.discount_type === "free_delivery";
+  const freeDeliveryByMember = emailDiscount?.discount_type === "free_delivery";
   const delivery =
-    mode === "delivery" && !freeDeliveryByThreshold && !freeDeliveryByPromo && !staffApproved
+    mode === "delivery" &&
+    !freeDeliveryByThreshold &&
+    !freeDeliveryByPromo &&
+    !freeDeliveryByMember &&
+    !staffApproved
       ? baseDelivery
       : 0;
   const onTab = !!tabSession;
   // Discounts are only for approved members set up in the admin dashboard.
-  const discountPercent = Math.max(emailDiscount?.percent ?? 0, staffDiscountPercent);
-  const loyaltyDiscount = Math.round(subtotal * (discountPercent / 100));
+  // A member is set up with a percentage, a fixed amount off, or free delivery.
+  const memberFixedDiscount =
+    emailDiscount?.discount_type === "fixed_amount"
+      ? Math.min(emailDiscount.amount_cents, subtotal)
+      : 0;
+  const discountPercent = Math.max(
+    emailDiscount?.discount_type === "percent" ? emailDiscount.percent : 0,
+    staffDiscountPercent,
+  );
+  const loyaltyDiscount = Math.round(subtotal * (discountPercent / 100)) + memberFixedDiscount;
   const promoDiscount =
     promo && !freeDeliveryByPromo ? Math.min(promo.discount_cents, subtotal) : 0;
   // Free drinks earned (every 11th) auto-apply to the cheapest eligible drinks.
