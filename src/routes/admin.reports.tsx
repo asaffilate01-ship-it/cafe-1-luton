@@ -134,18 +134,13 @@ function FinancePage() {
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [mfaReady, setMfaReady] = useState(false);
+  
   const fromDate = useMemo(() => startFor(days), [days]);
   const toDate = isoDate();
 
   const refresh = useCallback(async () => {
     if (!siteId) return;
-    if (!mfaReady) {
-      setData(null);
-      setError(null);
-      setLoading(false);
-      return;
-    }
+
     setLoading(true);
     try {
       const [finance, stock] = await Promise.all([
@@ -283,14 +278,8 @@ function FinancePage() {
           </div>
         </header>
 
-        <AdminMfaCard onAssuranceChange={setMfaReady} />
 
-        {!mfaReady && (
-          <section className="mt-5 rounded-2xl border border-amber-300 bg-amber-50 p-4 text-sm text-amber-950">
-            Verify manager multi-factor authentication above to unlock the financial dashboard,
-            expenses, purchases and SumUp reconciliation.
-          </section>
-        )}
+
 
         <div className="mt-5 flex gap-2 overflow-x-auto pb-1">
           {(
