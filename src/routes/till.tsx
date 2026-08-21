@@ -107,6 +107,7 @@ import {
   RotateCw,
   Leaf,
   StickyNote,
+  Scale,
 } from "lucide-react";
 
 export const Route = createFileRoute("/till")({
@@ -236,6 +237,13 @@ const FAVOURITES_CATEGORY = "__favourites__";
 const FULFIL: { id: Fulfilment; label: string; Icon: typeof ShoppingBag }[] = [
   { id: "dine_in", label: "Dine in", Icon: HandPlatter },
   { id: "collection", label: "Takeaway", Icon: ShoppingBag },
+];
+/** Till-facing choices: judges room is a dine-in order routed to the judge side. */
+type FulfilChoice = Fulfilment | "judges_room";
+const FULFIL_CHOICES: { id: FulfilChoice; label: string; Icon: typeof ShoppingBag }[] = [
+  { id: "dine_in", label: "Dine in", Icon: HandPlatter },
+  { id: "collection", label: "Takeaway", Icon: ShoppingBag },
+  { id: "judges_room", label: "Judges room", Icon: Scale },
 ];
 
 function loadDraftBasket(): DraftBasket {
@@ -956,6 +964,20 @@ function Till() {
     setSide(next);
   }
 
+  const fulfilChoice: FulfilChoice = side === "judge" ? "judges_room" : type;
+  const fulfilLabel =
+    FULFIL_CHOICES.find((item) => item.id === fulfilChoice)?.label ?? String(type);
+
+  async function selectFulfilment(next: FulfilChoice) {
+    if (next === "judges_room") {
+      await changeSide("judge");
+      setType("dine_in");
+      return;
+    }
+    if (side === "judge") await changeSide("public");
+    setType(next);
+  }
+
   async function manualDrawer() {
     if (!shift) return toast.error("Open a shift before using the cash drawer");
     const reason = (
@@ -1011,8 +1033,8 @@ function Till() {
         <span className="inline-flex w-fit rounded-xl bg-primary px-2.5 py-1.5 text-[11px] font-black uppercase tracking-[0.16em] text-primary-foreground shadow-lg shadow-primary/25 xl:px-3 xl:text-xs xl:tracking-[0.2em]">
           Cafe 1 <span className="ml-1 hidden sm:inline">Till</span>
         </span>
-        <div className="col-span-3 row-start-2 grid w-full grid-cols-3 gap-1 rounded-xl border border-white/10 bg-neutral-950/70 p-1 shadow-inner shadow-black/30 min-[960px]:col-span-1 min-[960px]:row-auto min-[960px]:flex min-[960px]:w-auto min-[960px]:shrink-0">
-          {(["jury", "judge", "public"] as const).map((s) => (
+        <div className="col-span-3 row-start-2 grid w-full grid-cols-2 gap-1 rounded-xl border border-white/10 bg-neutral-950/70 p-1 shadow-inner shadow-black/30 min-[960px]:col-span-1 min-[960px]:row-auto min-[960px]:flex min-[960px]:w-auto min-[960px]:shrink-0">
+          {(["jury", "public"] as const).map((s) => (
             <button
               key={s}
               onClick={() => changeSide(s)}
@@ -1189,14 +1211,14 @@ function Till() {
             data-pos-region="mobile-fulfilment"
             className="shrink-0 border-b border-white/10 bg-neutral-950/55 px-2 py-1.5 min-[960px]:hidden"
           >
-            <div className="grid grid-cols-2 gap-1.5 rounded-xl border border-white/10 bg-neutral-900/80 p-1">
-              {FULFIL.map(({ id, label, Icon }) => (
+            <div className="grid grid-cols-3 gap-1.5 rounded-xl border border-white/10 bg-neutral-900/80 p-1">
+              {FULFIL_CHOICES.map(({ id, label, Icon }) => (
                 <button
                   key={id}
                   type="button"
-                  aria-pressed={type === id}
-                  onClick={() => setType(id)}
-                  className={`flex min-h-11 min-w-0 items-center justify-center gap-2 rounded-lg px-2 text-xs font-black uppercase tracking-wide transition active:scale-[0.98] ${type === id ? "bg-primary text-primary-foreground shadow-md shadow-primary/25" : "text-white/65 hover:bg-white/5 hover:text-white"}`}
+                  aria-pressed={fulfilChoice === id}
+                  onClick={() => void selectFulfilment(id)}
+                  className={`flex min-h-11 min-w-0 items-center justify-center gap-2 rounded-lg px-2 text-xs font-black uppercase tracking-wide transition active:scale-[0.98] ${fulfilChoice === id ? "bg-primary text-primary-foreground shadow-md shadow-primary/25" : "text-white/65 hover:bg-white/5 hover:text-white"}`}
                 >
                   <Icon className="h-4 w-4 shrink-0" />
                   <span className="truncate">{label}</span>
@@ -1345,7 +1367,7 @@ function Till() {
               <span className="block truncate font-display text-lg font-bold">Current order</span>
               <span className="block text-[11px] font-semibold uppercase tracking-wide text-white/45">
                 {count} item{count === 1 ? "" : "s"} ·{" "}
-                {FULFIL.find((item) => item.id === type)?.label}
+                {fulfilLabel}
               </span>
             </span>
             <span className="font-display text-xl font-black tabular-nums text-primary">
@@ -1355,15 +1377,15 @@ function Till() {
           <div className="relative z-10 shrink-0 space-y-1.5 border-b border-white/10 bg-neutral-900 p-2.5 shadow-md shadow-black/10 md:p-2.5">
             <div
               data-pos-region="order-fulfilment"
-              className="grid grid-cols-2 gap-1.5 rounded-2xl border border-white/10 bg-neutral-950/50 p-1.5 md:gap-1 md:p-1"
+              className="grid grid-cols-3 gap-1.5 rounded-2xl border border-white/10 bg-neutral-950/50 p-1.5 md:gap-1 md:p-1"
             >
-              {FULFIL.map(({ id, label, Icon }) => (
+              {FULFIL_CHOICES.map(({ id, label, Icon }) => (
                 <button
                   key={id}
                   type="button"
-                  aria-pressed={type === id}
-                  onClick={() => setType(id)}
-                  className={`flex min-h-10 flex-row items-center justify-center gap-1.5 rounded-xl py-2 text-[10px] font-bold uppercase tracking-wide transition active:scale-95 md:min-h-0 md:gap-0.5 md:py-1.5 ${type === id ? "bg-primary text-primary-foreground shadow-md shadow-primary/25" : "text-white/55 hover:bg-white/5 hover:text-white"}`}
+                  aria-pressed={fulfilChoice === id}
+                  onClick={() => void selectFulfilment(id)}
+                  className={`flex min-h-10 flex-row items-center justify-center gap-1.5 rounded-xl py-2 text-[10px] font-bold uppercase tracking-wide transition active:scale-95 md:min-h-0 md:gap-0.5 md:py-1.5 ${fulfilChoice === id ? "bg-primary text-primary-foreground shadow-md shadow-primary/25" : "text-white/55 hover:bg-white/5 hover:text-white"}`}
                 >
                   <Icon className="h-4 w-4 md:h-3.5 md:w-3.5" /> {label}
                 </button>
@@ -1759,8 +1781,8 @@ function Till() {
             </span>
             <span className="block truncate text-[11px] font-semibold text-primary-foreground/75">
               {count
-                ? `${FULFIL.find((item) => item.id === type)?.label} · ${count} item${count === 1 ? "" : "s"}`
-                : `${FULFIL.find((item) => item.id === type)?.label} · tap to review`}
+                ? `${fulfilLabel} · ${count} item${count === 1 ? "" : "s"}`
+                : `${fulfilLabel} · tap to review`}
             </span>
           </span>
           <span className="font-display text-xl font-black tabular-nums">{money(due)}</span>
