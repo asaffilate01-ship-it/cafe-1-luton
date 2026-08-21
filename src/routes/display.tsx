@@ -8,7 +8,6 @@ import {
   ShoppingBag,
   HandPlatter,
   Bike,
-  UtensilsCrossed,
   Delete,
   Loader2,
   ShieldCheck,
@@ -146,10 +145,12 @@ function DisplayPage() {
   }, []);
 
   useEffect(() => {
-    if (banners.length < 2) return;
+    // Adverts only cycle while the screen is idle, so the customer's order
+    // never moves or flickers underneath them mid-sale.
+    if (banners.length < 2 || lines.length > 0 || paid || jurorUrl || qrScreen) return;
     const t = setInterval(() => setSlide((s) => (s + 1) % banners.length), 9000);
     return () => clearInterval(t);
-  }, [banners.length]);
+  }, [banners.length, lines.length, paid, jurorUrl, qrScreen]);
 
   useEffect(() => {
     const unsubscribe = subscribeToDisplay(handleDisplayMessage);
