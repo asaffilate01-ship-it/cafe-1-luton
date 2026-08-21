@@ -106,6 +106,7 @@ import {
   Copy,
   RotateCw,
   Leaf,
+  StickyNote,
 } from "lucide-react";
 
 export const Route = createFileRoute("/till")({
