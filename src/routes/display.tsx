@@ -176,6 +176,28 @@ function DisplayPage() {
   const banner = banners[slide] ?? null;
   const Icon = FULFIL_ICON[fulfilment] ?? HandPlatter;
 
+  /* ---- staff-triggered QR takeover ---- */
+  if (qrScreen) {
+    return (
+      <div className="grid h-screen place-items-center bg-white px-10 py-8 text-center text-neutral-900">
+        <div>
+          <span className="inline-flex items-center gap-2 rounded-full bg-primary px-5 py-1.5 text-sm font-black uppercase tracking-[0.25em] text-primary-foreground">
+            Scan with your phone
+          </span>
+          <h1 className="mt-5 font-display text-5xl font-black">
+            {qrScreen.title ?? "Scan this code"}
+          </h1>
+          {qrScreen.subtitle && (
+            <p className="mt-3 text-2xl text-neutral-500">{qrScreen.subtitle}</p>
+          )}
+          <div className="mx-auto mt-8 w-fit rounded-3xl border-4 border-neutral-900 p-5">
+            <QrCode value={qrScreen.url} size={320} alt={qrScreen.title ?? "Scan this QR code"} />
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   /* ---- juror voucher QR ---- */
   if (jurorUrl) {
     return (
