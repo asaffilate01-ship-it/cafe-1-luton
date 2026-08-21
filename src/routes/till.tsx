@@ -637,13 +637,13 @@ function Till() {
             })),
             subtotal: total,
             voucher_cents: voucherApplied,
-            discount_cents: jurorDiscount,
+            discount_cents: jurorDiscount + manualDiscountCents,
             due,
             fulfilment: type,
           }
         : { type: "idle" },
     );
-  }, [due, jurorDiscount, lines, total, type, voucherApplied]);
+  }, [due, jurorDiscount, manualDiscountCents, lines, total, type, voucherApplied]);
 
   // Keep the grid at the top whenever the operator switches category or searches.
   useEffect(() => {
