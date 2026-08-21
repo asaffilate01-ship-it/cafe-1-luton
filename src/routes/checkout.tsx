@@ -709,7 +709,17 @@ function Checkout() {
                   ? `${emailDiscount.label || "Approved member discount"} applied`
                   : "Signed in"}
               </span>{" "}
-              — {emailDiscount ? `${emailDiscount.percent}% off this order and ` : ""}you'll earn{" "}
+              —{" "}
+              {emailDiscount
+                ? `${
+                    emailDiscount.discount_type === "fixed_amount"
+                      ? `${money(emailDiscount.amount_cents)} off`
+                      : emailDiscount.discount_type === "free_delivery"
+                        ? "free delivery"
+                        : `${emailDiscount.percent}% off`
+                  } this order and `
+                : ""}
+              you'll earn{" "}
               {pointsEarn} points.
             </div>
           )}
