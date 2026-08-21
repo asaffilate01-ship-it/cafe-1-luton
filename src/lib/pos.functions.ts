@@ -119,6 +119,9 @@ function rpcArgs(
     _payment_mode: paymentMode,
     _manual_card_reference: manualCardReference,
     _items: data.items,
+    _manual_discount_type: data.manual_discount_type ?? null,
+    _manual_discount_value: data.manual_discount_value ?? 0,
+    _manual_discount_reason: data.manual_discount_reason ?? null,
   };
 }
 
