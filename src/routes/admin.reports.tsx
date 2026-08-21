@@ -155,7 +155,7 @@ function FinancePage() {
     } finally {
       setLoading(false);
     }
-  }, [siteId, fromDate, toDate, loadFinance, loadInventory, mfaReady]);
+  }, [siteId, fromDate, toDate, loadFinance, loadInventory]);
 
   useEffect(() => {
     void refresh();
