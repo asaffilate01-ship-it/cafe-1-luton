@@ -1201,7 +1201,9 @@ function Checkout() {
             {loyaltyDiscount > 0 && (
               <div className="flex justify-between text-primary">
                 <span>
-                  {`${emailDiscount?.label || "Approved member discount"} (${discountPercent}%)`}
+                  {`${emailDiscount?.label || "Approved member discount"}${
+                    discountPercent > 0 ? ` (${discountPercent}%)` : ""
+                  }`}
                 </span>
                 <span>−{money(loyaltyDiscount)}</span>
               </div>
