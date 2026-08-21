@@ -212,12 +212,31 @@ export const startReaderPayment = createServerFn({ method: "POST" })
     });
     if (insertError) throw new Error(insertError.message);
 
+    // Show the actual items on the SumUp receipt/transaction so sales can be
+    // analysed in SumUp, not just "Cafe 1 order #N".
+    let itemSummary = "";
+    try {
+      const { data: items } = await supabaseAdmin
+        .from("order_items")
+        .select("qty, name")
+        .eq("order_id", order.id);
+      itemSummary = (items ?? [])
+        .map((i) => `${i.qty}x ${i.name}`)
+        .join(", ");
+    } catch {
+      itemSummary = "";
+    }
+    const baseDescription = itemSummary
+      ? `#${order.order_number} ${itemSummary}`
+      : `Cafe 1 order #${order.order_number}`;
+    const description = (data.description ?? baseDescription).slice(0, 250);
+
     const { readerCheckout } = await import("./sumup-readers.server");
     try {
       const out = await readerCheckout({
         readerId: data.reader_id,
         amount_cents: readerAmountCents,
-        description: data.description ?? `Cafe 1 order #${order.order_number}`,
+        description,
         reference,
       });
       const { error: updateError } = await supabaseAdmin
