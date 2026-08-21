@@ -309,10 +309,10 @@ function DisplayPage() {
     );
   }
 
-  /* ---- live order + advert side panel ---- */
+  /* ---- live order (items only — adverts pause so the screen never jumps) ---- */
   return (
-    <div className="grid h-screen grid-cols-1 overflow-hidden bg-neutral-950 text-white lg:grid-cols-[1fr_38%]">
-      <section className="flex min-h-0 flex-col p-8">
+    <div className="h-screen overflow-hidden bg-neutral-950 text-white">
+      <section className="mx-auto flex h-full min-h-0 max-w-5xl flex-col p-8">
         <div className="flex items-center justify-between">
           <span className="rounded-full bg-primary px-5 py-1.5 text-base font-black uppercase tracking-[0.25em] text-primary-foreground">
             Your order
