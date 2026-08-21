@@ -599,10 +599,21 @@ function Till() {
     foodSubtotalCents: foodTotal,
     voucherRemainingCents: voucher?.remaining_cents,
     optedIn: voucher?.opted_in ?? false,
+    manualDiscountType: manualDiscount?.type ?? null,
+    manualDiscountValue: manualDiscount?.value ?? 0,
   });
   const voucherApplied = pricing.voucherCents;
   const jurorDiscount = pricing.discountCents;
+  const manualDiscountCents = pricing.manualDiscountCents;
   const due = pricing.dueCents;
+  /** Sent with every counter order so the discount is priced and audited server-side. */
+  const manualDiscountArgs = manualDiscount
+    ? {
+        manual_discount_type: manualDiscount.type,
+        manual_discount_value: manualDiscount.value,
+        manual_discount_reason: manualDiscount.reason,
+      }
+    : {};
 
   // mirror the basket onto the customer-facing second screen (/display)
   useEffect(() => {
@@ -851,6 +862,7 @@ function Till() {
             pos_terminal: side,
             voucher_code: voucher?.code,
             voucher_pin: voucher?.pin,
+            ...manualDiscountArgs,
             items: lines.map((line) => ({
               menu_item_id: line.id,
               qty: line.qty,
@@ -866,7 +878,7 @@ function Till() {
         setBusy(false);
       }
     },
-    [completeSale, create, lines, name, online, shift, side, table, type, voucher],
+    [completeSale, create, lines, manualDiscountArgs, name, online, shift, side, table, type, voucher],
   );
 
   /**
@@ -913,6 +925,7 @@ function Till() {
             pos_terminal: side,
             voucher_code: voucher?.code,
             voucher_pin: voucher?.pin,
+            ...manualDiscountArgs,
             items: lines.map((line) => ({
               menu_item_id: line.id,
               qty: line.qty,
@@ -1900,6 +1913,7 @@ function Till() {
             pos_terminal: side,
             voucher_code: voucher?.code,
             voucher_pin: voucher?.pin,
+            ...manualDiscountArgs,
             items: lines.map((line) => ({
               menu_item_id: line.id,
               qty: line.qty,
