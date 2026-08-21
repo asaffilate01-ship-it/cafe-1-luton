@@ -75,6 +75,11 @@ function DisplayPage() {
   const [fulfilment, setFulfilment] = useState("dine_in");
   const [paid, setPaid] = useState<null | { order_number: number; total: number }>(null);
   const [jurorUrl, setJurorUrl] = useState<string | null>(null);
+  const [qrScreen, setQrScreen] = useState<{
+    url: string;
+    title: string | null;
+    subtitle: string | null;
+  } | null>(null);
   const [banners, setBanners] = useState<Banner[]>([]);
   const [slide, setSlide] = useState(0);
   const [now, setNow] = useState<Date | null>(null);
