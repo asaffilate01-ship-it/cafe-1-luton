@@ -19,7 +19,17 @@ export const getEmailDiscount = createServerFn({ method: "POST" })
     });
     const row = (rows ?? [])[0];
     await recordAttempt("promo", ident, Boolean(row));
-    return row ? { percent: row.percent, label: row.label ?? null } : null;
+    return row
+      ? {
+          percent: row.percent ?? 0,
+          label: row.label ?? null,
+          discount_type: (row.discount_type ?? "percent") as
+            | "percent"
+            | "fixed_amount"
+            | "free_delivery",
+          amount_cents: row.amount_cents ?? 0,
+        }
+      : null;
   });
 
 export const validatePromo = createServerFn({ method: "POST" })
