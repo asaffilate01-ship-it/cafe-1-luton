@@ -367,31 +367,6 @@ function DisplayPage() {
           </div>
         </div>
       </section>
-
-      <aside className="relative hidden overflow-hidden border-l border-white/10 lg:block">
-        {banner?.image_url ? (
-          <img src={banner.image_url} alt={banner.title} className="h-full w-full object-cover" />
-        ) : (
-          <div className="h-full w-full bg-gradient-to-br from-primary via-red-800 to-neutral-950" />
-        )}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent" />
-        <div className="absolute inset-x-0 bottom-0 p-8">
-          {banner?.badge && (
-            <span className="inline-block rounded-full bg-white/15 px-4 py-1 text-sm font-bold uppercase tracking-widest">
-              {banner.badge}
-            </span>
-          )}
-          <p className="mt-3 font-display text-4xl font-black leading-tight">
-            {banner?.title ?? "Made fresh at Cafe 1"}
-          </p>
-          {banner?.subtitle && <p className="mt-2 text-xl text-white/70">{banner.subtitle}</p>}
-          {!banner && (
-            <p className="mt-2 inline-flex items-center gap-2 text-xl text-white/70">
-              <UtensilsCrossed className="h-5 w-5" /> Ask about today&apos;s specials
-            </p>
-          )}
-        </div>
-      </aside>
     </div>
   );
 }
