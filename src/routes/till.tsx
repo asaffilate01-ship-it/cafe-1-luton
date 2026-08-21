@@ -3166,8 +3166,8 @@ function TillSettings({
         <input
           value={code}
           onChange={(e) => setCode(e.target.value.toUpperCase())}
-          placeholder="8-char code e.g. A7KD9PQ2"
-          maxLength={8}
+          placeholder="8–9 char code e.g. A7KD9PQ2"
+          maxLength={9}
           className="h-10 rounded-xl border border-white/10 bg-neutral-800 px-3 font-mono text-sm outline-none focus:border-primary"
         />
         <button
