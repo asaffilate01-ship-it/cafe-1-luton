@@ -1276,19 +1276,19 @@ function Till() {
           >
             <div
               data-pos-region="product-grid"
-              className="grid min-w-0 grid-cols-3 items-stretch gap-1.5 min-[390px]:grid-cols-4 min-[560px]:grid-cols-5 min-[800px]:grid-cols-6 min-[960px]:grid-cols-4 sm:gap-2 xl:grid-cols-4 2xl:grid-cols-5"
+              className="grid min-w-0 grid-cols-3 items-stretch gap-1.5 min-[390px]:grid-cols-4 min-[560px]:grid-cols-5 min-[800px]:grid-cols-6 min-[960px]:grid-cols-5 lg:grid-cols-6 xl:grid-cols-6 2xl:grid-cols-6 sm:gap-2"
             >
               {visible.map((i) => (
                 <div
                   key={i.id}
                   data-pos-item
-                  className="group relative min-w-0 overflow-hidden rounded-lg border border-white/10 bg-neutral-900/80 shadow-lg shadow-black/30 transition duration-150 hover:-translate-y-0.5 hover:border-primary/70 hover:bg-neutral-800 hover:shadow-xl hover:shadow-primary/10 sm:rounded-xl"
+                  className="group relative min-w-0 overflow-hidden rounded-lg border border-white/10 bg-neutral-900/80 shadow-lg shadow-black/30 transition duration-150 hover:-translate-y-0.5 hover:border-primary/70 hover:bg-neutral-800 hover:shadow-xl hover:shadow-primary/10"
                 >
                   <button
                     onClick={() => add(i)}
                     className="flex h-full w-full flex-col text-left transition active:scale-[0.97]"
                   >
-                    <div className="relative aspect-[4/3] w-full overflow-hidden bg-neutral-800 sm:aspect-[16/10] xl:aspect-[16/9]">
+                    <div className="relative aspect-[16/10] w-full overflow-hidden bg-neutral-800">
                       {i.image_url ? (
                         <>
                           <img
@@ -1301,15 +1301,15 @@ function Till() {
                         </>
                       ) : (
                         <div className="grid h-full w-full place-items-center bg-[radial-gradient(80%_80%_at_50%_20%,rgba(255,255,255,0.06),transparent)] text-white/15">
-                          <UtensilsCrossed className="h-7 w-7" />
+                          <UtensilsCrossed className="h-5 w-5 sm:h-6 sm:w-6" />
                         </div>
                       )}
                     </div>
-                    <div className="flex min-h-[50px] min-w-0 flex-1 flex-col justify-between gap-0.5 p-1.5 sm:min-h-[56px] sm:p-2 lg:min-h-[52px]">
-                      <span className="line-clamp-2 min-h-[2.2em] text-[10px] font-semibold leading-[1.1] min-[360px]:text-[11px] sm:text-xs">
+                    <div className="flex min-h-[44px] min-w-0 flex-1 flex-col justify-between gap-0.5 p-1 sm:min-h-[48px] sm:p-1.5">
+                      <span className="line-clamp-2 min-h-[2.2em] text-[9px] font-semibold leading-[1.1] min-[360px]:text-[10px] sm:text-[11px]">
                         {i.name}
                       </span>
-                      <span className="font-display text-xs font-black tabular-nums text-primary sm:text-sm">
+                      <span className="font-display text-[10px] font-black tabular-nums text-primary sm:text-xs">
                         {money(i.price_cents)}
                       </span>
                     </div>
@@ -1318,10 +1318,10 @@ function Till() {
                     onClick={() => favourites.toggle(i.id)}
                     aria-label={`${favourites.has(i.id) ? "Remove" : "Add"} ${i.name} ${favourites.has(i.id) ? "from" : "to"} favourites`}
                     aria-pressed={favourites.has(i.id)}
-                    className={`absolute right-1.5 top-1.5 grid h-7 w-7 place-items-center rounded-lg border shadow-lg transition active:scale-90 sm:right-2 sm:top-2 sm:h-8 sm:w-8 lg:h-7 lg:w-7 ${favourites.has(i.id) ? "border-amber-300 bg-amber-400 text-neutral-950" : "border-white/15 bg-neutral-950/85 text-white/70 hover:text-amber-300"}`}
+                    className={`absolute right-1 top-1 grid h-6 w-6 place-items-center rounded-md border shadow-lg transition active:scale-90 sm:right-1.5 sm:top-1.5 sm:h-7 sm:w-7 ${favourites.has(i.id) ? "border-amber-300 bg-amber-400 text-neutral-950" : "border-white/15 bg-neutral-950/85 text-white/70 hover:text-amber-300"}`}
                   >
                     <Star
-                      className={`h-4 w-4 lg:h-3.5 lg:w-3.5 ${favourites.has(i.id) ? "fill-current" : ""}`}
+                      className={`h-3.5 w-3.5 ${favourites.has(i.id) ? "fill-current" : ""}`}
                     />
                   </button>
                 </div>
