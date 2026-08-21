@@ -160,6 +160,8 @@ function Checkout() {
   const [emailDiscount, setEmailDiscount] = useState<null | {
     percent: number;
     label: string | null;
+    discount_type: "percent" | "fixed_amount" | "free_delivery";
+    amount_cents: number;
   }>(null);
   const emailForDiscount = (form.customer_email || "").trim().toLowerCase();
   useEffect(() => {
