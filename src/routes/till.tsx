@@ -571,12 +571,16 @@ function Till() {
   }, [loadReaders]);
 
   const visible = useMemo(() => {
+    // Staff scan the grid by name, so keep every list A–Z on every till.
+    const byName = (a: Item, b: Item) =>
+      a.name.localeCompare(b.name, "en-GB", { sensitivity: "base", numeric: true });
     const term = q.trim().toLowerCase();
     if (term) {
       return items
         .filter(
           (item) => item.name.toLowerCase().includes(term) || item.barcode?.toLowerCase() === term,
         )
+        .sort(byName)
         .slice(0, 80);
     }
     if (catId === FAVOURITES_CATEGORY) {
@@ -585,8 +589,9 @@ function Till() {
         .filter((item) => order.has(item.id))
         .sort((a, b) => (order.get(a.id) ?? 0) - (order.get(b.id) ?? 0));
     }
-    return items.filter((i) => i.category_id === catId);
+    return items.filter((i) => i.category_id === catId).sort(byName);
   }, [items, catId, q, favourites.ids]);
+
 
   function addBarcode(value: string) {
     const barcode = value.trim().toLowerCase();
