@@ -441,6 +441,7 @@ function Till() {
   const gridRef = useRef<HTMLDivElement | null>(null);
   const basketRef = useRef<HTMLUListElement | null>(null);
   const [flashKey, setFlashKey] = useState<string | null>(null);
+  const [noteKey, setNoteKey] = useState<string | null>(null);
   const selectedReader = readers.find((reader) => reader.id === readerId);
   const readerReady =
     online && !readerError && Boolean(selectedReader && isReaderOnline(selectedReader.status));
