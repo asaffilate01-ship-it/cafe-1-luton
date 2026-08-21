@@ -134,18 +134,13 @@ function FinancePage() {
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [mfaReady, setMfaReady] = useState(false);
+  
   const fromDate = useMemo(() => startFor(days), [days]);
   const toDate = isoDate();
 
   const refresh = useCallback(async () => {
     if (!siteId) return;
-    if (!mfaReady) {
-      setData(null);
-      setError(null);
-      setLoading(false);
-      return;
-    }
+
     setLoading(true);
     try {
       const [finance, stock] = await Promise.all([
