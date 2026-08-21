@@ -26,6 +26,10 @@ const CounterBasketSchema = z.object({
     .regex(/^\d{6}$/)
     .optional(),
   items: z.array(CounterLineSchema).min(1).max(60),
+  /** Ad-hoc discount keyed in at the till; always audited with a reason. */
+  manual_discount_type: z.enum(["percent", "fixed_amount"]).optional(),
+  manual_discount_value: z.number().int().min(1).max(100_000).optional(),
+  manual_discount_reason: z.string().min(3).max(120).optional(),
 });
 
 type CounterBasket = z.infer<typeof CounterBasketSchema>;
