@@ -82,11 +82,17 @@ function DisplayPage() {
 
   const handleDisplayMessage = useCallback((msg: DisplayMessage | RemoteDisplayMessage) => {
     if (msg.type === "juror") {
+      setQrScreen(null);
       setJurorUrl(msg.url);
       return;
     }
     if (msg.type === "juror_applied") return;
     setJurorUrl(null);
+    if (msg.type === "qr") {
+      setQrScreen({ url: msg.url, title: msg.title ?? null, subtitle: msg.subtitle ?? null });
+      return;
+    }
+    setQrScreen(null);
     if (msg.type === "order") {
       setPaid(null);
       setLines(msg.lines);
