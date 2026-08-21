@@ -757,6 +757,7 @@ function Till() {
     setName("");
     setTable("");
     setVoucher(null);
+    setManualDiscount(null);
     setPay(null);
     setTendered(0);
     toast.success(`Parked ${order.label}`);
@@ -779,6 +780,7 @@ function Till() {
     setType(order.type);
     setTable(order.table);
     setVoucher(null);
+    setManualDiscount(null);
     if (order.voucher) toast.info("Re-enter the juror code and PIN before completing this order");
     setHeld((current) => current.filter((item) => item.id !== order.id));
     setHeldOpen(false);
@@ -981,6 +983,7 @@ function Till() {
       return;
     setLines([]);
     setVoucher(null);
+    setManualDiscount(null);
     setPay(null);
     setTendered(0);
     setSide(next);
