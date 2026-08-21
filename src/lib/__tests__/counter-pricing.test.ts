@@ -13,8 +13,28 @@ describe("calculateCounterDue", () => {
       subtotalCents: 1000,
       voucherCents: 571,
       discountCents: 43,
+      manualDiscountCents: 0,
       dueCents: 386,
     });
+  });
+
+  it("applies a manual discount last, capped at what is still payable", () => {
+    expect(
+      calculateCounterDue({
+        subtotalCents: 1000,
+        foodSubtotalCents: 1000,
+        manualDiscountType: "percent",
+        manualDiscountValue: 10,
+      }),
+    ).toMatchObject({ manualDiscountCents: 100, dueCents: 900 });
+    expect(
+      calculateCounterDue({
+        subtotalCents: 500,
+        foodSubtotalCents: 500,
+        manualDiscountType: "fixed_amount",
+        manualDiscountValue: 900,
+      }),
+    ).toMatchObject({ manualDiscountCents: 500, dueCents: 0 });
   });
 
   it("does not discount drinks or allow negative values", () => {

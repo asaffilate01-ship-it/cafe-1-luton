@@ -108,6 +108,7 @@ import {
   Leaf,
   StickyNote,
   Scale,
+  BadgePercent,
 } from "lucide-react";
 
 export const Route = createFileRoute("/till")({
@@ -423,6 +424,13 @@ function Till() {
   const [tendered, setTendered] = useState(0);
   const [showOrder, setShowOrder] = useState(false);
   const [voucher, setVoucher] = useState<AppliedVoucher | null>(null);
+  /** One-off discount keyed in by the operator for this basket only. */
+  const [manualDiscount, setManualDiscount] = useState<null | {
+    type: "percent" | "fixed_amount";
+    value: number;
+    reason: string;
+  }>(null);
+  const [discountOpen, setDiscountOpen] = useState(false);
   const [voucherOpen, setVoucherOpen] = useState(false);
   const [customize, setCustomize] = useState<Item | null>(null);
   const [shift, setShift] = useState<TillShift | null>(null);
@@ -599,10 +607,21 @@ function Till() {
     foodSubtotalCents: foodTotal,
     voucherRemainingCents: voucher?.remaining_cents,
     optedIn: voucher?.opted_in ?? false,
+    manualDiscountType: manualDiscount?.type ?? null,
+    manualDiscountValue: manualDiscount?.value ?? 0,
   });
   const voucherApplied = pricing.voucherCents;
   const jurorDiscount = pricing.discountCents;
+  const manualDiscountCents = pricing.manualDiscountCents;
   const due = pricing.dueCents;
+  /** Sent with every counter order so the discount is priced and audited server-side. */
+  const manualDiscountArgs = manualDiscount
+    ? {
+        manual_discount_type: manualDiscount.type,
+        manual_discount_value: manualDiscount.value,
+        manual_discount_reason: manualDiscount.reason,
+      }
+    : {};
 
   // mirror the basket onto the customer-facing second screen (/display)
   useEffect(() => {
@@ -618,13 +637,13 @@ function Till() {
             })),
             subtotal: total,
             voucher_cents: voucherApplied,
-            discount_cents: jurorDiscount,
+            discount_cents: jurorDiscount + manualDiscountCents,
             due,
             fulfilment: type,
           }
         : { type: "idle" },
     );
-  }, [due, jurorDiscount, lines, total, type, voucherApplied]);
+  }, [due, jurorDiscount, manualDiscountCents, lines, total, type, voucherApplied]);
 
   // Keep the grid at the top whenever the operator switches category or searches.
   useEffect(() => {
@@ -739,6 +758,7 @@ function Till() {
     setName("");
     setTable("");
     setVoucher(null);
+    setManualDiscount(null);
     setPay(null);
     setTendered(0);
     toast.success(`Parked ${order.label}`);
@@ -761,6 +781,7 @@ function Till() {
     setType(order.type);
     setTable(order.table);
     setVoucher(null);
+    setManualDiscount(null);
     if (order.voucher) toast.info("Re-enter the juror code and PIN before completing this order");
     setHeld((current) => current.filter((item) => item.id !== order.id));
     setHeldOpen(false);
@@ -828,6 +849,7 @@ function Till() {
       setTendered(0);
       setShowOrder(false);
       setVoucher(null);
+      setManualDiscount(null);
       setSplitCash(0);
     },
     [lines, side, type, laterTime, scheduleOrder],
@@ -851,6 +873,7 @@ function Till() {
             pos_terminal: side,
             voucher_code: voucher?.code,
             voucher_pin: voucher?.pin,
+            ...manualDiscountArgs,
             items: lines.map((line) => ({
               menu_item_id: line.id,
               qty: line.qty,
@@ -866,7 +889,7 @@ function Till() {
         setBusy(false);
       }
     },
-    [completeSale, create, lines, name, online, shift, side, table, type, voucher],
+    [completeSale, create, lines, manualDiscountArgs, name, online, shift, side, table, type, voucher],
   );
 
   /**
@@ -913,6 +936,7 @@ function Till() {
             pos_terminal: side,
             voucher_code: voucher?.code,
             voucher_pin: voucher?.pin,
+            ...manualDiscountArgs,
             items: lines.map((line) => ({
               menu_item_id: line.id,
               qty: line.qty,
@@ -936,6 +960,7 @@ function Till() {
       completeSale,
       findSimilar,
       lines,
+      manualDiscountArgs,
       online,
       prepareOrder,
       shift,
@@ -959,6 +984,7 @@ function Till() {
       return;
     setLines([]);
     setVoucher(null);
+    setManualDiscount(null);
     setPay(null);
     setTendered(0);
     setSide(next);
@@ -1668,7 +1694,47 @@ function Till() {
                   <Ticket className="h-4 w-4" /> Juror voucher
                 </button>
               )}
+
+              {manualDiscount ? (
+                <div className="flex items-center justify-between text-amber-300">
+                  <span className="truncate">
+                    Discount ·{" "}
+                    {manualDiscount.type === "percent"
+                      ? `${manualDiscount.value}%`
+                      : money(manualDiscount.value)}{" "}
+                    <span className="text-white/40">({manualDiscount.reason})</span>
+                  </span>
+                  <span className="inline-flex items-center gap-2">
+                    <span className="tabular-nums">−{money(manualDiscountCents)}</span>
+                    <button
+                      onClick={() => setManualDiscount(null)}
+                      className="text-xs font-semibold text-white/40 underline"
+                    >
+                      Remove
+                    </button>
+                  </span>
+                </div>
+              ) : (
+                lines.length > 0 && (
+                  <button
+                    onClick={() => setDiscountOpen(true)}
+                    className="inline-flex h-10 w-full items-center justify-center gap-2 rounded-xl border border-amber-500/40 text-xs font-bold uppercase tracking-wide text-amber-300 hover:border-amber-400 md:h-9"
+                  >
+                    <BadgePercent className="h-4 w-4" /> Add discount
+                  </button>
+                )
+              )}
             </div>
+          )}
+          {discountOpen && (
+            <ManualDiscountModal
+              dueCents={total - voucherApplied - jurorDiscount}
+              onClose={() => setDiscountOpen(false)}
+              onApply={(value) => {
+                setManualDiscount(value);
+                setDiscountOpen(false);
+              }}
+            />
           )}
 
           <div className="shrink-0 space-y-2 border-t border-white/10 bg-neutral-950/40 p-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] md:space-y-1.5 md:p-2.5">
@@ -1900,6 +1966,7 @@ function Till() {
             pos_terminal: side,
             voucher_code: voucher?.code,
             voucher_pin: voucher?.pin,
+            ...manualDiscountArgs,
             items: lines.map((line) => ({
               menu_item_id: line.id,
               qty: line.qty,
@@ -2107,6 +2174,112 @@ type TillTabAccount = Awaited<ReturnType<typeof listAccounts>>[number];
 type TillTabStatement = Awaited<ReturnType<typeof getAccountStatement>>;
 
 /** Account picker and ledger preview for both public and judge-side tills. */
+/**
+ * Ad-hoc discount at the till. A reason is required so every discount is
+ * auditable, and the server re-prices it — this dialog is display only.
+ */
+function ManualDiscountModal({
+  dueCents,
+  onClose,
+  onApply,
+}: {
+  dueCents: number;
+  onClose: () => void;
+  onApply: (value: {
+    type: "percent" | "fixed_amount";
+    value: number;
+    reason: string;
+  }) => void;
+}) {
+  const [type, setType] = useState<"percent" | "fixed_amount">("percent");
+  const [percent, setPercent] = useState(10);
+  const [pounds, setPounds] = useState("1.00");
+  const [reason, setReason] = useState("");
+  const preview =
+    type === "percent"
+      ? Math.round((Math.max(0, dueCents) * Math.min(100, Math.max(0, percent))) / 100)
+      : Math.min(Math.max(0, dueCents), Math.round(parseFloat(pounds || "0") * 100) || 0);
+
+  function apply() {
+    if (reason.trim().length < 3) return toast.error("Add a short reason for this discount");
+    if (type === "percent") {
+      if (!(percent > 0 && percent <= 100)) return toast.error("Enter 1–100%");
+      return onApply({ type, value: percent, reason: reason.trim() });
+    }
+    const cents = Math.round(parseFloat(pounds || "0") * 100);
+    if (!cents || cents <= 0) return toast.error("Enter an amount off");
+    onApply({ type, value: cents, reason: reason.trim() });
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 grid place-items-center bg-black/70 p-4">
+      <div className="w-full max-w-sm rounded-2xl border border-white/10 bg-neutral-900 p-4 text-white">
+        <p className="font-display text-lg font-black">Discount this order</p>
+        <div className="mt-3 grid grid-cols-2 gap-2">
+          {(["percent", "fixed_amount"] as const).map((t) => (
+            <button
+              key={t}
+              onClick={() => setType(t)}
+              className={`h-11 rounded-xl border text-sm font-bold ${
+                type === t
+                  ? "border-amber-400 bg-amber-400/10 text-amber-300"
+                  : "border-white/10 text-white/60"
+              }`}
+            >
+              {t === "percent" ? "% off" : "£ off"}
+            </button>
+          ))}
+        </div>
+        {type === "percent" ? (
+          <input
+            type="number"
+            min={1}
+            max={100}
+            value={percent}
+            onChange={(e) => setPercent(parseInt(e.target.value || "0", 10))}
+            className="mt-3 h-12 w-full rounded-xl border border-white/10 bg-black/40 px-4 text-lg tabular-nums"
+            aria-label="Percent off"
+          />
+        ) : (
+          <input
+            type="number"
+            min={0.01}
+            step={0.01}
+            value={pounds}
+            onChange={(e) => setPounds(e.target.value)}
+            className="mt-3 h-12 w-full rounded-xl border border-white/10 bg-black/40 px-4 text-lg tabular-nums"
+            aria-label="Amount off in pounds"
+          />
+        )}
+        <input
+          value={reason}
+          onChange={(e) => setReason(e.target.value)}
+          maxLength={120}
+          placeholder="Reason (e.g. staff, goodwill, damaged item)"
+          className="mt-3 h-12 w-full rounded-xl border border-white/10 bg-black/40 px-4 text-sm"
+        />
+        <p className="mt-3 text-sm text-white/60">
+          Comes off this order: <span className="tabular-nums text-amber-300">{money(preview)}</span>
+        </p>
+        <div className="mt-4 grid grid-cols-2 gap-2">
+          <button
+            onClick={onClose}
+            className="h-12 rounded-xl border border-white/10 text-sm font-bold text-white/60"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={apply}
+            className="h-12 rounded-xl bg-amber-500 text-sm font-black text-black"
+          >
+            Apply discount
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function AccountTabModal({
   total,
   busy,

@@ -304,21 +304,30 @@ export const createOrder = createServerFn({ method: "POST" })
       }
     }
 
-    // Percentage discount: ONLY for approved members listed in the backend
-    // (Admin → Approved members). Simply being signed in earns points, not a
-    // discount.
+    // Approved-member discount: ONLY for people listed in the backend
+    // (Admin → Approved members). Each member can be set to a percentage, a
+    // fixed amount off, or free delivery. Simply being signed in earns points,
+    // not a discount.
     let discount_percent = 0;
+    let member_fixed_discount = 0;
     const discountEmail = (data.customer_email || authEmail || "").trim();
     if (discountEmail) {
       const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
       const { data: dRows } = await supabaseAdmin.rpc("get_customer_discount", {
         _email: discountEmail,
       });
-      const p = (dRows ?? [])[0]?.percent ?? 0;
-      if (p > discount_percent) discount_percent = p;
+      const member = (dRows ?? [])[0];
+      if (member?.discount_type === "fixed_amount") {
+        member_fixed_discount = Math.min(member.amount_cents ?? 0, subtotal);
+      } else if (member?.discount_type === "free_delivery") {
+        delivery_fee = 0;
+      } else if ((member?.percent ?? 0) > discount_percent) {
+        discount_percent = member?.percent ?? 0;
+      }
     }
     if (staff_discount_percent > discount_percent) discount_percent = staff_discount_percent;
-    const loyalty_discount = Math.round(subtotal * (discount_percent / 100));
+    const loyalty_discount =
+      Math.round(subtotal * (discount_percent / 100)) + member_fixed_discount;
     const staff_discount_cents = staff_member_id ? loyalty_discount : 0;
 
     // Coffee/tea loyalty: every 10 drinks earns a free one, auto-redeemed on the
