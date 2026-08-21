@@ -108,6 +108,7 @@ import {
   Leaf,
   StickyNote,
   Scale,
+  BadgePercent,
 } from "lucide-react";
 
 export const Route = createFileRoute("/till")({
@@ -2173,6 +2174,112 @@ type TillTabAccount = Awaited<ReturnType<typeof listAccounts>>[number];
 type TillTabStatement = Awaited<ReturnType<typeof getAccountStatement>>;
 
 /** Account picker and ledger preview for both public and judge-side tills. */
+/**
+ * Ad-hoc discount at the till. A reason is required so every discount is
+ * auditable, and the server re-prices it — this dialog is display only.
+ */
+function ManualDiscountModal({
+  dueCents,
+  onClose,
+  onApply,
+}: {
+  dueCents: number;
+  onClose: () => void;
+  onApply: (value: {
+    type: "percent" | "fixed_amount";
+    value: number;
+    reason: string;
+  }) => void;
+}) {
+  const [type, setType] = useState<"percent" | "fixed_amount">("percent");
+  const [percent, setPercent] = useState(10);
+  const [pounds, setPounds] = useState("1.00");
+  const [reason, setReason] = useState("");
+  const preview =
+    type === "percent"
+      ? Math.round((Math.max(0, dueCents) * Math.min(100, Math.max(0, percent))) / 100)
+      : Math.min(Math.max(0, dueCents), Math.round(parseFloat(pounds || "0") * 100) || 0);
+
+  function apply() {
+    if (reason.trim().length < 3) return toast.error("Add a short reason for this discount");
+    if (type === "percent") {
+      if (!(percent > 0 && percent <= 100)) return toast.error("Enter 1–100%");
+      return onApply({ type, value: percent, reason: reason.trim() });
+    }
+    const cents = Math.round(parseFloat(pounds || "0") * 100);
+    if (!cents || cents <= 0) return toast.error("Enter an amount off");
+    onApply({ type, value: cents, reason: reason.trim() });
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 grid place-items-center bg-black/70 p-4">
+      <div className="w-full max-w-sm rounded-2xl border border-white/10 bg-neutral-900 p-4 text-white">
+        <p className="font-display text-lg font-black">Discount this order</p>
+        <div className="mt-3 grid grid-cols-2 gap-2">
+          {(["percent", "fixed_amount"] as const).map((t) => (
+            <button
+              key={t}
+              onClick={() => setType(t)}
+              className={`h-11 rounded-xl border text-sm font-bold ${
+                type === t
+                  ? "border-amber-400 bg-amber-400/10 text-amber-300"
+                  : "border-white/10 text-white/60"
+              }`}
+            >
+              {t === "percent" ? "% off" : "£ off"}
+            </button>
+          ))}
+        </div>
+        {type === "percent" ? (
+          <input
+            type="number"
+            min={1}
+            max={100}
+            value={percent}
+            onChange={(e) => setPercent(parseInt(e.target.value || "0", 10))}
+            className="mt-3 h-12 w-full rounded-xl border border-white/10 bg-black/40 px-4 text-lg tabular-nums"
+            aria-label="Percent off"
+          />
+        ) : (
+          <input
+            type="number"
+            min={0.01}
+            step={0.01}
+            value={pounds}
+            onChange={(e) => setPounds(e.target.value)}
+            className="mt-3 h-12 w-full rounded-xl border border-white/10 bg-black/40 px-4 text-lg tabular-nums"
+            aria-label="Amount off in pounds"
+          />
+        )}
+        <input
+          value={reason}
+          onChange={(e) => setReason(e.target.value)}
+          maxLength={120}
+          placeholder="Reason (e.g. staff, goodwill, damaged item)"
+          className="mt-3 h-12 w-full rounded-xl border border-white/10 bg-black/40 px-4 text-sm"
+        />
+        <p className="mt-3 text-sm text-white/60">
+          Comes off this order: <span className="tabular-nums text-amber-300">{money(preview)}</span>
+        </p>
+        <div className="mt-4 grid grid-cols-2 gap-2">
+          <button
+            onClick={onClose}
+            className="h-12 rounded-xl border border-white/10 text-sm font-bold text-white/60"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={apply}
+            className="h-12 rounded-xl bg-amber-500 text-sm font-black text-black"
+          >
+            Apply discount
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function AccountTabModal({
   total,
   busy,
