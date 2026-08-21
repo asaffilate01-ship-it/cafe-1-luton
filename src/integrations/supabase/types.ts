@@ -629,7 +629,9 @@ export type Database = {
       customer_discounts: {
         Row: {
           active: boolean
+          amount_cents: number
           created_at: string
+          discount_type: string
           email: string
           id: string
           label: string | null
@@ -638,7 +640,9 @@ export type Database = {
         }
         Insert: {
           active?: boolean
+          amount_cents?: number
           created_at?: string
+          discount_type?: string
           email: string
           id?: string
           label?: string | null
@@ -647,7 +651,9 @@ export type Database = {
         }
         Update: {
           active?: boolean
+          amount_cents?: number
           created_at?: string
+          discount_type?: string
           email?: string
           id?: string
           label?: string | null
@@ -4027,6 +4033,8 @@ export type Database = {
       get_customer_discount: {
         Args: { _email: string }
         Returns: {
+          amount_cents: number
+          discount_type: string
           label: string
           percent: number
         }[]
@@ -4135,6 +4143,9 @@ export type Database = {
           _idempotency_key: string
           _items: Json
           _manual_card_reference: string
+          _manual_discount_reason?: string
+          _manual_discount_type?: string
+          _manual_discount_value?: number
           _order_type: string
           _payment_mode: string
           _shift_id: string
@@ -4159,6 +4170,9 @@ export type Database = {
           _idempotency_key: string
           _items: Json
           _manual_card_reference: string
+          _manual_discount_reason?: string
+          _manual_discount_type?: string
+          _manual_discount_value?: number
           _order_type: string
           _payment_mode: string
           _shift_id: string
