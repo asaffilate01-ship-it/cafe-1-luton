@@ -90,6 +90,7 @@ import {
   ShoppingBag,
   HandPlatter,
   MonitorPlay,
+  QrCode as QrCodeIcon,
   Delete,
   ReceiptText,
   UtensilsCrossed,
@@ -431,6 +432,7 @@ function Till() {
   const [readerSaleKey, setReaderSaleKey] = useState<string | null>(null);
   const [splitCash, setSplitCash] = useState(0);
   const favourites = useTillFavourites();
+  const [qrCast, setQrCast] = useState(false);
   const displayStatus = useCustomerDisplayStatus();
   const displayRelay = useCustomerDisplayRelay({ role: "till" });
   const deviceStatus = usePosDeviceStatus();
@@ -1072,6 +1074,14 @@ function Till() {
                   const result = openCustomerScreen(displayRelay.displayUrl || "/display");
                   if (result.ok) toast.success(result.message);
                   else toast.error(result.message);
+                }}
+              />
+              <TillMenuItem
+                icon={QrCodeIcon}
+                label="Show a QR on customer screen"
+                onClick={() => {
+                  setMenuOpen(false);
+                  setQrCast(true);
                 }}
               />
               {shift && (
@@ -1900,6 +1910,7 @@ function Till() {
           }}
         />
       )}
+      {qrCast && <QrCastModal onClose={() => setQrCast(false)} />}
       {settings && (
         <TillSettings
           readers={readers}
@@ -1913,6 +1924,102 @@ function Till() {
           onClose={() => setSettings(false)}
         />
       )}
+    </div>
+  );
+}
+
+/* ------------------------------------------------- QR cast to 2nd screen */
+
+const QR_PRESETS: { id: string; label: string; path: string; subtitle: string }[] = [
+  {
+    id: "juror",
+    label: "Juror voucher scheme",
+    path: "/juror?src=till",
+    subtitle: "Scan to check your allowance and opt in",
+  },
+  {
+    id: "judges",
+    label: "Judges menu",
+    path: "/judges-menu",
+    subtitle: "Scan to order from chambers",
+  },
+  {
+    id: "menu",
+    label: "Order online",
+    path: "/menu",
+    subtitle: "Scan to order and pay from your phone",
+  },
+  {
+    id: "feedback",
+    label: "Leave feedback",
+    path: "/contact",
+    subtitle: "Tell us how we did today",
+  },
+];
+
+/** Lets the counter throw a QR code (voucher, judges, menu…) onto /display. */
+function QrCastModal({ onClose }: { onClose: () => void }) {
+  const origin = typeof window === "undefined" ? "" : window.location.origin;
+  const [custom, setCustom] = useState("");
+
+  function show(url: string, title: string, subtitle: string) {
+    postToDisplay({ type: "qr", url, title, subtitle });
+    toast.success("QR shown on the customer screen");
+    onClose();
+  }
+
+  return (
+    <div className="fixed inset-0 z-[120] grid place-items-center bg-black/70 p-4">
+      <div className="w-full max-w-lg rounded-2xl border border-white/10 bg-neutral-900 p-5 text-white">
+        <div className="flex items-center justify-between">
+          <h2 className="font-display text-xl font-black">Show a QR on the customer screen</h2>
+          <button onClick={onClose} aria-label="Close" className="text-white/60">
+            ✕
+          </button>
+        </div>
+        <div className="mt-4 grid gap-2 sm:grid-cols-2">
+          {QR_PRESETS.map((preset) => (
+            <button
+              key={preset.id}
+              onClick={() => show(`${origin}${preset.path}`, preset.label, preset.subtitle)}
+              className="rounded-xl border border-white/10 bg-neutral-800 p-3 text-left hover:border-primary"
+            >
+              <span className="block font-bold">{preset.label}</span>
+              <span className="block text-xs text-white/50">{preset.subtitle}</span>
+            </button>
+          ))}
+        </div>
+        <div className="mt-4">
+          <label className="text-xs font-bold uppercase tracking-widest text-white/50">
+            Custom link
+          </label>
+          <div className="mt-1 flex gap-2">
+            <input
+              value={custom}
+              onChange={(event) => setCustom(event.target.value)}
+              placeholder="https://…"
+              className="h-11 min-w-0 flex-1 rounded-xl border border-white/10 bg-neutral-800 px-3 outline-none focus:border-primary"
+            />
+            <button
+              disabled={!/^https:\/\//.test(custom.trim())}
+              onClick={() => show(custom.trim(), "Scan this code", "")}
+              className="h-11 rounded-xl bg-primary px-4 font-bold text-primary-foreground disabled:opacity-50"
+            >
+              Show
+            </button>
+          </div>
+        </div>
+        <button
+          onClick={() => {
+            postToDisplay({ type: "idle" });
+            toast.success("Customer screen back to adverts");
+            onClose();
+          }}
+          className="mt-4 h-11 w-full rounded-xl border border-white/15 font-bold"
+        >
+          Back to adverts
+        </button>
+      </div>
     </div>
   );
 }
