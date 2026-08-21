@@ -17,7 +17,6 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { AdminNav } from "@/components/admin-nav";
-import { AdminMfaCard } from "@/components/admin-mfa-card";
 import { RequireRole } from "@/components/require-role";
 import { SiteSwitcher } from "@/components/site-switcher";
 import { useSites } from "@/hooks/use-sites";
@@ -155,7 +154,7 @@ function FinancePage() {
     } finally {
       setLoading(false);
     }
-  }, [siteId, fromDate, toDate, loadFinance, loadInventory, mfaReady]);
+  }, [siteId, fromDate, toDate, loadFinance, loadInventory]);
 
   useEffect(() => {
     void refresh();
