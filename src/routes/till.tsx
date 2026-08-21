@@ -423,6 +423,13 @@ function Till() {
   const [tendered, setTendered] = useState(0);
   const [showOrder, setShowOrder] = useState(false);
   const [voucher, setVoucher] = useState<AppliedVoucher | null>(null);
+  /** One-off discount keyed in by the operator for this basket only. */
+  const [manualDiscount, setManualDiscount] = useState<null | {
+    type: "percent" | "fixed_amount";
+    value: number;
+    reason: string;
+  }>(null);
+  const [discountOpen, setDiscountOpen] = useState(false);
   const [voucherOpen, setVoucherOpen] = useState(false);
   const [customize, setCustomize] = useState<Item | null>(null);
   const [shift, setShift] = useState<TillShift | null>(null);
@@ -839,6 +846,7 @@ function Till() {
       setTendered(0);
       setShowOrder(false);
       setVoucher(null);
+      setManualDiscount(null);
       setSplitCash(0);
     },
     [lines, side, type, laterTime, scheduleOrder],
@@ -949,6 +957,7 @@ function Till() {
       completeSale,
       findSimilar,
       lines,
+      manualDiscountArgs,
       online,
       prepareOrder,
       shift,
