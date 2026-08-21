@@ -693,6 +693,9 @@ function Till() {
     });
     setFlashKey(touched);
   }
+  function setLineNote(key: string, note: string) {
+    setLines((prev) => prev.map((l) => (l.key === key ? { ...l, notes: note.slice(0, 140) } : l)));
+  }
   function bump(key: string, d: number) {
     setLines((prev) =>
       prev.flatMap((l) =>
