@@ -1170,7 +1170,7 @@ function Till() {
 
       <div
         data-pos-region="workspace"
-        className="relative grid min-h-0 min-w-0 flex-1 overflow-hidden min-[960px]:grid-cols-[minmax(0,1fr)_340px] xl:grid-cols-[148px_minmax(0,1fr)_392px] 2xl:grid-cols-[156px_minmax(0,1fr)_420px]"
+        className="relative grid min-h-0 min-w-0 flex-1 overflow-hidden min-[960px]:grid-cols-[minmax(0,1fr)_340px] xl:grid-cols-[172px_minmax(0,1fr)_392px] 2xl:grid-cols-[192px_minmax(0,1fr)_420px]"
       >
         {/* category rail (desktop) */}
         <nav className="hidden min-h-0 flex-col gap-1 overflow-y-auto border-r border-white/10 bg-neutral-900/40 p-2 xl:flex">
