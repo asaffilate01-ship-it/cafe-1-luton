@@ -283,14 +283,8 @@ function FinancePage() {
           </div>
         </header>
 
-        <AdminMfaCard onAssuranceChange={setMfaReady} />
 
-        {!mfaReady && (
-          <section className="mt-5 rounded-2xl border border-amber-300 bg-amber-50 p-4 text-sm text-amber-950">
-            Verify manager multi-factor authentication above to unlock the financial dashboard,
-            expenses, purchases and SumUp reconciliation.
-          </section>
-        )}
+
 
         <div className="mt-5 flex gap-2 overflow-x-auto pb-1">
           {(
