@@ -106,6 +106,7 @@ import {
   Copy,
   RotateCw,
   Leaf,
+  StickyNote,
 } from "lucide-react";
 
 export const Route = createFileRoute("/till")({
@@ -440,6 +441,7 @@ function Till() {
   const gridRef = useRef<HTMLDivElement | null>(null);
   const basketRef = useRef<HTMLUListElement | null>(null);
   const [flashKey, setFlashKey] = useState<string | null>(null);
+  const [noteKey, setNoteKey] = useState<string | null>(null);
   const selectedReader = readers.find((reader) => reader.id === readerId);
   const readerReady =
     online && !readerError && Boolean(selectedReader && isReaderOnline(selectedReader.status));
@@ -690,6 +692,9 @@ function Till() {
       ];
     });
     setFlashKey(touched);
+  }
+  function setLineNote(key: string, note: string) {
+    setLines((prev) => prev.map((l) => (l.key === key ? { ...l, notes: note.slice(0, 140) } : l)));
   }
   function bump(key: string, d: number) {
     setLines((prev) =>
@@ -1442,23 +1447,68 @@ function Till() {
                       <Trash2 className="h-3.5 w-3.5" />
                     </button>
                   </span>
-                  <div className="col-span-2 flex w-fit items-center gap-1 rounded-xl border border-white/10 bg-neutral-950/40 p-0.5">
+                  <div className="col-span-2 flex flex-wrap items-center gap-1.5">
+                    <div className="flex w-fit items-center gap-1 rounded-xl border border-white/10 bg-neutral-950/40 p-0.5">
+                      <button
+                        onClick={() => bump(l.key, -1)}
+                        aria-label={`Remove one ${l.name}`}
+                        className="grid h-9 w-9 place-items-center rounded-lg transition hover:bg-white/10 active:scale-90"
+                      >
+                        <Minus className="h-3.5 w-3.5" />
+                      </button>
+                      <span className="w-7 text-center font-bold tabular-nums">{l.qty}</span>
+                      <button
+                        onClick={() => bump(l.key, 1)}
+                        aria-label={`Add one ${l.name}`}
+                        className="grid h-9 w-9 place-items-center rounded-lg transition hover:bg-white/10 active:scale-90"
+                      >
+                        <Plus className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
                     <button
-                      onClick={() => bump(l.key, -1)}
-                      aria-label={`Remove one ${l.name}`}
-                      className="grid h-9 w-9 place-items-center rounded-lg transition hover:bg-white/10 active:scale-90"
+                      onClick={() => setNoteKey((k) => (k === l.key ? null : l.key))}
+                      aria-label={`Add a kitchen note for ${l.name}`}
+                      className={`flex h-9 items-center gap-1.5 rounded-xl border px-2.5 text-[11px] font-bold uppercase tracking-wide transition active:scale-95 ${
+                        l.notes
+                          ? "border-amber-400/50 bg-amber-400/15 text-amber-200"
+                          : "border-white/10 bg-neutral-950/40 text-white/50 hover:text-white"
+                      }`}
                     >
-                      <Minus className="h-3.5 w-3.5" />
-                    </button>
-                    <span className="w-7 text-center font-bold tabular-nums">{l.qty}</span>
-                    <button
-                      onClick={() => bump(l.key, 1)}
-                      aria-label={`Add one ${l.name}`}
-                      className="grid h-9 w-9 place-items-center rounded-lg transition hover:bg-white/10 active:scale-90"
-                    >
-                      <Plus className="h-3.5 w-3.5" />
+                      <StickyNote className="h-3.5 w-3.5" />
+                      {l.notes ? "Note" : "Add note"}
                     </button>
                   </div>
+                  {noteKey === l.key && (
+                    <div className="col-span-2 flex items-center gap-1.5">
+                      <input
+                        autoFocus
+                        value={l.notes}
+                        onChange={(e) => setLineNote(l.key, e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter" || e.key === "Escape") setNoteKey(null);
+                        }}
+                        maxLength={140}
+                        placeholder="e.g. no butter, well done"
+                        aria-label={`Kitchen note for ${l.name}`}
+                        className="h-10 min-w-0 flex-1 rounded-xl border border-amber-400/40 bg-neutral-900 px-2.5 text-sm outline-none placeholder:text-white/30 focus:border-amber-300"
+                      />
+                      {l.notes && (
+                        <button
+                          onClick={() => setLineNote(l.key, "")}
+                          aria-label={`Clear note for ${l.name}`}
+                          className="grid h-10 w-10 shrink-0 place-items-center rounded-xl border border-white/10 text-white/40 transition hover:text-red-300"
+                        >
+                          <X className="h-4 w-4" />
+                        </button>
+                      )}
+                      <button
+                        onClick={() => setNoteKey(null)}
+                        className="h-10 shrink-0 rounded-xl bg-amber-400 px-3 text-xs font-bold uppercase tracking-wide text-neutral-950 transition active:scale-95"
+                      >
+                        Done
+                      </button>
+                    </div>
+                  )}
                 </li>
               ))}
               {!lines.length && (
