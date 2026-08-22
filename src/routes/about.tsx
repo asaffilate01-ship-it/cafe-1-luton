@@ -234,7 +234,7 @@ function About() {
                 {
                   Icon: Truck,
                   title: "Local delivery",
-                  text: "08:30–16:30 · within 805 metres of AL1 3JU",
+                  text: "08:30–16:30 · within half a mile of AL1 3JU",
                 },
                 {
                   Icon: ShieldCheck,
