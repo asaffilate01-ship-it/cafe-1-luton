@@ -127,8 +127,9 @@ export function PlatformFooter() {
             height={40}
             className="h-7 w-auto"
           />
-          <p>© {new Date().getFullYear()} dishbee</p>
+          <p>© {new Date().getFullYear()} DishBee — a trading name of iTechLounge Ltd</p>
         </div>
+
         <div className="flex flex-wrap gap-5">
           <Link to="/platform/compliance" className="hover:text-foreground">{t.nav.compliance}</Link>
           <Link to="/privacy" className="hover:text-foreground">{t.nav.privacy}</Link>
