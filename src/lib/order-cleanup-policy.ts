@@ -1,5 +1,6 @@
-export const WEB_UNPAID_TTL_MS = 5 * 60 * 1000;
-export const COUNTER_UNPAID_TTL_MS = 30 * 60 * 1000;
+/** Any unpaid order that is not a tab/account order is abandoned after 10 minutes. */
+export const WEB_UNPAID_TTL_MS = 10 * 60 * 1000;
+export const COUNTER_UNPAID_TTL_MS = 10 * 60 * 1000;
 
 const TERMINAL_UNPAID_STATUSES = new Set(["FAILED", "CANCELLED", "CANCELED", "EXPIRED"]);
 
