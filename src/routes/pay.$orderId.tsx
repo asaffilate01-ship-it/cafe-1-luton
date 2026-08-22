@@ -303,20 +303,25 @@ function PayView() {
           <div className="mb-4 flex items-center gap-2 text-xs text-muted-foreground">
             <Lock className="h-3.5 w-3.5" /> Secure card payment powered by SumUp
           </div>
-          {status !== "error" && isGooglePayDemoMode() && (
+          {status !== "error" && isDemo && (
             <>
               {!(typeof window !== "undefined" &&
                 window.location.hash.includes("hide-demo-notice")) && (
                 <div className="mb-4 rounded-xl border border-amber-500/40 bg-amber-500/10 p-3 text-xs font-semibold text-amber-700">
-                  Google Pay demo mode — test button for onboarding screenshots only.
+                  {simulatedButton
+                    ? "Google Pay demo mode — simulated button. For Google onboarding screenshots, open a real /pay/<orderId>?token=… URL with this same hash."
+                    : "Google Pay onboarding mode — capture the official button rendered by the SumUp widget below."}
                 </div>
               )}
-              <GooglePayDemo
-                amount={order ? (order.total_cents / 100).toFixed(2) : "1.00"}
-                merchantName={GOOGLE_PAY_MERCHANT_NAME}
-              />
+              {simulatedButton && (
+                <GooglePayDemo
+                  amount={order ? (order.total_cents / 100).toFixed(2) : "1.00"}
+                  merchantName={GOOGLE_PAY_MERCHANT_NAME}
+                />
+              )}
             </>
           )}
+
           {status !== "error" && walletConfigured && !walletDetected && (
             <div className="mb-4 flex items-start gap-2 rounded-xl border border-border bg-muted/40 p-3 text-xs text-muted-foreground">
               <Smartphone className="mt-0.5 h-3.5 w-3.5 shrink-0" />
