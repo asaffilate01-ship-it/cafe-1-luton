@@ -123,28 +123,37 @@ function PayView() {
   const [errorMsg, setErrorMsg] = useState<string>("");
   const [walletDetected, setWalletDetected] = useState(false);
   const [walletConfigured, setWalletConfigured] = useState(false);
+  const [simulatedButton, setSimulatedButton] = useState(false);
   const mountedRef = useRef(false);
   const isDemo = isGooglePayDemoMode();
 
   useEffect(() => {
     let cancelled = false;
     (async () => {
-      if (isDemo) {
-        if (cancelled) return;
-        setOrder(GOOGLE_PAY_DEMO_ORDER);
-        setStatus("ready");
-        return;
+      // Google onboarding must show the real, SDK-rendered button on a genuine
+      // checkout. We only fall back to the simulated button when this URL has
+      // no usable server-created SumUp checkout.
+      let res: Awaited<ReturnType<typeof getPublicOrder>> | null = null;
+      try {
+        res = await getPublicOrder({ data: { order_id: orderId, tracking_token: token } });
+      } catch {
+        res = null;
       }
-      const res = await getPublicOrder({ data: { order_id: orderId, tracking_token: token } });
-      const data = res.order as (Order & { sumup_checkout_id: string | null }) | null;
+      const data = (res?.order ?? null) as (Order & { sumup_checkout_id: string | null }) | null;
       if (cancelled) return;
-      if (!data) {
+      if (!data || (isDemo && !data.sumup_checkout_id)) {
+        if (isDemo) {
+          setOrder(GOOGLE_PAY_DEMO_ORDER);
+          setSimulatedButton(true);
+          setStatus("ready");
+          return;
+        }
         setStatus("error");
         setErrorMsg("Order not found.");
         return;
       }
       setOrder(data as Order);
-      if (data.payment_status === "paid") {
+      if (data.payment_status === "paid" && !isDemo) {
         navigate({
           to: "/order/$orderId",
           params: { orderId },
@@ -158,6 +167,7 @@ function PayView() {
         setErrorMsg("This order has no active card checkout. Please place a new order.");
         return;
       }
+
       try {
         await loadSumUpSdk();
       } catch {
@@ -293,20 +303,25 @@ function PayView() {
           <div className="mb-4 flex items-center gap-2 text-xs text-muted-foreground">
             <Lock className="h-3.5 w-3.5" /> Secure card payment powered by SumUp
           </div>
-          {status !== "error" && isGooglePayDemoMode() && (
+          {status !== "error" && isDemo && (
             <>
               {!(typeof window !== "undefined" &&
                 window.location.hash.includes("hide-demo-notice")) && (
                 <div className="mb-4 rounded-xl border border-amber-500/40 bg-amber-500/10 p-3 text-xs font-semibold text-amber-700">
-                  Google Pay demo mode — test button for onboarding screenshots only.
+                  {simulatedButton
+                    ? "Google Pay demo mode — simulated button. For Google onboarding screenshots, open a real /pay/<orderId>?token=… URL with this same hash."
+                    : "Google Pay onboarding mode — capture the official button rendered by the SumUp widget below."}
                 </div>
               )}
-              <GooglePayDemo
-                amount={order ? (order.total_cents / 100).toFixed(2) : "1.00"}
-                merchantName={GOOGLE_PAY_MERCHANT_NAME}
-              />
+              {simulatedButton && (
+                <GooglePayDemo
+                  amount={order ? (order.total_cents / 100).toFixed(2) : "1.00"}
+                  merchantName={GOOGLE_PAY_MERCHANT_NAME}
+                />
+              )}
             </>
           )}
+
           {status !== "error" && walletConfigured && !walletDetected && (
             <div className="mb-4 flex items-start gap-2 rounded-xl border border-border bg-muted/40 p-3 text-xs text-muted-foreground">
               <Smartphone className="mt-0.5 h-3.5 w-3.5 shrink-0" />
