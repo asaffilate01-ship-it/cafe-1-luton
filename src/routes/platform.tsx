@@ -1,5 +1,5 @@
-import { useEffect } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { safeJsonLd } from "@/lib/seo";
 import { PlatformShell } from "@/components/platform-layout";
 import heroImage from "@/assets/platform-hero.jpg";
 import shotHome from "@/assets/platform/shot-home.webp.asset.json";
@@ -32,25 +32,54 @@ import {
   Users,
 } from "lucide-react";
 
-const title = "dishbee — Sell. Serve. Grow. | Ordering platform for independent venues";
+const title = "DishBee — Sell. Serve. Grow";
 const description =
-  "dishbee is one white-label platform for cafés and restaurants: branded website, direct ordering, kitchen display, EPOS, delivery driver app, voucher and code schemes, plus full financial reporting.";
+  "DishBee is one white-label platform for cafés and restaurants: branded website, direct ordering, kitchen display, EPOS, delivery driver app, voucher and code schemes, plus full financial reporting.";
+const PLATFORM_ORIGIN = "https://dishbee.itechlounge.co.uk";
+const PLATFORM_URL = `${PLATFORM_ORIGIN}/platform`;
+const PLATFORM_OG_IMAGE = `${PLATFORM_ORIGIN}/images/promo-hero.jpg`;
+
+const platformJsonLd = {
+  "@context": "https://schema.org",
+  "@type": "Organization",
+  name: "DishBee",
+  legalName: "iTechLounge Ltd",
+  alternateName: "DishBee is a trading name of iTechLounge Ltd",
+  url: PLATFORM_URL,
+  logo: `${PLATFORM_ORIGIN}/dishbee-favicon.png`,
+  image: PLATFORM_OG_IMAGE,
+  slogan: "Sell. Serve. Grow.",
+  description,
+};
 
 export const Route = createFileRoute("/platform")({
   head: () => ({
     meta: [
       { title },
       { name: "description", content: description },
+      { name: "robots", content: "index, follow, max-image-preview:large" },
+      { property: "og:site_name", content: "DishBee" },
       { property: "og:title", content: title },
       { property: "og:description", content: description },
       { property: "og:type", content: "website" },
-      { property: "og:url", content: "https://dishbee.co.uk/platform" },
+      { property: "og:url", content: PLATFORM_URL },
+      { property: "og:image", content: PLATFORM_OG_IMAGE },
+      { property: "og:image:alt", content: "DishBee — Sell. Serve. Grow." },
       { name: "twitter:card", content: "summary_large_image" },
+      { name: "twitter:title", content: title },
+      { name: "twitter:description", content: description },
+      { name: "twitter:image", content: PLATFORM_OG_IMAGE },
     ],
-    links: [{ rel: "canonical", href: "https://dishbee.co.uk/platform" }],
+    links: [
+      { rel: "canonical", href: PLATFORM_URL },
+      { rel: "icon", type: "image/png", href: "/dishbee-favicon.png" },
+      { rel: "apple-touch-icon", href: "/dishbee-favicon.png" },
+    ],
+    scripts: [{ type: "application/ld+json", children: safeJsonLd(platformJsonLd) }],
   }),
   component: PlatformHome,
 });
+
 
 const serviceIcons = [
   Globe2,
@@ -83,9 +112,7 @@ function PlatformHome() {
 
 function PlatformContent() {
   const { t } = usePlatformI18n();
-  useEffect(() => {
-    document.title = t.hero.pageTitle;
-  }, [t.hero.pageTitle]);
+
   return (
       <main>
         <section className="relative overflow-hidden border-b border-border bg-secondary/40">
