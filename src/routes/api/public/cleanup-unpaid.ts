@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 
 /**
- * Removes website orders left unpaid for more than 5 minutes.
+ * Abandons non-tab orders left unpaid for more than 10 minutes.
  * Scheduler-only: requires the CRON_SECRET bearer.
  */
 async function run(request: Request) {
