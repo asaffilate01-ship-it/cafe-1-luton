@@ -123,6 +123,7 @@ function PayView() {
   const [errorMsg, setErrorMsg] = useState<string>("");
   const [walletDetected, setWalletDetected] = useState(false);
   const [walletConfigured, setWalletConfigured] = useState(false);
+  const [simulatedButton, setSimulatedButton] = useState(false);
   const mountedRef = useRef(false);
   const isDemo = isGooglePayDemoMode();
 
