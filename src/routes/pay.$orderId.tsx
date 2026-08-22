@@ -129,22 +129,30 @@ function PayView() {
   useEffect(() => {
     let cancelled = false;
     (async () => {
-      if (isDemo) {
-        if (cancelled) return;
-        setOrder(GOOGLE_PAY_DEMO_ORDER);
-        setStatus("ready");
-        return;
+      // Google onboarding must show the real, SDK-rendered button on a genuine
+      // checkout. We only fall back to the simulated button when this URL has
+      // no usable server-created SumUp checkout.
+      let res: Awaited<ReturnType<typeof getPublicOrder>> | null = null;
+      try {
+        res = await getPublicOrder({ data: { order_id: orderId, tracking_token: token } });
+      } catch {
+        res = null;
       }
-      const res = await getPublicOrder({ data: { order_id: orderId, tracking_token: token } });
-      const data = res.order as (Order & { sumup_checkout_id: string | null }) | null;
+      const data = (res?.order ?? null) as (Order & { sumup_checkout_id: string | null }) | null;
       if (cancelled) return;
-      if (!data) {
+      if (!data || (isDemo && !data.sumup_checkout_id)) {
+        if (isDemo) {
+          setOrder(GOOGLE_PAY_DEMO_ORDER);
+          setSimulatedButton(true);
+          setStatus("ready");
+          return;
+        }
         setStatus("error");
         setErrorMsg("Order not found.");
         return;
       }
       setOrder(data as Order);
-      if (data.payment_status === "paid") {
+      if (data.payment_status === "paid" && !isDemo) {
         navigate({
           to: "/order/$orderId",
           params: { orderId },
@@ -158,6 +166,7 @@ function PayView() {
         setErrorMsg("This order has no active card checkout. Please place a new order.");
         return;
       }
+
       try {
         await loadSumUpSdk();
       } catch {
