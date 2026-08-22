@@ -182,6 +182,14 @@ function PayView() {
       } catch {
         googlePayMerchantId = null;
       }
+      // Google rejects the merchant ID (DEVELOPER_ERROR on tap) on any origin
+      // that is not registered in the Google Pay & Wallet Console. On preview
+      // or local origins fall back to SumUp's own Google Pay merchant so the
+      // button still works instead of erroring.
+      const host = typeof window !== "undefined" ? window.location.hostname : "";
+      const isApprovedGooglePayOrigin =
+        host === "cafe1stalbans.co.uk" || host === "www.cafe1stalbans.co.uk";
+      if (!isApprovedGooglePayOrigin) googlePayMerchantId = null;
       setWalletConfigured(Boolean(googlePayMerchantId));
       if (cancelled || mountedRef.current || !window.SumUpCard) return;
       mountedRef.current = true;
