@@ -229,34 +229,51 @@ function Socials() {
 
         <section className="border-b border-border" aria-labelledby="google-reviews">
           <div className="mx-auto max-w-6xl px-4 py-16">
-            <div className="flex flex-col justify-between gap-5 sm:flex-row sm:items-end">
-              <div>
+            <div className="card-3d flex flex-col gap-6 rounded-3xl border border-border bg-card p-6 sm:p-8 lg:flex-row lg:items-center lg:justify-between">
+              <div className="min-w-0">
                 <p className="text-sm font-semibold uppercase tracking-[0.18em] text-primary">
                   Customer feedback
                 </p>
                 <h2 id="google-reviews" className="mt-2 font-display text-4xl font-bold">
                   Live Google reviews
                 </h2>
-                {google?.available && google.rating !== null && (
-                  <p className="mt-3 flex flex-wrap items-center gap-2 text-muted-foreground">
-                    <span className="inline-flex items-center gap-1 font-bold text-foreground">
-                      {google.rating.toFixed(1)}{" "}
-                      <Star className="h-4 w-4 fill-amber-400 text-amber-400" />
-                    </span>
-                    {google.reviewCount !== null && (
-                      <span>from {google.reviewCount.toLocaleString("en-GB")} Google reviews</span>
-                    )}
-                  </p>
-                )}
+                <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+                  Straight from our Google Business Profile — nothing edited, nothing hidden.
+                </p>
               </div>
-              <a
-                href={google?.googleMapsUrl ?? GOOGLE_REVIEWS_URL}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex w-fit items-center gap-2 rounded-full border border-border bg-card px-5 py-2.5 text-sm font-semibold hover:border-primary hover:text-primary"
-              >
-                Read or leave a Google review <ExternalLink className="h-4 w-4" />
-              </a>
+              <div className="flex flex-col items-start gap-4 sm:flex-row sm:items-center">
+                {google?.available && google.rating !== null && (
+                  <div className="rounded-2xl bg-primary-soft px-5 py-4 text-center">
+                    <p className="font-display text-4xl font-bold leading-none">
+                      {google.rating.toFixed(1)}
+                    </p>
+                    <div
+                      className="mt-2 flex justify-center gap-0.5"
+                      aria-label={`${google.rating.toFixed(1)} out of 5 stars`}
+                    >
+                      {Array.from({ length: 5 }, (_, star) => (
+                        <Star
+                          key={star}
+                          className={`h-3.5 w-3.5 ${star < Math.round(google.rating ?? 0) ? "fill-amber-400 text-amber-400" : "text-border"}`}
+                        />
+                      ))}
+                    </div>
+                    {google.reviewCount !== null && (
+                      <p className="mt-2 text-xs font-medium text-muted-foreground">
+                        {google.reviewCount.toLocaleString("en-GB")} reviews
+                      </p>
+                    )}
+                  </div>
+                )}
+                <a
+                  href={google?.googleMapsUrl ?? GOOGLE_REVIEWS_URL}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex w-fit items-center gap-2 rounded-full bg-primary px-5 py-3 text-sm font-semibold text-primary-foreground transition hover:-translate-y-0.5"
+                >
+                  Read or leave a review <ExternalLink className="h-4 w-4" />
+                </a>
+              </div>
             </div>
 
             {isLoading ? (
