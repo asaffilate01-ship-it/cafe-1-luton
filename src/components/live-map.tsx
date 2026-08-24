@@ -55,6 +55,14 @@ export function LiveMap({ points, className = "" }: { points: MapPoint[]; classN
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
+    const onAuthFail = () => setError("Live map unavailable");
+    authFailureListeners.add(onAuthFail);
+    return () => {
+      authFailureListeners.delete(onAuthFail);
+    };
+  }, []);
+
+  useEffect(() => {
     let cancelled = false;
     loadMaps()
       .then(() => {
