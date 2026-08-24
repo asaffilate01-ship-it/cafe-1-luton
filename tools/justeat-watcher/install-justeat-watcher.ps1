@@ -44,6 +44,39 @@ function Stop-Watcher {
   Start-Sleep -Seconds 2
 }
 
+function Repair-InstallAccess {
+  # An earlier install can leave the folder locked down or the files read-only,
+  # which makes the upgrade copy fail with "Access to the path ... is denied".
+  if (-not (Test-Path $installDir)) { return }
+  $me = [Security.Principal.WindowsIdentity]::GetCurrent().User.Value
+  & takeown.exe /F $installDir /R /D Y 2>&1 | Out-Null
+  & icacls.exe $installDir /reset /T /C /Q 2>&1 | Out-Null
+  & icacls.exe $installDir /grant:r "*${me}:(OI)(CI)F" "*S-1-5-18:(OI)(CI)F" "*S-1-5-32-544:(OI)(CI)F" /T /C /Q 2>&1 | Out-Null
+  Get-ChildItem $installDir -Recurse -Force -File -ErrorAction SilentlyContinue |
+    Where-Object { $_.IsReadOnly } |
+    ForEach-Object { try { $_.IsReadOnly = $false } catch { } }
+}
+
+function Copy-WatcherFile([string]$from, [string]$to) {
+  for ($attempt = 1; $attempt -le 5; $attempt++) {
+    try {
+      if (Test-Path $to) {
+        try { (Get-Item $to -Force).IsReadOnly = $false } catch { }
+        Remove-Item $to -Force -ErrorAction SilentlyContinue
+      }
+      Copy-Item $from $to -Force
+      return
+    } catch {
+      if ($attempt -eq 5) {
+        throw "Cannot update $([System.IO.Path]::GetFileName($to)). Close any Cafe 1 watcher windows, sign out and back into Windows, then run setup again. ($($_.Exception.Message))"
+      }
+      Stop-Watcher
+      Repair-InstallAccess
+      Start-Sleep -Seconds 2
+    }
+  }
+}
+
 Write-Host ""
 Write-Host "========================================================" -ForegroundColor DarkCyan
 Write-Host "     CAFE 1 - JUST EAT TO KDS ONE-CLICK SETUP" -ForegroundColor White
