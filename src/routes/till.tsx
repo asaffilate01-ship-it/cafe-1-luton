@@ -1468,7 +1468,9 @@ function Till() {
             </div>
           </div>
 
-          <div className="min-h-0 flex-1 overflow-y-auto p-4 md:p-2.5">
+          <div
+            className={`min-h-0 flex-1 overflow-y-auto p-4 md:p-2.5 ${pay === "cash" ? "max-h-[28vh] min-[960px]:max-h-none" : ""}`}
+          >
             <ul ref={basketRef} className="space-y-2 md:space-y-1.5">
               {lines.map((l) => (
                 <li
@@ -1584,8 +1586,8 @@ function Till() {
           </div>
 
           {pay === "cash" && (
-            <div className="shrink-0 border-t border-white/10 p-3 md:p-2.5">
-              <div className="mb-2 grid grid-cols-3 items-end gap-2 rounded-2xl border border-white/5 bg-neutral-800/70 px-3 py-2.5 md:mb-1.5 md:py-2">
+            <div className="min-h-0 shrink overflow-y-auto border-t border-white/10 p-2.5 min-[380px]:p-3 md:shrink-0 md:p-2.5">
+              <div className="mb-1.5 grid grid-cols-3 items-end gap-2 rounded-2xl border border-white/5 bg-neutral-800/70 px-3 py-2 md:mb-1.5 md:py-2">
                 <div>
                   <p className="text-[10px] font-bold uppercase tracking-widest text-white/40">
                     Tendered
@@ -1616,33 +1618,33 @@ function Till() {
                   <button
                     key={n}
                     onClick={() => setTendered((t) => Math.min(t * 10 + n * 100, 5_000_00))}
-                    className="h-12 rounded-xl border border-white/10 bg-neutral-800/60 text-lg font-bold tabular-nums transition hover:bg-neutral-700/60 active:scale-95 md:h-10"
+                    className="h-11 min-[380px]:h-12 rounded-xl border border-white/10 bg-neutral-800/60 text-lg font-bold tabular-nums transition hover:bg-neutral-700/60 active:scale-95 md:h-10"
                   >
                     {n}
                   </button>
                 ))}
                 <button
                   onClick={() => setTendered(due)}
-                  className="h-12 rounded-xl border border-emerald-500/40 bg-emerald-500/10 text-xs font-black uppercase tracking-wide text-emerald-300 transition hover:bg-emerald-500/20 active:scale-95 md:h-10"
+                  className="h-11 min-[380px]:h-12 rounded-xl border border-emerald-500/40 bg-emerald-500/10 text-xs font-black uppercase tracking-wide text-emerald-300 transition hover:bg-emerald-500/20 active:scale-95 md:h-10"
                 >
                   Exact
                 </button>
                 <button
                   onClick={() => setTendered((t) => Math.min(t * 10, 5_000_00))}
-                  className="h-12 rounded-xl border border-white/10 bg-neutral-800/60 text-lg font-bold tabular-nums transition hover:bg-neutral-700/60 active:scale-95 md:h-10"
+                  className="h-11 min-[380px]:h-12 rounded-xl border border-white/10 bg-neutral-800/60 text-lg font-bold tabular-nums transition hover:bg-neutral-700/60 active:scale-95 md:h-10"
                 >
                   0
                 </button>
                 <button
                   onClick={() => setTendered((t) => Math.floor(t / 10 / 100) * 100)}
                   aria-label="Delete last digit"
-                  className="grid h-12 place-items-center rounded-xl border border-white/10 bg-neutral-800/60 transition hover:bg-neutral-700/60 active:scale-95 md:h-10"
+                  className="grid h-11 min-[380px]:h-12 place-items-center rounded-xl border border-white/10 bg-neutral-800/60 transition hover:bg-neutral-700/60 active:scale-95 md:h-10"
                 >
                   <Delete className="h-4 w-4" />
                 </button>
                 <button
                   onClick={() => setTendered(0)}
-                  className="h-12 rounded-xl border border-white/10 text-xs font-black uppercase tracking-wide text-white/50 transition hover:bg-white/5 active:scale-95 md:h-10"
+                  className="h-11 min-[380px]:h-12 rounded-xl border border-white/10 text-xs font-black uppercase tracking-wide text-white/50 transition hover:bg-white/5 active:scale-95 md:h-10"
                 >
                   Clear
                 </button>
@@ -1652,7 +1654,7 @@ function Till() {
                   <button
                     key={v}
                     onClick={() => setTendered(v)}
-                    className="h-9 rounded-xl border border-white/10 text-xs font-bold tabular-nums text-white/70 transition hover:bg-white/5 active:scale-95 md:h-8"
+                    className="h-8 min-[380px]:h-9 rounded-xl border border-white/10 text-xs font-bold tabular-nums text-white/70 transition hover:bg-white/5 active:scale-95 md:h-8"
                   >
                     {money(v)}
                   </button>
@@ -1662,7 +1664,9 @@ function Till() {
           )}
 
           {(voucher || lines.length > 0) && (
-            <div className="shrink-0 space-y-1.5 border-t border-white/10 px-3 pt-2 text-sm">
+            <div
+              className={`shrink-0 space-y-1.5 border-t border-white/10 px-3 pt-2 text-sm ${pay === "cash" ? "hidden min-[960px]:block" : ""}`}
+            >
               {voucher ? (
                 <>
                   <div className="flex items-center justify-between text-white/60">
