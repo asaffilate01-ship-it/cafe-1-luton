@@ -57,6 +57,42 @@ function Repair-InstallAccess {
     ForEach-Object { try { $_.IsReadOnly = $false } catch { } }
 }
 
+function Protect-InstallAccess {
+  # Use well-known SIDs rather than localized account names (for example,
+  # "Administrators" is named differently on some Windows installations).
+  # Grant access before removing inheritance so a failed ACL command can never
+  # lock the current user out of the watcher it has just installed.
+  $currentUserSid = [Security.Principal.WindowsIdentity]::GetCurrent().User.Value
+  $principals = @(
+    "*${currentUserSid}:(OI)(CI)F",
+    "*S-1-5-18:(OI)(CI)F",
+    "*S-1-5-32-544:(OI)(CI)F"
+  )
+
+  & icacls.exe $installDir /grant:r $principals /T /C /Q 2>&1 | Out-Null
+  if ($LASTEXITCODE -ne 0) {
+    Repair-InstallAccess
+    Write-Host "Windows kept the standard folder permissions; setup can continue safely." -ForegroundColor Yellow
+    return
+  }
+
+  & icacls.exe $installDir /inheritance:r /T /C /Q 2>&1 | Out-Null
+  if ($LASTEXITCODE -ne 0) {
+    Repair-InstallAccess
+    Write-Host "Windows kept the standard folder permissions; setup can continue safely." -ForegroundColor Yellow
+    return
+  }
+
+  $watcherPath = Join-Path $installDir "justeat-hub-watcher.mjs"
+  try {
+    $stream = [System.IO.File]::Open($watcherPath, [System.IO.FileMode]::Open, [System.IO.FileAccess]::Read, [System.IO.FileShare]::ReadWrite)
+    $stream.Dispose()
+  } catch {
+    Repair-InstallAccess
+    throw "Windows blocked access to the installed watcher. Access has been repaired; run setup once more. ($($_.Exception.Message))"
+  }
+}
+
 function Copy-WatcherFile([string]$from, [string]$to) {
   for ($attempt = 1; $attempt -le 5; $attempt++) {
     try {
@@ -187,11 +223,8 @@ try {
   Pop-Location
 }
 
-# Limit local session/secret access to this Windows user, SYSTEM and administrators.
-& icacls.exe $installDir /inheritance:r /grant:r `
-  "$($env:USERDOMAIN)\$($env:USERNAME):(OI)(CI)F" `
-  "SYSTEM:(OI)(CI)F" `
-  "Administrators:(OI)(CI)F" /T /C | Out-Null
+# Limit local session/secret access without relying on localized Windows names.
+Protect-InstallAccess
 
 $env:JUSTEAT_BRIDGE_SECRET = $bridgeKey
 Write-Step "Checking the protected Cafe 1 KDS bridge"
