@@ -91,10 +91,11 @@ if (-not (Test-Path $installDir)) {
 if ([System.IO.Path]::GetFullPath($sourceDir).TrimEnd('\') -ne [System.IO.Path]::GetFullPath($installDir).TrimEnd('\')) {
   Write-Step "Installing the watcher in your Windows profile"
   Stop-Watcher
+  Repair-InstallAccess
   foreach ($file in $sourceFiles) {
     $from = Join-Path $sourceDir $file
     if (-not (Test-Path $from)) { throw "The download is incomplete: $file is missing." }
-    Copy-Item $from (Join-Path $installDir $file) -Force
+    Copy-WatcherFile $from (Join-Path $installDir $file)
   }
   & powershell.exe -NoProfile -ExecutionPolicy Bypass -File (Join-Path $installDir "install-deliveroo-watcher.ps1")
   exit $LASTEXITCODE
