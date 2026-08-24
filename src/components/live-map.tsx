@@ -46,7 +46,15 @@ const PIN: Record<MapPoint["kind"], string> = {
   store: "#f59e0b",
 };
 
-export function LiveMap({ points, className = "" }: { points: MapPoint[]; className?: string }) {
+export function LiveMap({
+  points,
+  className = "",
+  fallbackHref,
+}: {
+  points: MapPoint[];
+  className?: string;
+  fallbackHref?: string;
+}) {
   const el = useRef<HTMLDivElement | null>(null);
   const map = useRef<google.maps.Map | null>(null);
   const markers = useRef<google.maps.Marker[]>([]);
