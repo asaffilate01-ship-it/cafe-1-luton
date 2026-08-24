@@ -1468,7 +1468,9 @@ function Till() {
             </div>
           </div>
 
-          <div className="min-h-0 flex-1 overflow-y-auto p-4 md:p-2.5">
+          <div
+            className={`min-h-0 flex-1 overflow-y-auto p-4 md:p-2.5 ${pay === "cash" ? "max-h-[28vh] min-[960px]:max-h-none" : ""}`}
+          >
             <ul ref={basketRef} className="space-y-2 md:space-y-1.5">
               {lines.map((l) => (
                 <li
