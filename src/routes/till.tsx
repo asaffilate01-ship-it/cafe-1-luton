@@ -1534,7 +1534,7 @@ function Till() {
                     </button>
                   </div>
                   {noteKey === l.key && (
-                    <div className="col-span-2 flex items-center gap-1.5">
+                    <div className="col-span-2 hidden items-center gap-1.5 min-[960px]:flex">
                       <input
                         autoFocus
                         value={l.notes}
