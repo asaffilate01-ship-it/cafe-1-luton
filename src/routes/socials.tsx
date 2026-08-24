@@ -83,7 +83,7 @@ function Socials() {
       <main>
         <section className="relative overflow-hidden border-b border-border bg-secondary/50">
           <div className="pointer-events-none absolute -right-32 -top-40 h-96 w-96 rounded-full bg-primary/10 blur-3xl" />
-          <div className="pointer-events-none absolute -left-24 bottom--10 h-72 w-72 rounded-full bg-primary/5 blur-3xl" />
+          <div className="pointer-events-none absolute -left-24 -bottom-10 h-72 w-72 rounded-full bg-primary/5 blur-3xl" />
           <div className="relative mx-auto max-w-6xl px-4 py-14 sm:py-20">
             <div className="max-w-2xl">
               <span className="inline-flex items-center gap-2 rounded-full border border-primary/25 bg-primary-soft px-3.5 py-1.5 text-xs font-semibold uppercase tracking-[0.18em] text-primary">
