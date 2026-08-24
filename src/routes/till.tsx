@@ -1664,7 +1664,9 @@ function Till() {
           )}
 
           {(voucher || lines.length > 0) && (
-            <div className="shrink-0 space-y-1.5 border-t border-white/10 px-3 pt-2 text-sm">
+            <div
+              className={`shrink-0 space-y-1.5 border-t border-white/10 px-3 pt-2 text-sm ${pay === "cash" ? "hidden min-[960px]:block" : ""}`}
+            >
               {voucher ? (
                 <>
                   <div className="flex items-center justify-between text-white/60">
