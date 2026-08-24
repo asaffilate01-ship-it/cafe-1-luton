@@ -78,6 +78,9 @@ for (const marker of [
 ]) {
   if (!installer.includes(marker)) failures.push(`installer control marker missing: ${marker}`);
 }
+for (const forbidden of ["Protect-InstallAccess", "/inheritance:r"]) {
+  if (installer.includes(forbidden)) failures.push(`installer must not remove inherited user access: ${forbidden}`);
+}
 
 try {
   const packageJson = JSON.parse(strFromU8(archive["package.json"]));
