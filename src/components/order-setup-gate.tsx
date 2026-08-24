@@ -10,7 +10,7 @@ import {
 } from "@/lib/order-context";
 import { useStoreStatus } from "@/hooks/use-store-status";
 import { buildScheduleSlots } from "@/lib/business";
-import { X, MapPin, Clock, Store, Bike, Utensils, Eye } from "lucide-react";
+import { X, MapPin, Clock, Store, Bike, Utensils, Eye, ExternalLink } from "lucide-react";
 
 /**
  * Jury Only menu: delivery is restricted to the court jury areas — nowhere else.
@@ -47,9 +47,15 @@ export function OrderSetupGate({
   const [step, setStep] = useState<1 | 2>(1);
   const [mode, setMode] = useState<OrderMode>(existing?.mode ?? "collection");
   const [postcode, setPostcode] = useState(existing?.postcode ?? "");
-  const [area, setArea] = useState<null | { ok: boolean; message: string; distance_m?: number }>(
-    null,
-  );
+  const [area, setArea] = useState<
+    null | {
+      ok: boolean;
+      message: string;
+      distance_m?: number;
+      deliveroo_url?: string | null;
+      justeat_url?: string | null;
+    }
+  >(null);
   const [areaBusy, setAreaBusy] = useState(false);
   const [scheduleMode, setScheduleMode] = useState<ScheduleMode>(existing?.schedule_mode ?? "asap");
   const [scheduledFor, setScheduledFor] = useState<string>(existing?.scheduled_for ?? "");
@@ -79,9 +85,16 @@ export function OrderSetupGate({
           ok: true,
           distance_m: res.distance_m ?? 0,
           message: `You're in our delivery area (${((res.distance_m ?? 0) / 1609.34).toFixed(2)} mi away).`,
+          deliveroo_url: res.deliveroo_url,
+          justeat_url: res.justeat_url,
         });
       } else {
-        setArea({ ok: false, message: res.reason });
+        setArea({
+          ok: false,
+          message: res.reason,
+          deliveroo_url: res.deliveroo_url,
+          justeat_url: res.justeat_url,
+        });
       }
     } catch {
       setArea({ ok: false, message: "Couldn't check that postcode. Try again." });
@@ -282,6 +295,38 @@ export function OrderSetupGate({
                       >
                         Switch to Dine in
                       </button>
+                    </div>
+                  )}
+                  {area && !area.ok && (area.deliveroo_url || area.justeat_url) && (
+                    <div className="mt-3 rounded-xl border border-primary/20 bg-primary/5 p-3">
+                      <p className="text-xs font-semibold text-primary">
+                        You're just outside our own delivery area
+                      </p>
+                      <p className="mt-1 text-xs text-muted-foreground">
+                        You can still get Cafe 1 delivered through our partners:
+                      </p>
+                      <div className="mt-2 flex flex-wrap gap-2">
+                        {area.deliveroo_url && (
+                          <a
+                            href={area.deliveroo_url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-1.5 rounded-full bg-primary px-3 py-1.5 text-xs font-bold text-primary-foreground hover:bg-primary-hover"
+                          >
+                            Order on Deliveroo <ExternalLink className="h-3 w-3" />
+                          </a>
+                        )}
+                        {area.justeat_url && (
+                          <a
+                            href={area.justeat_url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-1.5 rounded-full bg-secondary px-3 py-1.5 text-xs font-bold text-secondary-foreground hover:bg-secondary/80"
+                          >
+                            Order on Just Eat <ExternalLink className="h-3 w-3" />
+                          </a>
+                        )}
+                      </div>
                     </div>
                   )}
                   <p className="mt-2 text-xs text-muted-foreground">

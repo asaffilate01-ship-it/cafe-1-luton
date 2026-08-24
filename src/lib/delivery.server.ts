@@ -67,28 +67,35 @@ export type DeliverySettings = {
   delivery_radius_m: number;
   delivery_open_time: string;
   delivery_close_time: string;
+  deliveroo_url?: string | null;
+  justeat_url?: string | null;
 };
 
 export type AreaCheck =
-  | { ok: true; distance_m: number; radius_m: number }
-  | { ok: false; reason: string; distance_m?: number; radius_m: number };
+  | { ok: true; distance_m: number; radius_m: number; deliveroo_url?: string | null; justeat_url?: string | null }
+  | { ok: false; reason: string; distance_m?: number; radius_m: number; deliveroo_url?: string | null; justeat_url?: string | null };
 
 export async function checkDeliveryArea(
   postcode: string,
   settings: DeliverySettings,
 ): Promise<AreaCheck> {
   const radius = Math.min(settings.delivery_radius_m ?? 805, 805);
+  const partners = {
+    deliveroo_url: settings.deliveroo_url ?? null,
+    justeat_url: settings.justeat_url ?? null,
+  };
   const [origin, dest] = await Promise.all([
     geocodePostcode(settings.delivery_origin_postcode),
     geocodePostcode(postcode),
   ]);
-  if (!dest) return { ok: false, reason: "We couldn't find that postcode — please check it.", radius_m: radius };
+  if (!dest) return { ok: false, reason: "We couldn't find that postcode — please check it.", radius_m: radius, ...partners };
   if (!origin) {
     return {
       ok: false,
       reason:
         "Delivery availability is temporarily unavailable. Please choose Pickup or try again shortly.",
       radius_m: radius,
+      ...partners,
     };
   }
   const d = Math.round(distanceMeters(origin, dest));
@@ -99,9 +106,10 @@ export async function checkDeliveryArea(
       reason: `Sorry, you're outside our delivery area — we only deliver within half a mile of ${settings.delivery_origin_postcode} (you're about ${miles} mi away). Please switch to Pickup or Dine-in instead.`,
       distance_m: d,
       radius_m: radius,
+      ...partners,
     };
   }
-  return { ok: true, distance_m: d, radius_m: radius };
+  return { ok: true, distance_m: d, radius_m: radius, ...partners };
 }
 
 function toMinutes(t: string) {
