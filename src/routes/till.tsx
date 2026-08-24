@@ -1586,8 +1586,8 @@ function Till() {
           </div>
 
           {pay === "cash" && (
-            <div className="shrink-0 border-t border-white/10 p-3 md:p-2.5">
-              <div className="mb-2 grid grid-cols-3 items-end gap-2 rounded-2xl border border-white/5 bg-neutral-800/70 px-3 py-2.5 md:mb-1.5 md:py-2">
+            <div className="min-h-0 shrink overflow-y-auto border-t border-white/10 p-2.5 min-[380px]:p-3 md:shrink-0 md:p-2.5">
+              <div className="mb-1.5 grid grid-cols-3 items-end gap-2 rounded-2xl border border-white/5 bg-neutral-800/70 px-3 py-2 md:mb-1.5 md:py-2">
                 <div>
                   <p className="text-[10px] font-bold uppercase tracking-widest text-white/40">
                     Tendered
