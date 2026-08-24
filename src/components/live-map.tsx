@@ -11,7 +11,13 @@ declare global {
   interface Window {
     google?: typeof google;
     __cafe1MapReady?: () => void;
+    gm_authFailure?: () => void;
   }
+}
+
+const authFailureListeners = new Set<() => void>();
+if (typeof window !== "undefined") {
+  window.gm_authFailure = () => authFailureListeners.forEach((fn) => fn());
 }
 
 let loaderPromise: Promise<void> | null = null;
