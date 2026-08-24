@@ -1585,6 +1585,83 @@ function Till() {
             </ul>
           </div>
 
+          {/* Phones/tablets get a bottom sheet so the note field stays above the keyboard. */}
+          {noteKey && lines.some((l) => l.key === noteKey) && (
+            <div
+              className="fixed inset-0 z-[130] flex items-end bg-black/70 backdrop-blur-sm min-[960px]:hidden"
+              role="dialog"
+              aria-modal="true"
+              aria-label="Kitchen note"
+              onMouseDown={(event) => {
+                if (event.target === event.currentTarget) setNoteKey(null);
+              }}
+            >
+              <div className="w-full rounded-t-3xl border-t border-white/10 bg-neutral-900 p-4 pb-[calc(1rem+env(safe-area-inset-bottom))] shadow-2xl">
+                {(() => {
+                  const line = lines.find((l) => l.key === noteKey)!;
+                  return (
+                    <>
+                      <div className="mb-3 flex items-start justify-between gap-3">
+                        <div className="min-w-0">
+                          <p className="text-[10px] font-black uppercase tracking-widest text-amber-300">
+                            Kitchen note
+                          </p>
+                          <p className="truncate font-display text-lg font-bold">{line.name}</p>
+                        </div>
+                        <button
+                          onClick={() => setNoteKey(null)}
+                          aria-label="Close note"
+                          className="grid h-9 w-9 shrink-0 place-items-center rounded-xl border border-white/15"
+                        >
+                          <X className="h-4 w-4" />
+                        </button>
+                      </div>
+                      <textarea
+                        autoFocus
+                        value={line.notes}
+                        onChange={(e) => setLineNote(line.key, e.target.value)}
+                        maxLength={140}
+                        placeholder="e.g. no butter, well done"
+                        aria-label={`Kitchen note for ${line.name}`}
+                        className="min-h-20 w-full rounded-2xl border border-amber-400/40 bg-neutral-950 p-3 text-base outline-none placeholder:text-white/30 focus:border-amber-300"
+                      />
+                      <div className="mt-2 flex flex-wrap gap-1.5">
+                        {["No sauce", "Extra hot", "Well done", "Allergy", "To go"].map((preset) => (
+                          <button
+                            key={preset}
+                            onClick={() =>
+                              setLineNote(
+                                line.key,
+                                (line.notes ? `${line.notes}; ` : "").concat(preset).slice(0, 140),
+                              )
+                            }
+                            className="h-9 rounded-xl border border-white/10 bg-neutral-800/60 px-3 text-xs font-bold text-white/70 active:scale-95"
+                          >
+                            {preset}
+                          </button>
+                        ))}
+                      </div>
+                      <div className="mt-3 grid grid-cols-[auto_minmax(0,1fr)] gap-2">
+                        <button
+                          onClick={() => setLineNote(line.key, "")}
+                          className="h-12 rounded-2xl border border-white/10 px-4 text-sm font-bold text-white/60 active:scale-95"
+                        >
+                          Clear
+                        </button>
+                        <button
+                          onClick={() => setNoteKey(null)}
+                          className="h-12 rounded-2xl bg-amber-400 text-sm font-black uppercase tracking-wide text-neutral-950 active:scale-95"
+                        >
+                          Save note
+                        </button>
+                      </div>
+                    </>
+                  );
+                })()}
+              </div>
+            </div>
+          )}
+
           {pay === "cash" && (
             <div className="min-h-0 shrink overflow-y-auto border-t border-white/10 p-2.5 min-[380px]:p-3 md:shrink-0 md:p-2.5">
               <div className="mb-1.5 grid grid-cols-3 items-end gap-2 rounded-2xl border border-white/5 bg-neutral-800/70 px-3 py-2 md:mb-1.5 md:py-2">
