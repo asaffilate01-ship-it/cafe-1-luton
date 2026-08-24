@@ -81,54 +81,61 @@ function Socials() {
     <div className="min-h-screen bg-background">
       <SiteHeader />
       <main>
-        <section className="relative overflow-hidden border-b border-border bg-secondary/55">
-          <div className="pointer-events-none absolute -right-28 -top-28 h-80 w-80 rounded-full bg-primary/10 blur-3xl" />
-          <div className="mx-auto grid max-w-6xl gap-10 px-4 py-16 lg:grid-cols-[1fr_0.72fr] lg:items-center lg:py-24">
-            <div>
-              <p className="text-sm font-semibold uppercase tracking-[0.2em] text-primary">
-                Watch · follow · review
-              </p>
-              <h1 className="mt-4 max-w-3xl font-display text-5xl font-bold leading-[0.98] sm:text-6xl">
+        <section className="relative overflow-hidden border-b border-border bg-secondary/50">
+          <div className="pointer-events-none absolute -right-32 -top-40 h-96 w-96 rounded-full bg-primary/10 blur-3xl" />
+          <div className="pointer-events-none absolute -left-24 bottom--10 h-72 w-72 rounded-full bg-primary/5 blur-3xl" />
+          <div className="relative mx-auto max-w-6xl px-4 py-14 sm:py-20">
+            <div className="max-w-2xl">
+              <span className="inline-flex items-center gap-2 rounded-full border border-primary/25 bg-primary-soft px-3.5 py-1.5 text-xs font-semibold uppercase tracking-[0.18em] text-primary">
+                <Play className="h-3.5 w-3.5" /> Watch · follow · review
+              </span>
+              <h1 className="mt-5 font-display text-5xl font-bold leading-[0.98] sm:text-6xl">
                 Fresh from Café 1.
               </h1>
-              <p className="mt-6 max-w-2xl text-lg leading-relaxed text-muted-foreground">
-                Food clips, behind-the-counter moments, weekly specials and customer
-                favourites—played here from our official social channels.
-              </p>
-              <div className="mt-7 flex flex-wrap gap-3">
-                {SOCIAL_PROFILES.map((profile) => {
-                  const Icon = ICONS[profile.platform];
-                  return (
-                    <a
-                      key={profile.platform}
-                      href={profile.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center gap-2 rounded-full border border-border bg-card px-4 py-2.5 text-sm font-semibold shadow-sm transition hover:-translate-y-0.5 hover:border-primary hover:text-primary"
-                    >
-                      <Icon className="h-4 w-4" /> {profile.label}
-                      <ExternalLink className="h-3.5 w-3.5 opacity-60" />
-                    </a>
-                  );
-                })}
-              </div>
-            </div>
-            <div className="card-3d relative overflow-hidden rounded-[2rem] border border-border bg-card p-7 sm:p-9">
-              <div className="absolute -right-8 -top-8 h-28 w-28 rounded-full bg-primary/10" />
-              <span className="icon-3d h-14 w-14">
-                <Play className="h-6 w-6" />
-              </span>
-              <p className="mt-7 text-sm font-semibold uppercase tracking-[0.16em] text-primary">
-                From the source
-              </p>
-              <h2 className="mt-2 font-display text-3xl font-bold">
-                One place for every Café 1 channel.
-              </h2>
-              <p className="mt-3 leading-relaxed text-muted-foreground">
-                New YouTube videos and Instagram Reels can appear automatically. Every player links
-                to its original source, and no social tracking loads unless you allow it.
+              <p className="mt-5 text-lg leading-relaxed text-muted-foreground">
+                Food clips, behind-the-counter moments and weekly specials — played straight from
+                our official channels, with no social tracking until you allow it.
               </p>
             </div>
+
+            <div className="mt-9 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+              {SOCIAL_PROFILES.map((profile) => {
+                const Icon = ICONS[profile.platform];
+                return (
+                  <a
+                    key={profile.platform}
+                    href={profile.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="card-3d card-3d-hover group flex items-center gap-3 rounded-2xl border border-border bg-card p-4 transition"
+                  >
+                    <span className="icon-3d-soft h-11 w-11 shrink-0">
+                      <Icon className="h-5 w-5" />
+                    </span>
+                    <span className="min-w-0 flex-1">
+                      <span className="block truncate text-sm font-semibold">{profile.label}</span>
+                      <span className="block text-xs text-muted-foreground">Follow us</span>
+                    </span>
+                    <ExternalLink className="h-4 w-4 shrink-0 text-muted-foreground transition group-hover:text-primary" />
+                  </a>
+                );
+              })}
+            </div>
+
+            <ul className="mt-6 flex flex-wrap gap-x-6 gap-y-2 text-sm text-muted-foreground">
+              <li className="inline-flex items-center gap-2">
+                <span aria-hidden className="h-1.5 w-1.5 rounded-full bg-primary" />
+                Official accounts only
+              </li>
+              <li className="inline-flex items-center gap-2">
+                <span aria-hidden className="h-1.5 w-1.5 rounded-full bg-primary" />
+                Privacy-first players
+              </li>
+              <li className="inline-flex items-center gap-2">
+                <span aria-hidden className="h-1.5 w-1.5 rounded-full bg-primary" />
+                Reviews stay attributed
+              </li>
+            </ul>
           </div>
         </section>
 
