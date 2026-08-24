@@ -131,9 +131,19 @@ export function LiveMap({
   if (error) {
     return (
       <div
-        className={`grid place-items-center rounded-2xl border border-border bg-secondary text-sm text-muted-foreground ${className}`}
+        className={`grid place-items-center gap-2 rounded-2xl border border-border bg-secondary p-4 text-center text-sm text-muted-foreground ${className}`}
       >
-        Live map unavailable
+        <span>Live map unavailable</span>
+        {fallbackHref && (
+          <a
+            href={fallbackHref}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="font-semibold text-primary underline underline-offset-4"
+          >
+            Open in Google Maps
+          </a>
+        )}
       </div>
     );
   }
