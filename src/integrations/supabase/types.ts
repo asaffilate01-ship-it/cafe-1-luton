@@ -355,6 +355,7 @@ export type Database = {
           allow_preorder_when_closed: boolean
           closed_message: string | null
           court_staff_discount_percent: number
+          deliveroo_url: string | null
           delivery_close_time: string
           delivery_fee_cents: number
           delivery_minutes: number
@@ -363,6 +364,7 @@ export type Database = {
           delivery_radius_m: number
           free_delivery_threshold_cents: number | null
           id: string
+          justeat_url: string | null
           min_order_cents: number
           name: string
           prep_minutes: number
@@ -376,6 +378,7 @@ export type Database = {
           allow_preorder_when_closed?: boolean
           closed_message?: string | null
           court_staff_discount_percent?: number
+          deliveroo_url?: string | null
           delivery_close_time?: string
           delivery_fee_cents?: number
           delivery_minutes?: number
@@ -384,6 +387,7 @@ export type Database = {
           delivery_radius_m?: number
           free_delivery_threshold_cents?: number | null
           id?: string
+          justeat_url?: string | null
           min_order_cents?: number
           name?: string
           prep_minutes?: number
@@ -397,6 +401,7 @@ export type Database = {
           allow_preorder_when_closed?: boolean
           closed_message?: string | null
           court_staff_discount_percent?: number
+          deliveroo_url?: string | null
           delivery_close_time?: string
           delivery_fee_cents?: number
           delivery_minutes?: number
@@ -405,6 +410,7 @@ export type Database = {
           delivery_radius_m?: number
           free_delivery_threshold_cents?: number | null
           id?: string
+          justeat_url?: string | null
           min_order_cents?: number
           name?: string
           prep_minutes?: number

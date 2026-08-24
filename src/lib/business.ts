@@ -23,6 +23,8 @@ export type BusinessSettings = {
   delivery_radius_m?: number;
   vat_registered?: boolean;
   vat_number?: string | null;
+  deliveroo_url?: string | null;
+  justeat_url?: string | null;
 };
 
 export const DAY_NAMES = [

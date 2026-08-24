@@ -1,0 +1,1 @@
+grant select (deliveroo_url, justeat_url) on public.business_settings to anon;

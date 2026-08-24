@@ -57,6 +57,8 @@ function AdminSettings() {
       delivery_close_time: s.delivery_close_time,
       delivery_origin_postcode: s.delivery_origin_postcode,
       delivery_radius_m: s.delivery_radius_m,
+      deliveroo_url: s.deliveroo_url?.trim() || null,
+      justeat_url: s.justeat_url?.trim() || null,
       vat_registered: s.vat_registered ?? false,
       vat_number: s.vat_registered ? s.vat_number?.trim() || null : null,
     }).eq("id", s.id);
@@ -137,6 +139,33 @@ function AdminSettings() {
                 <input value={s.delivery_origin_postcode ?? ""} onChange={(e) => setS({ ...s, delivery_origin_postcode: e.target.value.toUpperCase() })} className="mt-1 h-10 w-full rounded-lg border border-border bg-background px-3" />
               </label>
               <NumberField label="Max delivery distance (metres — 805 = ½ mile)" v={s.delivery_radius_m ?? 805} on={(v) => setS({ ...s, delivery_radius_m: Math.min(Math.max(v, 100), 805) })} />
+            </div>
+          </section>
+
+          <section className="rounded-2xl border border-border bg-card p-5">
+            <p className="font-semibold">Delivery partners</p>
+            <p className="mt-1 text-xs text-muted-foreground">
+              Shown to customers who enter a postcode outside our own half-mile delivery area as a fallback ordering option.
+            </p>
+            <div className="mt-3 grid gap-3">
+              <label className="text-sm">
+                <span className="text-muted-foreground">Deliveroo restaurant link</span>
+                <input
+                  value={s.deliveroo_url ?? ""}
+                  onChange={(e) => setS({ ...s, deliveroo_url: e.target.value })}
+                  placeholder="https://deliveroo.co.uk/menu/..."
+                  className="mt-1 h-10 w-full rounded-lg border border-border bg-background px-3"
+                />
+              </label>
+              <label className="text-sm">
+                <span className="text-muted-foreground">Just Eat restaurant link</span>
+                <input
+                  value={s.justeat_url ?? ""}
+                  onChange={(e) => setS({ ...s, justeat_url: e.target.value })}
+                  placeholder="https://www.just-eat.co.uk/restaurants-..."
+                  className="mt-1 h-10 w-full rounded-lg border border-border bg-background px-3"
+                />
+              </label>
             </div>
           </section>
 
