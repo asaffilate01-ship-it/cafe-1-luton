@@ -11,7 +11,13 @@ declare global {
   interface Window {
     google?: typeof google;
     __cafe1MapReady?: () => void;
+    gm_authFailure?: () => void;
   }
+}
+
+const authFailureListeners = new Set<() => void>();
+if (typeof window !== "undefined") {
+  window.gm_authFailure = () => authFailureListeners.forEach((fn) => fn());
 }
 
 let loaderPromise: Promise<void> | null = null;
@@ -40,13 +46,29 @@ const PIN: Record<MapPoint["kind"], string> = {
   store: "#f59e0b",
 };
 
-export function LiveMap({ points, className = "" }: { points: MapPoint[]; className?: string }) {
+export function LiveMap({
+  points,
+  className = "",
+  fallbackHref,
+}: {
+  points: MapPoint[];
+  className?: string;
+  fallbackHref?: string;
+}) {
   const el = useRef<HTMLDivElement | null>(null);
   const map = useRef<google.maps.Map | null>(null);
   const markers = useRef<google.maps.Marker[]>([]);
   const infos = useRef<google.maps.InfoWindow[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [ready, setReady] = useState(false);
+
+  useEffect(() => {
+    const onAuthFail = () => setError("Live map unavailable");
+    authFailureListeners.add(onAuthFail);
+    return () => {
+      authFailureListeners.delete(onAuthFail);
+    };
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -109,9 +131,19 @@ export function LiveMap({ points, className = "" }: { points: MapPoint[]; classN
   if (error) {
     return (
       <div
-        className={`grid place-items-center rounded-2xl border border-border bg-secondary text-sm text-muted-foreground ${className}`}
+        className={`grid place-items-center gap-2 rounded-2xl border border-border bg-secondary p-4 text-center text-sm text-muted-foreground ${className}`}
       >
-        Live map unavailable
+        <span>Live map unavailable</span>
+        {fallbackHref && (
+          <a
+            href={fallbackHref}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="font-semibold text-primary underline underline-offset-4"
+          >
+            Open in Google Maps
+          </a>
+        )}
       </div>
     );
   }

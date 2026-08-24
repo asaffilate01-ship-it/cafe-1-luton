@@ -80,7 +80,11 @@ function Contact() {
               </div>
             </div>
             <div className="px-3 pb-3">
-              <LiveMap points={[STORE]} className="h-64 w-full rounded-xl" />
+              <LiveMap
+                points={[STORE]}
+                fallbackHref={DIRECTIONS_URL}
+                className="h-64 w-full rounded-xl"
+              />
             </div>
           </div>
           {rows.map((r) => (
