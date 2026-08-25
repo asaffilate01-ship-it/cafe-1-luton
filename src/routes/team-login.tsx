@@ -14,9 +14,9 @@ export const Route = createFileRoute("/team-login")({
   validateSearch: search,
   head: () => ({ meta: [
     { title: "Staff sign in — Cafe1" },
-    { name: "description", content: "Restricted sign in for Cafe1 staff, kitchen and drivers." },
+    { name: "description", content: "Restricted sign in for Cafe1 staff and kitchen teams." },
     { property: "og:title", content: "Staff sign in — Cafe1" },
-    { property: "og:description", content: "Restricted sign in for Cafe1 staff, kitchen and drivers." },
+    { property: "og:description", content: "Restricted sign in for Cafe1 staff and kitchen teams." },
     { property: "og:type", content: "website" },
     { name: "twitter:card", content: "summary" },
     { name: "robots", content: "noindex" },
@@ -31,7 +31,7 @@ function StaffLogin() {
   const [password, setPassword] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
-  const safeNext = next && next.startsWith("/") && !next.startsWith("//") ? next : null;
+  const safeNext = next && /^\/(?:staff|till|kds|admin)(?:\/|$)/.test(next) ? next : null;
 
   async function onSubmit(event: React.FormEvent) {
     event.preventDefault();
@@ -44,12 +44,12 @@ function StaffLogin() {
       const { data: rows, error: roleError } = await supabase.from("user_roles").select("role").eq("user_id", data.user.id);
       if (roleError) throw roleError;
       const roles = (rows ?? []).map((row) => row.role);
-      if (!roles.some((role) => role === "staff" || role === "driver" || role === "admin")) {
+      if (!roles.some((role) => role === "staff" || role === "admin")) {
         await supabase.auth.signOut();
         throw new Error("This account does not have team access.");
       }
       toast.success("Signed in");
-      navigate({ to: safeNext ?? (roles.includes("driver") ? "/driver" : "/staff") });
+      navigate({ to: safeNext ?? "/staff" });
     } catch (caught) {
       const message = caught instanceof Error ? caught.message : "Sign in failed";
       setError(message);
@@ -66,7 +66,7 @@ function StaffLogin() {
         <section className="mt-6 rounded-3xl border border-border bg-card p-8 shadow-brand">
           <div className="grid h-12 w-12 place-items-center rounded-2xl bg-primary text-primary-foreground"><Users className="h-6 w-6" /></div>
           <h1 className="mt-4 font-display text-3xl font-bold">Cafe1 staff sign in</h1>
-          <p className="mt-1 text-sm text-muted-foreground">For staff, kitchen and delivery team accounts.</p>
+          <p className="mt-1 text-sm text-muted-foreground">For staff and kitchen team accounts.</p>
           {error ? <p role="alert" className="mt-6 rounded-xl border border-destructive/40 bg-destructive/5 p-3 text-sm text-destructive">{error}</p> : null}
           <form onSubmit={onSubmit} className="mt-6 space-y-3" aria-busy={busy}>
             <div><label htmlFor="team-email" className="mb-1.5 block text-sm font-medium">Work email</label><input id="team-email" name="email" type="email" value={email} onChange={(event) => setEmail(event.target.value)} required autoComplete="username" className="h-11 w-full rounded-xl border border-border bg-background px-4" /></div>

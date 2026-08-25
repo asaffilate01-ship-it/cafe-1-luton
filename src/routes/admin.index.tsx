@@ -8,8 +8,6 @@ import { useServerFn } from "@tanstack/react-start";
 import {
   updateOrderStatus,
   markPaidManually,
-  assignDriver,
-  listDrivers,
   cancelTabOrder,
 } from "@/lib/orders.functions";
 import { refundOrder } from "@/lib/payments.functions";
@@ -32,11 +30,9 @@ type OrderRow = {
   created_at: string;
   scheduled_for: string | null;
   schedule_mode: string | null;
-  driver_id: string | null;
   account_id: string | null;
   accounts?: { name: string } | null;
 };
-type Driver = { id: string; full_name: string | null; email: string | null };
 
 export const Route = createFileRoute("/admin/")({
   head: () => ({
@@ -62,12 +58,9 @@ function Admin() {
   const { has, loading: rolesLoading } = useRoles(user);
   const navigate = useNavigate();
   const [orders, setOrders] = useState<OrderRow[]>([]);
-  const [drivers, setDrivers] = useState<Driver[]>([]);
   const [feed, setFeed] = useState<"all" | "tabs">("all");
   const update = useServerFn(updateOrderStatus);
   const markPaid = useServerFn(markPaidManually);
-  const assign = useServerFn(assignDriver);
-  const fetchDrivers = useServerFn(listDrivers);
   const refund = useServerFn(refundOrder);
   const cancelTab = useServerFn(cancelTabOrder);
 
@@ -104,7 +97,7 @@ function Admin() {
       const { data } = await supabase
         .from("orders")
         .select(
-          "id, order_number, status, payment_status, type, total_cents, customer_name, customer_phone, created_at, scheduled_for, schedule_mode, driver_id, account_id, accounts(name)",
+          "id, order_number, status, payment_status, type, total_cents, customer_name, customer_phone, created_at, scheduled_for, schedule_mode, account_id, accounts(name)",
         )
         .order("created_at", { ascending: false })
         .limit(50);
@@ -120,29 +113,12 @@ function Admin() {
     };
   }, []);
 
-  useEffect(() => {
-    if (!user || (!has("admin") && !has("staff"))) return;
-    fetchDrivers()
-      .then((d) => setDrivers(d as Driver[]))
-      .catch(() => {});
-  }, [user, has, fetchDrivers]);
-
   async function setStatus(o: OrderRow, next: string, label?: string) {
     try {
       await update({ data: { order_id: o.id, status: next as "preparing" } });
       toast.success(label ?? `Marked ${next.replace(/_/g, " ")}`);
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Update failed");
-    }
-  }
-
-  async function doAssign(orderId: string, driverId: string) {
-    if (!driverId) return;
-    try {
-      await assign({ data: { order_id: orderId, driver_id: driverId } });
-      toast.success("Driver assigned · out for delivery");
-    } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Failed");
     }
   }
 
@@ -219,12 +195,6 @@ function Admin() {
               className="rounded-full border border-border bg-card px-4 py-2 font-semibold hover:border-primary"
             >
               KDS
-            </Link>
-            <Link
-              to="/driver"
-              className="rounded-full border border-border bg-card px-4 py-2 font-semibold hover:border-primary"
-            >
-              Driver
             </Link>
             <Link
               to="/admin/menu"
@@ -404,23 +374,6 @@ function Admin() {
                           → ready
                         </button>
                       )}
-                      {o.status === "ready" && o.type === "delivery" && (
-                        <select
-                          defaultValue=""
-                          onChange={(e) => doAssign(o.id, e.target.value)}
-                          className="rounded-full border border-border bg-card px-2 py-1 text-xs font-semibold hover:border-primary"
-                        >
-                          <option value="" disabled>
-                            Assign driver…
-                          </option>
-                          {drivers.map((d) => (
-                            <option key={d.id} value={d.id}>
-                              {d.full_name || d.email || d.id.slice(0, 6)}
-                            </option>
-                          ))}
-                          {!drivers.length && <option disabled>No drivers</option>}
-                        </select>
-                      )}
                       {o.status === "ready" &&
                         (o.type === "collection" || o.type === "dine_in") && (
                           <button
@@ -436,9 +389,6 @@ function Admin() {
                             {o.type === "dine_in" ? "Served" : "Collected"}
                           </button>
                         )}
-                      {o.status === "out_for_delivery" && (
-                        <span className="text-xs text-muted-foreground">Driver en route</span>
-                      )}
                       {(o.payment_status === "paid" || o.payment_status === "on_account") && (
                         <button
                           onClick={() => doRefund(o)}

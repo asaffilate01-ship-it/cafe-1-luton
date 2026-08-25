@@ -30,7 +30,6 @@ const requiredPrivatePatterns = [
   "/staff/*",
   "/till/*",
   "/kds/*",
-  "/driver/*",
   "/display/*",
   "/pay/*",
   "/order/*",

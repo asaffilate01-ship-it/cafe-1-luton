@@ -6,6 +6,7 @@ import { useServerFn } from "@tanstack/react-start";
 import {
   cancelCounterOrder,
   createCounterOrder,
+  createCounterSplitOrder,
   finalizeCounterCardPayment,
   prepareCounterOrder,
   setCounterOrderSchedule,
@@ -14,11 +15,8 @@ import {
   closeTillShift,
   getTillShift,
   listRecentTillOrders,
-  listPairedReaders,
   openTillShift,
-  pairSumupReader,
   recordTillCashEvent,
-  unpairSumupReader,
   startReaderPayment,
   checkReaderPayment,
   cancelReaderPayment,
@@ -60,7 +58,7 @@ import {
 } from "@/hooks/use-customer-display-relay";
 import { usePosDeviceStatus } from "@/hooks/use-pos-device-status";
 import { useTillFavourites } from "@/hooks/use-till-favourites";
-import { useSites } from "@/hooks/use-sites";
+import { DEFAULT_SITE_ID, useSites } from "@/hooks/use-sites";
 import { toast } from "sonner";
 import { getStaffMenuItems } from "@/lib/menu-operations.functions";
 import {
@@ -120,7 +118,7 @@ export const Route = createFileRoute("/till")({
       {
         name: "description",
         content:
-          "Counter till for Cafe 1 at Luton Crown Court: ring up cash and card sales, take payment on the SumUp Solo and open the cash drawer.",
+          "Counter till for Cafe 1 at Luton Crown Court: ring up cash and card sales, take payment on the EVO Mobile/3500 and open the cash drawer.",
       },
       { name: "robots", content: "noindex" },
       { property: "og:title", content: "Till — Cafe 1 Luton" },
@@ -222,6 +220,7 @@ type CounterBasketInput = {
   customer_name: string;
   type: Fulfilment;
   table_number?: string;
+  order_notes?: string;
   pos_terminal: TillTerminal;
   voucher_code?: string;
   voucher_pin?: string;
@@ -391,9 +390,11 @@ function TillLogin() {
 function Till() {
   const { user } = useSession();
   const { has } = useRoles(user);
-  const sites = useSites();
+  const assignedSiteId =
+    typeof user?.app_metadata?.site_id === "string" ? user.app_metadata.site_id : null;
+  const sites = useSites(has("admin") ? null : (assignedSiteId ?? DEFAULT_SITE_ID));
   const create = useServerFn(createCounterOrder);
-  const readersFn = useServerFn(listPairedReaders);
+  const createSplit = useServerFn(createCounterSplitOrder);
   const getShift = useServerFn(getTillShift);
   const openShift = useServerFn(openTillShift);
   const closeShift = useServerFn(closeTillShift);
@@ -425,12 +426,10 @@ function Till() {
   const availableFulfilChoices = futuresHouse
     ? FULFIL_CHOICES.filter((choice) => choice.id !== "judges_room")
     : FULFIL_CHOICES;
-  const [readers, setReaders] = useState<{ id: string; name: string; status: string }[]>([]);
-  const [readerError, setReaderError] = useState<string | null>(null);
-  const [readerId, setReaderId] = useState<string>(() =>
-    typeof window === "undefined" ? "" : (window.localStorage.getItem("cafe1-till-reader") ?? ""),
+  const [evoConnected, setEvoConnected] = useState(() =>
+    typeof window === "undefined" ? false : Boolean(window.localStorage.getItem("cafe1-evo-reader")),
   );
-  const [pay, setPay] = useState<null | "cash" | "reader" | "manual" | "split">(null);
+  const [pay, setPay] = useState<null | "cash" | "manual" | "split">(null);
   const [settings, setSettings] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [payOpen, setPayOpen] = useState(false);
@@ -464,7 +463,6 @@ function Till() {
     }
   });
   const [heldOpen, setHeldOpen] = useState(false);
-  const [readerSaleKey, setReaderSaleKey] = useState<string | null>(null);
   const [splitCash, setSplitCash] = useState(0);
   const favourites = useTillFavourites();
   const [qrCast, setQrCast] = useState(false);
@@ -477,9 +475,7 @@ function Till() {
   const lastSiteId = useRef(sites.siteId);
   const [flashKey, setFlashKey] = useState<string | null>(null);
   const [noteKey, setNoteKey] = useState<string | null>(null);
-  const selectedReader = readers.find((reader) => reader.id === readerId);
-  const readerReady =
-    online && !readerError && Boolean(selectedReader && isReaderOnline(selectedReader.status));
+  const readerReady = online && evoConnected;
   const displayConnected = displayStatus.connected || displayRelay.connected;
 
   useEffect(() => {
@@ -498,8 +494,18 @@ function Till() {
     toast.message(`Till switched to ${sites.site?.name ?? "the selected branch"}`);
   }, [futuresHouse, side, sites.site, sites.siteId]);
   useEffect(() => {
-    if (readerId) window.localStorage.setItem("cafe1-till-reader", readerId);
-  }, [readerId]);
+    const refresh = () => setEvoConnected(Boolean(window.localStorage.getItem("cafe1-evo-reader")));
+    const nativeStatus = (event: Event) => {
+      const detail = (event as CustomEvent<{ connected?: boolean }>).detail;
+      if (typeof detail?.connected === "boolean") setEvoConnected(detail.connected);
+    };
+    window.addEventListener("cafe1-evo-reader-change", refresh);
+    window.addEventListener("cafe1:evo-terminal", nativeStatus);
+    return () => {
+      window.removeEventListener("cafe1-evo-reader-change", refresh);
+      window.removeEventListener("cafe1:evo-terminal", nativeStatus);
+    };
+  }, []);
   useEffect(() => {
     window.localStorage.setItem("cafe1-held-orders", JSON.stringify(held.slice(0, 20)));
   }, [held]);
@@ -582,25 +588,6 @@ function Till() {
   useEffect(() => {
     if (!shiftLoading && !shift) setShiftPanel("open");
   }, [shift, shiftLoading]);
-
-  const loadReaders = useCallback(async () => {
-    try {
-      const res = await readersFn({});
-      if (res.ok) {
-        setReaders(res.readers);
-        setReaderError(null);
-        setReaderId((prev) => prev || res.readers[0]?.id || "");
-      } else {
-        setReaders([]);
-        setReaderError(res.error ?? "Could not reach SumUp");
-      }
-    } catch (e) {
-      setReaderError(e instanceof Error ? e.message : "Could not reach SumUp");
-    }
-  }, [readersFn]);
-  useEffect(() => {
-    void loadReaders();
-  }, [loadReaders]);
 
   const visible = useMemo(() => {
     // Staff scan the grid by name, so keep every list A–Z on every till.
@@ -903,7 +890,7 @@ function Till() {
             shift_id: shift.id,
             customer_name: name.trim() || "Counter",
             type,
-            table_number: table.trim() || undefined,
+            order_notes: table.trim() || undefined,
             payment_method,
             manual_card_reference: manualCardReference,
             pos_terminal: terminal,
@@ -933,6 +920,56 @@ function Till() {
       name,
       online,
       shift,
+      table,
+      terminal,
+      type,
+      voucher,
+    ],
+  );
+
+  const finishSplit = useCallback(
+    async (manualCardReference: string) => {
+      if (!shift) return toast.error("Open a till shift first");
+      if (!online) return toast.error("The till is offline — reconnect before taking payment");
+      setBusy(true);
+      try {
+        const res = await createSplit({
+          data: {
+            idempotency_key: crypto.randomUUID(),
+            shift_id: shift.id,
+            customer_name: name.trim() || "Counter",
+            type,
+            order_notes: table.trim() || undefined,
+            cash_component_cents: splitCash,
+            manual_card_reference: manualCardReference,
+            pos_terminal: terminal,
+            voucher_code: voucher?.code,
+            voucher_pin: voucher?.pin,
+            ...manualDiscountArgs,
+            items: lines.map((line) => ({
+              menu_item_id: line.id,
+              qty: line.qty,
+              notes: line.notes || undefined,
+              modifier_ids: line.modifier_ids,
+            })),
+          },
+        });
+        await completeSale(res, "split");
+      } catch (error) {
+        toast.error(error instanceof Error ? error.message : "Could not record split payment");
+      } finally {
+        setBusy(false);
+      }
+    },
+    [
+      completeSale,
+      createSplit,
+      lines,
+      manualDiscountArgs,
+      name,
+      online,
+      shift,
+      splitCash,
       table,
       terminal,
       type,
@@ -980,7 +1017,7 @@ function Till() {
             shift_id: shift.id,
             customer_name: account.name,
             type,
-            table_number: table.trim() || undefined,
+            order_notes: table.trim() || undefined,
             pos_terminal: terminal,
             voucher_code: voucher?.code,
             voucher_pin: voucher?.pin,
@@ -1091,7 +1128,6 @@ function Till() {
       return toast.error("Cash portion must be between 1p and less than the amount due");
     }
     setSplitCash(cents);
-    setReaderSaleKey(crypto.randomUUID());
     setPay("split");
   }
 
@@ -1107,19 +1143,25 @@ function Till() {
         <span className="inline-flex w-fit rounded-xl bg-primary px-2.5 py-1.5 text-[11px] font-black uppercase tracking-[0.16em] text-primary-foreground shadow-lg shadow-primary/25 xl:px-3 xl:text-xs xl:tracking-[0.2em]">
           Cafe 1 <span className="ml-1 hidden sm:inline">Till</span>
         </span>
-        <select
-          value={sites.siteId}
-          onChange={(event) => sites.setSiteId(event.target.value)}
-          disabled={sites.loading || sites.sites.length < 2}
-          aria-label="Till branch"
-          className="h-9 min-w-0 rounded-xl border border-slate-300 bg-white px-2 text-xs font-bold text-slate-950 outline-none disabled:opacity-70"
-        >
-          {sites.sites.map((site) => (
-            <option key={site.id} value={site.id}>
-              {site.name}
-            </option>
-          ))}
-        </select>
+        {has("admin") ? (
+          <select
+            value={sites.siteId}
+            onChange={(event) => sites.setSiteId(event.target.value)}
+            disabled={sites.loading || sites.sites.length < 2}
+            aria-label="Till branch"
+            className="h-9 min-w-0 rounded-xl border border-slate-300 bg-white px-2 text-xs font-bold text-slate-950 outline-none disabled:opacity-70"
+          >
+            {sites.sites.map((site) => (
+              <option key={site.id} value={site.id}>
+                {site.name}
+              </option>
+            ))}
+          </select>
+        ) : (
+          <span className="min-w-0 truncate rounded-xl border border-slate-200 bg-slate-100 px-3 py-2 text-xs font-black text-slate-700">
+            {sites.site?.name ?? "Assigned branch"}
+          </span>
+        )}
         <div
           className={`col-span-3 row-start-2 grid w-full gap-1 rounded-xl border border-slate-200 bg-white/95 p-1 shadow-inner shadow-slate-300/60 min-[960px]:col-span-1 min-[960px]:row-auto min-[960px]:flex min-[960px]:w-auto min-[960px]:shrink-0 ${futuresHouse ? "grid-cols-1" : "grid-cols-2"}`}
         >
@@ -1520,23 +1562,20 @@ function Till() {
                 Pre-order · kitchen will hold this until {laterTime}
               </p>
             )}
-            <div className="grid grid-cols-2 gap-1.5">
+            <div className="grid grid-cols-1 gap-1.5 sm:grid-cols-2">
               <input
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 placeholder="Customer name (optional)"
                 className="h-9 min-w-0 rounded-xl border border-slate-200 bg-slate-100 px-2.5 text-xs outline-none placeholder:text-slate-400 focus:border-primary"
               />
-              {type === "dine_in" ? (
-                <input
-                  value={table}
-                  onChange={(e) => setTable(e.target.value)}
-                  placeholder="Table number"
-                  className="h-9 min-w-0 rounded-xl border border-slate-200 bg-slate-100 px-2.5 text-xs outline-none placeholder:text-slate-400 focus:border-primary"
-                />
-              ) : (
-                <div className="hidden sm:block" />
-              )}
+              <input
+                value={table}
+                onChange={(e) => setTable(e.target.value.slice(0, 500))}
+                placeholder="Order notes (optional)"
+                aria-label="Order notes"
+                className="h-9 min-w-0 rounded-xl border border-slate-200 bg-slate-100 px-2.5 text-xs outline-none placeholder:text-slate-400 focus:border-primary"
+              />
             </div>
           </div>
 
@@ -1959,7 +1998,7 @@ function Till() {
                 className="inline-flex h-14 w-full items-center justify-between gap-2 rounded-2xl bg-indigo-500 px-5 text-base font-bold text-slate-950 shadow-lg shadow-indigo-500/25 transition active:scale-[0.99] disabled:opacity-40 disabled:shadow-none md:h-12"
               >
                 <span className="inline-flex items-center gap-2">
-                  <Ticket className="h-5 w-5" /> Complete voucher sale
+                  <Check className="h-5 w-5" /> Complete order
                 </span>
                 <span className="font-display text-lg font-black tabular-nums">{money(0)}</span>
               </button>
@@ -2035,13 +2074,12 @@ function Till() {
             <div className="grid gap-2">
               <PayChoice
                 icon={Smartphone}
-                label="Card — SumUp Solo"
-                hint={readerReady ? "Reader online" : "Reader offline"}
+                label="Card — EVO Mobile/3500"
+                hint="Take payment on the Bluetooth terminal"
                 tone="primary"
                 onClick={() => {
                   setPayOpen(false);
-                  setReaderSaleKey(crypto.randomUUID());
-                  setPay("reader");
+                  setPay("manual");
                 }}
               />
               <PayChoice
@@ -2063,17 +2101,6 @@ function Till() {
                   void startSplitPayment();
                 }}
               />
-              {has("admin") && (
-                <PayChoice
-                  icon={CreditCard}
-                  label="Manual card terminal"
-                  hint="Manager only — needs a receipt reference"
-                  onClick={() => {
-                    setPayOpen(false);
-                    setPay("manual");
-                  }}
-                />
-              )}
               {!futuresHouse && (
                 <>
                   {!voucher && (
@@ -2116,6 +2143,15 @@ function Till() {
           onConfirm={(reference) => void finish("card", reference)}
         />
       )}
+      {pay === "split" && (
+        <ManualCardModal
+          total={due - splitCash}
+          cashComponent={splitCash}
+          busy={busy}
+          onClose={() => setPay(null)}
+          onConfirm={(reference) => void finishSplit(reference)}
+        />
+      )}
       {tabOpen && (
         <AccountTabModal
           total={due}
@@ -2123,40 +2159,6 @@ function Till() {
           canCreate={has("admin")}
           onClose={() => setTabOpen(false)}
           onConfirm={(account: { id: string; name: string }) => void chargeAccountTab(account)}
-        />
-      )}
-      {(pay === "reader" || pay === "split") && shift && readerSaleKey && (
-        <ReaderPay
-          total={due - (pay === "split" ? splitCash : 0)}
-          cashComponent={pay === "split" ? splitCash : 0}
-          basket={{
-            idempotency_key: readerSaleKey,
-            shift_id: shift.id,
-            customer_name: name.trim() || "Counter",
-            type,
-            table_number: table.trim() || undefined,
-            pos_terminal: terminal,
-            voucher_code: voucher?.code,
-            voucher_pin: voucher?.pin,
-            ...manualDiscountArgs,
-            items: lines.map((line) => ({
-              menu_item_id: line.id,
-              qty: line.qty,
-              notes: line.notes || undefined,
-              modifier_ids: line.modifier_ids,
-            })),
-          }}
-          readers={readers}
-          readerId={readerId}
-          setReaderId={setReaderId}
-          readerError={readerError}
-          reloadReaders={loadReaders}
-          onClose={() => setPay(null)}
-          onPaid={(result) => void completeSale(result, pay === "split" ? "split" : "card")}
-          onSettings={() => {
-            setPay(null);
-            setSettings(true);
-          }}
         />
       )}
       {voucherOpen && (
@@ -2226,9 +2228,6 @@ function Till() {
       {qrCast && <QrCastModal onClose={() => setQrCast(false)} />}
       {settings && (
         <TillSettings
-          readers={readers}
-          readerError={readerError}
-          reload={loadReaders}
           online={online}
           readerReady={readerReady}
           printerReady={deviceStatus.printerReady}
@@ -2376,7 +2375,7 @@ function RecentTillOrdersModal({ siteId, onClose }: { siteId: string; onClose: (
     const remaining = Math.max(0, order.total_cents - order.refunded_cents);
     const raw = await askPrompt({
       title: `Refund order #${order.order_number}`,
-      description: `Up to ${money(remaining)} can be refunded. Card amounts return through SumUp; cash amounts are posted to the till ledger.`,
+      description: `Up to ${money(remaining)} can be refunded. Card amounts return through EVO Payments; cash amounts are posted to the till ledger.`,
       label: "Refund amount (£)",
       defaultValue: (remaining / 100).toFixed(2),
       inputMode: "decimal",
@@ -3131,22 +3130,36 @@ function Modal({
 
 function ManualCardModal({
   total,
+  cashComponent = 0,
   busy,
   onClose,
   onConfirm,
 }: {
   total: number;
+  cashComponent?: number;
   busy: boolean;
   onClose: () => void;
   onConfirm: (reference: string) => void;
 }) {
   const [reference, setReference] = useState("");
   return (
-    <Modal title="Manager manual card settlement" onClose={onClose}>
+    <Modal title="EVO Mobile/3500 card payment" onClose={onClose}>
       <p className="text-sm text-slate-600">
-        Use only after an external terminal shows an approved payment. The receipt reference is
-        stored in the audit log.
+        Complete the payment on the EVO terminal, then enter its approved receipt reference. The
+        reference is stored in the audit log.
       </p>
+      {cashComponent > 0 && (
+        <div className="mt-4 grid grid-cols-2 gap-2 rounded-xl bg-slate-100 p-3 text-center">
+          <div>
+            <p className="text-[10px] font-black uppercase tracking-wide text-slate-500">Cash</p>
+            <p className="font-display text-xl font-black">{money(cashComponent)}</p>
+          </div>
+          <div>
+            <p className="text-[10px] font-black uppercase tracking-wide text-slate-500">EVO card</p>
+            <p className="font-display text-xl font-black text-primary">{money(total)}</p>
+          </div>
+        </div>
+      )}
       <label className="mt-4 block text-xs font-bold uppercase tracking-widest text-slate-500">
         Terminal receipt reference
       </label>
@@ -3615,7 +3628,7 @@ function ReaderPay({
   }
 
   return (
-    <Modal title="Card payment on SumUp Solo" onClose={abort}>
+    <Modal title="Card payment on EVO Mobile/3500" onClose={abort}>
       <div className="rounded-2xl bg-slate-100 p-4 text-center">
         <p className="text-xs font-bold uppercase tracking-widest text-slate-500">Card amount</p>
         <p className="font-display text-4xl font-black text-primary">
@@ -3681,9 +3694,6 @@ function ReaderPay({
 }
 
 function TillSettings({
-  readers,
-  readerError,
-  reload,
   online,
   readerReady,
   printerReady,
@@ -3691,9 +3701,6 @@ function TillSettings({
   displayRelay,
   onClose,
 }: {
-  readers: { id: string; name: string; status: string }[];
-  readerError?: string | null;
-  reload: () => Promise<void>;
   online: boolean;
   readerReady: boolean;
   printerReady: boolean;
@@ -3701,15 +3708,10 @@ function TillSettings({
   displayRelay: CustomerDisplayRelay;
   onClose: () => void;
 }) {
-  const pairFn = useServerFn(pairSumupReader);
-  const unpairFn = useServerFn(unpairSumupReader);
-  const [code, setCode] = useState("");
-  const [name, setName] = useState("Counter Solo");
   const [bridgeUrl, setBridgeUrl] = useState(() => getDeviceBridgeConfig().baseUrl);
   const [bridgeToken, setBridgeToken] = useState(() => getDeviceBridgeConfig().token);
   const [bridgeMessage, setBridgeMessage] = useState<string | null>(null);
   const [bridgeBusy, setBridgeBusy] = useState(false);
-  const [busy, setBusy] = useState(false);
   const readiness = [
     { label: "Internet", ok: online },
     { label: "Card reader", ok: readerReady },
@@ -3717,37 +3719,6 @@ function TillSettings({
     { label: "Customer display", ok: displayConnected },
   ];
   const readyCount = readiness.filter((item) => item.ok).length;
-
-  async function pair() {
-    const clean = code.trim().replace(/[\s-]/g, "").toUpperCase();
-    if (!clean) return toast.error("Enter the pairing code shown on the Solo");
-    if (clean.length < 8 || clean.length > 9) {
-      return toast.error(
-        "SumUp pairing codes are 8–9 characters (e.g. A7KD9PQ2). On the Solo open Settings → Connections → Connect to POS to see the full code.",
-      );
-    }
-    setBusy(true);
-    try {
-      await pairFn({ data: { pairing_code: clean, name: name.trim() || "Solo" } });
-      toast.success("Reader paired");
-      setCode("");
-      await reload();
-    } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Pairing failed");
-    } finally {
-      setBusy(false);
-    }
-  }
-
-  async function unpair(id: string) {
-    try {
-      await unpairFn({ data: { reader_id: id } });
-      toast.success("Reader removed");
-      await reload();
-    } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Could not remove reader");
-    }
-  }
 
   async function saveAndTestBridge() {
     setBridgeBusy(true);
@@ -3808,69 +3779,11 @@ function TillSettings({
         </p>
       </div>
 
-      <div className="flex items-center justify-between gap-2">
+      <div className="rounded-xl border border-slate-200 bg-slate-950 p-3 text-white">
         <p className="text-xs font-bold uppercase tracking-widest text-slate-500">
-          SumUp Solo readers
+          EVO Mobile/3500 card terminal
         </p>
-        <button
-          onClick={() => void reload()}
-          className="rounded-lg border border-slate-300 px-2.5 py-1 text-[11px] font-bold uppercase hover:border-primary"
-        >
-          Refresh
-        </button>
-      </div>
-      {readerError && (
-        <p className="mt-2 rounded-xl bg-red-500/15 p-3 text-xs text-red-300">
-          SumUp connection problem: {readerError}
-        </p>
-      )}
-      <div className="mt-2 space-y-1.5">
-        {readers.map((r) => (
-          <div
-            key={r.id}
-            className="flex items-center gap-2 rounded-xl border border-slate-200 px-3 py-2 text-sm"
-          >
-            <Smartphone className="h-4 w-4 text-slate-500" />
-            <span className="flex-1 truncate font-semibold">{r.name}</span>
-            <ReaderStatusPill status={r.status} />
-            <button
-              onClick={() => unpair(r.id)}
-              aria-label={`Remove ${r.name}`}
-              className="grid h-7 w-7 place-items-center rounded-lg border border-slate-300 hover:border-primary"
-            >
-              <Trash2 className="h-3.5 w-3.5" />
-            </button>
-          </div>
-        ))}
-        {!readers.length && <p className="text-sm text-slate-500">None paired yet.</p>}
-      </div>
-      <div className="mt-3 rounded-xl border border-slate-200 p-3">
-        <p className="text-xs font-bold uppercase tracking-widest text-slate-500">
-          Connect the Solo through SumUp Cloud
-        </p>
-        <ReaderLinkGuide />
-      </div>
-      <div className="mt-2 grid grid-cols-[1fr_1fr_auto] gap-2">
-        <input
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          placeholder="Reader name"
-          className="h-10 rounded-xl border border-slate-200 bg-slate-100 px-3 text-sm outline-none focus:border-primary"
-        />
-        <input
-          value={code}
-          onChange={(e) => setCode(e.target.value.toUpperCase())}
-          placeholder="8–9 char code e.g. A7KD9PQ2"
-          maxLength={9}
-          className="h-10 rounded-xl border border-slate-200 bg-slate-100 px-3 font-mono text-sm outline-none focus:border-primary"
-        />
-        <button
-          disabled={busy}
-          onClick={pair}
-          className="inline-flex h-10 items-center gap-1 rounded-xl bg-primary px-4 text-sm font-bold text-primary-foreground disabled:opacity-50"
-        >
-          {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />} Pair
-        </button>
+        <ReaderLinkGuide defaultMode="bluetooth" />
       </div>
 
       <p className="mt-6 text-xs font-bold uppercase tracking-widest text-slate-500">

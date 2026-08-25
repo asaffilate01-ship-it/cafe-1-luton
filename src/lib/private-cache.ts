@@ -4,7 +4,6 @@ export const PRIVATE_ROUTE_ROOTS = [
   "/staff",
   "/till",
   "/kds",
-  "/driver",
   "/display",
   "/pay",
   "/order",

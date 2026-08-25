@@ -40,7 +40,7 @@ export const Route = createFileRoute("/gdpr")({
         <p>Financial and order records are retained for six years to meet HMRC requirements, even after an account is deleted. Remaining personal details are removed or anonymised.</p>
       </Section>
       <Section heading="Security">
-        <p>Access to order and customer data is restricted to café staff accounts with role-based permissions. Card details are handled entirely by SumUp and never stored by Café 1.</p>
+        <p>Access to order and customer data is restricted to café staff accounts with role-based permissions. Card details are handled entirely by our secure payment provider and never stored by Café 1.</p>
       </Section>
       <Section heading="Complaints to the regulator">
         <p>If you're unhappy with how we've handled your data you can complain to the Information Commissioner's Office at ico.org.uk or on 0303 123 1113.</p>

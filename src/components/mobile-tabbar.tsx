@@ -5,7 +5,7 @@ import { useSession } from "@/hooks/use-auth";
 
 /**
  * App-style bottom tab bar for phones (and installed PWA).
- * Hidden on tablets/desktop and on staff surfaces (admin/kds/driver/pos).
+ * Hidden on tablets/desktop and on staff surfaces (admin/kds/pos).
  */
 export function MobileTabBar() {
   const path = useRouterState({ select: (s) => s.location.pathname });
@@ -13,7 +13,7 @@ export function MobileTabBar() {
   const c = useCart();
   const count = c.items.reduce((s, i) => s + i.qty, 0);
 
-  const hidden = /^(\/(platform|admin|kds|driver|pos|till|display|print|pay))/.test(path);
+  const hidden = /^(\/(admin|kds|pos|till|display|print|pay))/.test(path);
   if (hidden) return null;
 
   const tabs = [

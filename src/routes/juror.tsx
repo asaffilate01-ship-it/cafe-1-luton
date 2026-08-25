@@ -541,8 +541,8 @@ function JurorPage() {
               your PIN is only ever stored as a cryptographic hash.
             </Card>
             <Card icon={Lock} title="Safe card payments">
-              Anything above your allowance is taken through SumUp, an FCA-authorised, PCI DSS
-              compliant payment gateway with 3-D Secure and tokenised Apple Pay and Google Pay.
+              Anything above your allowance is taken through our regulated, PCI DSS-compliant
+              payment gateway with 3-D Secure and tokenised Apple Pay and Google Pay.
               Café 1 never sees or stores your card details.
             </Card>
             <Card icon={Clock} title="Long court days">

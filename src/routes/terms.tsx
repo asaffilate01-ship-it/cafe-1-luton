@@ -43,7 +43,7 @@ export const Route = createFileRoute("/terms")({
       <Section heading="Prices and payment">
         <p>
           Cafe 1 is not currently VAT registered, so the displayed total does not include a VAT
-          charge and receipts do not show input VAT. Card payments are taken securely through SumUp
+          charge and receipts do not show input VAT. Card payments are taken securely through our payment provider
           at the time of ordering. House account (tab) orders are invoiced to the account holder and
           must be settled within the agreed terms.
         </p>

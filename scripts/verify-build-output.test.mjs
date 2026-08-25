@@ -11,7 +11,6 @@ test("build output verifier checks every private route family", async () => {
     "/staff/*",
     "/till/*",
     "/kds/*",
-    "/driver/*",
     "/display/*",
     "/pay/*",
     "/order/*",

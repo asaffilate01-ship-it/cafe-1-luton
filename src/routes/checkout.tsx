@@ -35,11 +35,11 @@ export const Route = createFileRoute("/checkout")({
   head: () => ({
     meta: [
       { title: "Checkout — Cafe1" },
-      { name: "description", content: "Complete your Cafe1 order — pay securely with SumUp." },
+      { name: "description", content: "Complete your Cafe1 order — pay securely online." },
       { property: "og:title", content: "Checkout — Cafe1" },
       {
         property: "og:description",
-        content: "Complete your Cafe1 order — pay securely with SumUp.",
+        content: "Complete your Cafe1 order — pay securely online.",
       },
       { name: "robots", content: "noindex" },
     ],
@@ -1420,8 +1420,8 @@ function Checkout() {
             {onTab
               ? "Billed to your account — settle later"
               : user
-                ? "Secured by SumUp"
-                : "Guest checkout · Secured by SumUp"}
+                ? "Secure checkout"
+                : "Guest checkout · Secure payment"}
           </p>
         </aside>
       </div>

@@ -44,7 +44,7 @@ function CookiePolicy() {
             <b>House account tab</b> — remembers the account you're ordering on.
           </li>
           <li>
-            <b>Checkout &amp; payment</b> — links your order to the SumUp payment.
+            <b>Checkout &amp; payment</b> — links your order to its secure payment.
           </li>
           <li>
             <b>Cookie choice</b> — stores the preferences you set here.
@@ -117,7 +117,7 @@ function CookiePolicy() {
       </Section>
       <Section heading="Third parties">
         <p>
-          Cloudflare provides website security and hosting-edge protection. SumUp may set strictly
+          Cloudflare provides website security and hosting-edge protection. Our payment provider may set strictly
           necessary cookies on its payment pages when you pay by card. Our website fonts are hosted
           by Café 1 and do not require a Google Fonts request. Google Maps services check delivery
           locations and provide attributed public review data. Facebook, Instagram, TikTok and

@@ -28,7 +28,7 @@ export function BackToTop() {
     };
   }, [path]);
 
-  const hidden = /^\/(admin|kds|driver|pos)/.test(path);
+  const hidden = /^\/(admin|kds|pos)/.test(path);
   if (hidden) return null;
 
   const r = 21;

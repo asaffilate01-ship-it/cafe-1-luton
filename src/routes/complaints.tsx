@@ -43,7 +43,7 @@ export const Route = createFileRoute("/complaints")({
       <Section heading="Putting it right">
         <p>
           Depending on the issue we will remake the item, refund the item or the order, or credit
-          your account. Card refunds are returned to the original card via SumUp and usually appear
+          your account. Card refunds are returned to the original card through our payment provider and usually appear
           within 3–5 working days.
         </p>
       </Section>

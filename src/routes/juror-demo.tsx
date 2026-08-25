@@ -337,14 +337,14 @@ const steps: Step[] = [
     title: "10. Security, hosting and payments",
     who: "Café 1 systems",
     icon: Server,
-    say: "The whole system runs on AWS cloud infrastructure in the UK/EEA, with managed patching, encryption in transit and at rest, automated backups and row-level database access control. Card payments are taken through SumUp, an FCA-authorised, PCI DSS compliant payment gateway with 3-D Secure and tokenised Apple Pay and Google Pay — Café 1 never holds card details. Voucher PINs are stored only as cryptographic hashes, admin accounts require two-factor authentication, and every voucher action is written to an immutable audit log.",
+    say: "The whole system runs on managed cloud infrastructure in the UK/EEA, with managed patching, encryption in transit and at rest, automated backups and row-level database access control. Card payments are handled by a regulated, PCI DSS-compliant payment gateway with 3-D Secure and tokenised Apple Pay and Google Pay — Café 1 never holds card details. Voucher PINs are stored only as cryptographic hashes, admin accounts use role-based security, and voucher actions are recorded in the audit log.",
     screen: () => (
       <div className="mx-auto grid max-w-lg gap-2 text-sm sm:grid-cols-2">
         <Fact icon={Server} title="AWS cloud hosting (UK/EEA)">
           Managed patching, TLS in transit, encryption at rest, automated backups.
         </Fact>
         <Fact icon={Lock} title="PCI DSS compliant payments">
-          SumUp gateway, 3-D Secure/SCA, tokenised Apple &amp; Google Pay. No card data held by Café
+          Regulated payment gateway, 3-D Secure/SCA, tokenised Apple &amp; Google Pay. No card data held by Café
           1.
         </Fact>
         <Fact icon={ShieldCheck} title="Access control">

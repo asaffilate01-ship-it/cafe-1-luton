@@ -2,7 +2,6 @@ User-agent: *
 Allow: /
 Disallow: /admin
 Disallow: /kds
-Disallow: /driver
 Disallow: /staff
 Disallow: /till
 Disallow: /display

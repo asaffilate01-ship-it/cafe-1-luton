@@ -5,7 +5,6 @@ import { useSession, useRoles } from "@/hooks/use-auth";
 import {
   LayoutDashboard,
   MonitorPlay,
-  Bike,
   BookOpen,
   Megaphone,
   ReceiptText,
@@ -13,13 +12,11 @@ import {
   Settings,
   Image as ImageIcon,
   Ticket,
-  BadgePercent,
   Boxes,
   ClipboardCheck,
   Clock3,
   ShieldCheck,
   Building2,
-  QrCode,
   Calculator,
 } from "lucide-react";
 
@@ -36,7 +33,7 @@ export const Route = createFileRoute("/staff")({
 
 function StaffPage() {
   return (
-    <RequireRole roles={["admin", "staff", "driver"]} next="/staff">
+    <RequireRole roles={["admin", "staff"]} next="/staff">
       <StaffHub />
     </RequireRole>
   );
@@ -52,7 +49,7 @@ function StaffHub() {
       to: "/admin" as const,
       icon: LayoutDashboard,
       title: "Admin dashboard",
-      desc: "Orders, menu, drivers.",
+      desc: "Orders, menu and kitchen.",
       show: has("admin"),
     },
     {
@@ -105,27 +102,6 @@ function StaffHub() {
       show: has("admin"),
     },
     {
-      to: "/admin/customer-discounts" as const,
-      icon: BadgePercent,
-      title: "Approved members",
-      desc: "Who gets the member discount, by email.",
-      show: has("admin"),
-    },
-    {
-      to: "/admin/vouchers" as const,
-      icon: Ticket,
-      title: "Court vouchers",
-      desc: "Daily allowances & weekly reimbursement report.",
-      show: has("admin"),
-    },
-    {
-      to: "/admin/juror-attendance" as const,
-      icon: QrCode,
-      title: "Jury-room attendance",
-      desc: "Generate approved short-life attendance QR codes.",
-      show: has("admin"),
-    },
-    {
       to: "/admin/settings" as const,
       icon: Settings,
       title: "Store settings",
@@ -143,7 +119,7 @@ function StaffHub() {
       to: "/admin/users" as const,
       icon: UserCog,
       title: "Users & roles",
-      desc: "Grant staff, driver or admin access.",
+      desc: "Grant staff or admin access.",
       show: has("admin"),
     },
     {
@@ -174,13 +150,6 @@ function StaffHub() {
       desc: "Live tickets for the kitchen.",
       show: has("admin") || has("staff"),
     },
-    {
-      to: "/driver" as const,
-      icon: Bike,
-      title: "Driver app",
-      desc: "Pick up and deliver orders.",
-      show: has("admin") || has("driver"),
-    },
   ];
 
   return (
@@ -207,7 +176,7 @@ function StaffHub() {
                 <p className="text-sm text-muted-foreground">{c.desc}</p>
               </Link>
             ))}
-          {!has("admin") && !has("staff") && !has("driver") && (
+          {!has("admin") && !has("staff") && (
             <p className="text-sm text-muted-foreground">
               You don't have staff access. An admin can grant a role in the user_roles table.
             </p>

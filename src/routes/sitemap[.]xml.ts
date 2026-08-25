@@ -60,7 +60,6 @@ export const Route = createFileRoute("/sitemap.xml")({
           ]),
         );
         for (const post of posts ?? []) {
-          if (post.slug.toLowerCase().includes("st-albans")) continue;
           if (!publishedPosts.has(post.slug)) publishedPosts.set(post.slug, post);
         }
         for (const post of publishedPosts.values()) {

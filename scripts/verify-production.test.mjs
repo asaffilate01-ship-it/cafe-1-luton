@@ -188,7 +188,7 @@ test("rejects invalid production response-time budgets", async () => {
 });
 
 test("covers every live POS and operational surface with private caching checks", () => {
-  for (const path of ["/till", "/kds", "/display", "/driver", "/staff", "/account", "/tab"]) {
+  for (const path of ["/till", "/kds", "/display", "/staff", "/account", "/tab"]) {
     const check = PRODUCTION_CHECKS.find((candidate) => candidate.path === path);
     assert.ok(check, `${path} is missing from production smoke`);
     assert.equal(check.protectedRoute, true, `${path} must be treated as private`);

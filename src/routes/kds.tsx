@@ -49,7 +49,6 @@ import { ManualOrderDialog } from "@/components/manual-order-dialog";
 import { EditOrderDialog } from "@/components/edit-order-dialog";
 import { InstallAppButton } from "@/components/install-app-button";
 import { useWakeLock } from "@/hooks/use-wake-lock";
-import { syncSumupPos } from "@/lib/sumup-pos.functions";
 import { orderCode } from "@/lib/order-code";
 import { getStaffMenuItems } from "@/lib/menu-operations.functions";
 import {
@@ -64,7 +63,7 @@ import {
 } from "@/lib/cooking";
 import { useConnectionStatus } from "@/hooks/use-connection-status";
 import { askConfirm, askPrompt } from "@/lib/confirm";
-import { useSites } from "@/hooks/use-sites";
+import { DEFAULT_SITE_ID, useSites } from "@/hooks/use-sites";
 import { SiteSwitcher } from "@/components/site-switcher";
 
 type Item = {
@@ -365,7 +364,11 @@ function KdsPage() {
 }
 
 function KDS() {
-  const sites = useSites();
+  const { user } = useSession();
+  const { has } = useRoles(user);
+  const assignedSiteId =
+    typeof user?.app_metadata?.site_id === "string" ? user.app_metadata.site_id : null;
+  const sites = useSites(has("admin") ? null : (assignedSiteId ?? DEFAULT_SITE_ID));
   const courtFeatures =
     sites.site?.code.toUpperCase() === "LUTON_CROWN_COURT" ||
     sites.site?.postcode?.toUpperCase() === "LU1 2AA";
@@ -405,11 +408,9 @@ function KDS() {
   // True when the last read of the order feed failed, so the board is showing
   // the previous tickets rather than a real empty kitchen.
   const [feedStale, setFeedStale] = useState(false);
-  const sync = useServerFn(syncSumupPos);
   const getMenuItems = useServerFn(getStaffMenuItems);
   const getKitchenStaff = useServerFn(listKitchenStaff);
   const [kitchenStaff, setKitchenStaff] = useState<KitchenStaff[]>([]);
-  const [syncing, setSyncing] = useState(false);
   const [lastSync, setLastSync] = useState<number | null>(null);
   const [syncOk, setSyncOk] = useState(true);
   const [now, setNow] = useState(() => Date.now());
@@ -422,9 +423,6 @@ function KDS() {
   const [sheet, setSheet] = useState<null | "stations" | "more">(null);
   // Phone/tablet feed filter — which side of the business the board shows.
   const [feed, setFeed] = useState<FeedKey>("all");
-  const { user } = useSession();
-  const { has } = useRoles(user);
-
   useEffect(() => {
     let cancelled = false;
     getKitchenStaff()
@@ -630,7 +628,7 @@ function KDS() {
                 meta.needs_cooking,
               ),
               prep_seconds: meta.prep_seconds,
-              // SumUp POS baskets bring their own category; ours is the fallback.
+              // Imported POS baskets may bring a category; ours is the fallback.
               category,
             };
           });
@@ -659,12 +657,17 @@ function KDS() {
       inFlight = true;
       try {
         await load();
-        if (!cancelled) setFeedStale(false);
+        if (!cancelled) {
+          setFeedStale(false);
+          setLastSync(Date.now());
+          setSyncOk(true);
+        }
       } catch {
         // Keep whatever is already on screen and try again shortly. Blanking
         // the board on a wifi blip is what made orders "disappear".
         if (!cancelled) {
           setFeedStale(true);
+          setSyncOk(false);
           if (retry) window.clearTimeout(retry);
           retry = window.setTimeout(() => void run(), 3000);
         }
@@ -759,57 +762,6 @@ function KDS() {
       supabase.removeChannel(ch);
     };
   }, [getMenuItems, recall, sites.siteId]);
-
-  // Auto-poll SumUp POS every 30s while KDS is open (staff/admin only)
-  useEffect(() => {
-    if (!user || (!has("admin") && !has("staff"))) return;
-    let cancelled = false;
-    async function tick() {
-      // Don't hammer SumUp while the screen is in the background.
-      if (typeof document !== "undefined" && document.visibilityState === "hidden") return;
-      try {
-        const r = await sync({ data: undefined as never });
-        if (!cancelled) {
-          setLastSync(Date.now());
-          setSyncOk(!r?.error);
-        }
-        if (!cancelled && r?.imported && r.imported > 0) {
-          toast.success(
-            `${r.imported} SumUp POS ${r.imported === 1 ? "order" : "orders"} imported`,
-          );
-        }
-        if (!cancelled && r?.voided && r.voided > 0) {
-          toast.warning(
-            `${r.voided} SumUp ${r.voided === 1 ? "order" : "orders"} refunded/cancelled — removed`,
-          );
-        }
-      } catch {
-        if (!cancelled) setSyncOk(false);
-      }
-    }
-    tick();
-    const iv = window.setInterval(tick, 15000);
-    return () => {
-      cancelled = true;
-      window.clearInterval(iv);
-    };
-  }, [user, has, sync]);
-
-  async function manualSync() {
-    setSyncing(true);
-    try {
-      const r = await sync({ data: undefined as never });
-      setLastSync(Date.now());
-      setSyncOk(!r?.error);
-      if (r?.error) toast.error(`SumUp: ${r.error}`);
-      else toast.success(`SumUp sync: ${r?.imported ?? 0} imported, ${r?.skipped ?? 0} skipped`);
-    } catch (e) {
-      setSyncOk(false);
-      toast.error(e instanceof Error ? e.message : "Sync failed");
-    } finally {
-      setSyncing(false);
-    }
-  }
 
   type KdsStatus = "paid" | "preparing" | "ready" | "completed";
 
@@ -906,17 +858,20 @@ function KDS() {
   }
 
   const [chromeHidden, setChromeHidden] = useState(false);
-  // 10" Android tablet in landscape (e.g. 1280x800). Width alone can't tell it
-  // apart from a laptop, so we look at a short landscape viewport plus touch
-  // input — and the kitchen can force it from Tools if detection is wrong.
+  // Automatic tablet mode is limited to the installed KDS app. Edge on a
+  // touch-enabled Windows till reports coarse input too, which previously made
+  // a normal desktop browser look like the mobile/tablet KDS.
   const [tabletPref, setTabletPref] = useState<"auto" | "on" | "off">("auto");
   const [tabletAuto, setTabletAuto] = useState(false);
   useEffect(() => {
     if (typeof window === "undefined") return;
     const param = new URLSearchParams(window.location.search).get("layout");
-    const stored =
-      param === "tablet" ? "on" : param === "desktop" ? "off" : localStorage.getItem("kds-layout");
-    if (stored === "on" || stored === "off") setTabletPref(stored);
+    const standalone = window.matchMedia?.("(display-mode: standalone)").matches ?? false;
+    const stored = localStorage.getItem("kds-layout");
+    if (param === "tablet") setTabletPref("on");
+    else if (param === "desktop") setTabletPref("off");
+    else if (standalone && (stored === "on" || stored === "off")) setTabletPref(stored);
+    else setTabletPref("off");
     const detect = () => {
       const w = window.innerWidth;
       const h = window.innerHeight;
@@ -924,7 +879,7 @@ function KDS() {
         (navigator.maxTouchPoints ?? 0) > 0 ||
         (window.matchMedia ? window.matchMedia("(pointer: coarse)").matches : false) ||
         "ontouchstart" in window;
-      setTabletAuto(touch && w > h && w >= 760 && w <= 1500 && h <= 900);
+      setTabletAuto(standalone && touch && w > h && w >= 760 && w <= 1500 && h <= 900);
     };
     detect();
     window.addEventListener("resize", detect);
@@ -1173,7 +1128,7 @@ function KDS() {
     return <div className="p-10 text-center text-muted-foreground">Not authorised.</div>;
 
   return (
-    <div className={`min-h-screen bg-secondary${tabletKds ? " kds-tablet" : ""}`}>
+    <div className={`kds-phone-feed min-h-screen bg-secondary${tabletKds ? " kds-tablet" : ""}`}>
       {!chromeHidden && (
         <div className="kds-adminnav min-[860px]:max-lg:hidden">
           <AdminNav />
@@ -1306,16 +1261,22 @@ function KDS() {
               </span>
             </h1>
             <div className="flex min-w-0 flex-wrap items-center justify-end gap-2">
-              <div className="rounded-xl bg-background px-1 text-foreground">
-                <SiteSwitcher
-                  sites={sites.sites}
-                  siteId={sites.siteId}
-                  onChange={sites.setSiteId}
-                  compact
-                  loading={sites.loading}
-                  error={sites.error}
-                />
-              </div>
+              {has("admin") ? (
+                <div className="rounded-xl bg-background px-1 text-foreground">
+                  <SiteSwitcher
+                    sites={sites.sites}
+                    siteId={sites.siteId}
+                    onChange={sites.setSiteId}
+                    compact
+                    loading={sites.loading}
+                    error={sites.error}
+                  />
+                </div>
+              ) : (
+                <span className="rounded-full bg-primary-foreground/15 px-3 py-1.5 text-xs font-bold">
+                  {sites.site?.name ?? "Assigned branch"}
+                </span>
+              )}
               <span className="hidden text-sm font-semibold opacity-80 sm:inline">
                 {visibleTickets.length} active
               </span>
@@ -1432,15 +1393,6 @@ function KDS() {
                     <span className="hidden sm:inline">Tools</span>
                   </summary>
                   <div className="absolute right-0 z-50 mt-2 w-64 rounded-2xl border border-border bg-card p-2 text-card-foreground shadow-xl">
-                    <button
-                      onClick={manualSync}
-                      disabled={syncing}
-                      className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left text-sm font-semibold hover:bg-muted disabled:opacity-50"
-                      title="Pull latest transactions from your SumUp terminal"
-                    >
-                      <RefreshCw className={`h-4 w-4 ${syncing ? "animate-spin" : ""}`} />
-                      {syncing ? "Syncing…" : "Sync SumUp POS"}
-                    </button>
                     <a
                       href={`/print/test?paper=${kdsPaper}&preview=1`}
                       target="_blank"
@@ -1507,7 +1459,7 @@ function KDS() {
               </div>
             </div>
             {/* Complete, touch-friendly top toolbar; horizontally scrollable on small screens. */}
-            <div className="kds-pillrow col-span-2 -mx-0.5 flex items-center gap-2 overflow-x-auto pb-0.5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            <div className="kds-pillrow col-span-2 -mx-0.5 flex items-center gap-2 overflow-x-auto border-t border-primary-foreground/15 pt-2 pb-0.5 min-[900px]:flex-wrap min-[900px]:justify-end min-[900px]:overflow-visible [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
               <button
                 type="button"
                 onClick={() => setManualOpen(true)}
@@ -1520,16 +1472,6 @@ function KDS() {
               <FullscreenToggle />
               <AlertsToggle />
               <WakeToggle />
-              <button
-                type="button"
-                onClick={manualSync}
-                disabled={syncing}
-                className="flex shrink-0 items-center gap-1.5 rounded-full bg-primary-foreground/15 px-3 py-2 text-xs font-bold text-primary-foreground active:scale-[0.97] disabled:opacity-50"
-                title="Pull the latest SumUp transactions"
-              >
-                <RefreshCw className={`h-4 w-4 ${syncing ? "animate-spin" : ""}`} />
-                {syncing ? "Syncing" : "Sync POS"}
-              </button>
               <InstallAppButton
                 manifest="/kds.webmanifest"
                 label="Install KDS"
@@ -1652,7 +1594,7 @@ function KDS() {
               )}
             </div>
           </div>
-          <div className="mx-auto flex max-w-[110rem] flex-nowrap items-center gap-2 overflow-x-auto px-3 pb-3 text-xs font-semibold sm:gap-3 sm:px-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+          <div className="mx-auto flex max-w-[110rem] flex-nowrap items-center gap-2 overflow-x-auto border-t border-primary-foreground/15 px-3 pt-2 pb-3 text-xs font-semibold sm:gap-3 sm:px-4 lg:flex-wrap lg:overflow-visible [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
             <button
               onClick={() => setAll("preparing", "ready")}
               disabled={
@@ -1764,7 +1706,7 @@ function KDS() {
           </div>
         </header>
       )}
-      <div className="kds-grid mx-auto grid max-w-[110rem] gap-3 p-3 pb-28 sm:grid-cols-2 min-[860px]:max-lg:grid-cols-4 min-[860px]:max-lg:gap-2 min-[860px]:max-lg:p-2 min-[860px]:max-lg:pb-2 lg:grid-cols-3 lg:pb-3 xl:grid-cols-4 2xl:grid-cols-5">
+      <div className="kds-grid mx-auto grid max-w-[110rem] grid-cols-1 gap-2 p-2 pb-28 min-[860px]:max-lg:grid-cols-4 min-[860px]:max-lg:pb-2 lg:grid-cols-3 lg:gap-3 lg:p-3 lg:pb-3 xl:grid-cols-4 2xl:grid-cols-5">
         {feedStale && (
           <div
             role="status"
@@ -1806,7 +1748,7 @@ function KDS() {
           return (
             <div
               key={t.id}
-              className={`kds-card flex min-w-0 flex-col break-words rounded-xl border-4 bg-white p-3 shadow-sm ring-2 transition-shadow sm:p-3 min-[860px]:max-lg:p-2 min-[860px]:max-lg:text-[13px] ${channel.border} ${channel.ring} ${hot ? "shadow-brand" : ""}`}
+              className={`kds-card flex w-full min-w-0 snap-start scroll-mt-24 flex-col break-words rounded-2xl border-4 bg-white p-3 shadow-md ring-2 transition-shadow min-[860px]:max-lg:rounded-xl min-[860px]:max-lg:p-2 min-[860px]:max-lg:text-[13px] lg:rounded-xl lg:shadow-sm ${channel.border} ${channel.ring} ${hot ? "shadow-brand" : ""}`}
             >
               {/* Area + cook state share one strip so the ticket stays short */}
               <div className="-mx-3 -mt-3 mb-1.5 grid grid-cols-2 overflow-hidden rounded-t-xl text-[10px] font-black uppercase tracking-[0.12em] sm:-mx-3 sm:-mt-3">
@@ -2352,14 +2294,6 @@ function KDS() {
               >
                 {recall ? "Unrecall last 15 orders" : "Recall last 15 orders"}
               </button>
-              <button
-                onClick={manualSync}
-                disabled={syncing}
-                className="flex w-full items-center gap-2 rounded-2xl bg-muted px-4 py-3 text-left text-sm font-semibold disabled:opacity-50"
-              >
-                <RefreshCw className={`h-4 w-4 ${syncing ? "animate-spin" : ""}`} />
-                {syncing ? "Syncing…" : "Sync SumUp POS"}
-              </button>
               <a
                 href={`/print/test?paper=${kdsPaper}&preview=1`}
                 target="_blank"
@@ -2513,7 +2447,7 @@ function SyncPill({
     secs === null ? "waiting…" : secs < 60 ? `${secs}s ago` : `${Math.floor(secs / 60)}m ago`;
   return (
     <span
-      title={ok ? "Last successful SumUp POS sync" : "Last SumUp POS sync failed"}
+      title={ok ? "Last successful order-feed sync" : "Order-feed sync failed"}
       className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 font-semibold ${
         compact ? "text-[10px]" : "text-xs"
       } ${stale ? "bg-amber-500/90 text-white" : "bg-primary-foreground/10"}`}
