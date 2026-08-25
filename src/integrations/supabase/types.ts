@@ -73,6 +73,7 @@ export type Database = {
           id: string
           name: string
           notes: string | null
+          site_id: string | null
           updated_at: string
         }
         Insert: {
@@ -86,6 +87,7 @@ export type Database = {
           id?: string
           name: string
           notes?: string | null
+          site_id?: string | null
           updated_at?: string
         }
         Update: {
@@ -99,9 +101,18 @@ export type Database = {
           id?: string
           name?: string
           notes?: string | null
+          site_id?: string | null
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "accounts_site_id_fkey"
+            columns: ["site_id"]
+            isOneToOne: false
+            referencedRelation: "sites"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       audit_events: {
         Row: {
@@ -3211,7 +3222,80 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      business_public_settings: {
+        Row: {
+          accepting_orders: boolean | null
+          allow_preorder_when_closed: boolean | null
+          closed_message: string | null
+          deliveroo_url: string | null
+          delivery_close_time: string | null
+          delivery_fee_cents: number | null
+          delivery_minutes: number | null
+          delivery_open_time: string | null
+          delivery_origin_postcode: string | null
+          delivery_radius_m: number | null
+          free_delivery_threshold_cents: number | null
+          id: string | null
+          justeat_url: string | null
+          min_order_cents: number | null
+          name: string | null
+          prep_minutes: number | null
+          site_id: string | null
+          updated_at: string | null
+          vat_registered: boolean | null
+        }
+        Insert: {
+          accepting_orders?: boolean | null
+          allow_preorder_when_closed?: boolean | null
+          closed_message?: string | null
+          deliveroo_url?: string | null
+          delivery_close_time?: string | null
+          delivery_fee_cents?: number | null
+          delivery_minutes?: number | null
+          delivery_open_time?: string | null
+          delivery_origin_postcode?: string | null
+          delivery_radius_m?: number | null
+          free_delivery_threshold_cents?: number | null
+          id?: string | null
+          justeat_url?: string | null
+          min_order_cents?: number | null
+          name?: string | null
+          prep_minutes?: number | null
+          site_id?: string | null
+          updated_at?: string | null
+          vat_registered?: boolean | null
+        }
+        Update: {
+          accepting_orders?: boolean | null
+          allow_preorder_when_closed?: boolean | null
+          closed_message?: string | null
+          deliveroo_url?: string | null
+          delivery_close_time?: string | null
+          delivery_fee_cents?: number | null
+          delivery_minutes?: number | null
+          delivery_open_time?: string | null
+          delivery_origin_postcode?: string | null
+          delivery_radius_m?: number | null
+          free_delivery_threshold_cents?: number | null
+          id?: string | null
+          justeat_url?: string | null
+          min_order_cents?: number | null
+          name?: string | null
+          prep_minutes?: number | null
+          site_id?: string | null
+          updated_at?: string | null
+          vat_registered?: boolean | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "business_settings_site_id_fkey"
+            columns: ["site_id"]
+            isOneToOne: false
+            referencedRelation: "sites"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Functions: {
       attach_juror_voucher_reservation: {
@@ -3243,6 +3327,7 @@ export type Database = {
         Args: { _admin_only?: boolean }
         Returns: string
       }
+      cafe1_can_access_site: { Args: { _site_id: string }; Returns: boolean }
       cafe1_cancel_tab_order: {
         Args: { _order_id: string; _reason: string }
         Returns: {
@@ -3439,6 +3524,7 @@ export type Database = {
         Args: { _room: string; _token_hash: string }
         Returns: Json
       }
+      cafe1_current_site_id: { Args: never; Returns: string }
       cafe1_customer_favourites: { Args: never; Returns: string[] }
       cafe1_delete_recipe_component: {
         Args: { _component_id: string }
