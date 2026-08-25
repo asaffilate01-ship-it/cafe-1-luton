@@ -15,7 +15,7 @@ export const Route = createFileRoute("/admin/staff-ops")({
     meta: [{ title: "Staff time — Cafe 1" }, { name: "robots", content: "noindex" }],
   }),
   component: () => (
-    <RequireRole roles={["admin", "staff"]} next="/admin/staff-ops">
+    <RequireRole roles={["admin"]} next="/admin/staff-ops">
       <StaffOpsPage />
     </RequireRole>
   ),

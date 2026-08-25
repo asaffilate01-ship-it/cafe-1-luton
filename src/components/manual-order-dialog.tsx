@@ -682,7 +682,7 @@ export function ManualOrderDialog({
                   <input
                     value={line.notes}
                     onChange={(event) => update(index, { notes: event.target.value })}
-                    placeholder="Modifiers or notes (optional)"
+                    placeholder="e.g. remove lettuce, add mayo, sauce on the side"
                     aria-label="Item notes"
                     className="h-10 w-full rounded-xl border border-border bg-background px-3 text-sm"
                   />

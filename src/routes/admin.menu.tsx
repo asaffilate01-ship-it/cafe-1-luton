@@ -102,7 +102,7 @@ function downloadCsv(filename: string, csv: string) {
 function MenuManagerInner() {
   const { user, loading } = useSession();
   const { roles, loading: rolesLoading } = useRoles(user);
-  const canManage = roles.includes("admin") || roles.includes("staff");
+  const canManage = roles.includes("admin");
   const navigate = useNavigate();
   const getMenuItems = useServerFn(getStaffMenuItems);
 
@@ -179,7 +179,7 @@ function MenuManagerInner() {
       <div className="mx-auto max-w-xl px-4 py-16">
         <h1 className="font-display text-3xl font-bold">Access denied</h1>
         <p className="mt-2 text-muted-foreground">
-          You need staff or admin role to manage the menu.
+          You need an admin role to manage the menu.
         </p>
         <Link to="/" className="mt-4 inline-block text-primary">
           ← Home

@@ -69,7 +69,7 @@ type Item = {
 
 const QUICK: Item[] = [
   { to: "/staff", label: "Hub", icon: Home },
-  { to: "/admin", label: "Orders", icon: LayoutDashboard },
+  { to: "/admin", label: "Orders", icon: LayoutDashboard, need: "admin" },
   { to: "/kds", label: "Kitchen", icon: MonitorPlay },
   { to: "/admin/pos", label: "Till", icon: Calculator },
 ];
@@ -78,37 +78,37 @@ const GROUPS: Array<{ label: string; items: Item[] }> = [
   {
     label: "Operations",
     items: [
-      { to: "/admin/operations", label: "Daily controls", icon: ClipboardCheck },
-      { to: "/admin/inventory", label: "Inventory & recipes", icon: Boxes },
-      { to: "/admin/staff-ops", label: "Staff time", icon: Clock3 },
+      { to: "/admin/operations", label: "Daily controls", icon: ClipboardCheck, need: "admin" },
+      { to: "/admin/inventory", label: "Inventory & recipes", icon: Boxes, need: "admin" },
+      { to: "/admin/staff-ops", label: "Staff time", icon: Clock3, need: "admin" },
       { to: "/driver", label: "Driver", icon: Bike, need: "driver" },
-      { to: "/admin/menu", label: "Menu & stock", icon: BookOpen },
+      { to: "/admin/menu", label: "Menu & stock", icon: BookOpen, need: "admin" },
     ],
   },
   {
     label: "Customers",
     items: [
-      { to: "/admin/customer-discounts", label: "Members", icon: BadgePercent },
-      { to: "/admin/court-staff", label: "Court staff", icon: ShieldCheck },
-      { to: "/admin/vouchers", label: "Juror vouchers", icon: Ticket },
-      { to: "/admin/juror-attendance", label: "Attendance QR", icon: QrCode },
-      { to: "/admin/accounts", label: "Accounts & judge tabs", icon: ReceiptText },
+      { to: "/admin/customer-discounts", label: "Members", icon: BadgePercent, need: "admin" },
+      { to: "/admin/court-staff", label: "Court staff", icon: ShieldCheck, need: "admin" },
+      { to: "/admin/vouchers", label: "Juror vouchers", icon: Ticket, need: "admin" },
+      { to: "/admin/juror-attendance", label: "Attendance QR", icon: QrCode, need: "admin" },
+      { to: "/admin/accounts", label: "Accounts & judge tabs", icon: ReceiptText, need: "admin" },
     ],
   },
   {
     label: "Marketing",
     items: [
-      { to: "/admin/blog", label: "Blog", icon: Newspaper },
-      { to: "/admin/broadcasts", label: "Broadcasts", icon: Megaphone },
-      { to: "/admin/banners", label: "Display banners", icon: ImageIcon },
-      { to: "/admin/promos", label: "Promo codes", icon: Ticket },
+      { to: "/admin/blog", label: "Blog", icon: Newspaper, need: "admin" },
+      { to: "/admin/broadcasts", label: "Broadcasts", icon: Megaphone, need: "admin" },
+      { to: "/admin/banners", label: "Display banners", icon: ImageIcon, need: "admin" },
+      { to: "/admin/promos", label: "Promo codes", icon: Ticket, need: "admin" },
     ],
   },
   {
     label: "Management",
     items: [
       { to: "/admin/reports", label: "Financials & KPIs", icon: BarChart3, need: "admin" },
-      { to: "/admin/settings", label: "Settings", icon: Settings },
+      { to: "/admin/settings", label: "Settings", icon: Settings, need: "admin" },
       { to: "/admin/security", label: "Security & alerts", icon: ShieldCheck, need: "admin" },
       { to: "/admin/locations", label: "Sites & legal entities", icon: Building2, need: "admin" },
       { to: "/landlord", label: "Landlord & tenants", icon: Building2, need: "admin" },

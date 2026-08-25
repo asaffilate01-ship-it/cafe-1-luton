@@ -13,7 +13,7 @@ export const Route = createFileRoute("/admin/juror-attendance")({
     meta: [{ title: "Jury-room attendance QR — Cafe 1" }, { name: "robots", content: "noindex" }],
   }),
   component: () => (
-    <RequireRole roles={["admin", "staff"]} next="/admin/juror-attendance">
+    <RequireRole roles={["admin"]} next="/admin/juror-attendance">
       <AttendancePage />
     </RequireRole>
   ),
