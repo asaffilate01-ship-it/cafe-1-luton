@@ -102,7 +102,7 @@ function MenuManager() {
 }
 
 function downloadCsv(filename: string, csv: string) {
-  // BOM keeps £ signs and accents intact when SumUp/Excel reads the file.
+  // BOM keeps £ signs and accents intact when the POS importer or Excel reads the file.
   const url = URL.createObjectURL(new Blob(["\uFEFF", csv], { type: "text/csv;charset=utf-8" }));
   const link = document.createElement("a");
   link.href = url;
@@ -234,19 +234,19 @@ function MenuManagerInner() {
               type="button"
               onClick={() => {
                 const stamp = new Date().toISOString().slice(0, 10);
-                // Exactly one file, in SumUp's own items-export layout.
+                // Exactly one file in the connected POS items-import layout.
                 downloadCsv(
                   `items-export-cafe1-${stamp}.csv`,
                   buildSumUpNativeItemsCsv(cats, items, mods),
                 );
                 toast.success(
-                  `SumUp import file ready — ${items.length} items, ${mods.length} modifiers`,
+                  `POS import file ready — ${items.length} items, ${mods.length} modifiers`,
                 );
               }}
               className="inline-flex h-10 items-center gap-2 rounded-xl border border-border px-3 text-sm font-semibold hover:border-primary"
             >
               <Download className="h-4 w-4" />
-              <span className="hidden sm:inline">Export for SumUp</span>
+              <span className="hidden sm:inline">Export for POS</span>
             </button>
           </div>
         </div>

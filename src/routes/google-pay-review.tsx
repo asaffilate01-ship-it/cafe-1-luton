@@ -170,7 +170,7 @@ function PaymentMethodScreen() {
         <span className="font-semibold">£{AMOUNT}</span>
       </div>
       <p className="mt-3 flex items-center gap-2 text-xs text-[#5f6368]">
-        <Lock className="h-3.5 w-3.5" /> Payments are processed securely by SumUp.
+        <Lock className="h-3.5 w-3.5" /> Payments are processed by our secure payment provider.
       </p>
     </ScreenFrame>
   );

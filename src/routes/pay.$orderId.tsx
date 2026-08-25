@@ -84,7 +84,7 @@ function loadSumUpSdk(): Promise<void> {
     const existing = document.querySelector<HTMLScriptElement>('script[data-sumup-sdk="1"]');
     if (existing) {
       existing.addEventListener("load", () => resolve());
-      existing.addEventListener("error", () => reject(new Error("SumUp SDK failed to load")));
+      existing.addEventListener("error", () => reject(new Error("Payment service failed to load")));
       return;
     }
     const s = document.createElement("script");
@@ -92,7 +92,7 @@ function loadSumUpSdk(): Promise<void> {
     s.async = true;
     s.dataset.sumupSdk = "1";
     s.onload = () => resolve();
-    s.onerror = () => reject(new Error("SumUp SDK failed to load"));
+    s.onerror = () => reject(new Error("Payment service failed to load"));
     document.body.appendChild(s);
   });
 }
@@ -309,7 +309,7 @@ function PayView() {
 
         <div className="mt-6 rounded-2xl border border-border bg-card p-5 shadow-brand">
           <div className="mb-4 flex items-center gap-2 text-xs text-muted-foreground">
-            <Lock className="h-3.5 w-3.5" /> Secure card payment powered by SumUp
+            <Lock className="h-3.5 w-3.5" /> Secure card payment
           </div>
           {status !== "error" && isDemo && (
             <>
@@ -318,7 +318,7 @@ function PayView() {
                 <div className="mb-4 rounded-xl border border-amber-500/40 bg-amber-500/10 p-3 text-xs font-semibold text-amber-700">
                   {simulatedButton
                     ? "Google Pay demo mode — simulated button. For Google onboarding screenshots, open a real /pay/<orderId>?token=… URL with this same hash."
-                    : "Google Pay onboarding mode — capture the official button rendered by the SumUp widget below."}
+                    : "Google Pay onboarding mode — capture the official payment button shown below."}
                 </div>
               )}
               {simulatedButton && (

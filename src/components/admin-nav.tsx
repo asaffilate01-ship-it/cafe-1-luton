@@ -9,9 +9,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
-  BadgePercent,
   BarChart3,
-  Bike,
   BookOpen,
   Boxes,
   Building2,
@@ -31,7 +29,6 @@ import {
   ShieldCheck,
   Ticket,
   UserCog,
-  QrCode,
 } from "lucide-react";
 
 type NavPath =
@@ -45,26 +42,21 @@ type NavPath =
   | "/admin/staff-ops"
   | "/admin/security"
   | "/admin/locations"
-  | "/admin/juror-attendance"
   | "/admin/blog"
   | "/admin/broadcasts"
   | "/admin/banners"
   | "/admin/promos"
-  | "/admin/customer-discounts"
   | "/admin/court-staff"
-  | "/admin/vouchers"
   | "/admin/settings"
   | "/admin/accounts"
   | "/admin/users"
-  | "/landlord"
-  | "/kds"
-  | "/driver";
+  | "/kds";
 
 type Item = {
   to: NavPath;
   label: string;
   icon: React.ComponentType<{ className?: string }>;
-  need?: "admin" | "driver";
+  need?: "admin";
 };
 
 const QUICK: Item[] = [
@@ -81,17 +73,13 @@ const GROUPS: Array<{ label: string; items: Item[] }> = [
       { to: "/admin/operations", label: "Daily controls", icon: ClipboardCheck, need: "admin" },
       { to: "/admin/inventory", label: "Inventory & recipes", icon: Boxes, need: "admin" },
       { to: "/admin/staff-ops", label: "Staff time", icon: Clock3, need: "admin" },
-      { to: "/driver", label: "Driver", icon: Bike, need: "driver" },
       { to: "/admin/menu", label: "Menu & stock", icon: BookOpen, need: "admin" },
     ],
   },
   {
     label: "Customers",
     items: [
-      { to: "/admin/customer-discounts", label: "Members", icon: BadgePercent, need: "admin" },
       { to: "/admin/court-staff", label: "Court staff", icon: ShieldCheck, need: "admin" },
-      { to: "/admin/vouchers", label: "Juror vouchers", icon: Ticket, need: "admin" },
-      { to: "/admin/juror-attendance", label: "Attendance QR", icon: QrCode, need: "admin" },
       { to: "/admin/accounts", label: "Accounts & judge tabs", icon: ReceiptText, need: "admin" },
     ],
   },
@@ -111,7 +99,6 @@ const GROUPS: Array<{ label: string; items: Item[] }> = [
       { to: "/admin/settings", label: "Settings", icon: Settings, need: "admin" },
       { to: "/admin/security", label: "Security & alerts", icon: ShieldCheck, need: "admin" },
       { to: "/admin/locations", label: "Sites & legal entities", icon: Building2, need: "admin" },
-      { to: "/landlord", label: "Landlord & tenants", icon: Building2, need: "admin" },
       { to: "/admin/users", label: "Users & roles", icon: UserCog, need: "admin" },
     ],
   },
@@ -127,12 +114,10 @@ export function AdminNav() {
   const pathname = useRouterState({ select: (state) => state.location.pathname });
   if (!user) return null;
   const isStaff = has("admin") || has("staff");
-  const isDriver = has("driver");
-  if (!isStaff && !isDriver) return null;
+  if (!isStaff) return null;
 
   const allowed = (item: Item) => {
     if (item.need === "admin") return has("admin");
-    if (item.need === "driver") return isDriver || has("admin");
     return isStaff;
   };
 

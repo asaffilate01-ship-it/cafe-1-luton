@@ -48,7 +48,7 @@ function GooglePayTest() {
           Runs Google&apos;s payment sheet exactly as the integration checklist requires:{" "}
           <code>isReadyToPay</code>, the official button, then <code>loadPaymentData</code>. In{" "}
           <strong>TEST</strong> no money moves and the returned token is a dummy — it is Google&apos;s
-          own sandbox, not SumUp&apos;s.
+          own sandbox, not the live payment provider.
         </p>
 
         <div className="mt-6 rounded-2xl border border-border bg-card p-5 shadow-brand">
@@ -125,9 +125,9 @@ function GooglePayTest() {
             </li>
             <li>
               For a real charge, place a £1 pickup order on the site and pay on the{" "}
-              <code>/pay</code> page — the SumUp widget shows the Google Pay button there. SumUp has
+              <code>/pay</code> page — the secure payment widget shows the Google Pay button there. The provider has
               no wallet sandbox, so it must be a genuine £1 payment (refund it afterwards from the
-              SumUp dashboard).
+              payment dashboard).
             </li>
             <li>
               Google Pay only appears on <code>https</code> origins registered in the Google Pay

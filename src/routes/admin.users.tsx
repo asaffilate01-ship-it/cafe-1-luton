@@ -1,4 +1,5 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { useServerFn } from "@tanstack/react-start";
 import { askConfirm, askPrompt } from "@/lib/confirm";
 import { AdminNav } from "@/components/admin-nav";
 import { useEffect, useState, useCallback } from "react";
@@ -6,12 +7,14 @@ import { supabase } from "@/integrations/supabase/client";
 import { useSession, useRoles } from "@/hooks/use-auth";
 import { toast } from "sonner";
 import { ShieldCheck, UserCog, Trash2, Plus, Pencil } from "lucide-react";
+import { useSites } from "@/hooks/use-sites";
+import { assignStaffSite, listStaffSiteAssignments } from "@/lib/user-site.functions";
 
 export const Route = createFileRoute("/admin/users")({
   head: () => ({
     meta: [
       { title: "Users & roles — Cafe1 admin" },
-      { name: "description", content: "Grant staff, driver, and admin access." },
+      { name: "description", content: "Grant staff and admin access and assign staff branches." },
       { name: "robots", content: "noindex" },
     ],
   }),
@@ -19,13 +22,15 @@ export const Route = createFileRoute("/admin/users")({
 });
 
 type Role = "admin" | "staff" | "driver" | "customer";
-const ASSIGNABLE: Role[] = ["admin", "staff", "driver"];
+const ASSIGNABLE: Role[] = ["admin", "staff"];
+const REMOVABLE: Role[] = ["admin", "staff", "driver"];
 
 type Row = {
   id: string;
   email: string | null;
   full_name: string | null;
   roles: Role[];
+  site_id: string | null;
 };
 
 function UsersAdmin() {
@@ -36,25 +41,34 @@ function UsersAdmin() {
   const [busy, setBusy] = useState(false);
   const [email, setEmail] = useState("");
   const [role, setRole] = useState<Role>("staff");
+  const sites = useSites();
+  const getAssignments = useServerFn(listStaffSiteAssignments);
+  const saveAssignment = useServerFn(assignStaffSite);
 
   useEffect(() => {
     if (!loading && !user) navigate({ to: "/admin/login", search: { next: "/admin/users" } });
   }, [loading, user, navigate]);
 
   const load = useCallback(async () => {
-    const { data: profs } = await supabase
-      .from("profiles")
-      .select("id, email, full_name")
-      .order("created_at", { ascending: false });
-    const { data: allRoles } = await supabase.from("user_roles").select("user_id, role");
+    const [{ data: profs }, { data: allRoles }, assignments] = await Promise.all([
+      supabase.from("profiles").select("id, email, full_name").order("created_at", { ascending: false }),
+      supabase.from("user_roles").select("user_id, role"),
+      getAssignments(),
+    ]);
     const map = new Map<string, Role[]>();
     for (const r of allRoles ?? []) {
       const list = map.get(r.user_id) ?? [];
       list.push(r.role as Role);
       map.set(r.user_id, list);
     }
-    setRows((profs ?? []).map((p) => ({ ...p, roles: map.get(p.id) ?? ["customer"] })));
-  }, []);
+    setRows(
+      (profs ?? []).map((p) => ({
+        ...p,
+        roles: map.get(p.id) ?? ["customer"],
+        site_id: assignments[p.id] ?? null,
+      })),
+    );
+  }, [getAssignments]);
 
   useEffect(() => {
     if (user && has("admin")) load();
@@ -122,6 +136,21 @@ function UsersAdmin() {
     load();
   }
 
+  async function assignSite(userId: string, siteId: string) {
+    setBusy(true);
+    try {
+      await saveAssignment({ data: { user_id: userId, site_id: siteId } });
+      setRows((current) =>
+        current.map((row) => (row.id === userId ? { ...row, site_id: siteId } : row)),
+      );
+      toast.success("Staff branch updated — it applies at their next sign-in");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Could not update staff branch");
+    } finally {
+      setBusy(false);
+    }
+  }
+
   if (loading || rolesLoading)
     return <div className="p-12 text-center text-muted-foreground">Loading…</div>;
   if (!has("admin"))
@@ -146,7 +175,7 @@ function UsersAdmin() {
           <div>
             <h1 className="font-display text-3xl font-bold">Users & roles</h1>
             <p className="text-sm text-muted-foreground">
-              Grant staff, driver or admin access to any signed-up user.
+              Grant staff or admin access to any signed-up user.
             </p>
           </div>
         </div>
@@ -193,6 +222,7 @@ function UsersAdmin() {
             <thead className="bg-muted/50 text-left text-xs uppercase tracking-wider text-muted-foreground">
               <tr>
                 <th className="p-3">User</th>
+                <th className="p-3">Staff branch</th>
                 <th className="p-3">Roles</th>
                 <th className="p-3 text-right">Actions</th>
               </tr>
@@ -205,6 +235,28 @@ function UsersAdmin() {
                     <p className="text-xs text-muted-foreground">{r.email}</p>
                   </td>
                   <td className="p-3">
+                    {r.roles.includes("staff") ? (
+                      <select
+                        value={r.site_id ?? ""}
+                        onChange={(event) => void assignSite(r.id, event.target.value)}
+                        disabled={busy || sites.loading}
+                        aria-label={`Assigned branch for ${r.email ?? r.full_name ?? "staff member"}`}
+                        className="h-9 max-w-56 rounded-xl border border-border bg-background px-2 text-xs font-semibold"
+                      >
+                        <option value="" disabled>
+                          Assign branch…
+                        </option>
+                        {sites.sites.map((site) => (
+                          <option key={site.id} value={site.id}>
+                            {site.name}
+                          </option>
+                        ))}
+                      </select>
+                    ) : (
+                      <span className="text-xs text-muted-foreground">—</span>
+                    )}
+                  </td>
+                  <td className="p-3">
                     <div className="flex flex-wrap gap-1">
                       {r.roles.map((rl) => (
                         <span
@@ -212,7 +264,7 @@ function UsersAdmin() {
                           className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-semibold ${rl === "admin" ? "bg-primary text-primary-foreground" : rl === "staff" ? "bg-primary-soft text-primary" : rl === "driver" ? "bg-accent text-accent-foreground" : "bg-muted text-muted-foreground"}`}
                         >
                           {rl}
-                          {ASSIGNABLE.includes(rl) && (
+                          {REMOVABLE.includes(rl) && (
                             <button
                               onClick={() => revoke(r.id, rl)}
                               className="opacity-70 hover:opacity-100"
@@ -250,7 +302,7 @@ function UsersAdmin() {
               ))}
               {!rows.length && (
                 <tr>
-                  <td colSpan={3} className="p-6 text-center text-muted-foreground">
+                  <td colSpan={4} className="p-6 text-center text-muted-foreground">
                     No users yet.
                   </td>
                 </tr>

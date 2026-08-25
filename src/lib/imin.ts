@@ -23,6 +23,11 @@ export type IminPrinter = {
 };
 
 type IminWindow = Window & {
+  Cafe1Hardware?: {
+    printTicket?: (text: string) => string;
+    openCashDrawer?: () => string;
+    status?: () => string;
+  };
   iminPrinter?: IminPrinter;
   imin?: { printer?: IminPrinter; presentation?: unknown } & Record<string, unknown>;
   sunmiPrinter?: IminPrinter;
@@ -47,6 +52,25 @@ function w(): IminWindow | null {
 export function getIminPrinter(): IminPrinter | null {
   const g = w();
   if (!g) return null;
+  if (g.Cafe1Hardware?.printTicket) {
+    return {
+      printText: (text) => {
+        const result = g.Cafe1Hardware?.printTicket?.(text);
+        if (result) {
+          const parsed = JSON.parse(result) as { ok?: boolean; error?: string };
+          if (!parsed.ok) throw new Error(parsed.error ?? "Native iMin print failed");
+        }
+      },
+      openCashBox: () => {
+        const result = g.Cafe1Hardware?.openCashDrawer?.();
+        if (result) {
+          const parsed = JSON.parse(result) as { ok?: boolean; error?: string };
+          if (!parsed.ok) throw new Error(parsed.error ?? "Native cash drawer failed");
+        }
+      },
+      getPrinterStatus: () => g.Cafe1Hardware?.status?.() ?? null,
+    };
+  }
   return (
     g.iminPrinter ?? g.imin?.printer ?? g.innerPrinter ?? g.sunmiPrinter ?? g.AndroidPrinter ?? null
   );
@@ -154,6 +178,10 @@ export function openCustomerScreen(url = "/display"): { ok: boolean; message: st
   const g = w();
   if (!g) return { ok: false, message: "Not available here" };
   const abs = new URL(url, g.location.origin).toString();
+
+  if (g.Cafe1Hardware) {
+    return { ok: true, message: "Customer display is running on the iMin second screen" };
+  }
 
   const ds = g.iminDualScreen ?? g.IminDualScreen;
   const push = ds?.show ?? ds?.open ?? ds?.start;

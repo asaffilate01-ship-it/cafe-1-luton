@@ -19,6 +19,7 @@ const CounterBasketSchema = z.object({
   customer_name: z.string().min(1).max(100),
   type: z.enum(["dine_in", "collection"]),
   table_number: z.string().max(20).optional(),
+  order_notes: z.string().max(500).optional(),
   pos_terminal: z.enum(["jury", "judge", "public", "futures_public"]),
   voucher_code: z.string().min(1).max(40).optional(),
   voucher_pin: z
@@ -137,6 +138,17 @@ function firstResult<T>(rows: T[] | null, message: string): T {
   return row;
 }
 
+async function saveOrderNotes(orderId: string, notes: string | undefined) {
+  const clean = notes?.trim();
+  if (!clean) return;
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  const { error } = await supabaseAdmin
+    .from("orders")
+    .update({ delivery_notes: clean, notes_manual: true })
+    .eq("id", orderId);
+  if (error) throw new Error(`Order was created but its notes could not be saved: ${error.message}`);
+}
+
 /**
  * Marks a counter order as being wanted for a later time so the kitchen
  * display shows it as a pre-order instead of starting it straight away.
@@ -174,12 +186,14 @@ export const prepareCounterOrder = createServerFn({ method: "POST" })
       "prepare_counter_order_secure",
       rpcArgs(data, "reader"),
     );
-    return firstResult(rows, "Could not prepare that counter order");
+    const result = firstResult(rows, "Could not prepare that counter order");
+    await saveOrderNotes(result.order_id, data.order_notes);
+    return result;
   });
 
 /**
- * Settles cash sales transactionally. A manual external-terminal card sale is
- * intentionally manager-only and requires its receipt reference.
+ * Settles cash sales transactionally. External-terminal card sales require the
+ * EVO receipt reference so every staff-authorised card payment is auditable.
  */
 export const createCounterOrder = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
@@ -193,10 +207,6 @@ export const createCounterOrder = createServerFn({ method: "POST" })
     if (data.payment_method === "card" && !data.manual_card_reference) {
       throw new Error("A card terminal receipt reference is required");
     }
-    if (data.payment_method === "card") {
-      const { requireManagerMfa } = await import("./elevated-auth.server");
-      requireManagerMfa(context.claims);
-    }
     await validateCounterModifierRules(context.supabase, data);
     const rows = await callOperationsRpc<CounterOrderResult[]>(
       context.supabase,
@@ -207,7 +217,64 @@ export const createCounterOrder = createServerFn({ method: "POST" })
         data.manual_card_reference ?? "",
       ),
     );
-    return firstResult(rows, "Could not settle that counter order");
+    const result = firstResult(rows, "Could not settle that counter order");
+    await saveOrderNotes(result.order_id, data.order_notes);
+    return result;
+  });
+
+/** Records a staff-authorised cash + EVO terminal split with both tender lines. */
+export const createCounterSplitOrder = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .validator((input: unknown) =>
+    CounterBasketSchema.extend({
+      cash_component_cents: z.number().int().min(1).max(500_000),
+      manual_card_reference: z.string().min(4).max(120),
+    }).parse(input),
+  )
+  .handler(async ({ data, context }) => {
+    await validateCounterModifierRules(context.supabase, data);
+    const rows = await callOperationsRpc<CounterOrderResult[]>(
+      context.supabase,
+      "prepare_counter_order_secure",
+      rpcArgs(data, "manual", data.manual_card_reference),
+    );
+    const result = firstResult(rows, "Could not settle that split payment");
+    if (data.cash_component_cents >= result.total_cents) {
+      throw new Error("Cash portion must be less than the order total");
+    }
+    await saveOrderNotes(result.order_id, data.order_notes);
+
+    const cardCents = result.total_cents - data.cash_component_cents;
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { error: clearError } = await supabaseAdmin
+      .from("order_payments")
+      .delete()
+      .eq("order_id", result.order_id);
+    if (clearError) throw new Error(`Sale completed but tender split needs review: ${clearError.message}`);
+    const { error: paymentError } = await supabaseAdmin.from("order_payments").insert([
+      {
+        order_id: result.order_id,
+        amount_cents: data.cash_component_cents,
+        method: "cash",
+        provider: null,
+        received_by: context.userId,
+      },
+      {
+        order_id: result.order_id,
+        amount_cents: cardCents,
+        method: "card",
+        provider: "evo",
+        provider_transaction_id: data.manual_card_reference,
+        received_by: context.userId,
+      },
+    ]);
+    if (paymentError) throw new Error(`Sale completed but tender split needs review: ${paymentError.message}`);
+    const { error: orderError } = await supabaseAdmin
+      .from("orders")
+      .update({ payment_method: "split" })
+      .eq("id", result.order_id);
+    if (orderError) throw new Error(`Sale completed but tender label needs review: ${orderError.message}`);
+    return result;
   });
 
 /** Finalizes a previously prepared reader order using a verified attempt. */

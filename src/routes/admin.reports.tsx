@@ -43,7 +43,7 @@ export const Route = createFileRoute("/admin/reports")({
       { title: "Financials & KPIs — Cafe1" },
       {
         name: "description",
-        content: "Manager KPIs, P&L, expenses, stock purchases and SumUp reconciliation.",
+        content: "Manager KPIs, P&L, expenses, stock purchases and payment reconciliation.",
       },
       { name: "robots", content: "noindex" },
     ],
@@ -80,7 +80,7 @@ const PAYMENT_LABELS: Record<string, string> = {
   card: "Card",
   bank_transfer: "Bank transfer",
   direct_debit: "Direct debit",
-  sumup_card: "SumUp card",
+  sumup_card: "Card processor",
   other: "Other",
 };
 
@@ -179,7 +179,7 @@ function FinancePage() {
       await run(async () => {
         const result = await postImport({ data: { site_id: siteId, rows } });
         toast.info(`${result.imported} new · ${result.skipped} already imported`);
-      }, "SumUp expense report imported");
+      }, "Processor expense report imported");
     } catch (cause) {
       toast.error(cause instanceof Error ? cause.message : "Could not read the CSV");
     }
@@ -252,7 +252,7 @@ function FinancePage() {
             <div>
               <h1 className="font-display text-2xl font-bold sm:text-3xl">Financials & KPIs</h1>
               <p className="mt-1 max-w-2xl text-sm text-muted-foreground">
-                Management P&amp;L, stock purchasing, expenses and SumUp reconciliation. Gross
+                Management P&amp;L, stock purchasing, expenses and payment reconciliation. Gross
                 amounts are used because Café 1 is not VAT registered.
               </p>
             </div>
@@ -286,7 +286,7 @@ function FinancePage() {
               ["overview", "Overview", BarChart3],
               ["expenses", "Expenses", ReceiptText],
               ["purchases", "Purchases", Boxes],
-              ["sumup", "SumUp", WalletCards],
+              ["sumup", "Payments", WalletCards],
             ] as const
           ).map(([id, label, Icon]) => (
             <button
@@ -343,7 +343,7 @@ function FinancePage() {
           <section className="mt-5 grid gap-4 lg:grid-cols-2">
             <Panel
               title="Automatic settlement reconciliation"
-              subtitle="Pulls official SumUp payouts, deductions and processing fees. Repeating a sync updates existing references; it never duplicates fees."
+              subtitle="Pulls processor payouts, deductions and processing fees. Repeating a sync updates existing references; it never duplicates fees."
             >
               <div className="grid gap-3 sm:grid-cols-3">
                 <Metric label="Paid out" value={money(data.sumup.paid_out_cents)} />
@@ -356,7 +356,7 @@ function FinancePage() {
                   void run(
                     () =>
                       postSync({ data: { site_id: siteId, from_date: fromDate, to_date: toDate } }),
-                    "SumUp settlements and fees reconciled",
+                    "Payment settlements and fees reconciled",
                   )
                 }
                 className="mt-4 inline-flex h-11 items-center gap-2 rounded-xl bg-primary px-5 text-sm font-bold text-primary-foreground disabled:opacity-50"
@@ -365,16 +365,16 @@ function FinancePage() {
                 Sync {days} days
               </button>
               <p className="mt-3 text-xs text-muted-foreground">
-                The SumUp API key needs <code>payouts.read</code>. Refund and chargeback deductions
+                The payment API key needs payout-read access. Refund and chargeback deductions
                 are stored for settlement reconciliation, not double-posted as ordinary expenses.
               </p>
             </Panel>
             <Panel
-              title="Import SumUp expense history"
-              subtitle="SumUp exposes POS Expenses in Back Office as a CSV export, not through its documented public API. Export it, then import it here."
+              title="Import POS expense history"
+              subtitle="Export the POS expense history as CSV, then import it here."
             >
               <ol className="space-y-2 text-sm text-muted-foreground">
-                <li>1. SumUp Back Office → Transactions → Expenses.</li>
+                <li>1. Payment back office → Transactions → Expenses.</li>
                 <li>2. Choose the period and select Export → CSV.</li>
                 <li>3. Import below. Identical rows are skipped automatically.</li>
               </ol>
@@ -394,10 +394,10 @@ function FinancePage() {
                 className="mt-4 inline-flex h-11 items-center gap-2 rounded-xl border border-primary bg-primary-soft px-5 text-sm font-bold text-primary disabled:opacity-50"
               >
                 <FileUp className="h-4 w-4" />
-                Choose SumUp expense CSV
+                Choose expense CSV
               </button>
               <p className="mt-3 text-xs text-muted-foreground">
-                The CSV parser supports quoted descriptions, UK/ISO dates, VAT shown by SumUp,
+                The CSV parser supports quoted descriptions, UK/ISO dates and VAT shown by the processor,
                 payment method, operator and bill number. VAT is retained only as invoice
                 information and is not reclaimed.
               </p>

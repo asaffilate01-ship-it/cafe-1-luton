@@ -16,7 +16,7 @@ const faqs = [
   {
     question: "How do I pay?",
     answer:
-      "Card online via SumUp, plus Google Pay and Apple Pay where supported, or card and cash at the counter. Approved court and chambers house accounts can charge to a weekly tab.",
+      "Secure card payment online, plus Google Pay and Apple Pay where supported, or card and cash at the counter. Approved court and chambers house accounts can charge to a weekly tab.",
   },
   {
     question: "I'm on jury service — how does the juror allowance work?",
@@ -47,7 +47,7 @@ export const Route = createFileRoute("/faq")({
       {
         name: "description",
         content:
-          "Answers about Café 1 Luton: locations, opening hours, online ordering, SumUp payments, house accounts, juror allowances, halal and allergy information.",
+          "Answers about Café 1 Luton: locations, opening hours, online ordering, secure payments, house accounts, juror allowances, halal and allergy information.",
       },
       { property: "og:title", content: "Café 1 Luton — Frequently Asked Questions" },
       {

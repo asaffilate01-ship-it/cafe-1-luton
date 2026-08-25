@@ -48,7 +48,7 @@ export const Route = createFileRoute("/privacy")({
       </Section>
       <Section heading="Card payments">
         <p>
-          Card payments are processed by SumUp. Café 1 never sees or stores your full card number,
+          Card payments are processed by our secure payment provider. Café 1 never sees or stores your full card number,
           expiry date or security code — we only receive a payment reference and whether the payment
           succeeded.
         </p>
@@ -69,7 +69,7 @@ export const Route = createFileRoute("/privacy")({
       </Section>
       <Section heading="Who we share it with">
         <p>
-          Our payment provider (SumUp), website security and edge provider (Cloudflare), hosting and
+          Our payment provider, website security and edge provider (Cloudflare), hosting and
           database provider (Supabase/Lovable), and Google Maps services used to show our café
           locations. If you allow analytics, Google Analytics receives the normal browser and
           page-use data with advertising features disabled. If you allow marketing cookies and play

@@ -58,7 +58,6 @@ export const PRODUCTION_CHECKS = [
   { path: "/till", statuses: [200], contentType: /text\/html/i, protectedRoute: true },
   { path: "/kds", statuses: [200], contentType: /text\/html/i, protectedRoute: true },
   { path: "/display", statuses: [200], contentType: /text\/html/i, protectedRoute: true },
-  { path: "/driver", statuses: [200], contentType: /text\/html/i, protectedRoute: true },
   { path: "/staff", statuses: [200], contentType: /text\/html/i, protectedRoute: true },
   { path: "/account", statuses: [200], contentType: /text\/html/i, protectedRoute: true },
   { path: "/tab", statuses: [200], contentType: /text\/html/i, protectedRoute: true },

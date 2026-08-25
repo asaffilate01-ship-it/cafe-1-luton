@@ -25,10 +25,6 @@ describe("production response security", () => {
   });
 
   it("grants sensitive browser capabilities only to the routes that use them", () => {
-    const driver = withProductionHeaders(
-      new Request("https://cafe1luton.co.uk/driver"),
-      new Response("driver"),
-    );
     const checkout = withProductionHeaders(
       new Request("https://cafe1luton.co.uk/checkout"),
       new Response("checkout"),
@@ -38,8 +34,6 @@ describe("production response security", () => {
       new Response("payment"),
     );
 
-    expect(driver.headers.get("permissions-policy")).toContain("geolocation=(self)");
-    expect(driver.headers.get("permissions-policy")).toContain("payment=()");
     expect(checkout.headers.get("permissions-policy")).toContain("geolocation=()");
     expect(checkout.headers.get("permissions-policy")).toContain("payment=(self)");
     expect(payment.headers.get("permissions-policy")).toContain("payment=(self)");
