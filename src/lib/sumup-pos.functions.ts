@@ -62,12 +62,15 @@ type SumupTxn = {
   type?: string;
 };
 
-/** Reads whichever category field this SumUp basket line happens to carry. */
+/**
+ * Reads whichever category field this SumUp basket line happens to carry.
+ * Vague till labels ("Misc", "Other", "General") are dropped so the kitchen
+ * card falls back to our own menu category instead of showing noise.
+ */
 function sumupCategory(p: NonNullable<SumupTxn["products"]>[number]): string | null {
   const first = p.categories?.[0];
   const fromList = typeof first === "string" ? first : first?.name;
-  const label = (p.category ?? p.category_name ?? fromList ?? "").trim();
-  return label || null;
+  return usefulLabel(p.category ?? p.category_name ?? fromList ?? null);
 }
 
 /** Reads whichever note/comment field a SumUp basket line happens to carry. */
