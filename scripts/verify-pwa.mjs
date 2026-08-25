@@ -81,6 +81,13 @@ export function verifyPwa(repositoryRoot = root) {
       startUrl: "/kds?source=pwa",
       orientation: "landscape",
     },
+    {
+      file: "till.webmanifest",
+      id: "/till",
+      scope: "/till",
+      startUrl: "/till?source=pwa",
+      orientation: "any",
+    },
   ];
   const failures = [];
   const manifests = manifestSpecs.map((spec) => {

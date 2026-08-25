@@ -10,6 +10,7 @@ import {
   setOrderFulfilment,
   setOrderChannel,
   setOrderPreparedBy,
+  listKitchenStaff,
   cancelTabOrder,
   settleTabOrder,
 } from "@/lib/orders.functions";
@@ -58,6 +59,8 @@ import {
   normaliseItemName,
   preferCategory,
   usefulLabel,
+  prepKindForItem,
+  type PrepKind,
 } from "@/lib/cooking";
 import { useConnectionStatus } from "@/hooks/use-connection-status";
 import { askConfirm, askPrompt } from "@/lib/confirm";
@@ -73,6 +76,7 @@ type Item = {
   notes: string | null;
   category_label: string | null;
   cook?: boolean;
+  prepKind?: PrepKind;
   station_code?: string;
   prep_seconds?: number;
   category?: string | null;
@@ -102,8 +106,16 @@ type Order = {
   jury_room: string | null;
   court_location: string | null;
   site_id: string;
+  delivered_at: string | null;
 };
-type Ticket = Order & { items: Item[]; needsCooking: boolean };
+type Ticket = Order & { items: Item[]; needsCooking: boolean; prepKind: PrepKind };
+type KitchenStaff = { id: string; display_name: string; initials: string };
+
+const PREP_TONE: Record<PrepKind, { strip: string; soft: string; dot: string; label: string }> = {
+  cook: { strip: "bg-rose-600 text-white", soft: "bg-rose-50", dot: "bg-rose-600", label: "Cooked" },
+  prep: { strip: "bg-amber-400 text-slate-950", soft: "bg-amber-50", dot: "bg-amber-400", label: "Prep required" },
+  none: { strip: "bg-emerald-600 text-white", soft: "bg-emerald-50", dot: "bg-emerald-600", label: "No prep" },
+};
 
 const TYPE_LABEL: Record<string, string> = {
   dine_in: "DINE IN",
@@ -395,6 +407,8 @@ function KDS() {
   const [feedStale, setFeedStale] = useState(false);
   const sync = useServerFn(syncSumupPos);
   const getMenuItems = useServerFn(getStaffMenuItems);
+  const getKitchenStaff = useServerFn(listKitchenStaff);
+  const [kitchenStaff, setKitchenStaff] = useState<KitchenStaff[]>([]);
   const [syncing, setSyncing] = useState(false);
   const [lastSync, setLastSync] = useState<number | null>(null);
   const [syncOk, setSyncOk] = useState(true);
@@ -410,6 +424,20 @@ function KDS() {
   const [feed, setFeed] = useState<FeedKey>("all");
   const { user } = useSession();
   const { has } = useRoles(user);
+
+  useEffect(() => {
+    let cancelled = false;
+    getKitchenStaff()
+      .then((staff) => {
+        if (!cancelled) setKitchenStaff(staff as KitchenStaff[]);
+      })
+      .catch(() => {
+        if (!cancelled) setKitchenStaff([]);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [getKitchenStaff]);
 
   useEffect(() => {
     if (!courtFeatures && ["jury", "judge", "delivery"].includes(feed)) setFeed("all");
@@ -434,7 +462,7 @@ function KDS() {
   useEffect(() => {
     async function load() {
       const COLUMNS =
-        "id, order_number, status, type, customer_name, created_at, schedule_mode, scheduled_for, table_number, source, payment_method, payment_status, customer_phone, company_name, address_line1, address_line2, city, postcode, delivery_notes, pos_terminal, prepared_by, jury_room, court_location, site_id";
+        "id, order_number, status, type, customer_name, created_at, schedule_mode, scheduled_for, table_number, source, payment_method, payment_status, customer_phone, company_name, address_line1, address_line2, city, postcode, delivery_notes, pos_terminal, prepared_by, jury_room, court_location, site_id, delivered_at";
       const { data: orders, error: ordersError } = await supabase
         .from("orders")
         .select(COLUMNS)
@@ -589,6 +617,12 @@ function KDS() {
             return {
               ...item,
               cook: meta.needs_cooking,
+              prepKind: prepKindForItem({
+                name: item.name,
+                needs_cooking: meta.needs_cooking,
+                prep_seconds: meta.prep_seconds,
+                matched: meta.matched,
+              }),
               station_code: inferStation(
                 meta.station_code === "PASS" ? null : meta.station_code,
                 item.name,
@@ -600,7 +634,12 @@ function KDS() {
               category,
             };
           });
-        return { ...o, items: its, needsCooking: its.some((i) => i.cook) };
+        const prepKind: PrepKind = its.some((i) => i.prepKind === "cook")
+          ? "cook"
+          : its.some((i) => i.prepKind === "prep")
+            ? "prep"
+            : "none";
+        return { ...o, items: its, needsCooking: prepKind === "cook", prepKind };
       });
       liveIds.current = new Set(grouped.map((g) => g.id));
       setTickets(grouped);
@@ -780,7 +819,16 @@ function KDS() {
     setTickets((prev) =>
       status === "completed" && !recall
         ? prev.filter((t) => t.id !== id)
-        : prev.map((t) => (t.id === id ? { ...t, status } : t)),
+        : prev.map((t) =>
+            t.id === id
+              ? {
+                  ...t,
+                  status,
+                  delivered_at:
+                    status === "completed" ? new Date().toISOString() : t.delivered_at,
+                }
+              : t,
+          ),
     );
     if (status === "completed" && !recall) clearedIds.current.set(id, Date.now());
     else clearedIds.current.delete(id);
@@ -1284,7 +1332,7 @@ function KDS() {
                 {linkDown ? <WifiOff className="h-3.5 w-3.5" /> : <Wifi className="h-3.5 w-3.5" />}
                 {linkDown ? "Offline" : "Online"}
               </span>
-              <div className="kds-desktop-controls hidden flex-wrap items-center justify-end gap-2 lg:flex">
+              <div className="kds-desktop-controls hidden flex-wrap items-center justify-end gap-2">
                 {courtFeatures && (
                   <>
                     <span
@@ -1458,8 +1506,8 @@ function KDS() {
                 </details>
               </div>
             </div>
-            {/* Phone / tablet: compact pill row — Deliveroo health + key in an order */}
-            <div className="kds-pillrow col-span-2 -mx-0.5 flex items-center gap-2 overflow-x-auto pb-0.5 lg:hidden [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            {/* Complete, touch-friendly top toolbar; horizontally scrollable on small screens. */}
+            <div className="kds-pillrow col-span-2 -mx-0.5 flex items-center gap-2 overflow-x-auto pb-0.5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
               <button
                 type="button"
                 onClick={() => setManualOpen(true)}
@@ -1470,6 +1518,38 @@ function KDS() {
                 <Plus className="h-4 w-4" /> Add order
               </button>
               <FullscreenToggle />
+              <AlertsToggle />
+              <WakeToggle />
+              <button
+                type="button"
+                onClick={manualSync}
+                disabled={syncing}
+                className="flex shrink-0 items-center gap-1.5 rounded-full bg-primary-foreground/15 px-3 py-2 text-xs font-bold text-primary-foreground active:scale-[0.97] disabled:opacity-50"
+                title="Pull the latest SumUp transactions"
+              >
+                <RefreshCw className={`h-4 w-4 ${syncing ? "animate-spin" : ""}`} />
+                {syncing ? "Syncing" : "Sync POS"}
+              </button>
+              <InstallAppButton
+                manifest="/kds.webmanifest"
+                label="Install KDS"
+                className="flex shrink-0 items-center gap-1.5 rounded-full bg-primary-foreground/15 px-3 py-2 text-xs font-bold text-primary-foreground active:scale-[0.97]"
+              />
+              <button
+                type="button"
+                onClick={() => window.location.reload()}
+                className="flex shrink-0 items-center gap-1.5 rounded-full bg-primary-foreground/15 px-3 py-2 text-xs font-bold text-primary-foreground active:scale-[0.97]"
+              >
+                <RefreshCw className="h-4 w-4" /> Refresh
+              </button>
+              <button
+                type="button"
+                onClick={toggleChrome}
+                className="flex shrink-0 items-center gap-1.5 rounded-full bg-primary-foreground/15 px-3 py-2 text-xs font-bold text-primary-foreground active:scale-[0.97]"
+                title="Hide the toolbar and maximise ticket space"
+              >
+                <ChevronsUp className="h-4 w-4" /> Hide toolbar
+              </button>
               <button
                 type="button"
                 onClick={toggleTabletLayout}
@@ -1572,7 +1652,7 @@ function KDS() {
               )}
             </div>
           </div>
-          <div className="mx-auto hidden max-w-[110rem] flex-wrap items-center gap-2 px-3 pb-3 text-xs font-semibold sm:gap-3 sm:px-4 lg:flex">
+          <div className="mx-auto flex max-w-[110rem] flex-nowrap items-center gap-2 overflow-x-auto px-3 pb-3 text-xs font-semibold sm:gap-3 sm:px-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
             <button
               onClick={() => setAll("preparing", "ready")}
               disabled={
@@ -1618,7 +1698,7 @@ function KDS() {
             )}
             <span className="mx-1 hidden h-4 w-px bg-primary-foreground/30 sm:block" />
             <div
-              className="hidden flex-wrap items-center gap-1 lg:flex"
+              className="flex shrink-0 flex-wrap items-center gap-1"
               aria-label="Order source filter"
             >
               {availableFeeds.map(({ key, label, Icon }) => {
@@ -1669,12 +1749,13 @@ function KDS() {
             </div>
             <span className="mx-1 hidden h-4 w-px bg-primary-foreground/30 xl:block" />
             <span className="hidden items-center gap-1.5 xl:inline-flex">
-              <span className="h-3 w-3 rounded-full bg-blue-600 ring-2 ring-white/60" /> Cooked /
-              hot food
+              <span className="h-3 w-3 rounded-full bg-rose-600 ring-2 ring-white/60" /> Cooked
             </span>
             <span className="hidden items-center gap-1.5 xl:inline-flex">
-              <span className="h-3 w-3 rounded-full bg-amber-400 ring-2 ring-white/60" /> No cooking /
-              cold
+              <span className="h-3 w-3 rounded-full bg-amber-400 ring-2 ring-white/60" /> Prep required
+            </span>
+            <span className="hidden items-center gap-1.5 xl:inline-flex">
+              <span className="h-3 w-3 rounded-full bg-emerald-600 ring-2 ring-white/60" /> No prep
             </span>
             <span className="hidden items-center gap-1.5 xl:inline-flex">
               <span className="h-3 w-3 rounded-full bg-emerald-500 ring-2 ring-white/60" /> Ready →
@@ -1694,9 +1775,13 @@ function KDS() {
           </div>
         )}
         {visibleTickets.map((t) => {
+          const timerEnd =
+            (t.status === "completed" || t.status === "delivered") && t.delivered_at
+              ? new Date(t.delivered_at).getTime()
+              : now;
           const elapsedSec = Math.max(
             0,
-            Math.floor((now - new Date(t.created_at).getTime()) / 1000),
+            Math.floor((timerEnd - new Date(t.created_at).getTime()) / 1000),
           );
           const mins = Math.floor(elapsedSec / 60);
           const clock = `${mins}:${String(elapsedSec % 60).padStart(2, "0")}`;
@@ -1709,6 +1794,7 @@ function KDS() {
                 ? "bg-amber-500 text-white"
                 : "bg-slate-800 text-white";
           const cook = t.needsCooking;
+          const prepTone = PREP_TONE[t.prepKind];
           const scheduledAt =
             t.scheduled_for && t.schedule_mode !== "asap" ? new Date(t.scheduled_for) : null;
           const minsUntilDue = scheduledAt
@@ -1728,9 +1814,9 @@ function KDS() {
                   {channelLabel}
                 </span>
                 <span
-                  className={`truncate px-2 py-1 text-center text-white ${cook ? "bg-blue-600" : "bg-amber-500"}`}
+                  className={`truncate px-2 py-1 text-center ${prepTone.strip}`}
                 >
-                  {cook ? "Cook / hot" : "No cooking / cold"}
+                  {prepTone.label}
                 </span>
               </div>
               <div className="mb-1.5">
@@ -2002,7 +2088,7 @@ function KDS() {
                 </p>
               )}
               <ul
-                className={`kds-items mt-2 flex-1 space-y-1.5 rounded-lg p-2.5 text-base ${cook ? "bg-blue-50" : "bg-amber-50"}`}
+                className={`kds-items mt-2 flex-1 space-y-1.5 rounded-lg p-2.5 text-base ${prepTone.soft}`}
               >
                 {groupByCategory(t.items).map((group) => (
                   <li key={group.category ?? "uncategorised"}>
@@ -2013,7 +2099,7 @@ function KDS() {
                       {group.items.map((i) => (
                         <li key={i.id} className="flex items-start gap-2 leading-tight">
                           <span
-                            className={`mt-1.5 h-2.5 w-2.5 shrink-0 rounded-full ${i.cook ? "bg-blue-600" : "bg-amber-400"}`}
+                            className={`mt-1.5 h-2.5 w-2.5 shrink-0 rounded-full ${PREP_TONE[i.prepKind ?? "prep"].dot}`}
                           />
                           <span className="min-w-0 flex-1 font-semibold">
                             <span className="font-black text-primary">{i.qty}×</span> {i.name}
@@ -2023,9 +2109,9 @@ function KDS() {
                               </span>
                             )}
                             <span
-                              className={`ml-1 align-middle rounded px-1 py-px text-[9px] font-black ${i.cook ? "bg-blue-600 text-white" : "bg-amber-400 text-slate-900"}`}
+                              className={`ml-1 align-middle rounded px-1 py-px text-[9px] font-black ${PREP_TONE[i.prepKind ?? "prep"].strip}`}
                             >
-                              {i.cook ? "HOT" : "NO COOK"}
+                              {PREP_TONE[i.prepKind ?? "prep"].label.toUpperCase()}
                             </span>
                             {i.notes ? (
                               <em className="mt-0.5 block rounded border border-amber-300 bg-amber-100 px-1.5 py-1 text-[11px] font-black not-italic text-amber-950">
@@ -2039,30 +2125,28 @@ function KDS() {
                   </li>
                 ))}
               </ul>
-              {/* Chef self-allocation: KS / SD / SA / OT — compact, prominent, inside the card */}
-              <div className="mt-2 flex items-center gap-1.5">
+              {/* Staff are managed in Admin → Users & roles, then selected per ticket. */}
+              <label className="mt-2 grid grid-cols-[auto_minmax(0,1fr)] items-center gap-2">
                 <span className="text-[10px] font-bold uppercase tracking-wide text-muted-foreground">
-                  Prep by
+                  Prepared by
                 </span>
-                {["KS", "SD", "SA", "OT"].map((initials) => {
-                  const active = t.prepared_by === initials;
-                  return (
-                    <button
-                      key={initials}
-                      type="button"
-                      onClick={() => assignPrep(t.id, active ? "" : initials)}
-                      className={`h-9 flex-1 rounded-full text-xs font-black uppercase tracking-wide active:scale-[0.98] sm:h-8 ${
-                        active
-                          ? "bg-primary text-primary-foreground shadow-sm"
-                          : "border-2 border-slate-300 bg-white text-slate-700 hover:border-primary hover:text-primary"
-                      }`}
-                      title={active ? "Tap to clear" : `I am preparing this order (${initials})`}
-                    >
-                      {initials}
-                    </button>
-                  );
-                })}
-              </div>
+                <select
+                  value={t.prepared_by ?? ""}
+                  onChange={(event) => void assignPrep(t.id, event.target.value)}
+                  className="h-9 min-w-0 rounded-xl border-2 border-slate-300 bg-white px-2 text-xs font-bold text-slate-900 outline-none focus:border-primary"
+                  aria-label={`Select who is preparing order ${t.order_number}`}
+                >
+                  <option value="">Choose chef…</option>
+                  {kitchenStaff.map((staff) => (
+                    <option key={staff.id} value={staff.initials}>
+                      {staff.display_name} ({staff.initials})
+                    </option>
+                  ))}
+                  {t.prepared_by && !kitchenStaff.some((staff) => staff.initials === t.prepared_by) && (
+                    <option value={t.prepared_by}>{t.prepared_by}</option>
+                  )}
+                </select>
+              </label>
               <div className="mt-2 flex flex-wrap gap-1.5">
                 {t.status === "ready" && t.type === "delivery" && (
                   <p className="w-full rounded-lg bg-slate-900 px-2 py-1 text-center text-[11px] font-black uppercase tracking-widest text-white">
@@ -2072,7 +2156,7 @@ function KDS() {
                 {canCompleteOrders && t.status === "preparing" && (
                   <button
                     onClick={() => set(t.id, "ready", { undoTo: "preparing" })}
-                    className={`h-10 min-w-[7rem] flex-1 rounded-full text-xs font-bold active:scale-[0.98] sm:h-8 ${cook ? "bg-blue-600 text-white hover:bg-blue-700" : "bg-amber-400 text-amber-950 hover:bg-amber-500"}`}
+                    className={`h-10 min-w-[7rem] flex-1 rounded-full text-xs font-bold active:scale-[0.98] sm:h-8 ${prepTone.strip}`}
                   >
                     Mark ready
                   </button>
