@@ -189,6 +189,22 @@ export function validateProductionEnvironment(env, { expectedRelease } = {}) {
     warnings.push("JUSTEAT_BRIDGE_SECRET is present but JUSTEAT_INGEST_MODE is disabled");
   }
 
+  const uberEatsMode = value(env, "UBEREATS_INGEST_MODE") || "disabled";
+  if (!["disabled", "hub_watcher"].includes(uberEatsMode)) {
+    errors.push("UBEREATS_INGEST_MODE must be disabled or hub_watcher");
+  }
+  if (uberEatsMode === "hub_watcher" && value(env, "UBEREATS_BRIDGE_SECRET").length < 32) {
+    errors.push("UBEREATS_BRIDGE_SECRET must contain at least 32 characters for hub_watcher mode");
+  } else if (
+    value(env, "UBEREATS_BRIDGE_SECRET") &&
+    value(env, "UBEREATS_BRIDGE_SECRET").length < 32
+  ) {
+    errors.push("UBEREATS_BRIDGE_SECRET must contain at least 32 characters when configured");
+  }
+  if (uberEatsMode === "disabled" && value(env, "UBEREATS_BRIDGE_SECRET")) {
+    warnings.push("UBEREATS_BRIDGE_SECRET is present but UBEREATS_INGEST_MODE is disabled");
+  }
+
   if (!value(env, "SUMUP_AFFILIATE_KEY")) {
     warnings.push(
       "SUMUP_AFFILIATE_KEY is absent; confirm it is not required for the connected readers",
@@ -229,10 +245,7 @@ export function validateProductionEnvironment(env, { expectedRelease } = {}) {
   ) {
     errors.push("YOUTUBE_UPLOADS_PLAYLIST_ID is malformed");
   }
-  if (
-    youtubeChannelId &&
-    !/^UC[A-Za-z0-9_-]{20,30}$/.test(youtubeChannelId)
-  ) {
+  if (youtubeChannelId && !/^UC[A-Za-z0-9_-]{20,30}$/.test(youtubeChannelId)) {
     errors.push("YOUTUBE_CHANNEL_ID is malformed");
   }
   if (

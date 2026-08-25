@@ -18,7 +18,7 @@ have happened.
 3. Documented the Just Eat real-order-to-KDS check in the deployment sequence
    without rewriting the existing production evidence record.
 4. Extended the exact-release production smoke to both Just Eat endpoints,
-   both watcher ZIP packages, `/order-direct`, `/contact` and
+   all marketplace watcher ZIP packages, `/contact` and
    `/watcher-download`.
 5. Added the new anonymous public pages to the five-minute edge cache allowlist
    while retaining no-store controls for POS, KDS, checkout and authenticated

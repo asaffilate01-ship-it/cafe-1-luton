@@ -1,6 +1,11 @@
 import { describe, expect, it } from "vitest";
 
-import { justEatIngestEnabled, readJustEatIngestMode } from "@/lib/partner-ingest.server";
+import {
+  justEatIngestEnabled,
+  readJustEatIngestMode,
+  readUberEatsIngestMode,
+  uberEatsIngestEnabled,
+} from "@/lib/partner-ingest.server";
 
 describe("Just Eat ingest mode", () => {
   it("is fail-closed when the mode is absent or unsupported", () => {
@@ -22,5 +27,16 @@ describe("Just Eat ingest mode", () => {
     const dual = { JUSTEAT_INGEST_MODE: " DUAL " };
     expect(justEatIngestEnabled("hub_watcher", dual)).toBe(true);
     expect(justEatIngestEnabled("webhook", dual)).toBe(true);
+  });
+});
+
+describe("Uber Eats ingest mode", () => {
+  it("fails closed and only enables the Crown Court watcher mode", () => {
+    expect(readUberEatsIngestMode({})).toBe("disabled");
+    expect(readUberEatsIngestMode({ UBEREATS_INGEST_MODE: "webhook" })).toBe("disabled");
+    expect(uberEatsIngestEnabled("hub_watcher", {})).toBe(false);
+    expect(uberEatsIngestEnabled("hub_watcher", { UBEREATS_INGEST_MODE: " hub_watcher " })).toBe(
+      true,
+    );
   });
 });

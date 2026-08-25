@@ -13,7 +13,8 @@ import { useSession } from "@/hooks/use-auth";
 import { tab, useTab } from "@/lib/tab";
 import { toast } from "sonner";
 import { useStoreStatus } from "@/hooks/use-store-status";
-import { buildScheduleSlots } from "@/lib/business";
+import { buildScheduleSlots, computeStoreStatus } from "@/lib/business";
+import { orderingHoursForLocation } from "@/lib/nap";
 import { useOrderContext, describeContext } from "@/lib/order-context";
 import { OrderSetupGate } from "@/components/order-setup-gate";
 import { requiresOrderSetup } from "@/lib/menu-intent";
@@ -54,7 +55,7 @@ function Checkout() {
   const navigate = useNavigate();
   const { user, loading } = useSession();
   const tabSession = useTab();
-  const { status, settings, hours, holidays } = useStoreStatus();
+  const { status: defaultStatus, settings, hours, holidays } = useStoreStatus();
   const place = useServerFn(createOrder);
   const findVoucher = useServerFn(lookupVoucher);
   const checkArea = useServerFn(checkDeliveryPostcode);
@@ -66,9 +67,29 @@ function Checkout() {
   const [mode, setMode] = useState<Mode>(ctx?.mode ?? "collection");
   const [scheduleMode, setScheduleMode] = useState<ScheduleMode>(ctx?.schedule_mode ?? "asap");
   const [scheduledFor, setScheduledFor] = useState<string>(ctx?.scheduled_for ?? "");
+  const branchHours = useMemo(
+    () => (ctx?.location ? orderingHoursForLocation(ctx.location) : hours),
+    [ctx?.location, hours],
+  );
+  const status = useMemo(
+    () =>
+      ctx?.location
+        ? computeStoreStatus(branchHours, settings, new Date(), holidays)
+        : defaultStatus,
+    [branchHours, ctx?.location, defaultStatus, holidays, settings],
+  );
   const timeSlots = useMemo(
-    () => buildScheduleSlots({ hours, holidays, settings, mode }),
-    [hours, holidays, settings, mode],
+    () =>
+      buildScheduleSlots({
+        hours: branchHours,
+        holidays,
+        settings,
+        mode,
+        intervalMinutes: 15,
+        openOffsetMinutes: 15,
+        closeOffsetMinutes: 30,
+      }),
+    [branchHours, holidays, settings, mode],
   );
   const [promoInput, setPromoInput] = useState("");
   const [promo, setPromo] = useState<null | {
@@ -775,8 +796,8 @@ function Checkout() {
             )}
             {scheduleMode === "scheduled" && (
               <p className="mt-2 text-xs text-muted-foreground">
-                Slots follow our opening hours (Mon–Fri, closed weekends and bank holidays)
-                {mode === "delivery" ? " and the delivery window." : "."}
+                Later slots begin 15 minutes after opening and finish 30 minutes before closing.
+                Bank holidays and branch closures are excluded.
               </p>
             )}
           </div>

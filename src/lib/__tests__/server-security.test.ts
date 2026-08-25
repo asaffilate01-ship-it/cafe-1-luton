@@ -84,7 +84,6 @@ describe("production response security", () => {
       "stale-while-revalidate=86400",
     );
     expect(isPublicDocumentPath("/blog/halal-breakfast-luton")).toBe(true);
-    expect(isPublicDocumentPath("/order-direct")).toBe(true);
     expect(isPublicDocumentPath("/watcher-download")).toBe(true);
     expect(isPublicDocumentPath("/checkout")).toBe(false);
   });
@@ -93,9 +92,7 @@ describe("production response security", () => {
     const html = new Response("<main>menu</main>", {
       headers: { "content-type": "text/html", "set-cookie": "session=private" },
     });
-    expect(canCachePublicDocument(new Request("https://cafe1luton.co.uk/menu"), html)).toBe(
-      false,
-    );
+    expect(canCachePublicDocument(new Request("https://cafe1luton.co.uk/menu"), html)).toBe(false);
     expect(
       canCachePublicDocument(
         new Request("https://cafe1luton.co.uk/menu", {

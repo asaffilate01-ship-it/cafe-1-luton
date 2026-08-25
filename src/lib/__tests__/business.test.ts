@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { buildScheduleSlots, computeStoreStatus, type HourRow } from "../business";
-import { NAP } from "../nap";
+import { NAP, orderingHoursForLocation } from "../nap";
 
 const hours: HourRow[] = Array.from({ length: 7 }, (_, day) => ({
   day_of_week: day,
@@ -72,5 +72,39 @@ describe("confirmed Cafe 1 trading rules", () => {
     expect(new Date(slots[0].value).getHours()).toBe(8);
     expect(new Date(slots[0].value).getMinutes()).toBe(30);
     expect(slots.every((slot) => new Date(slot.value).getHours() < 17)).toBe(true);
+  });
+
+  it("offers Crown Court Later orders from 09:15 until 16:30", () => {
+    const slots = buildScheduleSlots({
+      hours: orderingHoursForLocation("luton-crown-court"),
+      settings: { ...settings, prep_minutes: 0 },
+      mode: "collection",
+      now: new Date(2026, 7, 24, 8, 0, 0),
+      daysAhead: 1,
+      intervalMinutes: 15,
+      openOffsetMinutes: 15,
+      closeOffsetMinutes: 30,
+    });
+    expect(new Date(slots[0]!.value).getHours()).toBe(9);
+    expect(new Date(slots[0]!.value).getMinutes()).toBe(15);
+    expect(new Date(slots.at(-1)!.value).getHours()).toBe(16);
+    expect(new Date(slots.at(-1)!.value).getMinutes()).toBe(30);
+  });
+
+  it("uses Futures House weekend hours for Later orders", () => {
+    const slots = buildScheduleSlots({
+      hours: orderingHoursForLocation("futures-house"),
+      settings: { ...settings, prep_minutes: 0 },
+      mode: "dine_in",
+      now: new Date(2026, 7, 23, 9, 0, 0),
+      daysAhead: 1,
+      intervalMinutes: 15,
+      openOffsetMinutes: 15,
+      closeOffsetMinutes: 30,
+    });
+    expect(new Date(slots[0]!.value).getHours()).toBe(10);
+    expect(new Date(slots[0]!.value).getMinutes()).toBe(15);
+    expect(new Date(slots.at(-1)!.value).getHours()).toBe(17);
+    expect(new Date(slots.at(-1)!.value).getMinutes()).toBe(30);
   });
 });

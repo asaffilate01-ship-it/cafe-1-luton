@@ -31,7 +31,7 @@ function WatcherDownload() {
             Download, extract and double-click one file per marketplace. Each installer keeps its
             watcher running in the background whenever the café PC is signed in.
           </p>
-          <div className="mt-7 flex flex-col gap-3 sm:flex-row">
+          <div className="mt-7 grid gap-3 sm:grid-cols-3">
             <a
               href="/downloads/cafe1-deliveroo-watcher-windows.zip"
               download
@@ -46,6 +46,13 @@ function WatcherDownload() {
             >
               <Download className="h-5 w-5" /> Just Eat setup
             </a>
+            <a
+              href="/downloads/cafe1-ubereats-watcher-windows.zip"
+              download
+              className="inline-flex h-14 items-center justify-center gap-2 rounded-2xl border border-white/15 bg-white/10 px-4 font-black text-white transition hover:bg-white/15 active:scale-[0.99]"
+            >
+              <Download className="h-5 w-5" /> Uber Eats setup
+            </a>
           </div>
         </div>
 
@@ -53,12 +60,12 @@ function WatcherDownload() {
           <Feature
             icon={CheckCircle2}
             title="One guided setup"
-            text="Run each START-CAFE1 file, sign into Deliveroo Hub or Just Eat Partner Centre once and wait for Connected."
+            text="Run each START-CAFE1 file on the Crown Court PC, sign into its marketplace once and wait for Connected."
           />
           <Feature
             icon={ShieldCheck}
             title="No saved password"
-            text="Café 1 never reads or stores the Deliveroo or Just Eat username or password."
+            text="Café 1 never reads or stores a Deliveroo, Just Eat or Uber Eats password."
           />
           <Feature
             icon={MonitorCheck}
@@ -75,7 +82,8 @@ function WatcherDownload() {
         <div className="border-t border-white/10 bg-white/[0.03] p-6 text-sm leading-relaxed text-white/55 sm:px-8">
           The installer may copy one Café 1 bridge setting to the clipboard. That key authenticates
           this PC to the website; it is not supplied by Deliveroo and is never committed to GitHub.
-          Keep the Deliveroo tablet working normally during setup and acceptance testing.
+          Keep all marketplace tablets working normally during setup and acceptance testing. These
+          watchers are for the Luton Crown Court branch only.
         </div>
       </section>
     </main>

@@ -12,7 +12,6 @@ const PUBLIC_DOCUMENTS = new Set([
   "/jury-menu",
   "/lunch-luton",
   "/menu",
-  "/order-direct",
   "/privacy",
   "/socials",
   "/terms",

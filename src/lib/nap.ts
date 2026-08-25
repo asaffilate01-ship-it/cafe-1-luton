@@ -59,6 +59,32 @@ export const LOCATIONS = [
 
 export type CafeLocationId = (typeof LOCATIONS)[number]["id"];
 
+const WEEKDAYS = [
+  "Sunday",
+  "Monday",
+  "Tuesday",
+  "Wednesday",
+  "Thursday",
+  "Friday",
+  "Saturday",
+] as const;
+
+/** Browser-safe branch hours for ordering and live open/closed calculations. */
+export function orderingHoursForLocation(id: CafeLocationId) {
+  const location = locationById(id);
+  return WEEKDAYS.map((day, day_of_week) => {
+    const period = location.openingHours.find((entry) =>
+      (entry.days as readonly string[]).includes(day),
+    );
+    return {
+      day_of_week,
+      open_time: period?.opens ?? "00:00",
+      close_time: period?.closes ?? "00:00",
+      closed: !period,
+    };
+  });
+}
+
 // Backwards-compatible primary NAP used by existing components.
 export const NAP = {
   ...LOCATIONS[0],

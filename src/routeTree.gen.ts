@@ -87,6 +87,7 @@ import { Route as ApiPublicDeliverooWebhookRouteImport } from './routes/api/publ
 import { Route as ApiPublicJusteatHubIngestRouteImport } from './routes/api/public/justeat/hub-ingest'
 import { Route as ApiPublicJusteatWebhookRouteImport } from './routes/api/public/justeat/webhook'
 import { Route as ApiPublicLandlordReportRouteImport } from './routes/api/public/landlord/report'
+import { Route as ApiPublicUbereatsHubIngestRouteImport } from './routes/api/public/ubereats/hub-ingest'
 import { Route as LovableEmailAuthPreviewRouteImport } from './routes/lovable/email/auth/preview'
 import { Route as LovableEmailAuthWebhookRouteImport } from './routes/lovable/email/auth/webhook'
 
@@ -485,6 +486,12 @@ const ApiPublicLandlordReportRoute = ApiPublicLandlordReportRouteImport.update({
   path: '/api/public/landlord/report',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicUbereatsHubIngestRoute =
+  ApiPublicUbereatsHubIngestRouteImport.update({
+    id: '/api/public/ubereats/hub-ingest',
+    path: '/api/public/ubereats/hub-ingest',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const LovableEmailAuthPreviewRoute = LovableEmailAuthPreviewRouteImport.update({
   id: '/lovable/email/auth/preview',
   path: '/lovable/email/auth/preview',
@@ -575,6 +582,7 @@ export interface FileRoutesByFullPath {
   '/api/public/justeat/hub-ingest': typeof ApiPublicJusteatHubIngestRoute
   '/api/public/justeat/webhook': typeof ApiPublicJusteatWebhookRoute
   '/api/public/landlord/report': typeof ApiPublicLandlordReportRoute
+  '/api/public/ubereats/hub-ingest': typeof ApiPublicUbereatsHubIngestRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
   '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
 }
@@ -657,6 +665,7 @@ export interface FileRoutesByTo {
   '/api/public/justeat/hub-ingest': typeof ApiPublicJusteatHubIngestRoute
   '/api/public/justeat/webhook': typeof ApiPublicJusteatWebhookRoute
   '/api/public/landlord/report': typeof ApiPublicLandlordReportRoute
+  '/api/public/ubereats/hub-ingest': typeof ApiPublicUbereatsHubIngestRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
   '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
 }
@@ -740,6 +749,7 @@ export interface FileRoutesById {
   '/api/public/justeat/hub-ingest': typeof ApiPublicJusteatHubIngestRoute
   '/api/public/justeat/webhook': typeof ApiPublicJusteatWebhookRoute
   '/api/public/landlord/report': typeof ApiPublicLandlordReportRoute
+  '/api/public/ubereats/hub-ingest': typeof ApiPublicUbereatsHubIngestRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
   '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
 }
@@ -824,6 +834,7 @@ export interface FileRouteTypes {
     | '/api/public/justeat/hub-ingest'
     | '/api/public/justeat/webhook'
     | '/api/public/landlord/report'
+    | '/api/public/ubereats/hub-ingest'
     | '/lovable/email/auth/preview'
     | '/lovable/email/auth/webhook'
   fileRoutesByTo: FileRoutesByTo
@@ -906,6 +917,7 @@ export interface FileRouteTypes {
     | '/api/public/justeat/hub-ingest'
     | '/api/public/justeat/webhook'
     | '/api/public/landlord/report'
+    | '/api/public/ubereats/hub-ingest'
     | '/lovable/email/auth/preview'
     | '/lovable/email/auth/webhook'
   id:
@@ -988,6 +1000,7 @@ export interface FileRouteTypes {
     | '/api/public/justeat/hub-ingest'
     | '/api/public/justeat/webhook'
     | '/api/public/landlord/report'
+    | '/api/public/ubereats/hub-ingest'
     | '/lovable/email/auth/preview'
     | '/lovable/email/auth/webhook'
   fileRoutesById: FileRoutesById
@@ -1071,6 +1084,7 @@ export interface RootRouteChildren {
   ApiPublicJusteatHubIngestRoute: typeof ApiPublicJusteatHubIngestRoute
   ApiPublicJusteatWebhookRoute: typeof ApiPublicJusteatWebhookRoute
   ApiPublicLandlordReportRoute: typeof ApiPublicLandlordReportRoute
+  ApiPublicUbereatsHubIngestRoute: typeof ApiPublicUbereatsHubIngestRoute
   LovableEmailAuthPreviewRoute: typeof LovableEmailAuthPreviewRoute
   LovableEmailAuthWebhookRoute: typeof LovableEmailAuthWebhookRoute
 }
@@ -1623,6 +1637,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicLandlordReportRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/ubereats/hub-ingest': {
+      id: '/api/public/ubereats/hub-ingest'
+      path: '/api/public/ubereats/hub-ingest'
+      fullPath: '/api/public/ubereats/hub-ingest'
+      preLoaderRoute: typeof ApiPublicUbereatsHubIngestRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/lovable/email/auth/preview': {
       id: '/lovable/email/auth/preview'
       path: '/lovable/email/auth/preview'
@@ -1719,6 +1740,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicJusteatHubIngestRoute: ApiPublicJusteatHubIngestRoute,
   ApiPublicJusteatWebhookRoute: ApiPublicJusteatWebhookRoute,
   ApiPublicLandlordReportRoute: ApiPublicLandlordReportRoute,
+  ApiPublicUbereatsHubIngestRoute: ApiPublicUbereatsHubIngestRoute,
   LovableEmailAuthPreviewRoute: LovableEmailAuthPreviewRoute,
   LovableEmailAuthWebhookRoute: LovableEmailAuthWebhookRoute,
 }

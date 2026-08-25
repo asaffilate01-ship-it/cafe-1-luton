@@ -53,7 +53,6 @@ export function SiteHeader() {
   const links: { to: string; label: string; exact?: boolean }[] = [
     { to: "/", label: "Home", exact: true },
     { to: "/menu", label: "Menu" },
-    { to: "/order-direct", label: "Why order direct" },
     { to: "/blog", label: "Blog" },
     { to: "/socials", label: "Socials" },
     { to: "/about", label: "About" },
@@ -88,13 +87,6 @@ export function SiteHeader() {
             className="hover:text-primary"
           >
             Menu
-          </Link>
-          <Link
-            to="/order-direct"
-            activeProps={{ className: "text-primary" }}
-            className="hover:text-primary"
-          >
-            Why order direct
           </Link>
           <Link
             to="/blog"
@@ -289,9 +281,6 @@ export function SiteFooter() {
           </a>
           <Link to="/menu" className="hover:text-primary">
             Menu
-          </Link>
-          <Link to="/order-direct" className="hover:text-primary">
-            Why order direct
           </Link>
           <Link to="/blog" className="hover:text-primary">
             Blog

@@ -78,7 +78,8 @@ function LocationsPage() {
           <p className="mt-2 max-w-3xl rounded-xl border border-border bg-card px-4 py-3 text-sm text-muted-foreground">
             Use site code <strong className="text-foreground">FUTURES_HOUSE</strong> and postcode
             <strong className="text-foreground"> LU3 3QB</strong> for Futures House. That site gets
-            the simplified till; Crown Court keeps the Judges, Jury side, Public side and tabs.
+            the simplified till. Crown Court keeps the Judges, Jury side, Public side, tabs and the
+            Deliveroo, Just Eat and Uber Eats watchers.
           </p>
         </div>
         <div className="mt-6 grid gap-6 lg:grid-cols-[minmax(0,1fr)_400px]">
@@ -194,8 +195,8 @@ function LocationsPage() {
                 Deliveroo/Uber/Just Eat enabled
               </label>
               <p className="text-xs text-muted-foreground">
-                Keep marketplace delivery disabled for Crown Court and Futures House under the
-                current operating model.
+                Enable marketplace delivery for Luton Crown Court only. Keep it disabled for Futures
+                House. Website orders remain dine-in or takeaway at both branches.
               </p>
             </div>
             <button

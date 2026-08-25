@@ -354,6 +354,9 @@ function KdsPage() {
 
 function KDS() {
   const sites = useSites();
+  const courtFeatures =
+    sites.site?.code.toUpperCase() === "LUTON_CROWN_COURT" ||
+    sites.site?.postcode?.toUpperCase() === "LU1 2AA";
   const [tickets, setTickets] = useState<Ticket[]>([]);
   // Ids currently shown on the board — used to announce cancellations/refunds.
   const liveIds = useRef<Set<string>>(new Set());
@@ -892,6 +895,8 @@ function KDS() {
   // prove tickets are still arriving.
   const [justEatLive, setJustEatLive] = useState<boolean | null>(null);
   const [justEatSeenAt, setJustEatSeenAt] = useState<number | null>(null);
+  const [uberEatsLive, setUberEatsLive] = useState<boolean | null>(null);
+  const [uberEatsSeenAt, setUberEatsSeenAt] = useState<number | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -899,7 +904,13 @@ function KDS() {
       const { data } = await supabase
         .from("integration_status")
         .select("key, last_seen_at, healthy")
-        .in("key", ["deliveroo_orders_api", "deliveroo_hub", "just_eat_hub", "just_eat_orders"])
+        .in("key", [
+          "deliveroo_orders_api",
+          "deliveroo_hub",
+          "just_eat_hub",
+          "just_eat_orders",
+          "uber_eats_hub",
+        ])
         .order("last_seen_at", { ascending: false });
       if (cancelled) return;
       const api = data?.find((row) => row.key === "deliveroo_orders_api");
@@ -912,6 +923,12 @@ function KDS() {
       setJustEatSeenAt(justEatSeen || null);
       setJustEatLive(
         justEat ? Boolean(justEat.healthy) && justEatSeen > Date.now() - 180_000 : false,
+      );
+      const uberEats = data?.find((row) => row.key === "uber_eats_hub") ?? null;
+      const uberEatsSeen = uberEats?.last_seen_at ? new Date(uberEats.last_seen_at).getTime() : 0;
+      setUberEatsSeenAt(uberEatsSeen || null);
+      setUberEatsLive(
+        uberEats ? Boolean(uberEats.healthy) && uberEatsSeen > Date.now() - 180_000 : false,
       );
       const selected = api ?? hub ?? null;
       const seen = selected?.last_seen_at ? new Date(selected.last_seen_at).getTime() : 0;
@@ -1127,7 +1144,7 @@ function KDS() {
         open={manualOpen}
         onClose={() => setManualOpen(false)}
         siteId={sites.siteId}
-        courtFeatures={sites.site?.postcode?.toUpperCase() !== "LU3 3QB"}
+        courtFeatures={courtFeatures}
       />
       <EditOrderDialog
         order={(() => {
@@ -1258,52 +1275,77 @@ function KDS() {
                 {linkDown ? "Offline" : "Online"}
               </span>
               <div className="kds-desktop-controls hidden flex-wrap items-center justify-end gap-2 lg:flex">
-                <span
-                  className={`flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-bold ${
-                    deliverooLive
-                      ? "bg-[#00CCBC] text-black"
-                      : "bg-primary-foreground/15 text-primary-foreground"
-                  }`}
-                  title={
-                    deliverooLive
-                      ? deliverooConnection === "orders_api"
-                        ? "Official Deliveroo Orders API is sending accepted orders directly to this KDS"
-                        : "Deliveroo orders are arriving through the shop Hub watcher"
-                      : deliverooSeenAt
-                        ? `The Deliveroo link last checked in ${Math.round((Date.now() - deliverooSeenAt) / 60000)} min ago. Key tickets in manually until it is restored.`
-                        : "No Deliveroo connection has completed a verified check-in yet."
-                  }
-                >
-                  <Bike className="h-3.5 w-3.5" />
-                  {deliverooLive === null
-                    ? "Deliveroo…"
-                    : deliverooLive
-                      ? deliverooConnection === "orders_api"
-                        ? "Deliveroo API"
-                        : "Deliveroo auto"
-                      : "Deliveroo offline"}
-                </span>
-                <span
-                  className={`flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-bold ${
-                    justEatLive
-                      ? "bg-[#FF8000] text-black"
-                      : "bg-primary-foreground/15 text-primary-foreground"
-                  }`}
-                  title={
-                    justEatLive
-                      ? "Just Eat orders are arriving through the shop Partner Centre watcher"
-                      : justEatSeenAt
-                        ? `The Just Eat watcher last checked in ${Math.round((Date.now() - justEatSeenAt) / 60000)} min ago. Key tickets in manually until it is restored.`
-                        : "No verified Just Eat check-in — key those tickets in by hand"
-                  }
-                >
-                  <Bike className="h-3.5 w-3.5" />
-                  {justEatLive === null
-                    ? "Just Eat…"
-                    : justEatLive
-                      ? "Just Eat auto"
-                      : "Just Eat offline"}
-                </span>
+                {courtFeatures && (
+                  <>
+                    <span
+                      className={`flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-bold ${
+                        deliverooLive
+                          ? "bg-[#00CCBC] text-black"
+                          : "bg-primary-foreground/15 text-primary-foreground"
+                      }`}
+                      title={
+                        deliverooLive
+                          ? deliverooConnection === "orders_api"
+                            ? "Official Deliveroo Orders API is sending accepted orders directly to this KDS"
+                            : "Deliveroo orders are arriving through the shop Hub watcher"
+                          : deliverooSeenAt
+                            ? `The Deliveroo link last checked in ${Math.round((Date.now() - deliverooSeenAt) / 60000)} min ago. Key tickets in manually until it is restored.`
+                            : "No Deliveroo connection has completed a verified check-in yet."
+                      }
+                    >
+                      <Bike className="h-3.5 w-3.5" />
+                      {deliverooLive === null
+                        ? "Deliveroo…"
+                        : deliverooLive
+                          ? deliverooConnection === "orders_api"
+                            ? "Deliveroo API"
+                            : "Deliveroo auto"
+                          : "Deliveroo offline"}
+                    </span>
+                    <span
+                      className={`flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-bold ${
+                        justEatLive
+                          ? "bg-[#FF8000] text-black"
+                          : "bg-primary-foreground/15 text-primary-foreground"
+                      }`}
+                      title={
+                        justEatLive
+                          ? "Just Eat orders are arriving through the shop Partner Centre watcher"
+                          : justEatSeenAt
+                            ? `The Just Eat watcher last checked in ${Math.round((Date.now() - justEatSeenAt) / 60000)} min ago. Key tickets in manually until it is restored.`
+                            : "No verified Just Eat check-in — key those tickets in by hand"
+                      }
+                    >
+                      <Bike className="h-3.5 w-3.5" />
+                      {justEatLive === null
+                        ? "Just Eat…"
+                        : justEatLive
+                          ? "Just Eat auto"
+                          : "Just Eat offline"}
+                    </span>
+                    <span
+                      className={`flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-bold ${
+                        uberEatsLive
+                          ? "bg-black text-white"
+                          : "bg-primary-foreground/15 text-primary-foreground"
+                      }`}
+                      title={
+                        uberEatsLive
+                          ? "Uber Eats orders are arriving through the Crown Court watcher"
+                          : uberEatsSeenAt
+                            ? `The Uber Eats watcher last checked in ${Math.round((Date.now() - uberEatsSeenAt) / 60000)} min ago. Key tickets in manually until it is restored.`
+                            : "No verified Uber Eats check-in — key those tickets in by hand"
+                      }
+                    >
+                      <Bike className="h-3.5 w-3.5" />
+                      {uberEatsLive === null
+                        ? "Uber Eats…"
+                        : uberEatsLive
+                          ? "Uber Eats auto"
+                          : "Uber Eats offline"}
+                    </span>
+                  </>
+                )}
                 <SyncPill lastSync={lastSync} ok={syncOk} now={now} />
                 <AlertsToggle />
                 <WakeToggle />

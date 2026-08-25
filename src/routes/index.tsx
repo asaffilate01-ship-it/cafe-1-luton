@@ -180,26 +180,26 @@ function Home() {
         <div className="card-3d mb-16 grid gap-6 p-8 sm:p-10 lg:grid-cols-[1.2fr_1fr] lg:items-center">
           <div>
             <p className="text-sm font-semibold uppercase tracking-[0.18em] text-primary">
-              Order direct
+              Order ahead
             </p>
             <h2 className="mt-2 font-display text-3xl font-bold sm:text-4xl">
-              Same food, café prices, no app fees.
+              Choose your branch and collection time.
             </h2>
             <p className="mt-3 max-w-xl text-muted-foreground">
-              Ordering here means counter pricing, loyalty points on every order and support that
-              goes straight to your chosen café — without third-party app fees.
+              Select Luton Crown Court or Futures House, then choose dine-in or takeaway and an ASAP
+              or Later collection time.
             </p>
             <Link
-              to="/order-direct"
+              to="/menu"
               className="mt-6 inline-flex h-11 items-center gap-2 rounded-full bg-primary px-6 font-semibold text-primary-foreground shadow-brand transition hover:bg-primary-hover"
             >
-              See why it's better <ArrowRight className="h-4 w-4" />
+              Start an order <ArrowRight className="h-4 w-4" />
             </Link>
           </div>
           <ul className="grid gap-3 text-sm">
             {[
               "No third-party service fees",
-              "Loyalty points on every direct order",
+              "Loyalty points on eligible website orders",
               "Choose your Luton branch first",
               "Tabs and weekly statements for offices",
             ].map((point) => (

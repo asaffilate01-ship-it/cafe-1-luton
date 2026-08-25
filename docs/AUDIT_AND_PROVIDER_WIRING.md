@@ -25,7 +25,7 @@
 | 5 | Apple Pay | Domain association file is served; verify domain in the SumUp/Apple merchant console for both apex and www. |
 | 6 | Web push | VAPID keys set. Test "order ready" push on iOS (must be installed to Home Screen) and Android Chrome. |
 | 7 | Email (Resend) | `RESEND_API_KEY` set. Verify sending domain SPF/DKIM/DMARC for cafe1luton.co.uk so receipts don't land in spam. |
-| 8 | Deliveroo / Just Eat watchers | Install both zips from /watcher-download on the shop PC, sign in once, place a test order each, confirm KDS colour coding (Deliveroo green, Just Eat via hub ingest). |
+| 8 | Crown Court marketplace watchers | Install the Deliveroo, Just Eat and Uber Eats ZIPs from `/watcher-download` on the Crown Court PC, sign in once to each marketplace, place a test order on each and confirm that all tickets reach only the Crown Court KDS. |
 | 9 | Cron | `CRON_SECRET` set; confirm scheduled jobs (nightly juror audit, weekly house-account billing, report rollups) ran in the last 24h from /admin/reports. |
 | 10 | Printing | Two tickets per job (KITCHEN + COUNTER) — run a live print from /kds on the iMin and confirm cut/feed. |
 

@@ -39,7 +39,6 @@ export const PRODUCTION_CHECKS = [
   { path: "/blog", statuses: [200], contentType: /text\/html/i },
   { path: "/about", statuses: [200], contentType: /text\/html/i },
   { path: "/contact", statuses: [200], contentType: /text\/html/i },
-  { path: "/order-direct", statuses: [200], contentType: /text\/html/i },
   { path: "/socials", statuses: [200], contentType: /text\/html/i },
   { path: "/watcher-download", statuses: [200], contentType: /text\/html/i },
   { path: "/privacy", statuses: [200], contentType: /text\/html/i },
@@ -164,6 +163,13 @@ export const PRODUCTION_CHECKS = [
     browserDocument: false,
   },
   {
+    path: "/api/public/ubereats/hub-ingest",
+    statuses: [401, 503],
+    method: "POST",
+    protectedRoute: true,
+    browserDocument: false,
+  },
+  {
     path: "/downloads/cafe1-justeat-watcher-windows.zip",
     statuses: [200],
     contentType: /application\/zip/i,
@@ -171,6 +177,12 @@ export const PRODUCTION_CHECKS = [
   },
   {
     path: "/downloads/cafe1-deliveroo-watcher-windows.zip",
+    statuses: [200],
+    contentType: /application\/zip/i,
+    browserDocument: false,
+  },
+  {
+    path: "/downloads/cafe1-ubereats-watcher-windows.zip",
     statuses: [200],
     contentType: /application\/zip/i,
     browserDocument: false,
