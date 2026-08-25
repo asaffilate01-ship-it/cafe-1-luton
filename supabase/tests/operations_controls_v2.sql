@@ -38,9 +38,9 @@ select has_function('public', 'cafe1_create_juror_challenge', 'juror challenge R
 select has_function('public', 'cafe1_consume_juror_challenge', 'juror verification RPC exists');
 
 select is(
-  (select postcode from public.sites where code = 'STALBANS'),
-  'AL1 3JU',
-  'confirmed St Albans postcode is applied'
+  (select postcode from public.sites where code = 'LUTON'),
+  'LU1 2AA',
+  'confirmed Luton postcode is applied'
 );
 select ok(
   not has_column_privilege('anon', 'public.menu_items', 'cost_cents', 'SELECT'),

@@ -5,7 +5,7 @@ import { openCookieSettings, useConsent } from "@/lib/cookie-consent";
 export const Route = createFileRoute("/cookies")({
   head: () => ({
     meta: [
-      { title: "Cookie Policy — Café 1 St Albans" },
+      { title: "Cookie Policy — Café 1 Luton" },
       {
         name: "description",
         content:
@@ -17,10 +17,10 @@ export const Route = createFileRoute("/cookies")({
         content: "Which cookies Café 1 uses and how to change your preferences.",
       },
       { property: "og:type", content: "article" },
-      { property: "og:url", content: "https://cafe1stalbans.co.uk/cookies" },
+      { property: "og:url", content: "https://cafe1luton.co.uk/cookies" },
       { name: "twitter:card", content: "summary" },
     ],
-    links: [{ rel: "canonical", href: "https://cafe1stalbans.co.uk/cookies" }],
+    links: [{ rel: "canonical", href: "https://cafe1luton.co.uk/cookies" }],
   }),
   component: CookiePolicy,
 });
@@ -146,7 +146,7 @@ function CookiePolicy() {
         </p>
       </Section>
       <Section heading="Policy details">
-        <p>Last updated: 9 August 2026. Contact info@cafe1stalbans.co.uk with questions.</p>
+        <p>Last updated: 9 August 2026. Contact info@cafe1luton.co.uk with questions.</p>
       </Section>
     </LegalPage>
   );

@@ -1,0 +1,1 @@
+REVOKE ALL ON FUNCTION public.cafe1_post_order_inventory() FROM PUBLIC, anon, authenticated;

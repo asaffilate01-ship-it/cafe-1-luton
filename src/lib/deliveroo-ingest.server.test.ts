@@ -22,7 +22,7 @@ describe("Deliveroo watcher authentication", () => {
   });
 
   it("reads the dedicated header before the bearer fallback", () => {
-    const request = new Request("https://cafe1stalbans.co.uk", {
+    const request = new Request("https://cafe1luton.co.uk", {
       headers: {
         "x-bridge-secret": "device-key",
         authorization: "Bearer old-key",

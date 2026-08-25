@@ -3,7 +3,7 @@
  * confirmed. Idempotent: orders.receipt_sent_at is claimed before sending, so
  * webhook retries and the reconciliation poller can never double-send.
  */
-const FROM = "CAFE 1 ST ALBANS <no-reply@cafe1stalbans.co.uk>";
+const FROM = "CAFE 1 LUTON <no-reply@cafe1luton.co.uk>";
 const RESEND_GATEWAY = "https://connector-gateway.lovable.dev/resend";
 
 const money = (c: number) => `£${(c / 100).toFixed(2)}`;
@@ -69,7 +69,7 @@ export async function sendOrderReceipt(orderId: string): Promise<boolean> {
   const line = (label: string, value: string) =>
     `<tr><td style="padding:4px 0">${label}</td><td align="right" style="padding:4px 0">${value}</td></tr>`;
 
-  const appUrl = process.env.PUBLIC_APP_URL ?? "https://cafe1stalbans.co.uk";
+  const appUrl = process.env.PUBLIC_APP_URL ?? "https://cafe1luton.co.uk";
   const when =
     order.schedule_mode === "scheduled" && order.scheduled_for
       ? new Date(order.scheduled_for).toLocaleString("en-GB", { timeZone: "Europe/London" })
@@ -95,7 +95,7 @@ export async function sendOrderReceipt(orderId: string): Promise<boolean> {
           <a href="${appUrl}/order/${order.id}" style="display:inline-block;background:#c8102e;color:#fff;text-decoration:none;padding:10px 18px;border-radius:999px;font-size:14px">Track this order</a>
         </p>
         <p style="color:#888;font-size:12px;margin-top:20px">
-          Café 1, St Albans AL1 3JU · Questions? Reply to this email.
+          Café 1, Luton LU1 2AA · Questions? Reply to this email.
         </p>
       </div>
     </div>`;
@@ -111,7 +111,7 @@ export async function sendOrderReceipt(orderId: string): Promise<boolean> {
       body: JSON.stringify({
         from: FROM,
         to: [order.customer_email],
-        reply_to: "info@cafe1stalbans.co.uk",
+        reply_to: "info@cafe1luton.co.uk",
         subject: `Café 1 receipt — order #${order.order_number} (${money(order.total_cents)})`,
         html,
       }),

@@ -37,11 +37,7 @@ import {
   setDeviceBridgeConfig,
 } from "@/lib/device-bridge";
 import { lookupVoucher } from "@/lib/vouchers.functions";
-import {
-  getAccountStatement,
-  listAccounts,
-  quickAddAccount,
-} from "@/lib/accounts.functions";
+import { getAccountStatement, listAccounts, quickAddAccount } from "@/lib/accounts.functions";
 import { chargeOrderToAccount, findSimilarAccountOrder } from "@/lib/judge-tab.functions";
 import { QrCode } from "@/components/qr-code";
 import {
@@ -61,6 +57,7 @@ import {
 } from "@/hooks/use-customer-display-relay";
 import { usePosDeviceStatus } from "@/hooks/use-pos-device-status";
 import { useTillFavourites } from "@/hooks/use-till-favourites";
+import { useSites } from "@/hooks/use-sites";
 import { toast } from "sonner";
 import { getStaffMenuItems } from "@/lib/menu-operations.functions";
 import {
@@ -114,17 +111,17 @@ import {
 export const Route = createFileRoute("/till")({
   head: () => ({
     meta: [
-      { title: "Till — Cafe 1 St Albans" },
+      { title: "Till — Cafe 1 Luton" },
       {
         name: "description",
         content:
-          "Counter till for Cafe 1 at St Albans Crown Court: ring up cash and card sales, take payment on the SumUp Solo and open the cash drawer.",
+          "Counter till for Cafe 1 at Luton Crown Court: ring up cash and card sales, take payment on the SumUp Solo and open the cash drawer.",
       },
       { name: "robots", content: "noindex" },
-      { property: "og:title", content: "Till — Cafe 1 St Albans" },
+      { property: "og:title", content: "Till — Cafe 1 Luton" },
       {
         property: "og:description",
-        content: "Staff-only counter till for Cafe 1 at St Albans Crown Court.",
+        content: "Staff-only counter till for Cafe 1 at Luton Crown Court.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
@@ -170,9 +167,11 @@ type DraftBasket = {
   table: string;
 };
 type Side = "jury" | "judge" | "public";
+type TillTerminal = Side | "futures_public";
 type Fulfilment = "dine_in" | "collection";
 type TillShift = {
   id: string;
+  site_id: string;
   terminal: string;
   staff_id: string;
   opening_float_cents: number;
@@ -217,7 +216,7 @@ type CounterBasketInput = {
   customer_name: string;
   type: Fulfilment;
   table_number?: string;
-  pos_terminal: Side;
+  pos_terminal: TillTerminal;
   voucher_code?: string;
   voucher_pin?: string;
   items: Array<{
@@ -246,6 +245,12 @@ const FULFIL_CHOICES: { id: FulfilChoice; label: string; Icon: typeof ShoppingBa
   { id: "collection", label: "Takeaway", Icon: ShoppingBag },
   { id: "judges_room", label: "Judges room", Icon: Scale },
 ];
+
+function isFuturesHouse(site: { code: string; postcode: string | null } | null): boolean {
+  return (
+    site?.code.toUpperCase() === "FUTURES_HOUSE" || site?.postcode?.toUpperCase() === "LU3 3QB"
+  );
+}
 
 function loadDraftBasket(): DraftBasket {
   const empty: DraftBasket = { lines: [], name: "", type: "dine_in", table: "" };
@@ -380,6 +385,7 @@ function TillLogin() {
 function Till() {
   const { user } = useSession();
   const { has } = useRoles(user);
+  const sites = useSites();
   const create = useServerFn(createCounterOrder);
   const readersFn = useServerFn(listPairedReaders);
   const getShift = useServerFn(getTillShift);
@@ -408,6 +414,11 @@ function Till() {
     if (typeof window === "undefined") return "public";
     return (window.localStorage.getItem("cafe1-pos-side") as Side) || "public";
   });
+  const futuresHouse = isFuturesHouse(sites.site);
+  const terminal: TillTerminal = futuresHouse ? "futures_public" : side;
+  const availableFulfilChoices = futuresHouse
+    ? FULFIL_CHOICES.filter((choice) => choice.id !== "judges_room")
+    : FULFIL_CHOICES;
   const [readers, setReaders] = useState<{ id: string; name: string; status: string }[]>([]);
   const [readerError, setReaderError] = useState<string | null>(null);
   const [readerId, setReaderId] = useState<string>(() =>
@@ -456,6 +467,7 @@ function Till() {
   const searchRef = useRef<HTMLInputElement | null>(null);
   const gridRef = useRef<HTMLDivElement | null>(null);
   const basketRef = useRef<HTMLUListElement | null>(null);
+  const lastSiteId = useRef(sites.siteId);
   const [flashKey, setFlashKey] = useState<string | null>(null);
   const [noteKey, setNoteKey] = useState<string | null>(null);
   const selectedReader = readers.find((reader) => reader.id === readerId);
@@ -466,6 +478,18 @@ function Till() {
   useEffect(() => {
     window.localStorage.setItem("cafe1-pos-side", side);
   }, [side]);
+  useEffect(() => {
+    if (futuresHouse && side !== "public") setSide("public");
+    if (lastSiteId.current === sites.siteId) return;
+    lastSiteId.current = sites.siteId;
+    setLines([]);
+    setVoucher(null);
+    setManualDiscount(null);
+    setLaterTime("");
+    setPay(null);
+    setShift(null);
+    toast.message(`Till switched to ${sites.site?.name ?? "the selected branch"}`);
+  }, [futuresHouse, side, sites.site, sites.siteId]);
   useEffect(() => {
     if (readerId) window.localStorage.setItem("cafe1-till-reader", readerId);
   }, [readerId]);
@@ -497,8 +521,9 @@ function Till() {
           .from("menu_categories")
           .select("id, name, sort_order")
           .eq("active", true)
+          .eq("site_id", sites.siteId)
           .order("sort_order"),
-        getMenuItems(),
+        getMenuItems({ data: { site_id: sites.siteId } }),
         supabase
           .from("menu_modifiers")
           .select(
@@ -521,7 +546,7 @@ function Till() {
     void loadMenu();
 
     const channel = supabase
-      .channel("till-live-menu")
+      .channel(`till-live-menu-${sites.siteId}`)
       .on("postgres_changes", { event: "*", schema: "public", table: "menu_categories" }, loadMenu)
       .on("postgres_changes", { event: "*", schema: "public", table: "menu_modifiers" }, loadMenu)
       .subscribe();
@@ -531,19 +556,19 @@ function Till() {
       window.clearInterval(interval);
       void supabase.removeChannel(channel);
     };
-  }, [getMenuItems]);
+  }, [getMenuItems, sites.siteId]);
 
   const loadShift = useCallback(async () => {
     setShiftLoading(true);
     try {
-      setShift((await getShift({ data: { terminal: side } })) as TillShift | null);
+      setShift((await getShift({ data: { terminal, site_id: sites.siteId } })) as TillShift | null);
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Could not load the till shift");
       setShift(null);
     } finally {
       setShiftLoading(false);
     }
-  }, [getShift, side]);
+  }, [getShift, sites.siteId, terminal]);
   useEffect(() => {
     void loadShift();
   }, [loadShift]);
@@ -591,7 +616,6 @@ function Till() {
     }
     return items.filter((i) => i.category_id === catId).sort(byName);
   }, [items, catId, q, favourites.ids]);
-
 
   function addBarcode(value: string) {
     const barcode = value.trim().toLowerCase();
@@ -821,14 +845,14 @@ function Till() {
             ? ` · FOR ${new Date(laterIso).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}`
             : ""
         }`,
-        terminal: SIDE_LABEL[side],
+        terminal: futuresHouse ? "Futures House" : SIDE_LABEL[side],
         lines: lines.map((line) => ({
           name: [line.name, ...line.modifier_names].join(" · "),
           qty: line.qty,
           price_cents: heading === "COUNTER" ? line.price_cents : undefined,
         })),
         total_cents: heading === "COUNTER" ? res.total_cents : undefined,
-        footer: heading === "COUNTER" ? "Thank you — cafe1stalbans.co.uk" : undefined,
+        footer: heading === "COUNTER" ? "Thank you — cafe1luton.co.uk" : undefined,
       }));
       let printed = iminPrintTickets(tickets);
       if (!printed) {
@@ -857,7 +881,7 @@ function Till() {
       setManualDiscount(null);
       setSplitCash(0);
     },
-    [lines, side, type, laterTime, scheduleOrder],
+    [futuresHouse, lines, side, type, laterTime, scheduleOrder],
   );
 
   const finish = useCallback(
@@ -875,7 +899,7 @@ function Till() {
             table_number: table.trim() || undefined,
             payment_method,
             manual_card_reference: manualCardReference,
-            pos_terminal: side,
+            pos_terminal: terminal,
             voucher_code: voucher?.code,
             voucher_pin: voucher?.pin,
             ...manualDiscountArgs,
@@ -894,7 +918,19 @@ function Till() {
         setBusy(false);
       }
     },
-    [completeSale, create, lines, manualDiscountArgs, name, online, shift, side, table, type, voucher],
+    [
+      completeSale,
+      create,
+      lines,
+      manualDiscountArgs,
+      name,
+      online,
+      shift,
+      table,
+      terminal,
+      type,
+      voucher,
+    ],
   );
 
   /**
@@ -938,7 +974,7 @@ function Till() {
             customer_name: account.name,
             type,
             table_number: table.trim() || undefined,
-            pos_terminal: side,
+            pos_terminal: terminal,
             voucher_code: voucher?.code,
             voucher_pin: voucher?.pin,
             ...manualDiscountArgs,
@@ -969,8 +1005,8 @@ function Till() {
       online,
       prepareOrder,
       shift,
-      side,
       table,
+      terminal,
       type,
       voucher,
     ],
@@ -1064,8 +1100,23 @@ function Till() {
         <span className="inline-flex w-fit rounded-xl bg-primary px-2.5 py-1.5 text-[11px] font-black uppercase tracking-[0.16em] text-primary-foreground shadow-lg shadow-primary/25 xl:px-3 xl:text-xs xl:tracking-[0.2em]">
           Cafe 1 <span className="ml-1 hidden sm:inline">Till</span>
         </span>
-        <div className="col-span-3 row-start-2 grid w-full grid-cols-2 gap-1 rounded-xl border border-white/10 bg-neutral-950/70 p-1 shadow-inner shadow-black/30 min-[960px]:col-span-1 min-[960px]:row-auto min-[960px]:flex min-[960px]:w-auto min-[960px]:shrink-0">
-          {(["jury", "public"] as const).map((s) => (
+        <select
+          value={sites.siteId}
+          onChange={(event) => sites.setSiteId(event.target.value)}
+          disabled={sites.loading || sites.sites.length < 2}
+          aria-label="Till branch"
+          className="h-9 min-w-0 rounded-xl border border-white/15 bg-neutral-950 px-2 text-xs font-bold text-white outline-none disabled:opacity-70"
+        >
+          {sites.sites.map((site) => (
+            <option key={site.id} value={site.id}>
+              {site.name}
+            </option>
+          ))}
+        </select>
+        <div
+          className={`col-span-3 row-start-2 grid w-full gap-1 rounded-xl border border-white/10 bg-neutral-950/70 p-1 shadow-inner shadow-black/30 min-[960px]:col-span-1 min-[960px]:row-auto min-[960px]:flex min-[960px]:w-auto min-[960px]:shrink-0 ${futuresHouse ? "grid-cols-1" : "grid-cols-2"}`}
+        >
+          {(futuresHouse ? (["public"] as const) : (["jury", "public"] as const)).map((s) => (
             <button
               key={s}
               onClick={() => changeSide(s)}
@@ -1242,8 +1293,10 @@ function Till() {
             data-pos-region="mobile-fulfilment"
             className="shrink-0 border-b border-white/10 bg-neutral-950/55 px-2 py-1.5 min-[960px]:hidden"
           >
-            <div className="grid grid-cols-3 gap-1.5 rounded-xl border border-white/10 bg-neutral-900/80 p-1">
-              {FULFIL_CHOICES.map(({ id, label, Icon }) => (
+            <div
+              className={`grid gap-1.5 rounded-xl border border-white/10 bg-neutral-900/80 p-1 ${futuresHouse ? "grid-cols-2" : "grid-cols-3"}`}
+            >
+              {availableFulfilChoices.map(({ id, label, Icon }) => (
                 <button
                   key={id}
                   type="button"
@@ -1351,9 +1404,7 @@ function Till() {
                     aria-pressed={favourites.has(i.id)}
                     className={`absolute right-1 top-1 grid h-6 w-6 place-items-center rounded-md border shadow-lg transition active:scale-90 sm:right-1.5 sm:top-1.5 sm:h-7 sm:w-7 ${favourites.has(i.id) ? "border-amber-300 bg-amber-400 text-neutral-950" : "border-white/15 bg-neutral-950/85 text-white/70 hover:text-amber-300"}`}
                   >
-                    <Star
-                      className={`h-3.5 w-3.5 ${favourites.has(i.id) ? "fill-current" : ""}`}
-                    />
+                    <Star className={`h-3.5 w-3.5 ${favourites.has(i.id) ? "fill-current" : ""}`} />
                   </button>
                 </div>
               ))}
@@ -1381,8 +1432,8 @@ function Till() {
         {/* Phone checkout is full-screen; tablet checkout is a right sheet; desktop is split. */}
         <aside
           data-pos-region="order"
-        className={`fixed inset-0 z-[85] h-dvh min-h-0 w-full max-w-full min-w-0 flex-col overflow-hidden overscroll-contain bg-neutral-900 shadow-[-12px_0_40px_-24px_rgba(0,0,0,0.9)] sm:left-auto sm:w-[min(30rem,100vw)] sm:border-l sm:border-white/10 min-[960px]:static min-[960px]:z-auto min-[960px]:flex min-[960px]:h-auto min-[960px]:w-full ${showOrder ? "flex" : "hidden"}`}
-      >
+          className={`fixed inset-0 z-[85] h-dvh min-h-0 w-full max-w-full min-w-0 flex-col overflow-hidden overscroll-contain bg-neutral-900 shadow-[-12px_0_40px_-24px_rgba(0,0,0,0.9)] sm:left-auto sm:w-[min(30rem,100vw)] sm:border-l sm:border-white/10 min-[960px]:static min-[960px]:z-auto min-[960px]:flex min-[960px]:h-auto min-[960px]:w-full ${showOrder ? "flex" : "hidden"}`}
+        >
           <div className="relative z-10 grid shrink-0 grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-2 border-b border-white/10 bg-neutral-950 px-2.5 pb-2.5 pt-[calc(0.625rem+env(safe-area-inset-top))] shadow-lg shadow-black/20 min-[380px]:gap-3 min-[380px]:px-3 min-[960px]:hidden">
             <button
               type="button"
@@ -1397,8 +1448,7 @@ function Till() {
             <span className="min-w-0">
               <span className="block truncate font-display text-lg font-bold">Current order</span>
               <span className="block text-[11px] font-semibold uppercase tracking-wide text-white/45">
-                {count} item{count === 1 ? "" : "s"} ·{" "}
-                {fulfilLabel}
+                {count} item{count === 1 ? "" : "s"} · {fulfilLabel}
               </span>
             </span>
             <span className="font-display text-xl font-black tabular-nums text-primary">
@@ -1408,9 +1458,9 @@ function Till() {
           <div className="relative z-10 shrink-0 space-y-1.5 border-b border-white/10 bg-neutral-900 p-2.5 shadow-md shadow-black/10 md:p-2.5">
             <div
               data-pos-region="order-fulfilment"
-              className="grid grid-cols-3 gap-1.5 rounded-2xl border border-white/10 bg-neutral-950/50 p-1.5 md:gap-1 md:p-1"
+              className={`grid gap-1.5 rounded-2xl border border-white/10 bg-neutral-950/50 p-1.5 md:gap-1 md:p-1 ${futuresHouse ? "grid-cols-2" : "grid-cols-3"}`}
             >
-              {FULFIL_CHOICES.map(({ id, label, Icon }) => (
+              {availableFulfilChoices.map(({ id, label, Icon }) => (
                 <button
                   key={id}
                   type="button"
@@ -1626,20 +1676,24 @@ function Till() {
                         className="min-h-20 w-full rounded-2xl border border-amber-400/40 bg-neutral-950 p-3 text-base outline-none placeholder:text-white/30 focus:border-amber-300"
                       />
                       <div className="mt-2 flex flex-wrap gap-1.5">
-                        {["No sauce", "Extra hot", "Well done", "Allergy", "To go"].map((preset) => (
-                          <button
-                            key={preset}
-                            onClick={() =>
-                              setLineNote(
-                                line.key,
-                                (line.notes ? `${line.notes}; ` : "").concat(preset).slice(0, 140),
-                              )
-                            }
-                            className="h-9 rounded-xl border border-white/10 bg-neutral-800/60 px-3 text-xs font-bold text-white/70 active:scale-95"
-                          >
-                            {preset}
-                          </button>
-                        ))}
+                        {["No sauce", "Extra hot", "Well done", "Allergy", "To go"].map(
+                          (preset) => (
+                            <button
+                              key={preset}
+                              onClick={() =>
+                                setLineNote(
+                                  line.key,
+                                  (line.notes ? `${line.notes}; ` : "")
+                                    .concat(preset)
+                                    .slice(0, 140),
+                                )
+                              }
+                              className="h-9 rounded-xl border border-white/10 bg-neutral-800/60 px-3 text-xs font-bold text-white/70 active:scale-95"
+                            >
+                              {preset}
+                            </button>
+                          ),
+                        )}
                       </div>
                       <div className="mt-3 grid grid-cols-[auto_minmax(0,1fr)] gap-2">
                         <button
@@ -1992,25 +2046,29 @@ function Till() {
                   }}
                 />
               )}
-              {!voucher && (
-                <PayChoice
-                  icon={Ticket}
-                  label="Apply juror voucher"
-                  onClick={() => {
-                    setPayOpen(false);
-                    setVoucherOpen(true);
-                  }}
-                />
+              {!futuresHouse && (
+                <>
+                  {!voucher && (
+                    <PayChoice
+                      icon={Ticket}
+                      label="Apply juror voucher"
+                      onClick={() => {
+                        setPayOpen(false);
+                        setVoucherOpen(true);
+                      }}
+                    />
+                  )}
+                  <PayChoice
+                    icon={ReceiptText}
+                    label="House tab"
+                    hint="Choose an account · bill now, settle later"
+                    onClick={() => {
+                      setPayOpen(false);
+                      setTabOpen(true);
+                    }}
+                  />
+                </>
               )}
-              <PayChoice
-                icon={ReceiptText}
-                label="House tab"
-                hint="Choose an account · bill now, settle later"
-                onClick={() => {
-                  setPayOpen(false);
-                  setTabOpen(true);
-                }}
-              />
             </div>
             <button
               onClick={() => setPayOpen(false)}
@@ -2049,7 +2107,7 @@ function Till() {
             customer_name: name.trim() || "Counter",
             type,
             table_number: table.trim() || undefined,
-            pos_terminal: side,
+            pos_terminal: terminal,
             voucher_code: voucher?.code,
             voucher_pin: voucher?.pin,
             ...manualDiscountArgs,
@@ -2112,7 +2170,9 @@ function Till() {
           isAdmin={has("admin")}
           onClose={() => setShiftPanel(null)}
           onOpen={async (openingFloat) => {
-            await openShift({ data: { terminal: side, opening_float_cents: openingFloat } });
+            await openShift({
+              data: { terminal, site_id: sites.siteId, opening_float_cents: openingFloat },
+            });
             setShiftPanel(null);
             await loadShift();
           }}
@@ -2271,11 +2331,7 @@ function ManualDiscountModal({
 }: {
   dueCents: number;
   onClose: () => void;
-  onApply: (value: {
-    type: "percent" | "fixed_amount";
-    value: number;
-    reason: string;
-  }) => void;
+  onApply: (value: { type: "percent" | "fixed_amount"; value: number; reason: string }) => void;
 }) {
   const [type, setType] = useState<"percent" | "fixed_amount">("percent");
   const [percent, setPercent] = useState(10);
@@ -2345,7 +2401,8 @@ function ManualDiscountModal({
           className="mt-3 h-12 w-full rounded-xl border border-white/10 bg-black/40 px-4 text-sm"
         />
         <p className="mt-3 text-sm text-white/60">
-          Comes off this order: <span className="tabular-nums text-amber-300">{money(preview)}</span>
+          Comes off this order:{" "}
+          <span className="tabular-nums text-amber-300">{money(preview)}</span>
         </p>
         <div className="mt-4 grid grid-cols-2 gap-2">
           <button
@@ -2561,8 +2618,7 @@ function TabAccountPreview({
   const payments = unsettledPayments.reduce((sum, payment) => sum + payment.amount_cents, 0);
   const outstanding = details ? Math.max(0, charges - payments) : account.outstanding_cents;
   const projected = outstanding + total;
-  const overLimit =
-    account.credit_limit_cents !== null && projected > account.credit_limit_cents;
+  const overLimit = account.credit_limit_cents !== null && projected > account.credit_limit_cents;
   const itemsByOrder = new Map<string, NonNullable<TillTabStatement>["items"]>();
   for (const item of details?.items ?? []) {
     const current = itemsByOrder.get(item.order_id) ?? [];
@@ -2619,7 +2675,10 @@ function TabAccountPreview({
       </div>
 
       {loading && (
-        <div aria-live="polite" className="rounded-2xl border border-white/10 p-5 text-sm text-white/45">
+        <div
+          aria-live="polite"
+          className="rounded-2xl border border-white/10 p-5 text-sm text-white/45"
+        >
           Loading running items and history…
         </div>
       )}
@@ -2635,7 +2694,9 @@ function TabAccountPreview({
               {unpaid.slice(0, 8).map((order) => (
                 <div key={order.id} className="rounded-xl bg-white/5 px-3 py-2 text-xs">
                   <div className="flex justify-between gap-2 font-bold">
-                    <span>#{order.order_number} · {new Date(order.created_at).toLocaleDateString()}</span>
+                    <span>
+                      #{order.order_number} · {new Date(order.created_at).toLocaleDateString()}
+                    </span>
                     <span className="shrink-0 tabular-nums text-amber-200">
                       {money(Math.max(0, order.total_cents - order.refunded_cents))}
                     </span>
@@ -2659,9 +2720,13 @@ function TabAccountPreview({
                 <p className="text-xs text-white/35">No settled history yet.</p>
               )}
               {details.payments.slice(0, 5).map((payment) => (
-                <div key={payment.id} className="flex justify-between gap-2 rounded-xl bg-white/5 px-3 py-2 text-xs">
+                <div
+                  key={payment.id}
+                  className="flex justify-between gap-2 rounded-xl bg-white/5 px-3 py-2 text-xs"
+                >
                   <span className="min-w-0 truncate text-white/55">
-                    Payment · {payment.method.replaceAll("_", " ")} · {new Date(payment.created_at).toLocaleDateString()}
+                    Payment · {payment.method.replaceAll("_", " ")} ·{" "}
+                    {new Date(payment.created_at).toLocaleDateString()}
                   </span>
                   <span className="shrink-0 font-bold tabular-nums text-emerald-200">
                     −{money(payment.amount_cents)}
@@ -2669,11 +2734,16 @@ function TabAccountPreview({
                 </div>
               ))}
               {paid.slice(0, 5).map((order) => (
-                <div key={order.id} className="flex justify-between gap-2 rounded-xl bg-white/5 px-3 py-2 text-xs">
+                <div
+                  key={order.id}
+                  className="flex justify-between gap-2 rounded-xl bg-white/5 px-3 py-2 text-xs"
+                >
                   <span className="min-w-0 truncate text-white/55">
                     #{order.order_number} · Paid · {new Date(order.created_at).toLocaleDateString()}
                   </span>
-                  <span className="shrink-0 font-bold tabular-nums">{money(order.total_cents)}</span>
+                  <span className="shrink-0 font-bold tabular-nums">
+                    {money(order.total_cents)}
+                  </span>
                 </div>
               ))}
             </div>
@@ -2682,8 +2752,13 @@ function TabAccountPreview({
       )}
 
       {overLimit && (
-        <p role="alert" className="rounded-2xl border border-red-400/30 bg-red-500/10 p-3 text-sm font-semibold text-red-200">
-          This would take the tab to {money(projected)}, above its {money(account.credit_limit_cents ?? 0)} limit. Take payment or ask a manager to change the limit.
+        <p
+          role="alert"
+          className="rounded-2xl border border-red-400/30 bg-red-500/10 p-3 text-sm font-semibold text-red-200"
+        >
+          This would take the tab to {money(projected)}, above its{" "}
+          {money(account.credit_limit_cents ?? 0)} limit. Take payment or ask a manager to change
+          the limit.
         </p>
       )}
 

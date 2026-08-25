@@ -7,8 +7,8 @@ select has_column('public', 'business_settings', 'vat_number', 'future VAT numbe
 
 select is(
   (select delivery_origin_postcode from public.business_settings limit 1),
-  'AL1 3JU',
-  'delivery origin is AL1 3JU'
+  'LU1 2AA',
+  'delivery origin is LU1 2AA'
 );
 select is(
   (select delivery_radius_m from public.business_settings limit 1),

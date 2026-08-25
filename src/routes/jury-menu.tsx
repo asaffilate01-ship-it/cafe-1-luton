@@ -19,13 +19,13 @@ export const Route = createFileRoute("/jury-menu")({
   }),
   head: () => ({
     meta: [
-      { title: "Jury Only Menu — Café 1, St Albans" },
+      { title: "Jury Only Menu — Café 1, Luton" },
       {
         name: "description",
         content:
           "Private Jury Only menu at Café 1. Verify your HMCTS Juror ID and PIN to order for collection or delivery to the Jury Lounge at Crown Court or the Jury Rooms at the Magistrates' Court.",
       },
-      { property: "og:title", content: "Jury Only Menu — Café 1, St Albans" },
+      { property: "og:title", content: "Jury Only Menu — Café 1, Luton" },
       {
         property: "og:description",
         content:
@@ -42,17 +42,17 @@ export const Route = createFileRoute("/jury-menu")({
 const ROOMS = [
   {
     id: "crown-lounge",
-    label: "Main Jury Lounge — St Albans Crown Court",
+    label: "Main Jury Lounge — Luton Crown Court",
     venue: JUROR_DELIVERY_VENUES[0],
   },
   {
     id: "crown-rooms",
-    label: "Jury Rooms — St Albans Crown Court",
+    label: "Jury Rooms — Luton Crown Court",
     venue: JUROR_DELIVERY_VENUES[0],
   },
   {
     id: "magistrates-rooms",
-    label: "Jury Rooms — St Albans Magistrates' Court",
+    label: "Jury Rooms — Luton Magistrates' Court",
     venue: JUROR_DELIVERY_VENUES[1],
   },
 ] as const;
@@ -141,8 +141,8 @@ function JuryMenuPage() {
             <h1 className="mt-2 font-display text-3xl font-black">Confirm you're a juror</h1>
             <p className="mt-2 text-sm text-muted-foreground">
               You've scanned the Jury Lounge QR code. This menu is only for jurors serving at St
-              Albans. Enter the HMCTS Juror ID on your summons or jury sheet to open it. We never
-              see your name or any personal details — no PIN is needed just to browse and order.
+              Luton. Enter the HMCTS Juror ID on your summons or jury sheet to open it. We never see
+              your name or any personal details — no PIN is needed just to browse and order.
             </p>
             <form onSubmit={verify} className="mt-6 space-y-3">
               <input
@@ -196,8 +196,8 @@ function JuryMenuPage() {
             JURY ONLY MENU — Café 1
           </h1>
           <p className="mt-3 text-primary-foreground/85">
-            Served or delivered <strong>only</strong> to the Jury Lounge at St Albans Crown Court or
-            the Jury Rooms at St Albans Magistrates' Court — or collect at the Café 1 counter.
+            Served or delivered <strong>only</strong> to the Jury Lounge at Luton Crown Court or the
+            Jury Rooms at Luton Magistrates' Court — or collect at the Café 1 counter.
           </p>
           <div className="mt-4 flex flex-wrap items-center gap-3 text-sm">
             {session.code ? (
@@ -258,7 +258,7 @@ function JuryMenuPage() {
           >
             Collect at Café 1
             <span className="mt-1 block text-xs font-normal text-muted-foreground">
-              St Albans Crown Court
+              Luton Crown Court
             </span>
           </button>
           {ROOMS.map((room) => (

@@ -12,8 +12,8 @@ describe("release health", () => {
 
     expect(payload).toEqual({
       status: "ok",
-      service: "cafe1-st-albans",
-      postcode: "AL1 3JU",
+      service: "cafe1-luton",
+      postcode: "LU1 2AA",
       release: release.toLowerCase(),
     });
     expect(JSON.stringify(payload)).not.toContain("must-not-leak");

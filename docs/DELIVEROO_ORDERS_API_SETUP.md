@@ -13,7 +13,7 @@ normal production after the official webhook has passed acceptance testing.
 
 Ask the Café 1 Deliveroo account manager or Technical Integration Manager for:
 
-- Partner Platform / Orders API production access for the St Albans site;
+- Partner Platform / Orders API production access for the Luton site;
 - production OAuth client ID and client secret;
 - an Order Events webhook secret;
 - confirmation that the site stays **tablet-based with automatic acceptance**;
@@ -21,7 +21,7 @@ Ask the Café 1 Deliveroo account manager or Technical Integration Manager for:
 
 The production callback is:
 
-`https://cafe1stalbans.co.uk/api/public/deliveroo/webhook`
+`https://cafe1luton.co.uk/api/public/deliveroo/webhook`
 
 Use the modern Order Events webhook. The deprecated Legacy POS webhook is supported only during a
 controlled transition.

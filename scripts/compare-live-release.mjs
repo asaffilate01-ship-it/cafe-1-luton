@@ -129,7 +129,7 @@ export async function compareLiveRelease({ baseUrl, expectedRelease, fetchImpl =
 async function runCli() {
   const baseUrl = argument(
     "--base-url",
-    process.env.PRODUCTION_BASE_URL ?? "https://cafe1stalbans.co.uk",
+    process.env.PRODUCTION_BASE_URL ?? "https://cafe1luton.co.uk",
   );
   const expectedRelease = argument(
     "--expected",

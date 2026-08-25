@@ -6,7 +6,7 @@
 4. Do not squash, rebase, force-push or replace published Lovable history.
 5. Commit the upload normally and wait for both **Production checks** jobs, **CodeQL** and **Browser journeys** to pass.
 6. Apply the database migrations to staging, complete `docs/GO_LIVE_CHECKLIST.md`, then deploy the same commit to production.
-7. Deploy, run **Production smoke**, then run **Release candidate evidence** against `https://cafe1stalbans.co.uk`, supplying the successful database-check workflow URL. Retain both workflow URLs and the downloaded artifact.
+7. Deploy, run **Production smoke**, then run **Release candidate evidence** against `https://cafe1luton.co.uk`, supplying the successful database-check workflow URL. Retain both workflow URLs and the downloaded artifact.
 8. Rotate and restrict the Google Maps browser key that previously appeared in public history. Do not rewrite or force-push Lovable history.
 9. If the deployed HTML responses still replace `private, no-store`, configure Cloudflare **Browser Cache TTL → Respect Existing Headers**, purge the four protected routes and rerun **Production smoke**.
 

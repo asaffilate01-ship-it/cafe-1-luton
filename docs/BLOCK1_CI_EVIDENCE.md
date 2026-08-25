@@ -9,7 +9,7 @@ Gates: `application_ci`, `database_ci`, `codeql`, `browser_journeys`,
 | Local equivalent | Result |
 | --- | --- |
 | `npm run release:guard && npm run check` | pass (only `repository-hygiene` git test cannot run in a sandbox; it passes in CI) |
-| `PRODUCTION_BASE_URL=https://cafe1stalbans.co.uk npm run smoke:production` | 35/35 checks pass |
+| `PRODUCTION_BASE_URL=https://cafe1luton.co.uk npm run smoke:production` | 35/35 checks pass |
 | Workflow files present and SHA-pinned | ci, codeql, browser-e2e, production-smoke, release-candidate, record-release-evidence |
 
 So the workflows should pass first time. Nothing else to change in code.
@@ -28,7 +28,7 @@ export SHA=$(git rev-parse HEAD)   # 40 chars — every run URL must match this
 2. **CodeQL** — runs automatically on push; otherwise Run workflow.
 3. **Browser journeys** — runs automatically on push; otherwise Run workflow.
 4. Deploy that commit to production, set `PUBLIC_RELEASE_SHA=$SHA`, then run
-   **Production smoke** with `base_url=https://cafe1stalbans.co.uk` and
+   **Production smoke** with `base_url=https://cafe1luton.co.uk` and
    `expected_release_sha=$SHA`.
 5. **Release candidate evidence** — Run workflow with `base_url` and the
    *Production checks* run URL for `database_check_run_url`.

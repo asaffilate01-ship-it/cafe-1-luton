@@ -5,7 +5,7 @@ import { CheckCircle2, Download, MonitorCheck, ShieldCheck } from "lucide-react"
 export const Route = createFileRoute("/watcher-download")({
   head: () => ({
     meta: [
-      { title: "Deliveroo Watcher Download | Cafe 1 St Albans" },
+      { title: "Deliveroo Watcher Download | Cafe 1 Luton" },
       {
         name: "description",
         content: "Internal one-click Café 1 Deliveroo-to-KDS watcher download.",

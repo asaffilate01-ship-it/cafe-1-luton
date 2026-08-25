@@ -7,7 +7,7 @@ import { canCachePublicDocument, isPublicDocumentPath } from "../public-cache";
 describe("production response security", () => {
   it("sets browser security headers on the production origin", () => {
     const response = withProductionHeaders(
-      new Request("https://cafe1stalbans.co.uk/menu"),
+      new Request("https://cafe1luton.co.uk/menu"),
       new Response("menu"),
     );
 
@@ -26,15 +26,15 @@ describe("production response security", () => {
 
   it("grants sensitive browser capabilities only to the routes that use them", () => {
     const driver = withProductionHeaders(
-      new Request("https://cafe1stalbans.co.uk/driver"),
+      new Request("https://cafe1luton.co.uk/driver"),
       new Response("driver"),
     );
     const checkout = withProductionHeaders(
-      new Request("https://cafe1stalbans.co.uk/checkout"),
+      new Request("https://cafe1luton.co.uk/checkout"),
       new Response("checkout"),
     );
     const payment = withProductionHeaders(
-      new Request("https://cafe1stalbans.co.uk/pay/order-1"),
+      new Request("https://cafe1luton.co.uk/pay/order-1"),
       new Response("payment"),
     );
 
@@ -48,7 +48,7 @@ describe("production response security", () => {
 
   it("prevents private operational pages from being cached", () => {
     const response = withProductionHeaders(
-      new Request("https://cafe1stalbans.co.uk/admin/security"),
+      new Request("https://cafe1luton.co.uk/admin/security"),
       new Response("restricted"),
     );
 
@@ -74,7 +74,7 @@ describe("production response security", () => {
 
   it("lets the CDN absorb cold starts only for anonymous public HTML", () => {
     const response = withProductionHeaders(
-      new Request("https://cafe1stalbans.co.uk/menu"),
+      new Request("https://cafe1luton.co.uk/menu"),
       new Response("<main>menu</main>", { headers: { "content-type": "text/html" } }),
     );
 
@@ -83,7 +83,7 @@ describe("production response security", () => {
     expect(response.headers.get("cloudflare-cdn-cache-control")).toContain(
       "stale-while-revalidate=86400",
     );
-    expect(isPublicDocumentPath("/blog/halal-breakfast-st-albans")).toBe(true);
+    expect(isPublicDocumentPath("/blog/halal-breakfast-luton")).toBe(true);
     expect(isPublicDocumentPath("/order-direct")).toBe(true);
     expect(isPublicDocumentPath("/watcher-download")).toBe(true);
     expect(isPublicDocumentPath("/checkout")).toBe(false);
@@ -93,12 +93,12 @@ describe("production response security", () => {
     const html = new Response("<main>menu</main>", {
       headers: { "content-type": "text/html", "set-cookie": "session=private" },
     });
-    expect(canCachePublicDocument(new Request("https://cafe1stalbans.co.uk/menu"), html)).toBe(
+    expect(canCachePublicDocument(new Request("https://cafe1luton.co.uk/menu"), html)).toBe(
       false,
     );
     expect(
       canCachePublicDocument(
-        new Request("https://cafe1stalbans.co.uk/menu", {
+        new Request("https://cafe1luton.co.uk/menu", {
           headers: { cookie: "session=private" },
         }),
         new Response("<main>menu</main>", { headers: { "content-type": "text/html" } }),
@@ -106,7 +106,7 @@ describe("production response security", () => {
     ).toBe(false);
     expect(
       canCachePublicDocument(
-        new Request("https://cafe1stalbans.co.uk/not-a-public-document"),
+        new Request("https://cafe1luton.co.uk/not-a-public-document"),
         new Response("<main>unknown</main>", { headers: { "content-type": "text/html" } }),
       ),
     ).toBe(false);
@@ -119,7 +119,7 @@ describe("production response security", () => {
     );
 
     expect(isPreviewHost("preview.lovable.app")).toBe(true);
-    expect(isPreviewHost("cafe1stalbans.co.uk")).toBe(false);
+    expect(isPreviewHost("cafe1luton.co.uk")).toBe(false);
     expect(response.headers.has("x-frame-options")).toBe(false);
     expect(response.headers.get("content-security-policy")).toContain("https://*.lovable.app");
   });

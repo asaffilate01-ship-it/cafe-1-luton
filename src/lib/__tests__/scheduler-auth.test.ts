@@ -23,7 +23,7 @@ describe("scheduler authentication", () => {
   it("fails closed when the scheduler secret is not configured", () => {
     delete process.env.CRON_SECRET;
     const response = captureResponse(() =>
-      requireSchedulerAuth(new Request("https://cafe1stalbans.co.uk/api/public/juror-daily")),
+      requireSchedulerAuth(new Request("https://cafe1luton.co.uk/api/public/juror-daily")),
     );
     expect(response.status).toBe(503);
   });
@@ -32,7 +32,7 @@ describe("scheduler authentication", () => {
     process.env.CRON_SECRET = "correct-secret-with-at-least-32-characters";
     const response = captureResponse(() =>
       requireSchedulerAuth(
-        new Request("https://cafe1stalbans.co.uk/api/public/juror-daily", {
+        new Request("https://cafe1luton.co.uk/api/public/juror-daily", {
           headers: { authorization: "Bearer incorrect-secret" },
         }),
       ),
@@ -44,7 +44,7 @@ describe("scheduler authentication", () => {
     process.env.CRON_SECRET = "correct-secret-with-at-least-32-characters";
     expect(() =>
       requireSchedulerAuth(
-        new Request("https://cafe1stalbans.co.uk/api/public/juror-daily", {
+        new Request("https://cafe1luton.co.uk/api/public/juror-daily", {
           headers: { authorization: `Bearer ${process.env.CRON_SECRET}` },
         }),
       ),
@@ -55,7 +55,7 @@ describe("scheduler authentication", () => {
     process.env.CRON_SECRET = "correct-secret-with-at-least-32-characters";
     expect(() =>
       requireSchedulerAuth(
-        new Request("https://cafe1stalbans.co.uk/api/public/cleanup-unpaid", {
+        new Request("https://cafe1luton.co.uk/api/public/cleanup-unpaid", {
           headers: { "x-cron-secret": process.env.CRON_SECRET! },
         }),
       ),
@@ -66,13 +66,13 @@ describe("scheduler authentication", () => {
 describe("scheduler dates", () => {
   it("defaults to today in UTC and rejects arbitrary dates", () => {
     const today = new Date().toISOString().slice(0, 10);
-    expect(schedulerDate(new Request("https://cafe1stalbans.co.uk/api/public/juror-daily"))).toBe(
+    expect(schedulerDate(new Request("https://cafe1luton.co.uk/api/public/juror-daily"))).toBe(
       today,
     );
 
     const response = captureResponse(() =>
       schedulerDate(
-        new Request("https://cafe1stalbans.co.uk/api/public/juror-daily?date=2099-01-01"),
+        new Request("https://cafe1luton.co.uk/api/public/juror-daily?date=2099-01-01"),
       ),
     );
     expect(response.status).toBe(400);

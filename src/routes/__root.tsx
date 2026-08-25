@@ -100,25 +100,25 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
   head: () => ({
     meta: [
       { charSet: "utf-8" },
-      { title: "Halal Café in St Albans | Breakfast & Lunch | Café 1" },
+      { title: "Halal Café in Luton | Breakfast & Lunch | Café 1" },
       {
         name: "description",
         content:
-          "Café 1 is a halal café in St Albans serving all-day breakfast, Desi favourites, lunch and coffee. Visit AL1 3JU or order for collection and local delivery.",
+          "Café 1 is a halal café in Luton serving all-day breakfast, Desi favourites, lunch and coffee at Luton Crown Court and Futures House, Marsh Farm.",
       },
-      { name: "author", content: "Café 1 St Albans team" },
+      { name: "author", content: "Café 1 Luton team" },
       {
         name: "robots",
         content: "index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1",
       },
       { name: "google-site-verification", content: "NoUffm8Qa2gTyc2dGJ6FFtKs0hjsOSm9z2UX72WRVDQ" },
-      { property: "og:site_name", content: "Café 1 St Albans" },
+      { property: "og:site_name", content: "Café 1 Luton" },
       { property: "og:locale", content: "en_GB" },
-      { property: "og:title", content: "Halal Café in St Albans | Breakfast & Lunch | Café 1" },
+      { property: "og:title", content: "Halal Café in Luton | Breakfast & Lunch | Café 1" },
       {
         property: "og:description",
         content:
-          "All-day halal breakfast, Desi favourites, lunch and coffee at St Albans Crown Court, AL1 3JU.",
+          "All-day halal breakfast, Desi favourites, lunch and coffee at two Luton Café 1 locations.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
@@ -129,19 +129,19 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { name: "apple-mobile-web-app-status-bar-style", content: "black-translucent" },
       { name: "apple-mobile-web-app-title", content: "Cafe1" },
       { name: "format-detection", content: "telephone=no" },
-      { name: "twitter:title", content: "Halal Café in St Albans | Breakfast & Lunch | Café 1" },
+      { name: "twitter:title", content: "Halal Café in Luton | Breakfast & Lunch | Café 1" },
       {
         name: "twitter:description",
         content:
-          "All-day halal breakfast, Desi favourites, lunch and coffee at St Albans Crown Court, AL1 3JU.",
+          "All-day halal breakfast, Desi favourites, lunch and coffee at two Luton Café 1 locations.",
       },
       {
         property: "og:image",
-        content: "https://cafe1stalbans.co.uk/icon-512.png",
+        content: "https://cafe1luton.co.uk/icon-512.png",
       },
       {
         name: "twitter:image",
-        content: "https://cafe1stalbans.co.uk/icon-512.png",
+        content: "https://cafe1luton.co.uk/icon-512.png",
       },
     ],
     links: [

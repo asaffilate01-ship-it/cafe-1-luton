@@ -27,17 +27,17 @@ export const JUROR_PIN_LENGTH = 6;
 export const JUROR_DELIVERY_VENUES = [
   {
     id: "crown",
-    label: "St Albans Crown Court",
-    address_line1: "St Albans Crown Court, Bricket Road",
-    city: "St Albans",
-    postcode: "AL1 3JU",
+    label: "Luton Crown Court",
+    address_line1: "Luton Crown Court, 7–9 George Street",
+    city: "Luton",
+    postcode: "LU1 2AA",
   },
   {
     id: "magistrates",
-    label: "St Albans Magistrates' Court",
-    address_line1: "St Albans Magistrates' Court, Bricket Road",
-    city: "St Albans",
-    postcode: "AL1 3JU",
+    label: "Luton Magistrates' Court",
+    address_line1: "Luton Magistrates' Court, Stuart Street",
+    city: "Luton",
+    postcode: "LU1 5BL",
   },
 ] as const;
 
@@ -56,7 +56,7 @@ export function isCourtDeliveryAddress(
 }
 
 export const JUROR_DELIVERY_RULE_MESSAGE =
-  "Voucher orders can only be delivered inside the court — choose St Albans Crown Court or St Albans Magistrates' Court, or select collection.";
+  "Voucher orders can only be delivered inside the court — choose Luton Crown Court or Luton Magistrates' Court, or select collection.";
 /** Fixed validity window for each activated HMCTS Juror ID. */
 export const JUROR_VALIDITY_WEEKS = 12;
 

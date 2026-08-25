@@ -1,27 +1,26 @@
 import { useEffect, useMemo, useState } from "react";
-import { useServerFn } from "@tanstack/react-start";
-import { checkDeliveryPostcode } from "@/lib/delivery.functions";
+import { Building2, Clock, Eye, MapPin, Store, Utensils, X } from "lucide-react";
+
+import { useStoreStatus } from "@/hooks/use-store-status";
+import { buildScheduleSlots } from "@/lib/business";
+import { LOCATIONS, type CafeLocationId } from "@/lib/nap";
 import {
   orderContext,
   type OrderContext,
-  type OrderMode,
   type ScheduleMode,
   useOrderContext,
 } from "@/lib/order-context";
-import { useStoreStatus } from "@/hooks/use-store-status";
-import { buildScheduleSlots } from "@/lib/business";
-import { X, MapPin, Clock, Store, Bike, Utensils, Eye, ExternalLink } from "lucide-react";
 
-/**
- * Jury Only menu: delivery is restricted to the court jury areas — nowhere else.
- */
+type PublicOrderMode = "collection" | "dine_in";
+
+/** Internal court destinations used by the Crown Court jury workflow only. */
 export const JURY_DELIVERY_ROOMS = [
-  { id: "crown-lounge", label: "Main Jury Lounge — St Albans Crown Court", postcode: "AL1 3JU" },
-  { id: "crown-rooms", label: "Jury Rooms — St Albans Crown Court", postcode: "AL1 3JU" },
+  { id: "crown-lounge", label: "Main Jury Lounge — Luton Crown Court", postcode: "LU1 2AA" },
+  { id: "crown-rooms", label: "Jury Rooms — Luton Crown Court", postcode: "LU1 2AA" },
   {
     id: "magistrates-rooms",
-    label: "Jury Rooms — St Albans Magistrates' Court",
-    postcode: "AL1 3JU",
+    label: "Jury Rooms — Luton Magistrates' Court",
+    postcode: "LU1 5BL",
   },
 ] as const;
 
@@ -37,95 +36,36 @@ export function OrderSetupGate({
   /** Public menu only: leave without creating an order context. */
   onBrowse?: () => void;
   dismissible?: boolean;
-  /** Restrict delivery to the court jury areas (Jury Only menu). */
+  /** Crown Court-only flow; the detailed jury destinations remain on /jury-menu. */
   juryOnly?: boolean;
 }) {
   const existing = useOrderContext();
   const { status, settings, hours, holidays } = useStoreStatus();
-  const checkArea = useServerFn(checkDeliveryPostcode);
-
-  const [step, setStep] = useState<1 | 2>(1);
-  const [mode, setMode] = useState<OrderMode>(existing?.mode ?? "collection");
-  const [postcode, setPostcode] = useState(existing?.postcode ?? "");
-  const [area, setArea] = useState<
-    null | {
-      ok: boolean;
-      message: string;
-      distance_m?: number;
-      deliveroo_url?: string | null;
-      justeat_url?: string | null;
-    }
-  >(null);
-  const [areaBusy, setAreaBusy] = useState(false);
+  const [step, setStep] = useState<1 | 2 | 3>(1);
+  const [location, setLocation] = useState<CafeLocationId | null>(existing?.location ?? null);
+  const [mode, setMode] = useState<PublicOrderMode>(
+    existing?.mode === "dine_in" ? "dine_in" : "collection",
+  );
   const [scheduleMode, setScheduleMode] = useState<ScheduleMode>(existing?.schedule_mode ?? "asap");
-  const [scheduledFor, setScheduledFor] = useState<string>(existing?.scheduled_for ?? "");
-  const [juryRoom, setJuryRoom] = useState<string>(existing?.jury_room ?? "");
+  const [scheduledFor, setScheduledFor] = useState(existing?.scheduled_for ?? "");
   const timeSlots = useMemo(
     () => buildScheduleSlots({ hours, holidays, settings, mode }),
     [hours, holidays, settings, mode],
   );
 
-  // Drop a previously chosen slot if it's no longer valid for this mode/day.
   useEffect(() => {
-    if (scheduledFor && !timeSlots.some((s) => s.value === scheduledFor)) setScheduledFor("");
-  }, [timeSlots, scheduledFor]);
+    if (scheduledFor && !timeSlots.some((slot) => slot.value === scheduledFor)) {
+      setScheduledFor("");
+    }
+  }, [scheduledFor, timeSlots]);
 
   useEffect(() => {
     if (!open) setStep(1);
-  }, [open]);
-
-  async function verify() {
-    const pc = postcode.trim();
-    if (!pc) return;
-    setAreaBusy(true);
-    try {
-      const res = await checkArea({ data: { postcode: pc } });
-      if (res.ok) {
-        setArea({
-          ok: true,
-          distance_m: res.distance_m ?? 0,
-          message: `You're in our delivery area (${((res.distance_m ?? 0) / 1609.34).toFixed(2)} mi away).`,
-          deliveroo_url: res.deliveroo_url,
-          justeat_url: res.justeat_url,
-        });
-      } else {
-        setArea({
-          ok: false,
-          message: res.reason,
-          deliveroo_url: res.deliveroo_url,
-          justeat_url: res.justeat_url,
-        });
-      }
-    } catch {
-      setArea({ ok: false, message: "Couldn't check that postcode. Try again." });
-    } finally {
-      setAreaBusy(false);
+    else if (juryOnly) {
+      setLocation("luton-crown-court");
+      setStep(2);
     }
-  }
-
-  function canContinueStep1() {
-    if (mode !== "delivery") return true;
-    if (juryOnly) return !!juryRoom;
-    return !!area?.ok;
-  }
-
-  function finish() {
-    const next: OrderContext = {
-      mode,
-      schedule_mode: scheduleMode,
-      scheduled_for: scheduleMode === "scheduled" ? scheduledFor : undefined,
-      postcode:
-        mode === "delivery"
-          ? juryOnly
-            ? (JURY_DELIVERY_ROOMS.find((r) => r.label === juryRoom)?.postcode ?? "AL1 3JU")
-            : postcode.trim().toUpperCase()
-          : undefined,
-      distance_m: mode === "delivery" && !juryOnly ? area?.distance_m : undefined,
-      jury_room: juryOnly && mode === "delivery" ? juryRoom : undefined,
-    };
-    orderContext.set(next);
-    onClose();
-  }
+  }, [juryOnly, open]);
 
   const canPreorder = !!settings?.allow_preorder_when_closed;
   const forceScheduled = !status.open && canPreorder;
@@ -134,28 +74,40 @@ export function OrderSetupGate({
     if (forceScheduled && scheduleMode === "asap") setScheduleMode("scheduled");
   }, [forceScheduled, scheduleMode]);
 
+  function finish() {
+    if (!location) return;
+    const next: OrderContext = {
+      location,
+      mode,
+      schedule_mode: scheduleMode,
+      scheduled_for: scheduleMode === "scheduled" ? scheduledFor : undefined,
+    };
+    orderContext.set(next);
+    onClose();
+  }
+
   if (!open) return null;
+
+  const title = step === 1 ? "Choose your Café 1" : step === 2 ? "Dine in or takeaway?" : "When?";
 
   return (
     <div
       role="dialog"
       aria-modal="true"
       aria-labelledby="order-setup-title"
-      onKeyDown={(e) => {
-        if (e.key === "Escape" && dismissible) onClose();
+      onKeyDown={(event) => {
+        if (event.key === "Escape" && dismissible) onClose();
       }}
       className="fixed inset-0 z-[60] flex items-end justify-center bg-black/50 p-0 sm:items-center sm:p-4"
     >
       <div className="w-full max-w-lg overflow-hidden rounded-t-3xl bg-card shadow-2xl sm:rounded-3xl">
         <div className="flex items-center justify-between border-b border-border px-5 py-4">
           <div>
-            <p className="text-xs font-medium uppercase tracking-widest text-primary">Cafe1</p>
+            <p className="text-xs font-medium uppercase tracking-widest text-primary">
+              Cafe 1 Luton
+            </p>
             <h2 id="order-setup-title" className="font-display text-lg font-bold">
-              {step === 1
-                ? onBrowse
-                  ? "Order now or just browse?"
-                  : "How would you like your order?"
-                : "When?"}
+              {title}
             </h2>
           </div>
           {dismissible && (
@@ -173,183 +125,48 @@ export function OrderSetupGate({
         <div className="space-y-5 px-5 py-5">
           {step === 1 && (
             <>
-              {onBrowse && (
-                <p className="text-sm leading-relaxed text-muted-foreground">
-                  Choose an ordering option, or look through the menu without selecting delivery,
-                  pickup or dine-in.
-                </p>
-              )}
-              <div className="grid grid-cols-3 gap-2">
-                {[
-                  { m: "collection" as const, label: "Pickup", icon: Store },
-                  { m: "delivery" as const, label: "Delivery", icon: Bike },
-                  { m: "dine_in" as const, label: "Dine in", icon: Utensils },
-                ].map(({ m, label, icon: Icon }) => (
-                  <button
-                    type="button"
-                    key={m}
-                    onClick={() => {
-                      setMode(m);
-                      if (m !== "delivery") setArea(null);
-                    }}
-                    className={`flex h-24 flex-col items-center justify-center gap-2 rounded-2xl border text-sm font-semibold transition ${
-                      mode === m
-                        ? "border-primary bg-primary text-primary-foreground"
-                        : "border-border bg-background hover:border-primary"
-                    }`}
-                  >
-                    <Icon className="h-5 w-5" />
-                    {label}
-                  </button>
-                ))}
-              </div>
-
-              {mode === "delivery" && juryOnly && (
-                <div className="rounded-2xl border border-border bg-background p-4">
-                  <p className="flex items-center gap-2 text-sm font-semibold">
-                    <MapPin className="h-4 w-4 text-primary" /> Where in the court?
-                  </p>
-                  <div className="mt-3 space-y-2">
-                    {JURY_DELIVERY_ROOMS.map((r) => (
-                      <button
-                        type="button"
-                        key={r.id}
-                        onClick={() => setJuryRoom(r.label)}
-                        className={`w-full rounded-xl border px-4 py-3 text-left text-sm font-semibold transition ${
-                          juryRoom === r.label
-                            ? "border-primary bg-primary text-primary-foreground"
-                            : "border-border bg-card hover:border-primary"
-                        }`}
-                      >
-                        {r.label}
-                      </button>
-                    ))}
-                  </div>
-                  <p className="mt-3 text-xs text-muted-foreground">
-                    Jury Only orders are delivered to these jury areas only — we can't deliver
-                    anywhere else. You can also choose Pickup or Dine in at Café 1.
-                  </p>
-                </div>
-              )}
-
-              {mode === "delivery" && !juryOnly && (
-                <div className="rounded-2xl border border-border bg-background p-4">
-                  <label className="flex items-center gap-2 text-sm font-semibold">
-                    <MapPin className="h-4 w-4 text-primary" /> Delivery postcode
-                  </label>
-                  <div className="mt-2 flex gap-2">
-                    <input
-                      value={postcode}
-                      onChange={(e) => {
-                        setPostcode(e.target.value);
-                        setArea(null);
-                      }}
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter") {
-                          e.preventDefault();
-                          void verify();
-                        }
-                      }}
-                      placeholder="e.g. AL1 3JU"
-                      className="h-11 flex-1 rounded-xl border border-border bg-card px-4 uppercase"
-                    />
+              <p className="text-sm leading-relaxed text-muted-foreground">
+                Select the Luton branch you would like to visit, or browse the menu without starting
+                an order.
+              </p>
+              <div className="grid gap-3 sm:grid-cols-2">
+                {LOCATIONS.map((branch, index) => {
+                  const Icon = index === 0 ? Building2 : MapPin;
+                  const selected = location === branch.id;
+                  return (
                     <button
                       type="button"
-                      onClick={() => void verify()}
-                      disabled={areaBusy || !postcode.trim()}
-                      className="h-11 rounded-xl bg-primary px-4 text-sm font-semibold text-primary-foreground hover:bg-primary-hover disabled:opacity-60"
-                    >
-                      {areaBusy ? "Checking…" : "Check"}
-                    </button>
-                  </div>
-                  {area && (
-                    <p
-                      className={`mt-2 rounded-xl px-3 py-2 text-xs font-medium ${
-                        area.ok
-                          ? "bg-primary/10 text-primary"
-                          : "bg-destructive/10 text-destructive"
+                      key={branch.id}
+                      onClick={() => setLocation(branch.id)}
+                      className={`flex min-h-32 flex-col items-start justify-center rounded-2xl border p-4 text-left transition ${
+                        selected
+                          ? "border-primary bg-primary text-primary-foreground"
+                          : "border-border bg-background hover:border-primary"
                       }`}
                     >
-                      {area.message}
-                    </p>
-                  )}
-                  {area && !area.ok && (
-                    <div className="mt-2 flex gap-2 text-xs">
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setMode("collection");
-                          setArea(null);
-                        }}
-                        className="rounded-full border border-primary/40 px-3 py-1 font-semibold text-primary hover:bg-primary/10"
+                      <Icon className="h-5 w-5" />
+                      <span className="mt-3 font-semibold">{branch.shortName}</span>
+                      <span
+                        className={`mt-1 text-xs ${selected ? "text-primary-foreground/80" : "text-muted-foreground"}`}
                       >
-                        Switch to Pickup
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setMode("dine_in");
-                          setArea(null);
-                        }}
-                        className="rounded-full border border-primary/40 px-3 py-1 font-semibold text-primary hover:bg-primary/10"
-                      >
-                        Switch to Dine in
-                      </button>
-                    </div>
-                  )}
-                  {area && !area.ok && (area.deliveroo_url || area.justeat_url) && (
-                    <div className="mt-3 rounded-xl border border-primary/20 bg-primary/5 p-3">
-                      <p className="text-xs font-semibold text-primary">
-                        You're just outside our own delivery area
-                      </p>
-                      <p className="mt-1 text-xs text-muted-foreground">
-                        You can still get Cafe 1 delivered through our partners:
-                      </p>
-                      <div className="mt-2 flex flex-wrap gap-2">
-                        {area.deliveroo_url && (
-                          <a
-                            href={area.deliveroo_url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="inline-flex items-center gap-1.5 rounded-full bg-primary px-3 py-1.5 text-xs font-bold text-primary-foreground hover:bg-primary-hover"
-                          >
-                            Order on Deliveroo <ExternalLink className="h-3 w-3" />
-                          </a>
-                        )}
-                        {area.justeat_url && (
-                          <a
-                            href={area.justeat_url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="inline-flex items-center gap-1.5 rounded-full bg-secondary px-3 py-1.5 text-xs font-bold text-secondary-foreground hover:bg-secondary/80"
-                          >
-                            Order on Just Eat <ExternalLink className="h-3 w-3" />
-                          </a>
-                        )}
-                      </div>
-                    </div>
-                  )}
-                  <p className="mt-2 text-xs text-muted-foreground">
-                    We deliver up to ½ mile from {settings?.delivery_origin_postcode ?? "AL1 3JU"},{" "}
-                    {(settings?.delivery_open_time ?? "08:30").slice(0, 5)}–
-                    {(settings?.delivery_close_time ?? "16:30").slice(0, 5)}.
-                  </p>
-                </div>
-              )}
-
+                        {branch.streetAddress} · {branch.postalCode}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
               <button
                 type="button"
-                disabled={!canContinueStep1()}
+                disabled={!location}
                 onClick={() => setStep(2)}
-                className="h-12 w-full rounded-full bg-primary font-semibold text-primary-foreground shadow-brand transition hover:bg-primary-hover disabled:opacity-60"
+                className="h-12 w-full rounded-full bg-primary font-semibold text-primary-foreground shadow-brand transition hover:bg-primary-hover disabled:opacity-50"
               >
                 Continue
               </button>
-
               {onBrowse && (
                 <>
                   <div className="flex items-center gap-3 text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">
-                    <span className="h-px flex-1 bg-border" /> Or{" "}
+                    <span className="h-px flex-1 bg-border" /> Or
                     <span className="h-px flex-1 bg-border" />
                   </div>
                   <button
@@ -366,23 +183,68 @@ export function OrderSetupGate({
 
           {step === 2 && (
             <>
+              <p className="text-sm leading-relaxed text-muted-foreground">
+                Online delivery is not offered. Choose how you will collect or enjoy your order at
+                the selected café.
+              </p>
+              <div className="grid grid-cols-2 gap-3">
+                {[
+                  { id: "dine_in" as const, label: "Dine in", Icon: Utensils },
+                  { id: "collection" as const, label: "Takeaway", Icon: Store },
+                ].map(({ id, label, Icon }) => (
+                  <button
+                    type="button"
+                    key={id}
+                    onClick={() => setMode(id)}
+                    className={`flex h-28 flex-col items-center justify-center gap-2 rounded-2xl border font-semibold transition ${
+                      mode === id
+                        ? "border-primary bg-primary text-primary-foreground"
+                        : "border-border bg-background hover:border-primary"
+                    }`}
+                  >
+                    <Icon className="h-5 w-5" />
+                    {label}
+                  </button>
+                ))}
+              </div>
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => setStep(1)}
+                  className="h-12 flex-1 rounded-full border border-border font-semibold hover:bg-muted"
+                >
+                  Back
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setStep(3)}
+                  className="h-12 flex-[2] rounded-full bg-primary font-semibold text-primary-foreground shadow-brand transition hover:bg-primary-hover"
+                >
+                  Continue
+                </button>
+              </div>
+            </>
+          )}
+
+          {step === 3 && (
+            <>
               <div className="grid grid-cols-2 gap-2">
-                {(["asap", "scheduled"] as const).map((s) => {
-                  const disabled = s === "asap" && forceScheduled;
+                {(["asap", "scheduled"] as const).map((schedule) => {
+                  const disabled = schedule === "asap" && forceScheduled;
                   return (
                     <button
                       type="button"
-                      key={s}
+                      key={schedule}
                       disabled={disabled}
-                      onClick={() => setScheduleMode(s)}
+                      onClick={() => setScheduleMode(schedule)}
                       className={`flex h-20 flex-col items-center justify-center gap-1 rounded-2xl border text-sm font-semibold transition ${
-                        scheduleMode === s
+                        scheduleMode === schedule
                           ? "border-primary bg-primary text-primary-foreground"
                           : "border-border bg-background hover:border-primary"
                       } disabled:cursor-not-allowed disabled:opacity-40`}
                     >
                       <Clock className="h-4 w-4" />
-                      {s === "asap" ? "ASAP (~20 min)" : "Schedule for later"}
+                      {schedule === "asap" ? "ASAP (~20 min)" : "Schedule for later"}
                     </button>
                   );
                 })}
@@ -391,14 +253,14 @@ export function OrderSetupGate({
               {scheduleMode === "scheduled" && (
                 <select
                   value={scheduledFor}
-                  onChange={(e) => setScheduledFor(e.target.value)}
+                  onChange={(event) => setScheduledFor(event.target.value)}
                   className="h-12 w-full rounded-xl border border-border bg-background px-4"
                 >
                   <option value="">Select a time slot…</option>
                   {timeSlots.length === 0 && <option disabled>No slots available</option>}
-                  {timeSlots.map((s) => (
-                    <option key={s.value} value={s.value}>
-                      {s.label}
+                  {timeSlots.map((slot) => (
+                    <option key={slot.value} value={slot.value}>
+                      {slot.label}
                     </option>
                   ))}
                 </select>
@@ -406,14 +268,14 @@ export function OrderSetupGate({
 
               {forceScheduled && (
                 <p className="rounded-xl bg-amber-500/10 px-3 py-2 text-xs font-medium text-amber-900">
-                  We're closed right now — pre-order for a later time.
+                  We&apos;re closed right now — pre-order for a later time.
                 </p>
               )}
 
               <div className="flex gap-2">
                 <button
                   type="button"
-                  onClick={() => setStep(1)}
+                  onClick={() => setStep(2)}
                   className="h-12 flex-1 rounded-full border border-border font-semibold hover:bg-muted"
                 >
                   Back

@@ -28,7 +28,7 @@ Run the normal exact-release command after deployment:
 
 ```sh
 EXPECTED_RELEASE_SHA=<40-character-merged-main-sha> \
-  npm run smoke:production -- https://cafe1stalbans.co.uk --json release/production-smoke.json
+  npm run smoke:production -- https://cafe1luton.co.uk --json release/production-smoke.json
 ```
 
 Only the exact merged `main` SHA is valid for `EXPECTED_RELEASE_SHA` and `PUBLIC_RELEASE_SHA`.

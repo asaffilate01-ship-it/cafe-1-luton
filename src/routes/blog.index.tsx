@@ -6,9 +6,9 @@ import { Calendar, ArrowRight } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { breadcrumbJsonLd, canonicalLink, jsonLdScript, seoMeta, webPageJsonLd } from "@/lib/seo";
 
-const title = "St Albans Food Guide | Breakfast, Lunch & Café News";
+const title = "Luton Food Guide | Breakfast, Lunch & Café News";
 const description =
-  "Local guides to halal breakfast, lunch, coffee and food near St Albans Crown Court, plus practical updates from the Café 1 team.";
+  "Local guides to halal breakfast, lunch, coffee and food near Luton Crown Court, plus practical updates from the Café 1 team.";
 
 async function loadPublishedPosts() {
   const { data, error } = await supabase
@@ -17,7 +17,15 @@ async function loadPublishedPosts() {
     .eq("published", true)
     .order("published_at", { ascending: false, nullsFirst: false });
   if (error) throw error;
-  return (data ?? []) as Post[];
+  const oldPlace = ["st", "albans"].join(" ");
+  const oldSlug = ["st", "albans"].join("-");
+  return ((data ?? []) as Post[]).filter((post) => {
+    const searchable = [post.title, post.excerpt, ...(post.tags ?? [])]
+      .filter(Boolean)
+      .join(" ")
+      .toLowerCase();
+    return !searchable.includes(oldPlace) && !post.slug.toLowerCase().includes(oldSlug);
+  });
 }
 
 export const Route = createFileRoute("/blog/")({
@@ -30,7 +38,7 @@ export const Route = createFileRoute("/blog/")({
       jsonLdScript(
         breadcrumbJsonLd([
           { name: "Home", path: "/" },
-          { name: "St Albans food guide", path: "/blog" },
+          { name: "Luton food guide", path: "/blog" },
         ]),
       ),
     ],
@@ -65,20 +73,20 @@ function BlogIndex() {
       <main className="mx-auto max-w-6xl px-4 py-12">
         <header className="mb-10">
           <p className="text-sm font-semibold uppercase tracking-widest text-primary">
-            St Albans food guide
+            Luton food guide
           </p>
           <h1 className="mt-2 font-display text-4xl font-bold sm:text-5xl">
             Useful local food guides from Café 1
           </h1>
           <p className="mt-3 max-w-3xl text-muted-foreground">
-            Practical guides to breakfast, halal food, lunch, coffee, delivery and eating near St
-            Albans Crown Court—written by the team serving it.
+            Practical guides to breakfast, halal food, lunch and coffee near Luton Crown Court and
+            Futures House in Marsh Farm—written by the Café 1 team.
           </p>
           <nav aria-label="Popular local guides" className="mt-6 flex flex-wrap gap-2">
             {[
-              ["/breakfast-st-albans", "Breakfast in St Albans"],
-              ["/halal-food-st-albans", "Halal food in St Albans"],
-              ["/lunch-st-albans", "Lunch in St Albans"],
+              ["/breakfast-luton", "Breakfast in Luton"],
+              ["/halal-food-luton", "Halal food in Luton"],
+              ["/lunch-luton", "Lunch in Luton"],
             ].map(([href, label]) => (
               <a
                 key={href}
@@ -110,7 +118,8 @@ function BlogIndex() {
         </span>
         {!isLoading && (!posts || posts.length === 0) && (
           <div className="rounded-2xl border border-dashed border-border bg-card p-10 text-center text-muted-foreground">
-            No posts published yet. Check back soon.
+            Explore the Luton breakfast, halal food and lunch guides above. More local stories are
+            coming soon.
           </div>
         )}
 

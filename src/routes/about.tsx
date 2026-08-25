@@ -7,7 +7,6 @@ import {
   Leaf,
   MapPin,
   ShieldCheck,
-  Truck,
   Users,
   UtensilsCrossed,
 } from "lucide-react";
@@ -24,9 +23,9 @@ import {
   webPageJsonLd,
 } from "@/lib/seo";
 
-const title = "About Café 1 | Independent Halal Café in St Albans";
+const title = "About Café 1 | Independent Halal Café in Luton";
 const description =
-  "Meet Café 1, an independent halal café open to the public at St Albans Crown Court, serving all-day breakfast, lunch and coffee on weekdays.";
+  "Meet Café 1, an independent halal café serving Luton from Crown Court and Futures House in Marsh Farm, with all-day breakfast, lunch and coffee.";
 
 export const Route = createFileRoute("/about")({
   head: () => ({
@@ -58,9 +57,9 @@ const customerGroups = [
     text: "We are open to local workers, residents and the general public—not only people attending court.",
   },
   {
-    Icon: Truck,
+    Icon: MapPin,
     title: "Made for your day",
-    text: "Dine in, take away, collect an online order or choose local delivery within half a mile.",
+    text: "Choose Luton Crown Court or Futures House, then dine in or collect your takeaway.",
   },
 ];
 
@@ -74,15 +73,14 @@ function About() {
           <div className="mx-auto grid max-w-6xl gap-10 px-4 py-14 lg:grid-cols-[1fr_0.92fr] lg:items-center lg:py-20">
             <div className="relative z-10">
               <p className="text-sm font-semibold uppercase tracking-[0.2em] text-primary">
-                Independent since 2008
+                Independent Luton café
               </p>
               <h1 className="mt-4 max-w-3xl font-display text-5xl font-bold leading-[0.98] sm:text-6xl">
                 Good food, good prices and a friendly welcome.
               </h1>
               <p className="mt-6 max-w-2xl text-lg leading-relaxed text-muted-foreground">
-                Café 1 brings freshly prepared, 100% halal breakfasts, lunches, snacks and drinks to
-                St Albans Crown Court—with the same honest value our customers have trusted in Luton
-                since 2008.
+                Enjoy our freshly prepared, 100% halal breakfasts, lunches, snacks and drinks at
+                Luton Crown Court or Futures House in Marsh Farm.
               </p>
               <div className="mt-7 flex flex-wrap gap-3">
                 <Link
@@ -133,25 +131,24 @@ function About() {
                 Our story
               </p>
               <h2 id="our-story" className="mt-2 font-display text-4xl font-bold">
-                Local roots, a new St Albans chapter.
+                Proudly serving Luton.
               </h2>
               <p className="mt-5 leading-relaxed text-muted-foreground">
-                Café 1 started serving the Luton community in 2008 and grew into two popular local
-                locations. In May 2026, we opened at St Albans Crown Court, bringing that same
-                straightforward promise to a new community: generous choice, sensible prices and
-                service that feels personal.
+                Café 1 started with a straightforward promise: generous choice, sensible prices and
+                service that feels personal. That same promise now connects our two Luton cafés at
+                Crown Court and Futures House in Marsh Farm.
               </p>
               <p className="mt-4 leading-relaxed text-muted-foreground">
-                Whether you have ten minutes between appointments or time to sit down, our team is
-                here to make ordering simple and your visit genuinely welcoming.
+                We also have a third location at St Albans Crown Court, so if you are ever in St
+                Albans, please come and visit us there too.
               </p>
             </div>
 
             <ol className="relative space-y-6 border-l border-primary/25 pl-7">
               <li className="relative card-3d rounded-3xl border border-border bg-card p-6">
                 <span className="absolute -left-[2.15rem] top-7 h-3 w-3 rounded-full border-4 border-background bg-primary" />
-                <p className="text-sm font-bold text-primary">2008</p>
-                <h3 className="mt-1 font-display text-2xl font-bold">Café 1 begins in Luton</h3>
+                <p className="text-sm font-bold text-primary">Our Luton cafés</p>
+                <h3 className="mt-1 font-display text-2xl font-bold">A welcoming local menu</h3>
                 <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
                   A neighbourhood café built around affordable food, a broad menu and friendly
                   service.
@@ -159,11 +156,11 @@ function About() {
               </li>
               <li className="relative card-3d rounded-3xl border border-border bg-card p-6">
                 <span className="absolute -left-[2.15rem] top-7 h-3 w-3 rounded-full border-4 border-background bg-primary" />
-                <p className="text-sm font-bold text-primary">May 2026</p>
-                <h3 className="mt-1 font-display text-2xl font-bold">St Albans opens</h3>
+                <p className="text-sm font-bold text-primary">Growing locally</p>
+                <h3 className="mt-1 font-display text-2xl font-bold">Futures House joins Café 1</h3>
                 <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
-                  Our newest café opens at St Albans Crown Court for the court community and the
-                  wider public.
+                  Our Marsh Farm café brings the same menu and welcome to the community at Futures
+                  House.
                 </p>
               </li>
               <li className="relative card-3d rounded-3xl border border-primary/30 bg-primary-soft p-6">
@@ -171,8 +168,8 @@ function About() {
                 <p className="text-sm font-bold text-primary">Today</p>
                 <h3 className="mt-1 font-display text-2xl font-bold">In café and online</h3>
                 <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
-                  Dine-in, takeaway, pickup and tightly local delivery, backed by our own ordering
-                  and loyalty experience.
+                  Choose either Luton branch online, then dine in or collect your takeaway with a
+                  simple ordering and loyalty experience.
                 </p>
               </li>
             </ol>
@@ -228,13 +225,13 @@ function About() {
               {[
                 {
                   Icon: Clock3,
-                  title: "Mon–Fri",
-                  text: "Dine-in, pickup and takeaway · 08:00–17:00",
+                  title: "Luton Crown Court",
+                  text: "Monday–Friday · 09:00–17:00",
                 },
                 {
-                  Icon: Truck,
-                  title: "Local delivery",
-                  text: "08:30–16:30 · within half a mile of AL1 3JU",
+                  Icon: MapPin,
+                  title: "Futures House",
+                  text: "Mon–Fri 09:00–17:00 · weekends 10:00–18:00",
                 },
                 {
                   Icon: ShieldCheck,
@@ -243,8 +240,8 @@ function About() {
                 },
                 {
                   Icon: UtensilsCrossed,
-                  title: "Closed",
-                  text: "Weekends and England/Wales bank holidays",
+                  title: "How to order",
+                  text: "Dine in or takeaway from your chosen Luton branch",
                 },
               ].map(({ Icon, title, text }) => (
                 <div key={title} className="flex items-start gap-4 bg-neutral-950 p-6">

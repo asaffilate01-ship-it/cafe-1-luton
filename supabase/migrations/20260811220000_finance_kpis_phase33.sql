@@ -1,0 +1,8 @@
+-- Compatibility marker.
+--
+-- Lovable generated and applied the canonical Phase 33 finance migration as
+-- 20260811214754_1542aaa3-c874-48b8-bc64-257ad8dda913.sql from the uploaded
+-- Phase 33 SQL. Keep that earlier executable migration as the single source of
+-- schema changes and preserve this later uploaded timestamp as a no-op. Running
+-- both executable copies would recreate business_expenses_updated and break a
+-- clean Supabase database rebuild.

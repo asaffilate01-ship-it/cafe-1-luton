@@ -2,7 +2,7 @@ import { execFileSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 import { dirname, resolve } from "node:path";
 
-const CANONICAL_ORIGIN = "https://cafe1stalbans.co.uk";
+const CANONICAL_ORIGIN = "https://cafe1luton.co.uk";
 const PLACEHOLDER = /(?:replace(?:[_ -]?me)?|your[_ -]?project|example|changeme|placeholder)/i;
 
 function value(env, name) {

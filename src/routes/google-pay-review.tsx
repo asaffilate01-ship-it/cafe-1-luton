@@ -6,17 +6,17 @@ import { GooglePayDemo } from "@/components/google-pay-demo";
 export const Route = createFileRoute("/google-pay-review")({
   head: () => ({
     meta: [
-      { title: "Google Pay integration screens — Café 1 St Albans" },
+      { title: "Google Pay integration screens — Café 1 Luton" },
       {
         name: "description",
         content:
-          "Reference screens for the Café 1 St Albans Google Pay API integration review: payment method selection, Google Pay payment sheet and post-purchase confirmation.",
+          "Reference screens for the Café 1 Luton Google Pay API integration review: payment method selection, Google Pay payment sheet and post-purchase confirmation.",
       },
-      { property: "og:title", content: "Google Pay integration screens — Café 1 St Albans" },
+      { property: "og:title", content: "Google Pay integration screens — Café 1 Luton" },
       {
         property: "og:description",
         content:
-          "Reference screens for the Café 1 St Albans Google Pay API integration review: payment method selection, Google Pay payment sheet and post-purchase confirmation.",
+          "Reference screens for the Café 1 Luton Google Pay API integration review: payment method selection, Google Pay payment sheet and post-purchase confirmation.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
@@ -27,7 +27,7 @@ export const Route = createFileRoute("/google-pay-review")({
 });
 
 const AMOUNT = "18.50";
-const MERCHANT = "Cafe 1 St Albans";
+const MERCHANT = "Cafe 1 Luton";
 
 /** Official Google Pay mark for light backgrounds (hosted by Google). */
 const GPAY_MARK_LIGHT = "https://www.gstatic.com/instantbuy/svg/light_gpay.svg";
@@ -57,7 +57,7 @@ function GooglePayReview() {
         <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
           Google Pay API — integration screens
         </p>
-        <h1 className="font-display text-2xl font-bold">Café 1 St Albans</h1>
+        <h1 className="font-display text-2xl font-bold">Café 1 Luton</h1>
         <p className="mt-1 text-sm text-muted-foreground">
           Test environment. Each tab is one of the screens requested for the Google Pay API
           integration review.

@@ -10,16 +10,16 @@ export const Route = createFileRoute("/google-pay-test")({
   loader: async () => await getWalletConfig(),
   head: () => ({
     meta: [
-      { title: "Google Pay test payment — Café 1 St Albans" },
+      { title: "Google Pay test payment — Café 1 Luton" },
       {
         name: "description",
         content:
-          "Internal sandbox for running Google Pay TEST environment payments against the Café 1 St Albans checkout before going live.",
+          "Internal sandbox for running Google Pay TEST environment payments against the Café 1 Luton checkout before going live.",
       },
-      { property: "og:title", content: "Google Pay test payment — Café 1 St Albans" },
+      { property: "og:title", content: "Google Pay test payment — Café 1 Luton" },
       {
         property: "og:description",
-        content: "Run a Google Pay test-environment payment sheet for Café 1 St Albans.",
+        content: "Run a Google Pay test-environment payment sheet for Café 1 Luton.",
       },
       { property: "og:type", content: "website" },
       { name: "robots", content: "noindex, nofollow" },
@@ -96,7 +96,7 @@ function GooglePayTest() {
             <GooglePayDemo
               key={`${env}-${amount}`}
               amount={amount || "1.00"}
-              merchantName="Cafe 1 St Albans"
+              merchantName="Cafe 1 Luton"
               environment={env}
               {...(env === "PRODUCTION" && googlePayMerchantId
                 ? { merchantId: googlePayMerchantId }

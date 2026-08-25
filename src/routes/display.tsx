@@ -28,15 +28,15 @@ import type { RemoteDisplayMessage } from "@/lib/customer-display-relay";
 export const Route = createFileRoute("/display")({
   head: () => ({
     meta: [
-      { title: "Customer display — Cafe 1 St Albans" },
+      { title: "Customer display — Cafe 1 Luton" },
       {
         name: "description",
         content:
-          "Second-screen customer display for Cafe 1 at St Albans Crown Court: shows the live order at the counter and plays cafe adverts between sales.",
+          "Second-screen customer display for Cafe 1 at Luton Crown Court: shows the live order at the counter and plays cafe adverts between sales.",
       },
       { name: "robots", content: "noindex" },
       { name: "referrer", content: "no-referrer" },
-      { property: "og:title", content: "Customer display — Cafe 1 St Albans" },
+      { property: "og:title", content: "Customer display — Cafe 1 Luton" },
       { property: "og:description", content: "Counter-facing order and advert screen for Cafe 1." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
@@ -286,7 +286,7 @@ function DisplayPage() {
           </div>
 
           <div className="flex items-center justify-between">
-            <p className="text-xl text-white/50">St Albans Crown Court · cafe1stalbans.co.uk</p>
+            <p className="text-xl text-white/50">Luton Crown Court · cafe1luton.co.uk</p>
             <div className="flex items-center gap-4">
               <span className="rounded-full bg-black/35 px-3 py-1 text-xs font-semibold text-white/55 backdrop-blur">
                 {displayRelay.configured

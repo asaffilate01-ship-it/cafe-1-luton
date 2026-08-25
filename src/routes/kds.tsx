@@ -5,7 +5,14 @@ import { signOutAndRedirect } from "@/lib/sign-out";
 import { useEffect, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useServerFn } from "@tanstack/react-start";
-import { updateOrderStatus, setOrderFulfilment, setOrderChannel, setOrderPreparedBy, cancelTabOrder, settleTabOrder } from "@/lib/orders.functions";
+import {
+  updateOrderStatus,
+  setOrderFulfilment,
+  setOrderChannel,
+  setOrderPreparedBy,
+  cancelTabOrder,
+  settleTabOrder,
+} from "@/lib/orders.functions";
 import { toast } from "sonner";
 import { useSession, useRoles } from "@/hooks/use-auth";
 import { useAlertOnIncrease, useNotificationPermission, playChime } from "@/hooks/use-order-alerts";
@@ -54,6 +61,8 @@ import {
 } from "@/lib/cooking";
 import { useConnectionStatus } from "@/hooks/use-connection-status";
 import { askConfirm, askPrompt } from "@/lib/confirm";
+import { useSites } from "@/hooks/use-sites";
+import { SiteSwitcher } from "@/components/site-switcher";
 
 type Item = {
   id: string;
@@ -92,6 +101,7 @@ type Order = {
   prepared_by: string | null;
   jury_room: string | null;
   court_location: string | null;
+  site_id: string;
 };
 type Ticket = Order & { items: Item[]; needsCooking: boolean };
 
@@ -322,7 +332,6 @@ function noteText(o: {
   return parts.join(" · ");
 }
 
-
 export const Route = createFileRoute("/kds")({
   head: () => ({
     meta: [
@@ -344,6 +353,7 @@ function KdsPage() {
 }
 
 function KDS() {
+  const sites = useSites();
   const [tickets, setTickets] = useState<Ticket[]>([]);
   // Ids currently shown on the board — used to announce cancellations/refunds.
   const liveIds = useRef<Set<string>>(new Set());
@@ -411,10 +421,11 @@ function KDS() {
   useEffect(() => {
     async function load() {
       const COLUMNS =
-        "id, order_number, status, type, customer_name, created_at, schedule_mode, scheduled_for, table_number, source, payment_method, payment_status, customer_phone, company_name, address_line1, address_line2, city, postcode, delivery_notes, pos_terminal, prepared_by, jury_room, court_location";
+        "id, order_number, status, type, customer_name, created_at, schedule_mode, scheduled_for, table_number, source, payment_method, payment_status, customer_phone, company_name, address_line1, address_line2, city, postcode, delivery_notes, pos_terminal, prepared_by, jury_room, court_location, site_id";
       const { data: orders, error: ordersError } = await supabase
         .from("orders")
         .select(COLUMNS)
+        .eq("site_id", sites.siteId)
         .in("status", ["preparing", "ready"])
         .order("created_at");
       // A dropped connection or a token refresh mid-request returns no rows.
@@ -431,6 +442,7 @@ function KDS() {
         const { data: recent } = await supabase
           .from("orders")
           .select(COLUMNS)
+          .eq("site_id", sites.siteId)
           .gte("created_at", since.toISOString())
           .in("status", [
             "paid",
@@ -481,8 +493,8 @@ function KDS() {
         cats = fresh.cats;
       } else {
         const [m, c] = await Promise.all([
-          getMenuItems(),
-          supabase.from("menu_categories").select("id, name"),
+          getMenuItems({ data: { site_id: sites.siteId } }),
+          supabase.from("menu_categories").select("id, name").eq("site_id", sites.siteId),
         ]);
         menu = m;
         cats = (c as { data: unknown }).data;
@@ -618,10 +630,11 @@ function KDS() {
     }
     void run();
     const ch = supabase
-      .channel("kds")
+      .channel(`kds-${sites.siteId}`)
       .on("postgres_changes", { event: "*", schema: "public", table: "orders" }, (payload) => {
         const o = (payload.new ?? null) as Partial<Order> | null;
         const removedRow = (payload.old ?? null) as Partial<Order> | null;
+        if (o?.site_id && o.site_id !== sites.siteId) return;
         const voided =
           !!o &&
           (o.status === "cancelled" ||
@@ -648,7 +661,9 @@ function KDS() {
         if (!dropId && o?.id && liveIds.current.has(o.id) && (o.status || "prepared_by" in o)) {
           const next = o.status ? (o.status as Order["status"]) : undefined;
           const prep = "prepared_by" in o ? ((o as Order).prepared_by ?? null) : undefined;
-          const stillLive = next ? next === "preparing" || next === "ready" || next === "paid" : true;
+          const stillLive = next
+            ? next === "preparing" || next === "ready" || next === "paid"
+            : true;
           if (next && !stillLive && !recall) {
             liveIds.current.delete(o.id);
             clearedIds.current.set(o.id, Date.now());
@@ -691,7 +706,7 @@ function KDS() {
       document.removeEventListener("visibilitychange", onVisible);
       supabase.removeChannel(ch);
     };
-  }, [getMenuItems, recall]);
+  }, [getMenuItems, recall, sites.siteId]);
 
   // Auto-poll SumUp POS every 30s while KDS is open (staff/admin only)
   useEffect(() => {
@@ -1108,7 +1123,12 @@ function KDS() {
           </span>
         </div>
       )}
-      <ManualOrderDialog open={manualOpen} onClose={() => setManualOpen(false)} />
+      <ManualOrderDialog
+        open={manualOpen}
+        onClose={() => setManualOpen(false)}
+        siteId={sites.siteId}
+        courtFeatures={sites.site?.postcode?.toUpperCase() !== "LU3 3QB"}
+      />
       <EditOrderDialog
         order={(() => {
           const t = tickets.find((x) => x.id === editId);
@@ -1203,12 +1223,24 @@ function KDS() {
           <div className="mx-auto grid max-w-[110rem] grid-cols-[minmax(0,1fr)_auto] items-center gap-x-3 gap-y-2 px-3 py-2.5 sm:px-4 lg:py-3">
             <h1 className="min-w-0 truncate font-display text-base font-bold sm:text-lg lg:text-2xl">
               <span className="kds-title-mobile lg:hidden">
-                KDS · {visibleTickets.length} active
+                {sites.site?.name ?? "Café 1"} KDS · {visibleTickets.length} active
                 <span className="ml-1 text-xs font-semibold opacity-70">{station}</span>
               </span>
-              <span className="kds-title-desktop hidden lg:inline">Kitchen Display · Cafe1</span>
+              <span className="kds-title-desktop hidden lg:inline">
+                Kitchen Display · {sites.site?.name ?? "Café 1"}
+              </span>
             </h1>
             <div className="flex min-w-0 flex-wrap items-center justify-end gap-2">
+              <div className="rounded-xl bg-background px-1 text-foreground">
+                <SiteSwitcher
+                  sites={sites.sites}
+                  siteId={sites.siteId}
+                  onChange={sites.setSiteId}
+                  compact
+                  loading={sites.loading}
+                  error={sites.error}
+                />
+              </div>
               <span className="hidden text-sm font-semibold opacity-80 sm:inline">
                 {visibleTickets.length} active
               </span>
@@ -1807,9 +1839,9 @@ function KDS() {
                       return <Icon className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />;
                     })()}
                     <span className="truncate">
-                    {t.source === "sumup_pos" && t.type === "collection"
-                      ? "TAKEAWAY"
-                      : (TYPE_LABEL[t.type] ?? t.type.replace("_", " ").toUpperCase())}
+                      {t.source === "sumup_pos" && t.type === "collection"
+                        ? "TAKEAWAY"
+                        : (TYPE_LABEL[t.type] ?? t.type.replace("_", " ").toUpperCase())}
                     </span>
                   </p>
                   <p className="shrink-0 text-[11px] font-black leading-none">
@@ -1852,16 +1884,17 @@ function KDS() {
               </p>
               {(t.jury_room ?? t.court_location) &&
                 (t.type === "delivery" || t.type === "dine_in") && (
-                <div className="mt-1.5 rounded-lg border-2 border-red-600 bg-red-50 p-1.5 text-red-900">
-                  <p className="text-[9px] font-black uppercase tracking-widest">
-                    {t.type === "delivery" ? "Deliver to (court)" : "Serve at (court)"}
-                  </p>
-                  <p className="font-display text-base font-black uppercase leading-tight">
-                    {t.jury_room ?? t.court_location}
-                  </p>
-                </div>
-              )}
-              {!t.jury_room && !t.court_location &&
+                  <div className="mt-1.5 rounded-lg border-2 border-red-600 bg-red-50 p-1.5 text-red-900">
+                    <p className="text-[9px] font-black uppercase tracking-widest">
+                      {t.type === "delivery" ? "Deliver to (court)" : "Serve at (court)"}
+                    </p>
+                    <p className="font-display text-base font-black uppercase leading-tight">
+                      {t.jury_room ?? t.court_location}
+                    </p>
+                  </div>
+                )}
+              {!t.jury_room &&
+                !t.court_location &&
                 (t.type === "delivery" || t.postcode || t.address_line1 || t.company_name) && (
                   <div className="mt-1.5 rounded-lg border border-slate-900 bg-white p-1.5 text-xs">
                     <p className="text-[9px] font-black uppercase tracking-widest text-slate-500">

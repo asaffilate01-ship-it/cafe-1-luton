@@ -9,8 +9,8 @@ import {
 
 describe("juror rules", () => {
   it("matches only approved court delivery addresses", () => {
-    expect(isCourtDeliveryAddress("St Albans Crown Court, Bricket Road", "AL1 3JU")).toBe(true);
-    expect(isCourtDeliveryAddress("1 High Street", "AL1 1AA")).toBe(false);
+    expect(isCourtDeliveryAddress("Luton Crown Court, 7–9 George Street", "LU1 2AA")).toBe(true);
+    expect(isCourtDeliveryAddress("1 High Street", "MK9 1AA")).toBe(false);
   });
 
   it("caps the discount at the remaining payable food", () => {

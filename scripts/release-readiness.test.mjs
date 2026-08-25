@@ -4,7 +4,7 @@ import { test } from "node:test";
 import { buildGoLiveDecision, evaluateProductionSmoke } from "./release-readiness.mjs";
 
 const commit = "193380f2a1ac82c0c33f7085680d465f2eda0c80";
-const origin = "https://cafe1stalbans.co.uk";
+const origin = "https://cafe1luton.co.uk";
 
 function passingSmoke() {
   return {

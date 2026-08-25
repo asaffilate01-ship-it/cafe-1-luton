@@ -20,7 +20,7 @@ async function waitForBridge(url, token) {
   for (let attempt = 0; attempt < 40; attempt += 1) {
     try {
       const response = await fetch(`${url}/v1/health`, {
-        headers: { Authorization: `Bearer ${token}`, Origin: "https://cafe1stalbans.co.uk" },
+        headers: { Authorization: `Bearer ${token}`, Origin: "https://cafe1luton.co.uk" },
       });
       if (response.ok) return;
     } catch {
@@ -40,7 +40,7 @@ test("device bridge enforces origin, bearer token and request validation", async
       ...process.env,
       CAFE1_BRIDGE_PORT: String(port),
       CAFE1_BRIDGE_TOKEN: token,
-      CAFE1_ALLOWED_ORIGINS: "https://cafe1stalbans.co.uk",
+      CAFE1_ALLOWED_ORIGINS: "https://cafe1luton.co.uk",
     },
     stdio: ["ignore", "ignore", "pipe"],
   });
@@ -53,7 +53,7 @@ test("device bridge enforces origin, bearer token and request validation", async
   await waitForBridge(url, token);
 
   const missingToken = await fetch(`${url}/v1/health`, {
-    headers: { Origin: "https://cafe1stalbans.co.uk" },
+    headers: { Origin: "https://cafe1luton.co.uk" },
   });
   assert.equal(missingToken.status, 401);
   assert.equal(missingToken.headers.get("cache-control"), "no-store");
@@ -64,7 +64,7 @@ test("device bridge enforces origin, bearer token and request validation", async
   assert.equal(invalidOrigin.status, 403);
 
   const health = await fetch(`${url}/v1/health`, {
-    headers: { Authorization: `Bearer ${token}`, Origin: "https://cafe1stalbans.co.uk" },
+    headers: { Authorization: `Bearer ${token}`, Origin: "https://cafe1luton.co.uk" },
   });
   assert.equal(health.status, 200, childError);
   assert.deepEqual(await health.json(), {
@@ -72,14 +72,14 @@ test("device bridge enforces origin, bearer token and request validation", async
     service: "cafe1-device-bridge",
     printer: { configured: false, transport: "unconfigured" },
   });
-  assert.equal(health.headers.get("access-control-allow-origin"), "https://cafe1stalbans.co.uk");
+  assert.equal(health.headers.get("access-control-allow-origin"), "https://cafe1luton.co.uk");
 
   const invalidPrint = await fetch(`${url}/v1/print`, {
     method: "POST",
     headers: {
       Authorization: `Bearer ${token}`,
       "Content-Type": "application/json",
-      Origin: "https://cafe1stalbans.co.uk",
+      Origin: "https://cafe1luton.co.uk",
     },
     body: JSON.stringify({ jobs: [] }),
   });

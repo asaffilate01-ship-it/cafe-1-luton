@@ -49,7 +49,7 @@ const FULFILMENTS = [
 ] as const;
 
 /** Where a "Dine in — Judges' room" ticket is served. */
-const JUDGES_ROOM = "Judges' Room — St Albans Court";
+const JUDGES_ROOM = "Judges' Room — Luton Court";
 
 type Fulfilment = (typeof FULFILMENTS)[number]["value"];
 
@@ -58,10 +58,14 @@ export function ManualOrderDialog({
   open,
   onClose,
   onCreated,
+  siteId,
+  courtFeatures = true,
 }: {
   open: boolean;
   onClose: () => void;
   onCreated?: () => void;
+  siteId: string;
+  courtFeatures?: boolean;
 }) {
   const create = useServerFn(createManualOrder);
   const loadAccounts = useServerFn(listAccounts);
@@ -71,7 +75,7 @@ export function ManualOrderDialog({
   const [accountId, setAccountId] = useState("");
   const [newAccountName, setNewAccountName] = useState("");
   const [addingAccount, setAddingAccount] = useState(false);
-  const [channel, setChannel] = useState<ManualChannel>("deliveroo");
+  const [channel, setChannel] = useState<ManualChannel>(courtFeatures ? "deliveroo" : "public");
   const [reference, setReference] = useState("");
   const [customerName, setCustomerName] = useState("");
   const [type, setType] = useState<Fulfilment>("collection");
@@ -95,7 +99,7 @@ export function ManualOrderDialog({
   const [totalTouched, setTotalTouched] = useState(false);
 
   const { data: menu = [] } = useQuery({
-    queryKey: ["manual-order-menu"],
+    queryKey: ["manual-order-menu", siteId],
     enabled: open,
     staleTime: 5 * 60_000,
     queryFn: async (): Promise<MenuChoice[]> => {
@@ -104,8 +108,9 @@ export function ManualOrderDialog({
           .from("menu_items")
           .select("id, name, price_cents, category_id, active, sort_order")
           .eq("active", true)
+          .eq("site_id", siteId)
           .order("sort_order"),
-        supabase.from("menu_categories").select("id, name"),
+        supabase.from("menu_categories").select("id, name").eq("site_id", siteId),
       ]);
       const catName = new Map((cats ?? []).map((c) => [c.id, c.name as string]));
       return (items ?? []).map((i) => ({
@@ -163,13 +168,16 @@ export function ManualOrderDialog({
     try {
       const row = await addAccount({ data: { name } });
       setAccounts((current) =>
-        (current.some((a) => a.id === row.id) ? current : [...current, { id: row.id, name: row.name }]).sort(
-          (a, b) => a.name.localeCompare(b.name),
-        ),
+        (current.some((a) => a.id === row.id)
+          ? current
+          : [...current, { id: row.id, name: row.name }]
+        ).sort((a, b) => a.name.localeCompare(b.name)),
       );
       setAccountId(row.id);
       setNewAccountName("");
-      toast.success(row.existed ? `${row.name} already had a tab — selected` : `${row.name} tab added`);
+      toast.success(
+        row.existed ? `${row.name} already had a tab — selected` : `${row.name} tab added`,
+      );
     } catch (cause) {
       toast.error(cause instanceof Error ? cause.message : "Could not add the account");
     } finally {
@@ -180,6 +188,9 @@ export function ManualOrderDialog({
   if (!open) return null;
 
   const meta = CHANNELS.find((c) => c.value === channel)!;
+  const availableChannels = courtFeatures
+    ? CHANNELS
+    : CHANNELS.filter((choice) => !["jury", "judge"].includes(choice.value));
   const isMarketplace = ["deliveroo", "just_eat", "uber_eats", "tgtg"].includes(channel);
   const isCourt = channel === "jury" || channel === "judge";
 
@@ -239,7 +250,9 @@ export function ManualOrderDialog({
         tabId = row.id;
         tabName = row.name;
         setAccounts((current) =>
-          current.some((a) => a.id === row.id) ? current : [...current, { id: row.id, name: row.name }],
+          current.some((a) => a.id === row.id)
+            ? current
+            : [...current, { id: row.id, name: row.name }],
         );
         setAccountId(row.id);
         setNewAccountName("");
@@ -287,12 +300,11 @@ export function ManualOrderDialog({
     try {
       const result = await create({
         data: {
+          site_id: siteId,
           channel,
           reference: reference.trim() || undefined,
           customer_name:
-            customerName.trim() ||
-            (paymentMethod === "account" ? tabName : undefined) ||
-            undefined,
+            customerName.trim() || (paymentMethod === "account" ? tabName : undefined) || undefined,
           // "Judges' room" is a dine-in ticket served to a specific room.
           type: type === "dine_in_judges" ? "dine_in" : type,
           total_cents: Math.round((Number(total) || 0) * 100),
@@ -376,7 +388,7 @@ export function ManualOrderDialog({
 
         <p className="mb-2 text-sm font-semibold">Where is it from?</p>
         <div className="flex flex-wrap gap-2">
-          {CHANNELS.map((c) => (
+          {availableChannels.map((c) => (
             <button
               key={c.value}
               type="button"
@@ -466,8 +478,8 @@ export function ManualOrderDialog({
 
           {type === "dine_in_judges" && (
             <p className="text-sm font-medium text-muted-foreground sm:col-span-2">
-              Serving to the <strong>Judges&rsquo; room</strong> — this shows on the kitchen
-              display so the runner knows where to take it.
+              Serving to the <strong>Judges&rsquo; room</strong> — this shows on the kitchen display
+              so the runner knows where to take it.
             </p>
           )}
 
@@ -492,7 +504,11 @@ export function ManualOrderDialog({
             <>
               <label className="text-sm font-medium">
                 Building / office
-                <input value={company} onChange={(e) => setCompany(e.target.value)} className={field} />
+                <input
+                  value={company}
+                  onChange={(e) => setCompany(e.target.value)}
+                  className={field}
+                />
               </label>
               <label className="text-sm font-medium">
                 Phone
@@ -500,11 +516,19 @@ export function ManualOrderDialog({
               </label>
               <label className="text-sm font-medium">
                 Address line 1
-                <input value={address1} onChange={(e) => setAddress1(e.target.value)} className={field} />
+                <input
+                  value={address1}
+                  onChange={(e) => setAddress1(e.target.value)}
+                  className={field}
+                />
               </label>
               <label className="text-sm font-medium">
                 Address line 2
-                <input value={address2} onChange={(e) => setAddress2(e.target.value)} className={field} />
+                <input
+                  value={address2}
+                  onChange={(e) => setAddress2(e.target.value)}
+                  className={field}
+                />
               </label>
               <label className="text-sm font-medium">
                 Postcode
@@ -578,7 +602,8 @@ export function ManualOrderDialog({
                 </button>
               </div>
               <p className="mt-1 text-xs text-muted-foreground">
-                Saved to the tab list so you can pick it next time and filter it on the accounts page.
+                Saved to the tab list so you can pick it next time and filter it on the accounts
+                page.
               </p>
             </div>
           )}

@@ -25,6 +25,7 @@ export const MANUAL_CHANNELS = [
 export type ManualChannel = (typeof MANUAL_CHANNELS)[number];
 
 const OrderSchema = z.object({
+  site_id: z.string().uuid(),
   channel: z.enum(MANUAL_CHANNELS),
   /** Short reference from the tablet/receipt, e.g. "F3K9". Optional for walk-ins. */
   reference: z.string().max(40).optional(),
@@ -122,11 +123,16 @@ export const createManualOrder = createServerFn({ method: "POST" })
     const { data: inserted, error } = await supabaseAdmin
       .from("orders")
       .insert({
+        site_id: data.site_id,
         customer_name: data.customer_name?.trim() || FALLBACK_NAME[data.channel],
         customer_phone: data.customer_phone?.trim() || "",
         type: data.type,
         status: "preparing",
-        payment_status: data.paid ? "paid" : data.payment_method === "account" ? "on_account" : "pending",
+        payment_status: data.paid
+          ? "paid"
+          : data.payment_method === "account"
+            ? "on_account"
+            : "pending",
         account_id: data.payment_method === "account" ? (data.account_id ?? null) : null,
         payment_method: data.payment_method,
         subtotal_cents: total,

@@ -1,0 +1,1 @@
+ALTER TABLE public.orders ADD COLUMN IF NOT EXISTS notes_manual boolean NOT NULL DEFAULT false;

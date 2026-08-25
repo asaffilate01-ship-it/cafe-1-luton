@@ -8,7 +8,7 @@ on:
       base_url:
         description: HTTPS origin to verify after deployment
         required: true
-        default: https://cafe1stalbans.co.uk
+        default: https://cafe1luton.co.uk
         type: string
       expected_release_sha:
         description: Expected deployed 40-character Git commit; blank uses the workflow commit
@@ -23,7 +23,7 @@ concurrency:
   cancel-in-progress: false
 
 env:
-  DEFAULT_PRODUCTION_BASE_URL: https://cafe1stalbans.co.uk
+  DEFAULT_PRODUCTION_BASE_URL: https://cafe1luton.co.uk
 
 jobs:
   smoke:

@@ -1,0 +1,6 @@
+-- Compatibility marker.
+--
+-- This migration was accidentally generated from the first section of
+-- 20260802090000_operations_controls_v2.sql. The complete schema already runs
+-- in the earlier timestamped migration. Keeping this version as a no-op
+-- preserves Lovable/Supabase migration history without replaying the DDL.

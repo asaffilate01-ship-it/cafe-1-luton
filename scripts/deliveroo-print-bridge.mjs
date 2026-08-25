@@ -11,14 +11,14 @@
  *
  * Optional env:
  *   BRIDGE_PORT     listen port (default 9100)
- *   CAFE1_URL       target site (default https://cafe1stalbans.co.uk)
+ *   CAFE1_URL       target site (default https://cafe1luton.co.uk)
  *   PRINTER_HOST    if set, the receipt is also relayed to the real printer
  *   PRINTER_PORT    real printer port (default 9100)
  */
 import net from "node:net";
 
 const PORT = Number(process.env.BRIDGE_PORT || 9100);
-const BASE = (process.env.CAFE1_URL || "https://cafe1stalbans.co.uk").replace(/\/$/, "");
+const BASE = (process.env.CAFE1_URL || "https://cafe1luton.co.uk").replace(/\/$/, "");
 const SECRET = process.env.DELIVEROO_BRIDGE_SECRET;
 const PRINTER_HOST = process.env.PRINTER_HOST || "";
 const PRINTER_PORT = Number(process.env.PRINTER_PORT || 9100);

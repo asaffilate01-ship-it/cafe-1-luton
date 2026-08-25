@@ -1,16 +1,16 @@
 import { createFileRoute } from "@tanstack/react-router";
 import type {} from "@tanstack/react-start";
 
-const BASE_URL = "https://cafe1stalbans.co.uk";
+const BASE_URL = "https://cafe1luton.co.uk";
 const STATIC_LAST_MODIFIED = "2026-08-09";
 
 const PUBLIC_ROUTES = [
   "/",
   "/menu",
   "/order-direct",
-  "/breakfast-st-albans",
-  "/halal-food-st-albans",
-  "/lunch-st-albans",
+  "/breakfast-luton",
+  "/halal-food-luton",
+  "/lunch-luton",
   "/blog",
   "/socials",
   "/about",

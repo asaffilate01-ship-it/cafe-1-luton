@@ -42,7 +42,7 @@ async function hkdf(salt: Uint8Array, ikm: Uint8Array, info: Uint8Array, length:
 async function vapidHeader(endpoint: string): Promise<string> {
   const publicKey = process.env["VAPID_PUBLIC_KEY"]!;
   const privateKey = process.env["VAPID_PRIVATE_KEY"]!;
-  const subject = process.env["VAPID_SUBJECT"] ?? "mailto:hello@cafe1stalbans.co.uk";
+  const subject = process.env["VAPID_SUBJECT"] ?? "mailto:hello@cafe1luton.co.uk";
   const audience = new URL(endpoint).origin;
   const raw = b64urlToBytes(publicKey);
   const jwk: JsonWebKey = {

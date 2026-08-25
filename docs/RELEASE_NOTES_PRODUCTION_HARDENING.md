@@ -19,7 +19,7 @@ This release combines the hardened payment/till foundation, Operations v2 and th
 ### Go-live repair layer
 
 - Preserves the three duplicate migration timestamps as no-ops so clean database rebuilds no longer replay policies.
-- Adds a forward-only release migration that confirms postcode AL1 3JU.
+- Adds a forward-only release migration that confirms postcode LU1 2AA.
 - Requires AAL2 for manager-only Operations RPCs and adds in-app authenticator enrolment/verification.
 - Removes internal menu cost, barcode, preparation and station fields from customer database access.
 - Adds security headers and no-store caching for protected routes.

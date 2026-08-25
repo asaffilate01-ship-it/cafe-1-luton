@@ -19,7 +19,7 @@ const CounterBasketSchema = z.object({
   customer_name: z.string().min(1).max(100),
   type: z.enum(["dine_in", "collection"]),
   table_number: z.string().max(20).optional(),
-  pos_terminal: z.enum(["jury", "judge", "public"]),
+  pos_terminal: z.enum(["jury", "judge", "public", "futures_public"]),
   voucher_code: z.string().min(1).max(40).optional(),
   voucher_pin: z
     .string()
@@ -61,17 +61,23 @@ async function validateCounterModifierRules(
     .in("id", itemIds);
   if (menuError) throw new Error(menuError.message);
   const menuRows = (menu ?? []) as CounterMenuRow[];
-  const categories = [...new Set(menuRows.map((item) => item.category_id).filter(Boolean))] as string[];
+  const categories = [
+    ...new Set(menuRows.map((item) => item.category_id).filter(Boolean)),
+  ] as string[];
   const [byItem, byCategory] = await Promise.all([
     supabase
       .from("menu_modifiers")
-      .select("id,name,category_id,item_id,group_name,group_type,required,min_selections,max_selections,is_exclusive")
+      .select(
+        "id,name,category_id,item_id,group_name,group_type,required,min_selections,max_selections,is_exclusive",
+      )
       .eq("active", true)
       .in("item_id", itemIds),
     categories.length
       ? supabase
           .from("menu_modifiers")
-          .select("id,name,category_id,item_id,group_name,group_type,required,min_selections,max_selections,is_exclusive")
+          .select(
+            "id,name,category_id,item_id,group_name,group_type,required,min_selections,max_selections,is_exclusive",
+          )
           .eq("active", true)
           .in("category_id", categories)
           .is("item_id", null)

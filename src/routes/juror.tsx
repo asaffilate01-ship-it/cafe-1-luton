@@ -51,13 +51,13 @@ export const Route = createFileRoute("/juror")({
   }),
   head: () => ({
     meta: [
-      { title: "Juror Voucher Scheme — Café 1, St Albans Crown Court" },
+      { title: "Juror Voucher Scheme — Café 1, Luton Crown Court" },
       {
         name: "description",
         content:
           "Opt into the Café 1 Juror Voucher Scheme with your HMCTS Juror ID, get your one-time six-digit PIN, check today's £5.71 allowance and order from the dedicated Juror Menu for collection or jury room delivery.",
       },
-      { property: "og:title", content: "Juror Voucher Scheme — Café 1, St Albans Crown Court" },
+      { property: "og:title", content: "Juror Voucher Scheme — Café 1, Luton Crown Court" },
       {
         property: "og:description",
         content:
@@ -209,7 +209,7 @@ function JurorPage() {
             </h1>
             <p className="mt-4 max-w-2xl text-lg text-primary-foreground/85">
               A {money(JUROR_DAILY_ALLOWANCE_CENTS)} allowance for every sitting day of your jury
-              service, redeemable at Café 1 inside St Albans Crown Court. Your voucher is your HMCTS
+              service, redeemable at Café 1 inside Luton Crown Court. Your voucher is your HMCTS
               Juror ID — we never see your name, email or any other personal details.
             </p>
             <Link

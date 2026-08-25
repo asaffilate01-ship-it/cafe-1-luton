@@ -44,7 +44,7 @@ After deployment, retain exact-release smoke evidence:
 
 ```bash
 EXPECTED_RELEASE_SHA="$(git rev-parse HEAD)" \
-PRODUCTION_BASE_URL="https://cafe1stalbans.co.uk" \
+PRODUCTION_BASE_URL="https://cafe1luton.co.uk" \
 npm run smoke:production -- --json release-evidence/production-smoke.json
 ```
 

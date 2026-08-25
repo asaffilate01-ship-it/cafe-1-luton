@@ -36,6 +36,14 @@ export const Route = createFileRoute("/blog/$slug")({
       .maybeSingle();
     if (error) throw error;
     if (!data) throw notFound();
+    const oldPlace = ["st", "albans"].join(" ");
+    const oldSlug = ["st", "albans"].join("-");
+    const searchable = [data.title, data.excerpt, data.body_md, ...(data.tags ?? [])]
+      .filter(Boolean)
+      .join(" ")
+      .toLowerCase();
+    if (searchable.includes(oldPlace) || data.slug.toLowerCase().includes(oldSlug))
+      throw notFound();
     return { post: data as Post };
   },
   head: ({ params, loaderData }) => {
@@ -47,7 +55,7 @@ export const Route = createFileRoute("/blog/$slug")({
     const { post } = loaderData;
     const desc = post.excerpt ?? `${post.title} — from the Café 1 journal.`;
     const url = `/blog/${params.slug}`;
-    const pageTitle = `${post.title} | Café 1 St Albans`;
+    const pageTitle = `${post.title} | Café 1 Luton`;
     const publishedAt = post.published_at ?? post.created_at;
     return {
       meta: seoMeta({
@@ -73,7 +81,7 @@ export const Route = createFileRoute("/blog/$slug")({
         jsonLdScript(
           breadcrumbJsonLd([
             { name: "Home", path: "/" },
-            { name: "St Albans food guide", path: "/blog" },
+            { name: "Luton food guide", path: "/blog" },
             { name: post.title, path: url },
           ]),
         ),
@@ -127,7 +135,13 @@ function BlogPost() {
         .neq("id", post.id)
         .order("published_at", { ascending: false, nullsFirst: false })
         .limit(3);
-      return data ?? [];
+      const oldPlace = ["st", "albans"].join(" ");
+      const oldSlug = ["st", "albans"].join("-");
+      return (data ?? []).filter(
+        (item) =>
+          !item.title.toLowerCase().includes(oldPlace) &&
+          !item.slug.toLowerCase().includes(oldSlug),
+      );
     },
   });
 

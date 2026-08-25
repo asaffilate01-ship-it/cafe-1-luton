@@ -22,17 +22,16 @@ const settings = {
   closed_message: null,
   delivery_open_time: "08:30:00",
   delivery_close_time: "16:30:00",
-  delivery_origin_postcode: "AL1 3JU",
+  delivery_origin_postcode: "LU1 2AA",
   delivery_radius_m: 805,
   vat_registered: false,
   vat_number: null,
 };
 
 describe("confirmed Cafe 1 trading rules", () => {
-  it("publishes the correct structured opening time and half-mile radius", () => {
-    expect(NAP.openTime).toBe("08:00");
+  it("publishes the Crown Court opening time", () => {
+    expect(NAP.openTime).toBe("09:00");
     expect(NAP.closeTime).toBe("17:00");
-    expect(NAP.deliveryRadiusMetres).toBe(805);
   });
 
   it("closes on weekends and points to Monday", () => {

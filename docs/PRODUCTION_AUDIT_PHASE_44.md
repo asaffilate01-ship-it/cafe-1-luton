@@ -14,7 +14,7 @@ Phase 44 closes the remaining software-controlled launch gap without claiming th
 
 1. Freeze `main` and deploy its exact 40-character SHA through Lovable.
 2. Set `PUBLIC_RELEASE_SHA` to that exact SHA and deploy all migrations/server routes.
-3. Run Production smoke and Release candidate evidence against `https://cafe1stalbans.co.uk`.
+3. Run Production smoke and Release candidate evidence against `https://cafe1luton.co.uk`.
 4. Record exact-SHA CI, database, CodeQL, browser and smoke evidence through **Record verified release evidence**.
 5. Work through the generated launch plan in order, recording only non-secret references.
 6. Enable the selected `DELIVEROO_INGEST_MODE` and `JUSTEAT_INGEST_MODE`; complete one real order from each partner through KDS.

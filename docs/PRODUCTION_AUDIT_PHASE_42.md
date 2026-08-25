@@ -5,7 +5,7 @@ and can also be invoked manually for a specific candidate commit.
 
 ## Added controls
 
-- GitHub Actions checks `https://cafe1stalbans.co.uk/api/public/health` daily at 06:15 UTC.
+- GitHub Actions checks `https://cafe1luton.co.uk/api/public/health` daily at 06:15 UTC.
 - Scheduled runs compare production with the exact checked-out `main` SHA. Manual runs may name
   another full 40-character commit, which must exist in the checked-out repository history.
 - The check fails unless production and the expected commit are identical. Behind, ahead,

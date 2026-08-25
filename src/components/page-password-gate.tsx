@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Lock } from "lucide-react";
 import { PasswordField } from "@/components/password-field";
 
-const PASSWORD = "AL13JU";
+const PASSWORD = "LU12AA";
 
 /**
  * Lightweight shared-password gate for the juror information pages.

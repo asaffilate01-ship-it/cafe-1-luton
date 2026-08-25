@@ -7,7 +7,7 @@ const port = Number(process.env.CAFE1_BRIDGE_PORT ?? 4782);
 const host = process.env.CAFE1_BRIDGE_HOST ?? "127.0.0.1";
 const token = process.env.CAFE1_BRIDGE_TOKEN ?? "";
 const allowedOrigins = new Set(
-  (process.env.CAFE1_ALLOWED_ORIGINS ?? "https://cafe1stalbans.co.uk,http://localhost:3000")
+  (process.env.CAFE1_ALLOWED_ORIGINS ?? "https://cafe1luton.co.uk,http://localhost:3000")
     .split(",")
     .map((value) => value.trim())
     .filter(Boolean),

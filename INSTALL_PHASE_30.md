@@ -15,7 +15,7 @@ split-sale/KDS correction.
 5. Commit all source files and push them through the protected GitHub workflow.
 6. Deploy the final commit.
 7. Set `PUBLIC_RELEASE_SHA` to that exact new 40-character commit SHA.
-8. Run `EXPECTED_RELEASE_SHA=<exact-sha> npm run smoke:production -- https://cafe1stalbans.co.uk`.
+8. Run `EXPECTED_RELEASE_SHA=<exact-sha> npm run smoke:production -- https://cafe1luton.co.uk`.
 
 ## Cumulative update ZIP
 

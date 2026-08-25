@@ -1,7 +1,7 @@
 # Café 1 full production audit — Phase 25
 
 Audit date: 10 August 2026  
-Canonical site: `https://cafe1stalbans.co.uk`  
+Canonical site: `https://cafe1luton.co.uk`
 Audited repository baseline: `69b9a579248d8b3e48813ada191996f9ab6d135b`  
 Release reported by the live health endpoint during the audit:
 `47cf2c10c79de95a517b64e11df13958aac9ba3f`
@@ -167,7 +167,7 @@ Put that final `git rev-parse HEAD` value into production `PUBLIC_RELEASE_SHA`, 
 commit, then run:
 
 ```bash
-EXPECTED_RELEASE_SHA=<final-sha> PRODUCTION_BASE_URL=https://cafe1stalbans.co.uk npm run smoke:production
+EXPECTED_RELEASE_SHA=<final-sha> PRODUCTION_BASE_URL=https://cafe1luton.co.uk npm run smoke:production
 npm run release:live-delta
 npm run operational:check
 ```

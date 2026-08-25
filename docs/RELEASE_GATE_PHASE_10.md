@@ -14,7 +14,7 @@ Phase 10 repairs the three failures observed on commit `96811ea`: repository hyg
 
 1. Upload this phase while preserving all paths. Do not rewrite Lovable history.
 2. Run **Remove tracked environment files** with confirmation `DELETE-TRACKED-ENV`. The update-only ZIP cannot delete a previously tracked file merely by omitting it.
-3. Rotate the exposed Google browser key and store the replacement only in the deployment secret manager. Restrict it to `https://cafe1stalbans.co.uk/*` and the APIs actually used.
+3. Rotate the exposed Google browser key and store the replacement only in the deployment secret manager. Restrict it to `https://cafe1luton.co.uk/*` and the APIs actually used.
 4. Wait for **Production checks**, **CodeQL** and **Browser journeys** to pass on the cleanup commit.
 5. Deploy that exact green commit and manually run **Production smoke**.
 6. If Cloudflare still rewrites the browser-facing header, set Browser Cache TTL to **Respect Existing Headers**, purge `/cart`, `/checkout`, `/admin/login` and `/admin/security`, then rerun the smoke workflow.

@@ -1,0 +1,1 @@
+REVOKE EXECUTE ON FUNCTION public.guard_profile_reward_columns() FROM PUBLIC, anon, authenticated;

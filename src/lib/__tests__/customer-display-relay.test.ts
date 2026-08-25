@@ -16,8 +16,8 @@ describe("customer display relay", () => {
     const token = generateDisplayRelayToken();
     expect(isDisplayRelayToken(token)).toBe(true);
     expect(generateDisplayRelayToken()).not.toBe(token);
-    const url = buildDisplayRelayUrl(token, "https://cafe1stalbans.co.uk");
-    expect(url).toBe(`https://cafe1stalbans.co.uk/display#pair=${token}`);
+    const url = buildDisplayRelayUrl(token, "https://cafe1luton.co.uk");
+    expect(url).toBe(`https://cafe1luton.co.uk/display#pair=${token}`);
     expect(new URL(url).search).toBe("");
   });
 

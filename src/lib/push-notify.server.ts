@@ -4,7 +4,7 @@
  */
 import { sendWebPush } from "./web-push.server";
 
-const FROM = "CAFE 1 ST ALBANS <no-reply@cafe1stalbans.co.uk>";
+const FROM = "CAFE 1 LUTON <no-reply@cafe1luton.co.uk>";
 const RESEND_GATEWAY = "https://connector-gateway.lovable.dev/resend";
 
 async function sendEmailFallback(to: string, subject: string, message: string, link: string) {
@@ -64,7 +64,7 @@ export async function notifyOrderStatus(orderId: string, status: string): Promis
     return;
   }
 
-  const appUrl = (process.env["PUBLIC_APP_URL"] ?? "https://cafe1stalbans.co.uk").replace(/\/+$/, "");
+  const appUrl = (process.env["PUBLIC_APP_URL"] ?? "https://cafe1luton.co.uk").replace(/\/+$/, "");
   const link = `${appUrl}/order/${order.id}`;
 
   let delivered = false;

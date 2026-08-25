@@ -9,7 +9,7 @@
  *   BRIDGE_HOST=192.168.1.50 node scripts/deliveroo-fake-tablet.mjs
  *
  * Or skip the bridge entirely and post straight to the site:
- *   DELIVEROO_BRIDGE_SECRET=xxx CAFE1_URL=https://cafe1stalbans.co.uk \
+ *   DELIVEROO_BRIDGE_SECRET=xxx CAFE1_URL=https://cafe1luton.co.uk \
  *     node scripts/deliveroo-fake-tablet.mjs --direct
  */
 import net from "node:net";
@@ -45,7 +45,7 @@ const receipt =
   "\n\n\n\x1dV\x00";
 
 if (DIRECT) {
-  const base = (process.env.CAFE1_URL || "https://cafe1stalbans.co.uk").replace(/\/$/, "");
+  const base = (process.env.CAFE1_URL || "https://cafe1luton.co.uk").replace(/\/$/, "");
   const secret = process.env.DELIVEROO_BRIDGE_SECRET;
   if (!secret) {
     console.error("DELIVEROO_BRIDGE_SECRET is required for --direct.");

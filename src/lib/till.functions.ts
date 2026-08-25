@@ -31,17 +31,22 @@ async function assertAdmin(context: StaffContext) {
   requireManagerMfa(context.claims);
 }
 
-const TerminalSchema = z.enum(["jury", "judge", "public"]);
+const TerminalSchema = z.enum(["jury", "judge", "public", "futures_public"]);
+const SiteTerminalSchema = z.object({
+  terminal: TerminalSchema,
+  site_id: z.string().uuid(),
+});
 
 export const getTillShift = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .validator((d: unknown) => z.object({ terminal: TerminalSchema }).parse(d))
+  .validator((d: unknown) => SiteTerminalSchema.parse(d))
   .handler(async ({ data, context }) => {
     await assertStaff(context);
     const { data: shift, error } = await context.supabase
       .from("till_shifts")
       .select("*")
       .eq("terminal", data.terminal)
+      .eq("site_id", data.site_id)
       .is("closed_at", null)
       .maybeSingle();
     if (error) throw new Error(error.message);
@@ -54,17 +59,39 @@ export const openTillShift = createServerFn({ method: "POST" })
     z
       .object({
         terminal: TerminalSchema,
+        site_id: z.string().uuid(),
         opening_float_cents: z.number().int().min(0).max(1_000_000),
       })
       .parse(d),
   )
   .handler(async ({ data, context }) => {
     await assertStaff(context);
-    const { data: shift, error } = await context.supabase.rpc("open_till_shift", {
+    const { data: openedShift, error } = await context.supabase.rpc("open_till_shift", {
       _terminal: data.terminal,
       _opening_float_cents: data.opening_float_cents,
     });
     if (error) throw new Error(error.message);
+    if (!openedShift) throw new Error("Could not open the till shift");
+    if (openedShift.site_id === data.site_id) return openedShift;
+
+    // The legacy RPC opens against the default site. A branch-specific
+    // terminal name keeps shifts distinct; attach the new shift to the branch
+    // selected on this device before any sale is taken.
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: site } = await supabaseAdmin
+      .from("sites")
+      .select("id")
+      .eq("id", data.site_id)
+      .eq("active", true)
+      .maybeSingle();
+    if (!site) throw new Error("That Café 1 branch is not active");
+    const { data: shift, error: updateError } = await supabaseAdmin
+      .from("till_shifts")
+      .update({ site_id: data.site_id })
+      .eq("id", openedShift.id)
+      .select("*")
+      .single();
+    if (updateError) throw new Error(updateError.message);
     return shift;
   });
 
@@ -220,9 +247,7 @@ export const startReaderPayment = createServerFn({ method: "POST" })
         .from("order_items")
         .select("qty, name")
         .eq("order_id", order.id);
-      itemSummary = (items ?? [])
-        .map((i) => `${i.qty}x ${i.name}`)
-        .join(", ");
+      itemSummary = (items ?? []).map((i) => `${i.qty}x ${i.name}`).join(", ");
     } catch {
       itemSummary = "";
     }

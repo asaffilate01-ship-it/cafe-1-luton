@@ -1,0 +1,2 @@
+DELETE FROM public.order_items WHERE order_id IN (SELECT id FROM public.orders WHERE deliveroo_order_id LIKE 'print:%' AND delivery_notes = 'Simulated test order');
+DELETE FROM public.orders WHERE deliveroo_order_id LIKE 'print:%' AND delivery_notes = 'Simulated test order';

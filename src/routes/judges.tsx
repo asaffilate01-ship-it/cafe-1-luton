@@ -16,12 +16,12 @@ export const Route = createFileRoute("/judges")({
       { title: "Judges' ordering portal — Cafe1" },
       {
         name: "description",
-        content: "Private ordering portal for HMCTS judges at Cafe1, St Albans Crown Court.",
+        content: "Private ordering portal for HMCTS judges at Cafe1, Luton Crown Court.",
       },
       { property: "og:title", content: "Judges' ordering portal — Cafe1" },
       {
         property: "og:description",
-        content: "Private ordering portal for HMCTS judges at Cafe1, St Albans Crown Court.",
+        content: "Private ordering portal for HMCTS judges at Cafe1, Luton Crown Court.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
@@ -38,7 +38,7 @@ function JudgesPortal() {
   const verify = useServerFn(verifyTabCode);
   const provision = useServerFn(ensureJudgeLogin);
 
-  const [email, setEmail] = useState("judge@cafe1stalbans.co.uk");
+  const [email, setEmail] = useState("judge@cafe1luton.co.uk");
   const [password, setPassword] = useState("");
   const [code, setCode] = useState("");
   const [busy, setBusy] = useState(false);
@@ -104,7 +104,7 @@ function JudgesPortal() {
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="judge@cafe1stalbans.co.uk"
+                  placeholder="judge@cafe1luton.co.uk"
                   className="h-12 w-full rounded-2xl border border-border bg-background px-4"
                 />
                 <input

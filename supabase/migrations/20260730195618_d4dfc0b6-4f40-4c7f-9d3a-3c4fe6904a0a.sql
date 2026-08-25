@@ -1,0 +1,2 @@
+ALTER TABLE public.pos_devices DROP CONSTRAINT IF EXISTS pos_devices_side_check;
+ALTER TABLE public.pos_devices ADD CONSTRAINT pos_devices_side_check CHECK (side = ANY (ARRAY['jury'::text, 'judge'::text, 'public'::text]));

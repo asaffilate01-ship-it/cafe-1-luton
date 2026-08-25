@@ -1,0 +1,5 @@
+-- Compatibility marker.
+--
+-- The triggers and grants that were generated here are already included in
+-- 20260802090000_operations_controls_v2.sql. Keep the applied version number,
+-- but do not execute the same release twice.

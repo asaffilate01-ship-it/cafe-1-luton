@@ -6,12 +6,12 @@ const faqs = [
   {
     question: "Where is Café 1 and what are the opening hours?",
     answer:
-      "Café 1 is inside St Albans Crown Court, AL1 3JU. We serve breakfast, lunch and hot drinks on court sitting days; live opening times are shown at the top of every page.",
+      "Café 1 is at Luton Crown Court, LU1 2AA, and Futures House in Marsh Farm, LU3 3QB. Crown Court opens Monday to Friday, 9am–5pm; Futures House opens Monday to Friday, 9am–5pm, and weekends, 10am–6pm.",
   },
   {
-    question: "Can I order online for collection or delivery?",
+    question: "Can I order online for dine-in or takeaway?",
     answer:
-      "Yes. Order from the menu for dine-in, collection or local delivery, and choose ASAP or a timed slot at checkout. Ordering direct means no aggregator mark-up.",
+      "Yes. Choose Luton Crown Court or Futures House first, then select dine-in or takeaway and choose ASAP or a timed slot. Online delivery is not offered.",
   },
   {
     question: "How do I pay?",
@@ -36,30 +36,30 @@ const faqs = [
   {
     question: "Something went wrong with my order — what do I do?",
     answer:
-      "Speak to the counter team, or email info@cafe1stalbans.co.uk with your order number. Our formal complaints process is published on the complaints page.",
+      "Speak to the counter team, or email info@cafe1luton.co.uk with your order number. Our formal complaints process is published on the complaints page.",
   },
 ];
 
 export const Route = createFileRoute("/faq")({
   head: () => ({
     meta: [
-      { title: "FAQ — Ordering, Payments & Jury Service | Café 1 St Albans" },
+      { title: "FAQ — Ordering, Payments & Jury Service | Café 1 Luton" },
       {
         name: "description",
         content:
-          "Answers about Café 1 St Albans: opening hours, online ordering, delivery, SumUp payments, house accounts, juror allowances, halal and allergy information.",
+          "Answers about Café 1 Luton: locations, opening hours, online ordering, SumUp payments, house accounts, juror allowances, halal and allergy information.",
       },
-      { property: "og:title", content: "Café 1 St Albans — Frequently Asked Questions" },
+      { property: "og:title", content: "Café 1 Luton — Frequently Asked Questions" },
       {
         property: "og:description",
         content:
-          "Opening hours, ordering, delivery, payments, house accounts and the juror allowance scheme explained.",
+          "Luton locations, opening hours, ordering, payments, house accounts and the juror allowance scheme explained.",
       },
       { property: "og:type", content: "article" },
-      { property: "og:url", content: "https://cafe1stalbans.co.uk/faq" },
+      { property: "og:url", content: "https://cafe1luton.co.uk/faq" },
       { name: "twitter:card", content: "summary" },
     ],
-    links: [{ rel: "canonical", href: "https://cafe1stalbans.co.uk/faq" }],
+    links: [{ rel: "canonical", href: "https://cafe1luton.co.uk/faq" }],
     scripts: [jsonLdScript(faqJsonLd(faqs))],
   }),
   component: FaqPage,
@@ -78,7 +78,7 @@ function FaqPage() {
       ))}
       <Section heading="Still need help?">
         <p>
-          Email info@cafe1stalbans.co.uk, or use our{" "}
+          Email info@cafe1luton.co.uk, or use our{" "}
           <Link to="/contact" className="text-primary underline underline-offset-2">
             contact page
           </Link>

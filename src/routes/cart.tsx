@@ -8,17 +8,17 @@ import { Minus, Plus, Trash2 } from "lucide-react";
 export const Route = createFileRoute("/cart")({
   head: () => ({
     meta: [
-      { title: "Your basket — Café 1 St Albans" },
+      { title: "Your basket — Café 1 Luton" },
       {
         name: "description",
         content:
-          "Review your Café 1 St Albans basket, adjust quantities and add-ons, then head to checkout for delivery, collection or dine-in.",
+          "Review your Café 1 Luton basket, adjust quantities and add-ons, then head to checkout for dine-in or takeaway.",
       },
-      { property: "og:title", content: "Your basket — Café 1 St Albans" },
+      { property: "og:title", content: "Your basket — Café 1 Luton" },
       {
         property: "og:description",
         content:
-          "Review your Café 1 St Albans basket, adjust quantities and add-ons, then head to checkout for delivery, collection or dine-in.",
+          "Review your Café 1 Luton basket, adjust quantities and add-ons, then head to checkout for dine-in or takeaway.",
       },
       { property: "og:type", content: "website" },
       { name: "robots", content: "noindex" },

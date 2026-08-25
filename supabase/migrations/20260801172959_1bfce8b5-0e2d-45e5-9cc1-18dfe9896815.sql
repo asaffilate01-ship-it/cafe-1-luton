@@ -1,0 +1,1 @@
+-- Compatibility marker for the unused temporary migration helper.

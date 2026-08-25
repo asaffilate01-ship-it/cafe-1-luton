@@ -28,9 +28,9 @@ import {
 } from "@/lib/social-media";
 import { breadcrumbJsonLd, canonicalLink, jsonLdScript, seoMeta, webPageJsonLd } from "@/lib/seo";
 
-const title = "Café 1 St Albans Videos, Social Posts & Google Reviews";
+const title = "Café 1 Luton Videos, Social Posts & Google Reviews";
 const description =
-  "Watch Café 1 St Albans food videos and updates from our official Facebook, Instagram, TikTok and YouTube sources, plus attributed Google reviews.";
+  "Watch Café 1 Luton food videos and updates from our official Facebook, Instagram, TikTok and YouTube sources, plus attributed Google reviews.";
 
 export const Route = createFileRoute("/socials")({
   head: () => ({

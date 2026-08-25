@@ -13,8 +13,8 @@ These use the official public profile embeds and do not require API tokens. TikT
 its supported creator-profile embed script rather than an unsupported profile iframe:
 
 ```text
-VITE_SOCIAL_TIKTOK_URL=https://www.tiktok.com/@Cafe1_Stalbans
-VITE_SOCIAL_FACEBOOK_URL=https://www.facebook.com/cafe1stalbans
+VITE_SOCIAL_TIKTOK_URL=https://www.tiktok.com/@cafe1luton
+VITE_SOCIAL_FACEBOOK_URL=https://www.facebook.com/cafe1luton
 ```
 
 Visitors must allow marketing cookies before either provider is loaded. The paused card now offers
@@ -76,4 +76,4 @@ a server request header and is never exposed to visitors.
    desktop.
 5. Confirm every player and review remains linked to its original source.
 6. Run `EXPECTED_RELEASE_SHA=<final-sha> npm run smoke:production --
-https://cafe1stalbans.co.uk` and retain the evidence.
+https://cafe1luton.co.uk` and retain the evidence.

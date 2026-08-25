@@ -1,6 +1,6 @@
 # Cafe 1 Connect
 
-Single-merchant ordering and operations platform for Cafe 1 at St Albans Crown Court. It includes the customer storefront, SumUp checkout, counter till, kitchen display, delivery driver view, juror vouchers, loyalty, business tabs, reporting, and the management dashboard.
+Multi-location ordering and operations platform for Cafe 1 in Luton. It includes the customer storefront, SumUp checkout, counter till, kitchen display, juror vouchers, loyalty, business tabs, reporting, and the management dashboard for Luton Crown Court and Futures House.
 
 ## Production hardening included
 
@@ -22,7 +22,7 @@ Read [the release notes](docs/RELEASE_NOTES_PRODUCTION_HARDENING.md) for the ful
 - Customer favourites, allergen/dietary filtering, order feedback and one-use juror attendance QR controls
 - Location/legal-entity configuration, delivery-channel switches, system alerts and manager audit views
 
-Read [the operations v2 guide](docs/OPERATIONS_CONTROLS_V2.md) before applying the release migrations. The follow-up `20260802102930_5d58aeb2-21c2-49b4-95d6-e60e3fec1ff6.sql` protects internal menu fields, enforces manager AAL2 and confirms AL1 3JU. Later duplicate migration timestamps are compatibility no-ops.
+Read [the operations v2 guide](docs/OPERATIONS_CONTROLS_V2.md) before applying the release migrations. The follow-up `20260802102930_5d58aeb2-21c2-49b4-95d6-e60e3fec1ff6.sql` protects internal menu fields, enforces manager AAL2 and confirms LU1 2AA. Later duplicate migration timestamps are compatibility no-ops.
 
 ## Local setup
 

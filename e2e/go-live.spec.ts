@@ -14,9 +14,9 @@ test("homepage exposes the public ordering entry point and confirmed address", a
   await openHealthy(page, "/");
 
   await expect(page).toHaveTitle(/Caf[eé]/i);
-  await expect(page).toHaveTitle(/St Albans/i);
+  await expect(page).toHaveTitle(/Luton/i);
   await expect(page.getByRole("heading", { level: 1 })).toContainText("One Great Menu");
-  await expect(page.getByText("AL1 3JU", { exact: false }).first()).toBeVisible();
+  await expect(page.getByText("LU1 2AA", { exact: false }).first()).toBeVisible();
   await expect(page.getByRole("link", { name: /order now/i })).toHaveAttribute("href", "/menu");
 });
 
@@ -78,6 +78,6 @@ test("social consent opens the canonical TikTok creator feed", async ({ page }) 
   await expect(banner).toBeHidden();
 
   const feed = page.locator("blockquote.tiktok-embed").first();
-  await expect(feed).toHaveAttribute("data-unique-id", "cafe1_stalbans");
+  await expect(feed).toHaveAttribute("data-unique-id", "cafe1_luton");
   await expect(feed).toHaveAttribute("data-embed-type", "creator");
 });

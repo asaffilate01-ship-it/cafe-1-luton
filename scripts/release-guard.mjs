@@ -172,7 +172,7 @@ for (const path of compatibilityMigrations) {
 const activeRelease = read(
   "supabase/migrations/20260802102930_5d58aeb2-21c2-49b4-95d6-e60e3fec1ff6.sql",
 );
-for (const expected of ["AL1 3JU", "auth.jwt()", "aal2", "REVOKE SELECT ON public.menu_items"]) {
+for (const expected of ["LU1 2AA", "auth.jwt()", "aal2", "REVOKE SELECT ON public.menu_items"]) {
   if (!activeRelease.includes(expected)) fail(`active release migration is missing: ${expected}`);
 }
 

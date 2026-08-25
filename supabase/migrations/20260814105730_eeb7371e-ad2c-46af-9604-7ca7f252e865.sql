@@ -1,0 +1,2 @@
+UPDATE public.menu_categories SET active = false WHERE name IN ('Jackets','Jacket Potatoes','Baguettes');
+UPDATE public.menu_items SET active = false WHERE category_id IN (SELECT id FROM public.menu_categories WHERE name IN ('Jackets','Jacket Potatoes','Baguettes'));

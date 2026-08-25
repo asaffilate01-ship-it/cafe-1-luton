@@ -75,6 +75,11 @@ function LocationsPage() {
             Staff, orders, stock, reports and delivery channels stay attached to the correct Cafe 1
             operation.
           </p>
+          <p className="mt-2 max-w-3xl rounded-xl border border-border bg-card px-4 py-3 text-sm text-muted-foreground">
+            Use site code <strong className="text-foreground">FUTURES_HOUSE</strong> and postcode
+            <strong className="text-foreground"> LU3 3QB</strong> for Futures House. That site gets
+            the simplified till; Crown Court keeps the Judges, Jury side, Public side and tabs.
+          </p>
         </div>
         <div className="mt-6 grid gap-6 lg:grid-cols-[minmax(0,1fr)_400px]">
           <section className="space-y-3">
