@@ -29,10 +29,10 @@ const description =
 
 export const Route = createFileRoute("/about")({
   head: () => ({
-    meta: seoMeta({ title, description, path: "/about", image: hero }),
+    meta: seoMeta({ title, description, path: "/about", image: hero.url }),
     links: [canonicalLink("/about")],
     scripts: [
-      jsonLdScript(localBusinessJsonLd(absoluteUrl(hero))),
+      jsonLdScript(localBusinessJsonLd(absoluteUrl(hero.url))),
       jsonLdScript(webPageJsonLd({ name: title, description, path: "/about" })),
       jsonLdScript(
         breadcrumbJsonLd([
@@ -101,7 +101,7 @@ function About() {
             <div className="relative">
               <div className="overflow-hidden rounded-[2rem] border border-white/50 bg-card p-2 shadow-2xl shadow-primary/10">
                 <img
-                  src={hero}
+                  src={hero.url}
                   alt="Café 1 Luton interior with counter, seating and menu boards"
                   className="aspect-[4/3] w-full rounded-[1.6rem] object-cover"
                   width={1200}
