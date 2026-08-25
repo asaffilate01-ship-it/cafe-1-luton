@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { guessCategory } from "@/lib/cooking";
+import { guessCategory, usefulLabel } from "@/lib/cooking";
+import { isPlaceholderLine, parseSumupProductSummary } from "@/lib/sumup-basket";
 import { parseSumupTabIntent } from "@/lib/sumup-tab";
 import {
   groupSumupSaleParts,
@@ -61,12 +62,15 @@ type SumupTxn = {
   type?: string;
 };
 
-/** Reads whichever category field this SumUp basket line happens to carry. */
+/**
+ * Reads whichever category field this SumUp basket line happens to carry.
+ * Vague till labels ("Misc", "Other", "General") are dropped so the kitchen
+ * card falls back to our own menu category instead of showing noise.
+ */
 function sumupCategory(p: NonNullable<SumupTxn["products"]>[number]): string | null {
   const first = p.categories?.[0];
   const fromList = typeof first === "string" ? first : first?.name;
-  const label = (p.category ?? p.category_name ?? fromList ?? "").trim();
-  return label || null;
+  return usefulLabel(p.category ?? p.category_name ?? fromList ?? null);
 }
 
 /** Reads whichever note/comment field a SumUp basket line happens to carry. */
@@ -684,32 +688,78 @@ export const syncSumupPos = createServerFn({ method: "POST" })
               .update({ delivery_notes: backfill })
               .eq("id", existing.id);
           }
-          const lineNotes = (sale.products ?? [])
-            .map((product) => ({
-              name: (product.name ?? "").trim().toLowerCase(),
-              note: sumupLineNote(product),
-              category: sumupCategory(product) ?? guessCategory(product.name ?? "") ?? null,
-            }))
-            .filter((line) => line.name && (line.note || line.category));
-          if (lineNotes.length) {
-            const { data: existingLines } = await supabaseAdmin
-              .from("order_items")
-              .select("id, name, notes, category_label")
-              .eq("order_id", existing.id);
+          const { data: existingLines } = await supabaseAdmin
+            .from("order_items")
+            .select("id, name, notes, category_label, menu_item_id")
+            .eq("order_id", existing.id);
+
+          const menuByName = await menuByNameIndex();
+          const basket = sale.products ?? [];
+          const placeholderOnly =
+            (existingLines ?? []).length > 0 &&
+            (existingLines ?? []).every((line) => isPlaceholderLine(line));
+
+          // The first sweep can land before SumUp exposes the basket, leaving a
+          // single summary line. Once the real basket appears, rebuild the
+          // ticket so the kitchen sees the proper items and categories.
+          if (placeholderOnly && basket.length) {
+            const rebuilt = basket.map((product) => {
+              const matches = menuByName.get((product.name ?? "").trim().toLowerCase()) ?? [];
+              const matched = matches.length === 1 ? matches[0] : undefined;
+              return {
+                order_id: existing.id,
+                menu_item_id: matched?.id ?? null,
+                category_label:
+                  matched?.category ??
+                  sumupCategory(product) ??
+                  guessCategory(product.name ?? "") ??
+                  null,
+                name: product.name || "Item",
+                qty: Math.max(1, Number(product.quantity ?? 1)),
+                unit_price_cents: Math.round(Number(product.price ?? 0) * 100),
+                notes: sumupLineNote(product),
+              };
+            });
+            await supabaseAdmin.from("order_items").delete().eq("order_id", existing.id);
+            await supabaseAdmin.from("order_items").insert(rebuilt);
+          } else {
+            const lineNotes = basket
+              .map((product) => {
+                const matches = menuByName.get((product.name ?? "").trim().toLowerCase()) ?? [];
+                const matched = matches.length === 1 ? matches[0] : undefined;
+                return {
+                  name: (product.name ?? "").trim().toLowerCase(),
+                  note: sumupLineNote(product),
+                  menuItemId: matched?.id ?? null,
+                  category:
+                    matched?.category ??
+                    sumupCategory(product) ??
+                    guessCategory(product.name ?? "") ??
+                    null,
+                };
+              })
+              .filter((line) => line.name && (line.note || line.category || line.menuItemId));
             for (const line of existingLines ?? []) {
               const match = lineNotes.find(
                 (candidate) => candidate.name === (line.name ?? "").trim().toLowerCase(),
               );
               if (!match) continue;
-              const patch: { notes?: string; category_label?: string } = {};
+              const patch: {
+                notes?: string;
+                category_label?: string;
+                menu_item_id?: string;
+              } = {};
               if (match.note && match.note !== line.notes) patch.notes = match.note;
-              if (match.category && !line.category_label) patch.category_label = match.category;
+              if (match.category && !usefulLabel(line.category_label))
+                patch.category_label = match.category;
+              if (match.menuItemId && !line.menu_item_id) patch.menu_item_id = match.menuItemId;
               if (Object.keys(patch).length) {
                 await supabaseAdmin.from("order_items").update(patch).eq("id", line.id);
               }
             }
           }
         }
+
         skipped += paymentParts.length;
         continue;
       }
@@ -806,10 +856,22 @@ export const syncSumupPos = createServerFn({ method: "POST" })
       const matchMenuItem = (product: NonNullable<SumupTxn["products"]>[number]) => {
         const matches = menuByName.get((product.name ?? "").trim().toLowerCase()) ?? [];
         if (matches.length === 1) return matches[0];
+        if (!matches.length) return undefined;
         const category = sumupCategory(product)?.toLowerCase();
-        if (!category) return undefined;
-        return matches.find((match) => match.category?.trim().toLowerCase() === category);
+        const byCategory = category
+          ? matches.find((match) => match.category?.trim().toLowerCase() === category)
+          : undefined;
+        if (byCategory) return byCategory;
+        // Same dish name in several categories: only safe when they agree.
+        const distinct = new Set(matches.map((match) => match.category ?? ""));
+        return distinct.size === 1 ? matches[0] : undefined;
       };
+
+      const summaryText = detailed.product_summary || primary.product_summary || "";
+      const summaryLines = parseSumupProductSummary(summaryText);
+      const fallbackUnit = summaryLines.length
+        ? Math.round(totalCents / summaryLines.reduce((sum, line) => sum + line.qty, 0))
+        : totalCents;
 
       const lines =
         products && products.length > 0
@@ -818,25 +880,42 @@ export const syncSumupPos = createServerFn({ method: "POST" })
               return {
                 order_id: inserted.id,
                 menu_item_id: matched?.id ?? null,
+                // Our own menu category is the truth when the line matched;
+                // the till label only fills the gaps, and keyword rules last.
                 category_label:
-                  sumupCategory(p) ?? matched?.category ?? guessCategory(p.name ?? "") ?? null,
+                  matched?.category ?? sumupCategory(p) ?? guessCategory(p.name ?? "") ?? null,
                 name: p.name || "Item",
                 qty: Math.max(1, Number(p.quantity ?? 1)),
                 unit_price_cents: Math.round(Number(p.price ?? 0) * 100),
                 notes: sumupLineNote(p),
               };
             })
-          : [
-              {
-                order_id: inserted.id,
-                menu_item_id: null as string | null,
-                category_label: null as string | null,
-                name: detailed.product_summary || primary.product_summary || "SumUp POS sale",
-                qty: 1,
-                unit_price_cents: totalCents,
-                notes: null as string | null,
-              },
-            ];
+          : summaryLines.length
+            ? summaryLines.map((line) => {
+                const matches = menuByName.get(line.name.trim().toLowerCase()) ?? [];
+                const matched = matches.length === 1 ? matches[0] : undefined;
+                return {
+                  order_id: inserted.id,
+                  menu_item_id: matched?.id ?? null,
+                  category_label: matched?.category ?? line.category_label,
+                  name: line.name,
+                  qty: line.qty,
+                  unit_price_cents: fallbackUnit,
+                  notes: null as string | null,
+                };
+              })
+            : [
+                {
+                  order_id: inserted.id,
+                  menu_item_id: null as string | null,
+                  category_label: null as string | null,
+                  name: summaryText || "SumUp POS sale",
+                  qty: 1,
+                  unit_price_cents: totalCents,
+                  notes: null as string | null,
+                },
+              ];
+
 
       await supabaseAdmin.from("order_items").insert(lines);
       imported++;
