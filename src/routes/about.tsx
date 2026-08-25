@@ -12,7 +12,7 @@ import {
 } from "lucide-react";
 
 import { SiteFooter, SiteHeader } from "@/components/site-header";
-import hero from "@/assets/cafe1-hero.webp";
+import hero from "@/assets/about-interior.webp.asset.json";
 import { localBusinessJsonLd } from "@/lib/nap";
 import {
   absoluteUrl,
@@ -102,7 +102,7 @@ function About() {
               <div className="overflow-hidden rounded-[2rem] border border-white/50 bg-card p-2 shadow-2xl shadow-primary/10">
                 <img
                   src={hero}
-                  alt="A selection of Café 1 breakfasts, lunches and hot meals"
+                  alt="Café 1 Luton interior with counter, seating and menu boards"
                   className="aspect-[4/3] w-full rounded-[1.6rem] object-cover"
                   width={1200}
                   height={960}
