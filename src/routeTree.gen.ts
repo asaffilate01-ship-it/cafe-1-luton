@@ -37,7 +37,6 @@ import { Route as KdsRouteImport } from './routes/kds'
 import { Route as LandlordRouteImport } from './routes/landlord'
 import { Route as LunchLutonRouteImport } from './routes/lunch-luton'
 import { Route as MenuRouteImport } from './routes/menu'
-import { Route as OrderDirectRouteImport } from './routes/order-direct'
 import { Route as PlatformRouteImport } from './routes/platform'
 import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
@@ -87,6 +86,7 @@ import { Route as ApiPublicDeliverooWebhookRouteImport } from './routes/api/publ
 import { Route as ApiPublicJusteatHubIngestRouteImport } from './routes/api/public/justeat/hub-ingest'
 import { Route as ApiPublicJusteatWebhookRouteImport } from './routes/api/public/justeat/webhook'
 import { Route as ApiPublicLandlordReportRouteImport } from './routes/api/public/landlord/report'
+import { Route as ApiPublicUbereatsHubIngestRouteImport } from './routes/api/public/ubereats/hub-ingest'
 import { Route as LovableEmailAuthPreviewRouteImport } from './routes/lovable/email/auth/preview'
 import { Route as LovableEmailAuthWebhookRouteImport } from './routes/lovable/email/auth/webhook'
 
@@ -228,11 +228,6 @@ const LunchLutonRoute = LunchLutonRouteImport.update({
 const MenuRoute = MenuRouteImport.update({
   id: '/menu',
   path: '/menu',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const OrderDirectRoute = OrderDirectRouteImport.update({
-  id: '/order-direct',
-  path: '/order-direct',
   getParentRoute: () => rootRouteImport,
 } as any)
 const PlatformRoute = PlatformRouteImport.update({
@@ -485,6 +480,12 @@ const ApiPublicLandlordReportRoute = ApiPublicLandlordReportRouteImport.update({
   path: '/api/public/landlord/report',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicUbereatsHubIngestRoute =
+  ApiPublicUbereatsHubIngestRouteImport.update({
+    id: '/api/public/ubereats/hub-ingest',
+    path: '/api/public/ubereats/hub-ingest',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const LovableEmailAuthPreviewRoute = LovableEmailAuthPreviewRouteImport.update({
   id: '/lovable/email/auth/preview',
   path: '/lovable/email/auth/preview',
@@ -525,7 +526,6 @@ export interface FileRoutesByFullPath {
   '/landlord': typeof LandlordRoute
   '/lunch-luton': typeof LunchLutonRoute
   '/menu': typeof MenuRoute
-  '/order-direct': typeof OrderDirectRoute
   '/platform': typeof PlatformRoute
   '/privacy': typeof PrivacyRoute
   '/reset-password': typeof ResetPasswordRoute
@@ -575,6 +575,7 @@ export interface FileRoutesByFullPath {
   '/api/public/justeat/hub-ingest': typeof ApiPublicJusteatHubIngestRoute
   '/api/public/justeat/webhook': typeof ApiPublicJusteatWebhookRoute
   '/api/public/landlord/report': typeof ApiPublicLandlordReportRoute
+  '/api/public/ubereats/hub-ingest': typeof ApiPublicUbereatsHubIngestRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
   '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
 }
@@ -607,7 +608,6 @@ export interface FileRoutesByTo {
   '/landlord': typeof LandlordRoute
   '/lunch-luton': typeof LunchLutonRoute
   '/menu': typeof MenuRoute
-  '/order-direct': typeof OrderDirectRoute
   '/platform': typeof PlatformRoute
   '/privacy': typeof PrivacyRoute
   '/reset-password': typeof ResetPasswordRoute
@@ -657,6 +657,7 @@ export interface FileRoutesByTo {
   '/api/public/justeat/hub-ingest': typeof ApiPublicJusteatHubIngestRoute
   '/api/public/justeat/webhook': typeof ApiPublicJusteatWebhookRoute
   '/api/public/landlord/report': typeof ApiPublicLandlordReportRoute
+  '/api/public/ubereats/hub-ingest': typeof ApiPublicUbereatsHubIngestRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
   '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
 }
@@ -690,7 +691,6 @@ export interface FileRoutesById {
   '/landlord': typeof LandlordRoute
   '/lunch-luton': typeof LunchLutonRoute
   '/menu': typeof MenuRoute
-  '/order-direct': typeof OrderDirectRoute
   '/platform': typeof PlatformRoute
   '/privacy': typeof PrivacyRoute
   '/reset-password': typeof ResetPasswordRoute
@@ -740,6 +740,7 @@ export interface FileRoutesById {
   '/api/public/justeat/hub-ingest': typeof ApiPublicJusteatHubIngestRoute
   '/api/public/justeat/webhook': typeof ApiPublicJusteatWebhookRoute
   '/api/public/landlord/report': typeof ApiPublicLandlordReportRoute
+  '/api/public/ubereats/hub-ingest': typeof ApiPublicUbereatsHubIngestRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
   '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
 }
@@ -774,7 +775,6 @@ export interface FileRouteTypes {
     | '/landlord'
     | '/lunch-luton'
     | '/menu'
-    | '/order-direct'
     | '/platform'
     | '/privacy'
     | '/reset-password'
@@ -824,6 +824,7 @@ export interface FileRouteTypes {
     | '/api/public/justeat/hub-ingest'
     | '/api/public/justeat/webhook'
     | '/api/public/landlord/report'
+    | '/api/public/ubereats/hub-ingest'
     | '/lovable/email/auth/preview'
     | '/lovable/email/auth/webhook'
   fileRoutesByTo: FileRoutesByTo
@@ -856,7 +857,6 @@ export interface FileRouteTypes {
     | '/landlord'
     | '/lunch-luton'
     | '/menu'
-    | '/order-direct'
     | '/platform'
     | '/privacy'
     | '/reset-password'
@@ -906,6 +906,7 @@ export interface FileRouteTypes {
     | '/api/public/justeat/hub-ingest'
     | '/api/public/justeat/webhook'
     | '/api/public/landlord/report'
+    | '/api/public/ubereats/hub-ingest'
     | '/lovable/email/auth/preview'
     | '/lovable/email/auth/webhook'
   id:
@@ -938,7 +939,6 @@ export interface FileRouteTypes {
     | '/landlord'
     | '/lunch-luton'
     | '/menu'
-    | '/order-direct'
     | '/platform'
     | '/privacy'
     | '/reset-password'
@@ -988,6 +988,7 @@ export interface FileRouteTypes {
     | '/api/public/justeat/hub-ingest'
     | '/api/public/justeat/webhook'
     | '/api/public/landlord/report'
+    | '/api/public/ubereats/hub-ingest'
     | '/lovable/email/auth/preview'
     | '/lovable/email/auth/webhook'
   fileRoutesById: FileRoutesById
@@ -1021,7 +1022,6 @@ export interface RootRouteChildren {
   LandlordRoute: typeof LandlordRoute
   LunchLutonRoute: typeof LunchLutonRoute
   MenuRoute: typeof MenuRoute
-  OrderDirectRoute: typeof OrderDirectRoute
   PlatformRoute: typeof PlatformRoute
   PrivacyRoute: typeof PrivacyRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
@@ -1071,6 +1071,7 @@ export interface RootRouteChildren {
   ApiPublicJusteatHubIngestRoute: typeof ApiPublicJusteatHubIngestRoute
   ApiPublicJusteatWebhookRoute: typeof ApiPublicJusteatWebhookRoute
   ApiPublicLandlordReportRoute: typeof ApiPublicLandlordReportRoute
+  ApiPublicUbereatsHubIngestRoute: typeof ApiPublicUbereatsHubIngestRoute
   LovableEmailAuthPreviewRoute: typeof LovableEmailAuthPreviewRoute
   LovableEmailAuthWebhookRoute: typeof LovableEmailAuthWebhookRoute
 }
@@ -1271,13 +1272,6 @@ declare module '@tanstack/react-router' {
       path: '/menu'
       fullPath: '/menu'
       preLoaderRoute: typeof MenuRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/order-direct': {
-      id: '/order-direct'
-      path: '/order-direct'
-      fullPath: '/order-direct'
-      preLoaderRoute: typeof OrderDirectRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/platform': {
@@ -1623,6 +1617,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicLandlordReportRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/ubereats/hub-ingest': {
+      id: '/api/public/ubereats/hub-ingest'
+      path: '/api/public/ubereats/hub-ingest'
+      fullPath: '/api/public/ubereats/hub-ingest'
+      preLoaderRoute: typeof ApiPublicUbereatsHubIngestRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/lovable/email/auth/preview': {
       id: '/lovable/email/auth/preview'
       path: '/lovable/email/auth/preview'
@@ -1669,7 +1670,6 @@ const rootRouteChildren: RootRouteChildren = {
   LandlordRoute: LandlordRoute,
   LunchLutonRoute: LunchLutonRoute,
   MenuRoute: MenuRoute,
-  OrderDirectRoute: OrderDirectRoute,
   PlatformRoute: PlatformRoute,
   PrivacyRoute: PrivacyRoute,
   ResetPasswordRoute: ResetPasswordRoute,
@@ -1719,6 +1719,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicJusteatHubIngestRoute: ApiPublicJusteatHubIngestRoute,
   ApiPublicJusteatWebhookRoute: ApiPublicJusteatWebhookRoute,
   ApiPublicLandlordReportRoute: ApiPublicLandlordReportRoute,
+  ApiPublicUbereatsHubIngestRoute: ApiPublicUbereatsHubIngestRoute,
   LovableEmailAuthPreviewRoute: LovableEmailAuthPreviewRoute,
   LovableEmailAuthWebhookRoute: LovableEmailAuthWebhookRoute,
 }

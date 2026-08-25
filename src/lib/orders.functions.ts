@@ -5,6 +5,7 @@ import { getRequest } from "@tanstack/react-start/server";
 import { createClient } from "@supabase/supabase-js";
 import type { Database } from "@/integrations/supabase/types";
 import { validateModifierSelection, type ModifierRule } from "./modifier-rules";
+import { orderingHoursForLocation } from "./nap";
 
 function createServerSupabase(bearer?: string) {
   const url = process.env.SUPABASE_URL!;
@@ -222,10 +223,8 @@ export const createOrder = createServerFn({ method: "POST" })
     if (selectedSiteId) {
       settingsQuery = settingsQuery.eq("site_id", selectedSiteId);
     }
-    const [{ data: settings }, { data: hoursRows }] = await Promise.all([
-      settingsQuery.maybeSingle(),
-      supabase.from("business_hours").select("*").order("day_of_week"),
-    ]);
+    const { data: settings } = await settingsQuery.maybeSingle();
+    const branchHours = orderingHoursForLocation(data.site_location);
 
     if (settings && !settings.accepting_orders) {
       throw new Error(settings.closed_message || "Sorry, we're not accepting orders right now.");
@@ -235,11 +234,29 @@ export const createOrder = createServerFn({ method: "POST" })
       throw new Error(`Minimum order is £${min}.`);
     }
     // Enforce opening hours for ASAP orders. Scheduled pre-orders may be allowed even if closed now.
-    if (data.schedule_mode === "asap" && hoursRows && settings) {
+    if (data.schedule_mode === "asap" && settings) {
       const { computeStoreStatus } = await import("./business");
-      const status = computeStoreStatus(hoursRows as never, settings as never);
-      if (!status.open && !settings.allow_preorder_when_closed) {
+      const status = computeStoreStatus(branchHours, settings as never);
+      if (!status.open) {
         throw new Error("We're closed right now. Please try a scheduled order.");
+      }
+    }
+    if (data.schedule_mode === "scheduled") {
+      if (!data.scheduled_for) throw new Error("Choose a Later collection time.");
+      const { buildScheduleSlots } = await import("./business");
+      const requested = new Date(data.scheduled_for).getTime();
+      const allowed = buildScheduleSlots({
+        hours: branchHours,
+        settings: settings as never,
+        mode: data.type,
+        intervalMinutes: 15,
+        openOffsetMinutes: 15,
+        closeOffsetMinutes: 30,
+      }).some((slot) => new Date(slot.value).getTime() === requested);
+      if (!allowed) {
+        throw new Error(
+          "That Later time is outside this branch's ordering hours. Please choose another slot.",
+        );
       }
     }
 

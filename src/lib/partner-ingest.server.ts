@@ -10,20 +10,21 @@ import {
   type IngestResult,
 } from "@/lib/deliveroo-ingest.server";
 
-export type PartnerKey = "just_eat";
+export type PartnerKey = "just_eat" | "uber_eats";
 export type JustEatIngestChannel = "hub_watcher" | "webhook";
 export type JustEatIngestMode = "disabled" | JustEatIngestChannel | "dual";
+export type UberEatsIngestChannel = "hub_watcher";
+export type UberEatsIngestMode = "disabled" | UberEatsIngestChannel;
 type JustEatEnvironment = Readonly<Record<string, string | undefined>>;
 
-export const PARTNER_LABEL: Record<PartnerKey, string> = { just_eat: "Just Eat" };
+export const PARTNER_LABEL: Record<PartnerKey, string> = {
+  just_eat: "Just Eat",
+  uber_eats: "Uber Eats",
+};
 
-export function readJustEatIngestMode(
-  env: JustEatEnvironment = process.env,
-): JustEatIngestMode {
+export function readJustEatIngestMode(env: JustEatEnvironment = process.env): JustEatIngestMode {
   const configured = env.JUSTEAT_INGEST_MODE?.trim().toLowerCase();
-  return configured === "hub_watcher" ||
-    configured === "webhook" ||
-    configured === "dual"
+  return configured === "hub_watcher" || configured === "webhook" || configured === "dual"
     ? configured
     : "disabled";
 }
@@ -36,6 +37,19 @@ export function justEatIngestEnabled(
   return mode === "dual" || mode === channel;
 }
 
+export function readUberEatsIngestMode(env: JustEatEnvironment = process.env): UberEatsIngestMode {
+  return env.UBEREATS_INGEST_MODE?.trim().toLowerCase() === "hub_watcher"
+    ? "hub_watcher"
+    : "disabled";
+}
+
+export function uberEatsIngestEnabled(
+  channel: UberEatsIngestChannel,
+  env: JustEatEnvironment = process.env,
+): boolean {
+  return readUberEatsIngestMode(env) === channel;
+}
+
 /** Canonical dedupe key so retries and reprints never double-ticket. */
 export function partnerRef(partner: PartnerKey, reference: string): string {
   return `${partner}:${reference.trim().toLowerCase()}`.slice(0, 120);
@@ -44,7 +58,9 @@ export function partnerRef(partner: PartnerKey, reference: string): string {
 /** Timing-safe compare of the caller's shared secret. */
 export function partnerSecretMatches(partner: PartnerKey, provided: string): boolean {
   const secret =
-    partner === "just_eat" ? process.env["JUSTEAT_BRIDGE_SECRET"] : undefined;
+    partner === "just_eat"
+      ? process.env["JUSTEAT_BRIDGE_SECRET"]
+      : process.env["UBEREATS_BRIDGE_SECRET"];
   if (!secret || !provided) return false;
   const a = createHash("sha256").update(provided, "utf8").digest();
   const b = createHash("sha256").update(secret, "utf8").digest();
@@ -74,6 +90,8 @@ export async function ingestPartnerOrder(
 ): Promise<IngestResult> {
   const ref = partnerRef(partner, order.reference);
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  const { resolveCrownCourtSiteId } = await import("./marketplace-site.server");
+  const crownCourtSiteId = await resolveCrownCourtSiteId();
 
   const { data: existing } = await supabaseAdmin
     .from("orders")
@@ -87,6 +105,7 @@ export async function ingestPartnerOrder(
     .from("orders")
     .insert({
       customer_name: order.customerName || `${PARTNER_LABEL[partner]} customer`,
+      ...(crownCourtSiteId ? { site_id: crownCourtSiteId } : {}),
       customer_phone: order.customerPhone ?? "",
       type: order.type,
       status: "preparing",

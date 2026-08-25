@@ -206,7 +206,7 @@ test("requires both Deliveroo channels to fail closed when probed without creden
   }
 });
 
-test("requires both Just Eat channels and both watcher packages in production smoke", () => {
+test("requires Just Eat, Uber Eats and all watcher packages in production smoke", () => {
   for (const path of ["/api/public/justeat/webhook", "/api/public/justeat/hub-ingest"]) {
     const check = PRODUCTION_CHECKS.find((candidate) => candidate.path === path);
     assert.ok(check, `${path} is missing from production smoke`);
@@ -216,9 +216,18 @@ test("requires both Just Eat channels and both watcher packages in production sm
     assert.equal(check.statuses.includes(200), false);
   }
 
+  for (const path of ["/api/public/ubereats/hub-ingest"]) {
+    const check = PRODUCTION_CHECKS.find((candidate) => candidate.path === path);
+    assert.ok(check, `${path} is missing from production smoke`);
+    assert.deepEqual(check.statuses, [401, 503]);
+    assert.equal(check.method, "POST");
+    assert.equal(check.protectedRoute, true);
+  }
+
   for (const path of [
     "/downloads/cafe1-justeat-watcher-windows.zip",
     "/downloads/cafe1-deliveroo-watcher-windows.zip",
+    "/downloads/cafe1-ubereats-watcher-windows.zip",
   ]) {
     const check = PRODUCTION_CHECKS.find((candidate) => candidate.path === path);
     assert.ok(check, `${path} is missing from production smoke`);
@@ -227,8 +236,8 @@ test("requires both Just Eat channels and both watcher packages in production sm
   }
 });
 
-test("covers the direct-order and watcher landing pages", () => {
-  for (const path of ["/order-direct", "/watcher-download"]) {
+test("covers the watcher landing page", () => {
+  for (const path of ["/watcher-download"]) {
     const check = PRODUCTION_CHECKS.find((candidate) => candidate.path === path);
     assert.ok(check, `${path} is missing from production smoke`);
     assert.deepEqual(check.statuses, [200]);

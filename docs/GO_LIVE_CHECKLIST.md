@@ -76,6 +76,7 @@ Do not enable live ordering or live SumUp charging until every mandatory box is 
 - [ ] If Deliveroo Orders API is enabled, complete `docs/DELIVEROO_ORDERS_API_SETUP.md`: verify exact-byte HMAC rejection, accepted-only KDS release, cross-channel duplicate handling, tablet sync status, scheduled orders, cancellation and staff-triggered ready-for-collection.
 - [ ] While the Hub watcher fallback is used, complete `docs/DELIVEROO_WATCHER_SETUP.md`: prove accepted-only KDS release, exact items/modifiers/notes/total, refresh/restart deduplication, cancellation removal, minute heartbeats, sign-out warning and automatic Windows restart. Record the chosen flow under `deliveroo_kds_integration`.
 - [ ] Before enabling Just Eat ingestion, set `JUSTEAT_INGEST_MODE=hub_watcher` and a 32+ character `JUSTEAT_BRIDGE_SECRET`, then complete `docs/JUSTEAT_WATCHER_SETUP.md`: prove accepted-only KDS release, exact items/modifiers/notes/total, refresh/restart deduplication, cancellation removal, minute heartbeats, sign-out warning and automatic Windows restart. Record evidence under `just_eat_kds_integration`; continue using Orderpad to notify the customer/rider that an order is ready.
+- [ ] At Luton Crown Court only, set `UBEREATS_INGEST_MODE=hub_watcher` and a 32+ character `UBEREATS_BRIDGE_SECRET`, then complete `docs/UBEREATS_WATCHER_SETUP.md`: install on the Crown Court PC, sign into Uber Eats Manager, submit one real accepted order and prove it reaches only the Crown Court KDS without duplication.
 
 ## 7. Compliance and launch operations
 

@@ -25,7 +25,7 @@
     "verify:migrations": "node scripts/verify-migration-integrity.mjs",
     "verify:capabilities": "node scripts/verify-release-capabilities.mjs",
     "build:watchers": "node scripts/build-watcher-packages.mjs",
-    "verify:watcher": "node scripts/verify-deliveroo-watcher-package.mjs && node scripts/verify-justeat-watcher-package.mjs",
+    "verify:watcher": "node scripts/verify-deliveroo-watcher-package.mjs && node scripts/verify-justeat-watcher-package.mjs && node scripts/verify-ubereats-watcher-package.mjs",
     "verify:seo": "node scripts/verify-seo.mjs",
     "verify:pwa": "node scripts/verify-pwa.mjs",
     "verify:bundle-budget": "node scripts/verify-bundle-budget.mjs",

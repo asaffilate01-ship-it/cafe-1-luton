@@ -2,8 +2,8 @@ import { useEffect, useMemo, useState } from "react";
 import { Building2, Clock, Eye, MapPin, Store, Utensils, X } from "lucide-react";
 
 import { useStoreStatus } from "@/hooks/use-store-status";
-import { buildScheduleSlots } from "@/lib/business";
-import { LOCATIONS, type CafeLocationId } from "@/lib/nap";
+import { buildScheduleSlots, computeStoreStatus } from "@/lib/business";
+import { LOCATIONS, orderingHoursForLocation, type CafeLocationId } from "@/lib/nap";
 import {
   orderContext,
   type OrderContext,
@@ -40,7 +40,7 @@ export function OrderSetupGate({
   juryOnly?: boolean;
 }) {
   const existing = useOrderContext();
-  const { status, settings, hours, holidays } = useStoreStatus();
+  const { status: defaultStatus, settings, hours, holidays } = useStoreStatus();
   const [step, setStep] = useState<1 | 2 | 3>(1);
   const [location, setLocation] = useState<CafeLocationId | null>(existing?.location ?? null);
   const [mode, setMode] = useState<PublicOrderMode>(
@@ -48,9 +48,27 @@ export function OrderSetupGate({
   );
   const [scheduleMode, setScheduleMode] = useState<ScheduleMode>(existing?.schedule_mode ?? "asap");
   const [scheduledFor, setScheduledFor] = useState(existing?.scheduled_for ?? "");
+  const branchHours = useMemo(
+    () => (location ? orderingHoursForLocation(location) : hours),
+    [hours, location],
+  );
+  const status = useMemo(
+    () =>
+      location ? computeStoreStatus(branchHours, settings, new Date(), holidays) : defaultStatus,
+    [branchHours, defaultStatus, holidays, location, settings],
+  );
   const timeSlots = useMemo(
-    () => buildScheduleSlots({ hours, holidays, settings, mode }),
-    [hours, holidays, settings, mode],
+    () =>
+      buildScheduleSlots({
+        hours: branchHours,
+        holidays,
+        settings,
+        mode,
+        intervalMinutes: 15,
+        openOffsetMinutes: 15,
+        closeOffsetMinutes: 30,
+      }),
+    [branchHours, holidays, settings, mode],
   );
 
   useEffect(() => {

@@ -183,6 +183,26 @@ test("requires an explicit, strong secret for every enabled Just Eat ingest mode
   assert.ok(disabledWithSecret.warnings.some((message) => message.includes("disabled")));
 });
 
+test("requires a strong secret for the Uber Eats watcher", () => {
+  const watcher = validateProductionEnvironment(
+    validEnvironment({
+      UBEREATS_INGEST_MODE: "hub_watcher",
+      UBEREATS_BRIDGE_SECRET: "u".repeat(64),
+    }),
+  );
+  assert.deepEqual(watcher.errors, []);
+
+  const missingSecret = validateProductionEnvironment(
+    validEnvironment({ UBEREATS_INGEST_MODE: "hub_watcher" }),
+  );
+  assert.ok(missingSecret.errors.some((message) => message.includes("UBEREATS_BRIDGE_SECRET")));
+
+  const invalidMode = validateProductionEnvironment(
+    validEnvironment({ UBEREATS_INGEST_MODE: "webhook" }),
+  );
+  assert.ok(invalidMode.errors.some((message) => message.includes("UBEREATS_INGEST_MODE")));
+});
+
 test("rejects malformed optional analytics configuration", () => {
   const result = validateProductionEnvironment(
     validEnvironment({ VITE_GA_MEASUREMENT_ID: "UA-legacy-id" }),

@@ -122,10 +122,13 @@ export async function ingestDeliverooOrder(
   }
 
   const total = order.totalCents;
+  const { resolveCrownCourtSiteId } = await import("./marketplace-site.server");
+  const crownCourtSiteId = await resolveCrownCourtSiteId();
   const { data: inserted, error } = await supabaseAdmin
     .from("orders")
     .insert({
       customer_name: order.customerName || "Deliveroo customer",
+      ...(crownCourtSiteId ? { site_id: crownCourtSiteId } : {}),
       customer_phone: order.customerPhone ?? "",
       type: order.type,
       status: "preparing",

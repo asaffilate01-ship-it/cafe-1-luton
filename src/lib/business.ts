@@ -107,7 +107,7 @@ function findNextOpen(
   base = new Date(),
 ): string | undefined {
   const holidaySet = new Set(holidays.map((h) => h.holiday_date));
-  const startOffset = ((fromDow - base.getDay()) % 7 + 7) % 7;
+  const startOffset = (((fromDow - base.getDay()) % 7) + 7) % 7;
   for (let i = 0; i < 7; i++) {
     const offset = startOffset + i;
     const day = new Date(base);
@@ -141,10 +141,17 @@ export function buildScheduleSlots(opts: {
   now?: Date;
   daysAhead?: number;
   intervalMinutes?: number;
+  /** Minutes after the branch opens before its first selectable Later slot. */
+  openOffsetMinutes?: number;
+  /** Minutes before the branch closes for its final selectable Later slot. */
+  closeOffsetMinutes?: number;
 }): ScheduleSlot[] {
   const { hours, holidays = [], settings = null, mode = "collection", now = new Date() } = opts;
   const daysAhead = opts.daysAhead ?? 7;
   const step = opts.intervalMinutes ?? 15;
+  const openOffset = Math.max(0, opts.openOffsetMinutes ?? 0);
+  // Preserve the former default of ending one interval before closing.
+  const closeOffset = Math.max(0, opts.closeOffsetMinutes ?? step);
   if (!hours.length) return [];
 
   const leadMinutes =
@@ -173,8 +180,9 @@ export function buildScheduleSlots(opts: {
     if (closeMin <= openMin) continue;
 
     // align first slot to the interval grid
-    const startMin = Math.ceil(openMin / step) * step;
-    for (let m = startMin; m <= closeMin - step; m += step) {
+    const startMin = Math.ceil((openMin + openOffset) / step) * step;
+    const lastMin = closeMin - closeOffset;
+    for (let m = startMin; m <= lastMin; m += step) {
       const d = new Date(day);
       d.setMinutes(m);
       if (d < earliest) continue;
