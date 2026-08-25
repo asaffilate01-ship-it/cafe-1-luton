@@ -153,7 +153,10 @@ export function LiveMap({
       .join(",");
     const marker = `${centre.lat.toFixed(5)},${centre.lng.toFixed(5)}`;
     return (
-      <div className={`relative overflow-hidden rounded-2xl border border-border ${className}`}>
+      <div
+        key="fallback-map"
+        className={`relative overflow-hidden rounded-2xl border border-border ${className}`}
+      >
         <iframe
           title={focus?.label ?? "Map"}
           src={`https://www.openstreetmap.org/export/embed.html?bbox=${bbox}&layer=mapnik&marker=${marker}`}
@@ -173,5 +176,5 @@ export function LiveMap({
       </div>
     );
   }
-  return <div ref={el} className={`rounded-2xl border border-border ${className}`} />;
+  return <div key="google-map" ref={el} className={`rounded-2xl border border-border ${className}`} />;
 }
