@@ -219,7 +219,10 @@ export const createOrder = createServerFn({ method: "POST" })
 
     // Load branch-specific settings and hours where available, otherwise use
     // the existing default records for backwards compatibility.
-    let settingsQuery = supabase.from("business_settings").select("*").limit(1);
+    let settingsQuery = supabase
+      .from("business_settings")
+      .select(PUBLIC_SETTINGS_COLUMNS)
+      .limit(1);
     if (selectedSiteId) {
       settingsQuery = settingsQuery.eq("site_id", selectedSiteId);
     }
