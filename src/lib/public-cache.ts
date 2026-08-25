@@ -13,7 +13,6 @@ const PUBLIC_DOCUMENTS = new Set([
   "/lunch-luton",
   "/menu",
   "/privacy",
-  "/socials",
   "/terms",
   "/watcher-download",
 ]);

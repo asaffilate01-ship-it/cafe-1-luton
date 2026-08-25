@@ -34,7 +34,7 @@ export const STATIC_BLOG_POSTS: BlogPostRecord[] = [
 
 ## Find your nearest Café 1 in Luton
 
-We have two Luton branches. **Café 1 Luton Crown Court** is at 7–11 Manchester Street, LU1 2AA, close to the town centre. **Café 1 Futures House** is inside Futures House at The Moakes, Marsh Farm, LU3 3QB.
+We have two Luton branches. **Café 1 Luton Crown Court** is inside Luton Crown Court at 7–9 George Street, Luton, LU1 2AA, close to the town centre and open to the public. **Café 1 Futures House** is inside Futures House at The Moakes, Marsh Farm, LU3 3QB.
 
 Both cafés serve dine-in and takeaway customers. Choose your branch on our [live menu](/menu), select dine-in or takeaway, and order for ASAP or a later collection time. We do not offer direct delivery from the Luton website.
 
@@ -99,7 +99,7 @@ Whether you live nearby, work in the area or are visiting Futures House, Café 1
     slug: "cafe-1-luton-crown-court",
     title: "Café 1 at Luton Crown Court: Good Food in the Heart of Luton",
     excerpt:
-      "Plan breakfast, coffee or lunch at Café 1 Luton Crown Court, open to the public Monday to Friday on Manchester Street.",
+      "Plan breakfast, coffee or lunch at Café 1 Luton Crown Court, open to the public Monday to Friday at 7–9 George Street.",
     cover_url: "/blog/luton-crown-court.jpg",
     author,
     tags: ["Luton Crown Court", "Luton town centre", "Lunch"],
@@ -107,7 +107,7 @@ Whether you live nearby, work in the area or are visiting Futures House, Café 1
     published_at: "2026-08-23T09:00:00.000Z",
     created_at: "2026-08-23T09:00:00.000Z",
     updated_at: "2026-08-25T09:00:00.000Z",
-    body_md: `Café 1 Luton Crown Court is a town-centre café serving the public as well as people working in and visiting the court. Find us at **7–11 Manchester Street, Luton LU1 2AA**.
+    body_md: `Café 1 Luton Crown Court is a town-centre café serving the public as well as people working in and visiting the court. Find us inside **Luton Crown Court, 7–9 George Street, Luton, LU1 2AA**.
 
 ## Open to the public
 
@@ -166,7 +166,7 @@ Breakfast is personal. One customer may want a full, hot plate and another may o
 
 ## Where to find breakfast in Luton
 
-- **Luton Crown Court:** 7–11 Manchester Street, LU1 2AA; Monday to Friday, 9am–5pm.
+- **Luton Crown Court:** 7–9 George Street, Luton, LU1 2AA; open to the public Monday to Friday, 9am–5pm.
 - **Futures House:** The Moakes, Marsh Farm, LU3 3QB; Monday to Friday, 9am–5pm and weekends, 10am–6pm.
 
 Breakfast availability may change as the day moves on, so an earlier visit gives you the widest choice. The branch status on the website will say **Open** or **Closed now**.
@@ -196,7 +196,7 @@ The live menu is the reliable place to confirm today’s dishes. Ingredients and
 
 ## Two places for halal breakfast in Luton
 
-Visit **Café 1 Luton Crown Court** on Manchester Street during the working week, or **Café 1 Futures House** at The Moakes in Marsh Farm on weekdays and weekends.
+Visit **Café 1 Luton Crown Court** at 7–9 George Street during the working week, or **Café 1 Futures House** at The Moakes in Marsh Farm on weekdays and weekends. Both branches are open to the public.
 
 - Crown Court: Monday to Friday, 9am–5pm.
 - Futures House: Monday to Friday, 9am–5pm; Saturday and Sunday, 10am–6pm.
@@ -316,7 +316,7 @@ At Café 1, chicken pie sits naturally alongside the British classics and Desi f
 
 ## Choose your Luton branch
 
-Visit Café 1 at **Luton Crown Court** on Manchester Street or at **Futures House** in Marsh Farm. Select the branch first when ordering because availability can differ between kitchens.
+Visit Café 1 inside **Luton Crown Court at 7–9 George Street, Luton, LU1 2AA**, or at **Futures House** in Marsh Farm. Both locations are open to the public. Select the branch first when ordering because availability can differ between kitchens.
 
 Both cafés offer dine in and takeaway. If you know the time of your lunch break, choose a Later slot. If you are ready to collect and the café is open, choose ASAP. The website will clearly show **Open** or **Closed now** for the selected location.
 
@@ -355,7 +355,7 @@ The menu changes with availability, so [today’s live menu](/menu) is the best 
 
 ## Lunch near central Luton
 
-**Café 1 Luton Crown Court** is at 7–11 Manchester Street, LU1 2AA. It is open to the public Monday to Friday from 9am to 5pm, making it a convenient town-centre choice for workers and visitors.
+**Café 1 Luton Crown Court** is inside Luton Crown Court at 7–9 George Street, Luton, LU1 2AA. It is open to the public Monday to Friday from 9am to 5pm, making it a convenient town-centre choice for workers and visitors.
 
 ## Lunch in Marsh Farm
 

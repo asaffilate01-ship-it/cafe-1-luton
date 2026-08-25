@@ -24,7 +24,7 @@ practical questions; they must not be rewritten as duplicate landing pages.
 - Shared title, description, canonical, Open Graph, X/Twitter and crawler metadata helpers.
 - Accurate `Restaurant`, `WebSite`, `WebPage`, `BreadcrumbList` and `Article` JSON-LD.
 - Correct NAP: Café 1 Luton, Luton Crown Court, 7–9 George Street, Luton,
-  Hertfordshire LU1 2AA, +44 1727 400117.
+  Bedfordshire LU1 2AA, +44 1582 484802. The Crown Court café is open to the public.
 - Accurate weekday hours and half-mile delivery area in business structured data.
 - No unsupported aggregate rating, review, halal certification or wallet-payment claims.
 - Server-rendered public menu and blog index so their content is present before browser JavaScript.

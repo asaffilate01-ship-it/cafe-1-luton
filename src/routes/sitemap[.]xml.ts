@@ -12,7 +12,6 @@ const PUBLIC_ROUTES = [
   "/halal-food-luton",
   "/lunch-luton",
   "/blog",
-  "/socials",
   "/about",
   "/contact",
   "/faq",
