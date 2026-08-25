@@ -1,1 +1,0 @@
-DROP TABLE IF EXISTS public.juror_demo_slip_staging;

@@ -1,1 +1,0 @@
-UPDATE public.orders SET status='paid' WHERE order_number=3336;

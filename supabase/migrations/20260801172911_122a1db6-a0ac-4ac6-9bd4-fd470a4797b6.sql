@@ -1,8 +1,0 @@
--- Compatibility marker.
---
--- The original file created a temporary migration helper and granted it to a
--- Lovable-only transient database role. Standard Supabase environments do not
--- provide that role, so clean database rebuilds stopped before the production
--- hardening migrations. The helper was never called and the following
--- migration immediately removed it, so preserving this timestamp as a no-op is
--- equivalent to the intended final schema and keeps remote histories aligned.

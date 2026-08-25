@@ -1,6 +1,0 @@
--- Compatibility marker.
---
--- Lovable generated 20260802102930_5d58aeb2-21c2-49b4-95d6-e60e3fec1ff6.sql
--- with the same postcode, manager AAL2 and public-menu privilege changes before
--- this uploaded timestamp. Keep one executable copy and preserve this later
--- migration number as a safe no-op so clean and hosted histories remain aligned.

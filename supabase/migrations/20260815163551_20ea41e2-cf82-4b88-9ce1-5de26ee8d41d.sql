@@ -1,1 +1,0 @@
-UPDATE public.menu_categories SET name = 'Cafe 1 Classics' WHERE name = 'Chef''s Specials';

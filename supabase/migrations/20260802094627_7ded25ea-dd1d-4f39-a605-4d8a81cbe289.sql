@@ -1,6 +1,0 @@
--- Compatibility marker.
---
--- This file previously repeated the policies and functions already created by
--- 20260802090000_operations_controls_v2.sql. In particular, replaying its 19
--- CREATE POLICY statements made a clean `supabase db push` fail. The timestamp
--- remains as a safe no-op so existing remote migration histories still align.

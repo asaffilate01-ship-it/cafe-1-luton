@@ -1,11 +1,11 @@
 {
-  "version": 1,
   "asset_id": "831f0700-1b5f-4c75-a24a-c9843f77e329",
-  "project_id": "4e8d727f-9796-42a7-9a37-e92941913d6a",
-  "url": "/__l5e/assets-v1/831f0700-1b5f-4c75-a24a-c9843f77e329/blog-st-albans.jpg",
-  "r2_key": "a/v1/4e8d727f-9796-42a7-9a37-e92941913d6a/831f0700-1b5f-4c75-a24a-c9843f77e329/blog-st-albans.jpg",
-  "original_filename": "blog-st-albans.jpg",
-  "size": 97776,
   "content_type": "image/jpeg",
-  "created_at": "2026-07-29T21:52:02Z"
+  "created_at": "2026-07-29T21:52:02Z",
+  "original_filename": "blog-st-albans.jpg",
+  "project_id": "42047280-74a6-4c32-a670-aba3786ad2c3",
+  "r2_key": "a/v1/42047280-74a6-4c32-a670-aba3786ad2c3/831f0700-1b5f-4c75-a24a-c9843f77e329/blog-st-albans.jpg",
+  "size": 97776,
+  "url": "/__l5e/assets-v1/831f0700-1b5f-4c75-a24a-c9843f77e329/blog-st-albans.jpg",
+  "version": 1
 }

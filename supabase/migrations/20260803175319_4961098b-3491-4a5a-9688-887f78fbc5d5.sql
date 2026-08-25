@@ -1,1 +1,0 @@
-UPDATE public.orders SET payment_status='paid', status='preparing' WHERE id='7ded45b1-fe79-4aba-acc2-5a2b1ef88317';
