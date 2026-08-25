@@ -255,8 +255,7 @@ function isFuturesHouse(site: { code: string; postcode: string | null } | null):
 
 function isCrownCourt(site: { code: string; postcode: string | null } | null): boolean {
   return (
-    site?.code.toUpperCase() === "LUTON_CROWN_COURT" ||
-    site?.postcode?.toUpperCase() === "LU1 2AA"
+    site?.code.toUpperCase() === "LUTON_CROWN_COURT" || site?.postcode?.toUpperCase() === "LU1 2AA"
   );
 }
 
@@ -431,7 +430,9 @@ function Till() {
   const orderDestination: TillTerminal = futuresHouse ? "futures_public" : side;
   const availableFulfilChoices = FULFIL_CHOICES;
   const [evoConnected, setEvoConnected] = useState(() =>
-    typeof window === "undefined" ? false : Boolean(window.localStorage.getItem("cafe1-evo-reader")),
+    typeof window === "undefined"
+      ? false
+      : Boolean(window.localStorage.getItem("cafe1-evo-reader")),
   );
   const [pay, setPay] = useState<null | "cash" | "manual" | "split">(null);
   const [settings, setSettings] = useState(false);
@@ -590,7 +591,9 @@ function Till() {
     setShiftLoading(true);
     try {
       setShift(
-        (await getShift({ data: { terminal: shiftTerminal, site_id: sites.siteId } })) as TillShift | null,
+        (await getShift({
+          data: { terminal: shiftTerminal, site_id: sites.siteId },
+        })) as TillShift | null,
       );
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Could not load the till shift");
@@ -1161,16 +1164,16 @@ function Till() {
         {crownCourt && (
           <div
             aria-label="Food hand-off location"
-            className="col-span-3 row-start-2 grid w-full grid-cols-3 gap-1 rounded-xl border border-slate-200 bg-white/95 p-1 shadow-inner shadow-slate-300/60 min-[960px]:col-span-1 min-[960px]:row-auto min-[960px]:flex min-[960px]:w-auto min-[960px]:shrink-0"
+            className="col-span-3 row-start-2 grid w-full grid-cols-3 gap-1 rounded-xl border border-slate-200 bg-white/95 p-1 shadow-inner shadow-slate-300/60 min-[960px]:hidden"
           >
-            <span className="col-span-3 px-1 pt-0.5 text-[9px] font-black uppercase tracking-widest text-slate-400 min-[960px]:self-center min-[960px]:px-2 min-[960px]:pt-0">
+            <span className="col-span-3 px-1 pt-0.5 text-[9px] font-black uppercase tracking-widest text-slate-400">
               Hand-off
             </span>
             {(["jury", "judge", "public"] as const).map((destination) => (
               <button
                 key={destination}
                 onClick={() => changeSide(destination)}
-                className={`h-9 w-full rounded-lg px-2 text-center text-[11px] font-black uppercase tracking-wide transition active:scale-95 min-[960px]:h-8 min-[960px]:w-auto min-[960px]:px-3 ${side === destination ? `${SIDE_TONE[destination]} shadow-md` : "text-slate-500 hover:bg-slate-100 hover:text-slate-950"}`}
+                className={`h-9 w-full rounded-lg px-2 text-center text-[11px] font-black uppercase tracking-wide transition active:scale-95 ${side === destination ? `${SIDE_TONE[destination]} shadow-md` : "text-slate-500 hover:bg-slate-100 hover:text-slate-950"}`}
               >
                 {SIDE_LABEL[destination]}
               </button>
@@ -1359,9 +1362,7 @@ function Till() {
             data-pos-region="mobile-fulfilment"
             className="shrink-0 border-b border-slate-200 bg-white/95 px-2 py-1.5 min-[960px]:hidden"
           >
-            <div
-              className="grid grid-cols-2 gap-1.5 rounded-xl border border-slate-200 bg-white/95 p-1"
-            >
+            <div className="grid grid-cols-2 gap-1.5 rounded-xl border border-slate-200 bg-white/95 p-1">
               {availableFulfilChoices.map(({ id, label, Icon }) => (
                 <button
                   key={id}
@@ -1377,36 +1378,46 @@ function Till() {
             </div>
           </div>
           <div className="shrink-0 space-y-2 border-b border-slate-200 p-2.5 min-[960px]:p-3 xl:space-y-0 xl:px-4 xl:py-2.5">
-            <div className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white/95 px-3 shadow-inner shadow-slate-200 focus-within:border-primary/60">
-              <Search className="h-4 w-4 shrink-0 text-slate-500" />
-              <input
-                ref={searchRef}
-                value={q}
-                onChange={(e) => setQ(e.target.value)}
-                onKeyDown={(event) => {
-                  if (event.key === "Enter" && addBarcode(q)) event.preventDefault();
+            <div className="flex items-center gap-2">
+              <div className="flex min-w-0 flex-1 items-center gap-2 rounded-xl border border-slate-200 bg-white/95 px-3 shadow-inner shadow-slate-200 focus-within:border-primary/60">
+                <Search className="h-4 w-4 shrink-0 text-slate-500" />
+                <input
+                  ref={searchRef}
+                  value={q}
+                  onChange={(e) => setQ(e.target.value)}
+                  onKeyDown={(event) => {
+                    if (event.key === "Enter" && addBarcode(q)) event.preventDefault();
+                  }}
+                  placeholder="Search or scan…"
+                  className="h-11 min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-slate-400 min-[960px]:h-10"
+                  autoComplete="off"
+                />
+                {q && (
+                  <button type="button" onClick={() => setQ("")} aria-label="Clear search">
+                    <X className="h-4 w-4 text-slate-500" />
+                  </button>
+                )}
+                <kbd className="hidden shrink-0 rounded border border-slate-300 px-1.5 py-0.5 text-[10px] font-bold text-slate-400 xl:block">
+                  /
+                </kbd>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  setCatId(FAVOURITES_CATEGORY);
+                  setQ("");
                 }}
-                placeholder="Search or scan a barcode…"
-                className="h-10 min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-slate-400"
-                autoComplete="off"
-              />
-              {q && (
-                <button onClick={() => setQ("")} aria-label="Clear search">
-                  <X className="h-4 w-4 text-slate-500" />
-                </button>
-              )}
-              <kbd className="hidden shrink-0 rounded border border-slate-300 px-1.5 py-0.5 text-[10px] font-bold text-slate-400 xl:block">
-                /
-              </kbd>
+                aria-label="Show favourite menu items"
+                aria-pressed={catId === FAVOURITES_CATEGORY && !q}
+                className={`grid h-11 w-11 shrink-0 place-items-center rounded-xl border transition active:scale-95 xl:hidden ${catId === FAVOURITES_CATEGORY && !q ? "border-amber-400 bg-amber-400 text-amber-950 shadow-md shadow-amber-400/20" : "border-slate-200 bg-white text-slate-600 hover:border-amber-300 hover:text-amber-700"}`}
+              >
+                <Star
+                  className={`h-5 w-5 ${catId === FAVOURITES_CATEGORY && !q ? "fill-current" : ""}`}
+                />
+              </button>
             </div>
             {!q && (
               <div className="-mx-0.5 flex snap-x snap-mandatory scroll-px-0.5 gap-1.5 overflow-x-auto overscroll-x-contain px-0.5 pb-0.5 xl:hidden">
-                <button
-                  onClick={() => setCatId(FAVOURITES_CATEGORY)}
-                  className={`inline-flex h-9 shrink-0 snap-start items-center gap-1.5 rounded-full px-3 text-[11px] font-bold uppercase tracking-wide transition active:scale-95 ${catId === FAVOURITES_CATEGORY ? "bg-amber-400 text-neutral-950 shadow-lg shadow-amber-400/20" : "border border-amber-300 bg-white text-amber-700"}`}
-                >
-                  <Star className="h-3.5 w-3.5 fill-current" /> Favourites
-                </button>
                 {cats.map((c) => (
                   <button
                     key={c.id}
@@ -1426,7 +1437,7 @@ function Till() {
           >
             <div
               data-pos-region="product-grid"
-              className="grid min-w-0 grid-cols-2 items-stretch gap-2 min-[390px]:grid-cols-3 min-[560px]:grid-cols-4 min-[800px]:grid-cols-5 min-[960px]:grid-cols-5 lg:grid-cols-6 xl:grid-cols-6 2xl:grid-cols-6"
+              className="grid min-w-0 grid-cols-3 items-stretch gap-2 min-[560px]:grid-cols-4 min-[800px]:grid-cols-5 min-[960px]:grid-cols-5 lg:grid-cols-6 xl:grid-cols-6 2xl:grid-cols-6"
             >
               {visible.map((i) => (
                 <div
@@ -1538,6 +1549,34 @@ function Till() {
                 </button>
               ))}
             </div>
+            {crownCourt && (
+              <div
+                aria-label="Food hand-off location"
+                className="hidden rounded-2xl border-2 border-amber-300 bg-amber-50 p-1.5 shadow-sm min-[960px]:block"
+              >
+                <div className="mb-1.5 flex items-center justify-between gap-2 px-1">
+                  <span className="text-[11px] font-black uppercase tracking-wide text-amber-950">
+                    Where should this order go?
+                  </span>
+                  <span className="rounded-full bg-amber-200 px-2 py-0.5 text-[9px] font-black uppercase tracking-wider text-amber-900">
+                    Hand-off
+                  </span>
+                </div>
+                <div className="grid grid-cols-3 gap-1.5">
+                  {(["jury", "judge", "public"] as const).map((destination) => (
+                    <button
+                      key={destination}
+                      type="button"
+                      aria-pressed={side === destination}
+                      onClick={() => changeSide(destination)}
+                      className={`h-10 rounded-xl px-2 text-[11px] font-black uppercase tracking-wide transition active:scale-95 ${side === destination ? `${SIDE_TONE[destination]} shadow-md` : "bg-white text-slate-600 hover:bg-slate-100 hover:text-slate-950"}`}
+                    >
+                      {SIDE_LABEL[destination]}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
             <div className="flex items-center gap-1.5 rounded-2xl border border-slate-200 bg-slate-100 p-1.5 md:p-1">
               <button
                 onClick={() => setLaterTime("")}
@@ -1862,31 +1901,65 @@ function Till() {
               className={`shrink-0 space-y-1.5 border-t border-slate-200 px-3 pt-2 text-sm ${pay === "cash" ? "hidden min-[960px]:block" : ""}`}
             >
               {manualDiscount ? (
-                <div className="flex items-center justify-between text-amber-300">
-                  <span className="truncate">
-                    Discount ·{" "}
-                    {manualDiscount.type === "percent"
-                      ? `${manualDiscount.value}%`
-                      : money(manualDiscount.value)}{" "}
-                    <span className="text-slate-500">({manualDiscount.reason})</span>
-                  </span>
-                  <span className="inline-flex items-center gap-2">
-                    <span className="tabular-nums">−{money(manualDiscountCents)}</span>
+                <div className="rounded-2xl border border-amber-300 bg-amber-50 p-2.5 text-amber-950 shadow-sm">
+                  <div className="flex items-start gap-2.5">
+                    <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-amber-400 text-amber-950">
+                      <BadgePercent className="h-4 w-4" />
+                    </span>
+                    <span className="min-w-0 flex-1">
+                      <span className="block text-[10px] font-black uppercase tracking-widest text-amber-700">
+                        Discount applied
+                      </span>
+                      <span className="block truncate text-xs font-bold">
+                        {manualDiscount.type === "percent"
+                          ? `${manualDiscount.value}% off`
+                          : `${money(manualDiscount.value)} off`}
+                        {" · "}
+                        {manualDiscount.reason}
+                      </span>
+                    </span>
+                    <span className="shrink-0 text-base font-black tabular-nums text-amber-800">
+                      −{money(manualDiscountCents)}
+                    </span>
+                  </div>
+                  <div className="mt-2 grid grid-cols-2 gap-1.5">
                     <button
-                      onClick={() => setManualDiscount(null)}
-                      className="text-xs font-semibold text-slate-500 underline"
+                      type="button"
+                      onClick={() => setDiscountOpen(true)}
+                      className="h-8 rounded-lg border border-amber-300 bg-white text-[10px] font-black uppercase tracking-wide text-amber-900 transition hover:bg-amber-100 active:scale-[0.98]"
                     >
-                      Remove
+                      Edit discount
                     </button>
-                  </span>
+                    <button
+                      type="button"
+                      onClick={() => setManualDiscount(null)}
+                      className="h-8 rounded-lg text-[10px] font-black uppercase tracking-wide text-red-700 transition hover:bg-red-100 active:scale-[0.98]"
+                    >
+                      Remove discount
+                    </button>
+                  </div>
                 </div>
               ) : (
                 lines.length > 0 && (
                   <button
+                    type="button"
                     onClick={() => setDiscountOpen(true)}
-                    className="inline-flex h-10 w-full items-center justify-center gap-2 rounded-xl border border-amber-500/40 text-xs font-bold uppercase tracking-wide text-amber-300 hover:border-amber-400 md:h-9"
+                    className="group flex min-h-11 w-full items-center gap-3 rounded-2xl border border-amber-300 bg-amber-50 px-3 text-left text-amber-950 shadow-sm transition hover:border-amber-400 hover:bg-amber-100 active:scale-[0.99] md:min-h-10"
                   >
-                    <BadgePercent className="h-4 w-4" /> Add discount
+                    <span className="grid h-8 w-8 shrink-0 place-items-center rounded-xl bg-amber-400">
+                      <BadgePercent className="h-4 w-4" />
+                    </span>
+                    <span className="min-w-0 flex-1">
+                      <span className="block text-xs font-black uppercase tracking-wide">
+                        Add discount
+                      </span>
+                      <span className="block text-[10px] font-semibold text-amber-700">
+                        Percentage or fixed amount
+                      </span>
+                    </span>
+                    <span aria-hidden="true" className="text-lg font-black text-amber-700">
+                      +
+                    </span>
                   </button>
                 )
               )}
@@ -1895,6 +1968,7 @@ function Till() {
           {discountOpen && (
             <ManualDiscountModal
               dueCents={total - voucherApplied - jurorDiscount}
+              initialValue={manualDiscount}
               onClose={() => setDiscountOpen(false)}
               onApply={(value) => {
                 setManualDiscount(value);
@@ -2377,22 +2451,36 @@ function RecentTillOrdersModal({ siteId, onClose }: { siteId: string; onClose: (
   }
 
   return (
-    <div className="fixed inset-0 z-[120] grid place-items-center bg-black/75 p-3" role="dialog" aria-modal="true">
+    <div
+      className="fixed inset-0 z-[120] grid place-items-center bg-black/75 p-3"
+      role="dialog"
+      aria-modal="true"
+    >
       <div className="flex max-h-[90dvh] w-full max-w-2xl flex-col overflow-hidden rounded-3xl border border-slate-200 bg-white text-slate-950 shadow-2xl">
         <div className="flex items-center justify-between border-b border-slate-200 px-5 py-4">
           <div>
             <p className="font-display text-xl font-black">Recent till sales</p>
-            <p className="text-xs text-slate-500">Staff can cancel unpaid orders and refund settled sales.</p>
+            <p className="text-xs text-slate-500">
+              Staff can cancel unpaid orders and refund settled sales.
+            </p>
           </div>
-          <button onClick={onClose} aria-label="Close recent sales" className="grid h-10 w-10 place-items-center rounded-xl border border-slate-200">
+          <button
+            onClick={onClose}
+            aria-label="Close recent sales"
+            className="grid h-10 w-10 place-items-center rounded-xl border border-slate-200"
+          >
             <X className="h-4 w-4" />
           </button>
         </div>
         <div className="min-h-0 flex-1 overflow-y-auto p-3">
           {loading ? (
-            <p className="flex items-center justify-center gap-2 py-12 text-sm text-slate-600"><Loader2 className="h-4 w-4 animate-spin" /> Loading sales…</p>
+            <p className="flex items-center justify-center gap-2 py-12 text-sm text-slate-600">
+              <Loader2 className="h-4 w-4 animate-spin" /> Loading sales…
+            </p>
           ) : orders.length === 0 ? (
-            <p className="py-12 text-center text-sm text-slate-600">No recent till sales at this branch.</p>
+            <p className="py-12 text-center text-sm text-slate-600">
+              No recent till sales at this branch.
+            </p>
           ) : (
             <ul className="space-y-2">
               {orders.map((order) => {
@@ -2400,30 +2488,64 @@ function RecentTillOrdersModal({ siteId, onClose }: { siteId: string; onClose: (
                 const settled = ["paid", "refunded", "on_account"].includes(order.payment_status);
                 const busy = workingId === order.id;
                 return (
-                  <li key={order.id} className="grid gap-3 rounded-2xl border border-slate-200 bg-slate-100 p-3 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center">
+                  <li
+                    key={order.id}
+                    className="grid gap-3 rounded-2xl border border-slate-200 bg-slate-100 p-3 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center"
+                  >
                     <div className="min-w-0">
                       <p className="flex flex-wrap items-center gap-2 font-bold">
                         <span>#{order.order_number}</span>
                         <span className="truncate">{order.customer_name || "Till customer"}</span>
-                        <span className="rounded-full bg-slate-200 px-2 py-0.5 text-[10px] uppercase text-slate-600">{order.type === "dine_in" ? "Dine in" : "Takeaway"}</span>
+                        <span className="rounded-full bg-slate-200 px-2 py-0.5 text-[10px] uppercase text-slate-600">
+                          {order.type === "dine_in" ? "Dine in" : "Takeaway"}
+                        </span>
                       </p>
                       <p className="mt-1 text-xs text-slate-500">
-                        {new Date(order.created_at).toLocaleString([], { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" })} · {order.payment_method || "unpaid"} · {order.payment_status.replace(/_/g, " ")}
+                        {new Date(order.created_at).toLocaleString([], {
+                          day: "2-digit",
+                          month: "short",
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        })}{" "}
+                        · {order.payment_method || "unpaid"} ·{" "}
+                        {order.payment_status.replace(/_/g, " ")}
                       </p>
                       <p className="mt-1 font-display text-lg font-black tabular-nums">
                         {money(order.total_cents)}
-                        {order.refunded_cents > 0 && <span className="ml-2 text-xs font-semibold text-amber-300">{money(order.refunded_cents)} refunded</span>}
+                        {order.refunded_cents > 0 && (
+                          <span className="ml-2 text-xs font-semibold text-amber-300">
+                            {money(order.refunded_cents)} refunded
+                          </span>
+                        )}
                       </p>
                     </div>
                     <div className="flex gap-2 sm:justify-end">
                       {!settled && order.status !== "cancelled" && (
-                        <button disabled={busy} onClick={() => void cancelSale(order)} className="inline-flex h-10 items-center gap-1.5 rounded-xl border border-red-400/50 px-3 text-xs font-bold text-red-300 disabled:opacity-40">
-                          {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <X className="h-4 w-4" />} Cancel
+                        <button
+                          disabled={busy}
+                          onClick={() => void cancelSale(order)}
+                          className="inline-flex h-10 items-center gap-1.5 rounded-xl border border-red-400/50 px-3 text-xs font-bold text-red-300 disabled:opacity-40"
+                        >
+                          {busy ? (
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                          ) : (
+                            <X className="h-4 w-4" />
+                          )}{" "}
+                          Cancel
                         </button>
                       )}
                       {settled && remaining > 0 && (
-                        <button disabled={busy} onClick={() => void refundSale(order)} className="inline-flex h-10 items-center gap-1.5 rounded-xl bg-amber-400 px-3 text-xs font-black text-neutral-950 disabled:opacity-40">
-                          {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <RotateCcw className="h-4 w-4" />} Refund
+                        <button
+                          disabled={busy}
+                          onClick={() => void refundSale(order)}
+                          className="inline-flex h-10 items-center gap-1.5 rounded-xl bg-amber-400 px-3 text-xs font-black text-neutral-950 disabled:opacity-40"
+                        >
+                          {busy ? (
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                          ) : (
+                            <RotateCcw className="h-4 w-4" />
+                          )}{" "}
+                          Refund
                         </button>
                       )}
                     </div>
@@ -2434,7 +2556,13 @@ function RecentTillOrdersModal({ siteId, onClose }: { siteId: string; onClose: (
           )}
         </div>
         <div className="border-t border-slate-200 p-3">
-          <button onClick={() => void load()} disabled={loading} className="h-10 w-full rounded-xl border border-slate-200 text-xs font-bold uppercase tracking-wide text-slate-700 disabled:opacity-40">Refresh sales</button>
+          <button
+            onClick={() => void load()}
+            disabled={loading}
+            className="h-10 w-full rounded-xl border border-slate-200 text-xs font-bold uppercase tracking-wide text-slate-700 disabled:opacity-40"
+          >
+            Refresh sales
+          </button>
         </div>
       </div>
     </div>
@@ -2448,21 +2576,28 @@ function RecentTillOrdersModal({ siteId, onClose }: { siteId: string; onClose: (
  */
 function ManualDiscountModal({
   dueCents,
+  initialValue,
   onClose,
   onApply,
 }: {
   dueCents: number;
+  initialValue: { type: "percent" | "fixed_amount"; value: number; reason: string } | null;
   onClose: () => void;
   onApply: (value: { type: "percent" | "fixed_amount"; value: number; reason: string }) => void;
 }) {
-  const [type, setType] = useState<"percent" | "fixed_amount">("percent");
-  const [percent, setPercent] = useState(10);
-  const [pounds, setPounds] = useState("1.00");
-  const [reason, setReason] = useState("");
+  const [type, setType] = useState<"percent" | "fixed_amount">(initialValue?.type ?? "percent");
+  const [percent, setPercent] = useState(
+    initialValue?.type === "percent" ? initialValue.value : 10,
+  );
+  const [pounds, setPounds] = useState(
+    initialValue?.type === "fixed_amount" ? (initialValue.value / 100).toFixed(2) : "1.00",
+  );
+  const [reason, setReason] = useState(initialValue?.reason ?? "");
   const preview =
     type === "percent"
       ? Math.round((Math.max(0, dueCents) * Math.min(100, Math.max(0, percent))) / 100)
       : Math.min(Math.max(0, dueCents), Math.round(parseFloat(pounds || "0") * 100) || 0);
+  const canApply = preview > 0 && reason.trim().length >= 3;
 
   function apply() {
     if (reason.trim().length < 3) return toast.error("Add a short reason for this discount");
@@ -2476,68 +2611,186 @@ function ManualDiscountModal({
   }
 
   return (
-    <div className="fixed inset-0 z-50 grid place-items-center bg-black/70 p-4">
-      <div className="w-full max-w-sm rounded-2xl border border-slate-200 bg-white p-4 text-slate-950">
-        <p className="font-display text-lg font-black">Discount this order</p>
-        <div className="mt-3 grid grid-cols-2 gap-2">
-          {(["percent", "fixed_amount"] as const).map((t) => (
-            <button
-              key={t}
-              onClick={() => setType(t)}
-              className={`h-11 rounded-xl border text-sm font-bold ${
-                type === t
-                  ? "border-amber-400 bg-amber-400/10 text-amber-300"
-                  : "border-slate-200 text-slate-600"
-              }`}
-            >
-              {t === "percent" ? "% off" : "£ off"}
-            </button>
-          ))}
+    <div
+      className="fixed inset-0 z-[140] flex items-end bg-black/60 backdrop-blur-sm sm:grid sm:place-items-center sm:p-4"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="discount-title"
+      onMouseDown={(event) => {
+        if (event.target === event.currentTarget) onClose();
+      }}
+    >
+      <div className="max-h-[92dvh] w-full overflow-y-auto rounded-t-3xl border border-slate-200 bg-white p-4 pb-[calc(1rem+env(safe-area-inset-bottom))] text-slate-950 shadow-2xl sm:max-w-md sm:rounded-3xl sm:p-5">
+        <div className="flex items-start gap-3">
+          <span className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-amber-400 text-amber-950 shadow-sm">
+            <BadgePercent className="h-5 w-5" />
+          </span>
+          <span className="min-w-0 flex-1">
+            <span id="discount-title" className="block font-display text-xl font-black">
+              {initialValue ? "Edit discount" : "Add a discount"}
+            </span>
+            <span className="block text-xs text-slate-500">
+              Choose an amount and record why it was given.
+            </span>
+          </span>
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label="Close discount"
+            className="grid h-10 w-10 shrink-0 place-items-center rounded-xl border border-slate-200 bg-slate-50 text-slate-600 transition hover:bg-slate-100 active:scale-95"
+          >
+            <X className="h-4 w-4" />
+          </button>
         </div>
-        {type === "percent" ? (
+
+        <fieldset className="mt-5">
+          <legend className="mb-2 text-[10px] font-black uppercase tracking-widest text-slate-500">
+            Discount type
+          </legend>
+          <div className="grid grid-cols-2 gap-2 rounded-2xl bg-slate-100 p-1.5">
+            {(["percent", "fixed_amount"] as const).map((t) => (
+              <button
+                key={t}
+                type="button"
+                aria-pressed={type === t}
+                onClick={() => setType(t)}
+                className={`h-12 rounded-xl border text-sm font-black transition active:scale-[0.98] ${
+                  type === t
+                    ? "border-amber-400 bg-amber-400 text-amber-950 shadow-sm"
+                    : "border-transparent bg-white text-slate-600 hover:border-slate-300"
+                }`}
+              >
+                {t === "percent" ? "Percentage (%)" : "Fixed amount (£)"}
+              </button>
+            ))}
+          </div>
+        </fieldset>
+
+        <div className="mt-4">
+          <label
+            htmlFor="discount-value"
+            className="mb-2 block text-[10px] font-black uppercase tracking-widest text-slate-500"
+          >
+            {type === "percent" ? "Percentage off" : "Amount off"}
+          </label>
+          <div className="relative">
+            <span className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-xl font-black text-slate-500">
+              {type === "percent" ? "%" : "£"}
+            </span>
+            {type === "percent" ? (
+              <input
+                id="discount-value"
+                type="number"
+                inputMode="numeric"
+                min={1}
+                max={100}
+                value={percent || ""}
+                onChange={(e) => setPercent(parseInt(e.target.value || "0", 10))}
+                className="h-14 w-full rounded-2xl border-2 border-slate-200 bg-white pl-12 pr-4 text-2xl font-black tabular-nums outline-none transition focus:border-amber-400"
+                aria-label="Percent off"
+              />
+            ) : (
+              <input
+                id="discount-value"
+                type="number"
+                inputMode="decimal"
+                min={0.01}
+                step={0.01}
+                value={pounds}
+                onChange={(e) => setPounds(e.target.value)}
+                className="h-14 w-full rounded-2xl border-2 border-slate-200 bg-white pl-12 pr-4 text-2xl font-black tabular-nums outline-none transition focus:border-amber-400"
+                aria-label="Amount off in pounds"
+              />
+            )}
+          </div>
+
+          <div className="mt-2 grid grid-cols-4 gap-1.5">
+            {(type === "percent" ? [5, 10, 15, 20] : [100, 200, 500, 1000]).map((value) => (
+              <button
+                key={value}
+                type="button"
+                onClick={() =>
+                  type === "percent" ? setPercent(value) : setPounds((value / 100).toFixed(2))
+                }
+                className="h-10 rounded-xl border border-slate-200 bg-slate-50 text-xs font-bold tabular-nums text-slate-700 transition hover:border-amber-400 hover:bg-amber-50 active:scale-95"
+              >
+                {type === "percent" ? `${value}%` : money(value)}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div className="mt-4">
+          <label
+            htmlFor="discount-reason"
+            className="mb-2 block text-[10px] font-black uppercase tracking-widest text-slate-500"
+          >
+            Reason <span className="text-red-600">· required</span>
+          </label>
           <input
-            type="number"
-            min={1}
-            max={100}
-            value={percent}
-            onChange={(e) => setPercent(parseInt(e.target.value || "0", 10))}
-            className="mt-3 h-12 w-full rounded-xl border border-slate-200 bg-black/40 px-4 text-lg tabular-nums"
-            aria-label="Percent off"
+            id="discount-reason"
+            value={reason}
+            onChange={(e) => setReason(e.target.value)}
+            maxLength={120}
+            placeholder="Why is this discount being given?"
+            className="h-12 w-full rounded-2xl border-2 border-slate-200 bg-white px-4 text-sm outline-none transition placeholder:text-slate-400 focus:border-amber-400"
           />
-        ) : (
-          <input
-            type="number"
-            min={0.01}
-            step={0.01}
-            value={pounds}
-            onChange={(e) => setPounds(e.target.value)}
-            className="mt-3 h-12 w-full rounded-xl border border-slate-200 bg-black/40 px-4 text-lg tabular-nums"
-            aria-label="Amount off in pounds"
-          />
-        )}
-        <input
-          value={reason}
-          onChange={(e) => setReason(e.target.value)}
-          maxLength={120}
-          placeholder="Reason (e.g. staff, goodwill, damaged item)"
-          className="mt-3 h-12 w-full rounded-xl border border-slate-200 bg-black/40 px-4 text-sm"
-        />
-        <p className="mt-3 text-sm text-slate-600">
-          Comes off this order:{" "}
-          <span className="tabular-nums text-amber-300">{money(preview)}</span>
-        </p>
+          <div className="mt-2 flex flex-wrap gap-1.5">
+            {["Staff", "Goodwill", "Damaged item", "Manager offer"].map((preset) => (
+              <button
+                key={preset}
+                type="button"
+                onClick={() => setReason(preset)}
+                className={`rounded-full border px-3 py-1.5 text-[11px] font-bold transition active:scale-95 ${reason === preset ? "border-amber-400 bg-amber-100 text-amber-900" : "border-slate-200 text-slate-600 hover:bg-slate-100"}`}
+              >
+                {preset}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div className="mt-4 grid grid-cols-3 gap-2 rounded-2xl border border-amber-200 bg-amber-50 p-3 text-center">
+          <span>
+            <span className="block text-[9px] font-black uppercase tracking-wide text-slate-500">
+              Order
+            </span>
+            <span className="block text-sm font-bold tabular-nums text-slate-700">
+              {money(dueCents)}
+            </span>
+          </span>
+          <span>
+            <span className="block text-[9px] font-black uppercase tracking-wide text-amber-700">
+              Discount
+            </span>
+            <span className="block text-sm font-black tabular-nums text-amber-800">
+              −{money(preview)}
+            </span>
+          </span>
+          <span>
+            <span className="block text-[9px] font-black uppercase tracking-wide text-emerald-700">
+              New total
+            </span>
+            <span className="block text-sm font-black tabular-nums text-emerald-800">
+              {money(Math.max(0, dueCents - preview))}
+            </span>
+          </span>
+        </div>
+
         <div className="mt-4 grid grid-cols-2 gap-2">
           <button
+            type="button"
             onClick={onClose}
-            className="h-12 rounded-xl border border-slate-200 text-sm font-bold text-slate-600"
+            className="h-12 rounded-2xl border border-slate-300 bg-white text-sm font-bold text-slate-700 transition hover:bg-slate-100 active:scale-[0.98]"
           >
             Cancel
           </button>
           <button
+            type="button"
             onClick={apply}
-            className="h-12 rounded-xl bg-amber-500 text-sm font-black text-black"
+            disabled={!canApply}
+            className="h-12 rounded-2xl bg-amber-400 text-sm font-black text-amber-950 shadow-md shadow-amber-400/20 transition hover:bg-amber-300 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-40"
           >
-            Apply discount
+            {initialValue ? "Save discount" : "Apply discount"}
           </button>
         </div>
       </div>
@@ -3097,7 +3350,9 @@ function ManualCardModal({
             <p className="font-display text-xl font-black">{money(cashComponent)}</p>
           </div>
           <div>
-            <p className="text-[10px] font-black uppercase tracking-wide text-slate-500">EVO card</p>
+            <p className="text-[10px] font-black uppercase tracking-wide text-slate-500">
+              EVO card
+            </p>
             <p className="font-display text-xl font-black text-primary">{money(total)}</p>
           </div>
         </div>
@@ -3772,7 +4027,9 @@ function TillSettings({
             Save and test connection
           </button>
           {bridgeMessage && (
-            <p className="rounded-lg bg-slate-100 px-3 py-2 text-xs text-slate-600">{bridgeMessage}</p>
+            <p className="rounded-lg bg-slate-100 px-3 py-2 text-xs text-slate-600">
+              {bridgeMessage}
+            </p>
           )}
         </div>
       )}
