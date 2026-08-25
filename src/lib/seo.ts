@@ -9,6 +9,7 @@ type SeoMetaInput = {
   description: string;
   path: string;
   image?: string;
+  imageAlt?: string;
   type?: "website" | "article";
   robots?: string;
 };
@@ -23,6 +24,7 @@ export function seoMeta({
   description,
   path,
   image = DEFAULT_SOCIAL_IMAGE,
+  imageAlt = `${SITE_NAME} food and drink`,
   type = "website",
   robots = "index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1",
 }: SeoMetaInput): Array<Record<string, string>> {
@@ -40,11 +42,12 @@ export function seoMeta({
     { property: "og:type", content: type },
     { property: "og:url", content: canonical },
     { property: "og:image", content: socialImage },
-    { property: "og:image:alt", content: `${SITE_NAME} food and drink` },
+    { property: "og:image:alt", content: imageAlt },
     { name: "twitter:card", content: "summary_large_image" },
     { name: "twitter:title", content: title },
     { name: "twitter:description", content: description },
     { name: "twitter:image", content: socialImage },
+    { name: "twitter:image:alt", content: imageAlt },
   ];
 }
 
