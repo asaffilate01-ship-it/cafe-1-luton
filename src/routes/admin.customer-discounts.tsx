@@ -27,7 +27,7 @@ export const Route = createFileRoute("/admin/customer-discounts")({
     ],
   }),
   component: () => (
-    <RequireRole roles={["admin", "staff"]} next="/admin/customer-discounts">
+    <RequireRole roles={["admin"]} next="/admin/customer-discounts">
       <AdminCustomerDiscounts />
     </RequireRole>
   ),

@@ -107,7 +107,7 @@ type Ticket = Order & { items: Item[]; needsCooking: boolean };
 
 const TYPE_LABEL: Record<string, string> = {
   dine_in: "DINE IN",
-  collection: "PICKUP",
+  collection: "TAKEAWAY",
   delivery: "DELIVERY",
 };
 /** Fulfilment strip colours — sky blue / lime / grey, all with readable text. */
@@ -149,13 +149,13 @@ const CHANNEL: Record<ChannelKey, { label: string; border: string; chip: string;
     ring: "ring-cyan-600/20",
   },
   jury: {
-    label: "Jury side",
+    label: "Jury",
     border: "border-red-600",
     chip: "bg-red-600 text-white",
     ring: "ring-red-600/20",
   },
   public: {
-    label: "Public side",
+    label: "Public",
     border: "border-pink-500",
     chip: "bg-pink-500 text-white",
     ring: "ring-pink-500/20",
@@ -357,6 +357,12 @@ function KDS() {
   const courtFeatures =
     sites.site?.code.toUpperCase() === "LUTON_CROWN_COURT" ||
     sites.site?.postcode?.toUpperCase() === "LU1 2AA";
+  const availableFeeds = courtFeatures
+    ? FEEDS
+    : FEEDS.filter(({ key }) => !["jury", "judge", "delivery"].includes(key));
+  const availableReassignChannels = courtFeatures
+    ? REASSIGN_CHANNELS
+    : REASSIGN_CHANNELS.filter((key) => key === "public" || key === "web");
   const [tickets, setTickets] = useState<Ticket[]>([]);
   // Ids currently shown on the board — used to announce cancellations/refunds.
   const liveIds = useRef<Set<string>>(new Set());
@@ -404,6 +410,10 @@ function KDS() {
   const [feed, setFeed] = useState<FeedKey>("all");
   const { user } = useSession();
   const { has } = useRoles(user);
+
+  useEffect(() => {
+    if (!courtFeatures && ["jury", "judge", "delivery"].includes(feed)) setFeed("all");
+  }, [courtFeatures, feed]);
 
   // Live kitchen timer — ticks every second
   useEffect(() => {
@@ -1056,7 +1066,7 @@ function KDS() {
     try {
       if (current === "dine_in") {
         await setFulfil({ data: { order_id: id, type: "collection", table_number: null } });
-        toast.success("Marked as pickup");
+        toast.success("Marked as takeaway");
       } else {
         const table =
           (await askPrompt({
@@ -1468,6 +1478,8 @@ function KDS() {
               >
                 {tabletKds ? "Desktop layout" : "Tablet layout"}
               </button>
+              {courtFeatures && (
+                <>
               <span
                 role="status"
                 aria-live="polite"
@@ -1538,6 +1550,26 @@ function KDS() {
                     : "No verified Just Eat check-in — key tickets in by hand"}
                 </span>
               ) : null}
+              <span
+                role="status"
+                aria-live="polite"
+                className={`flex shrink-0 items-center gap-1.5 rounded-full px-3 py-2 text-xs font-bold ${
+                  uberEatsLive === null
+                    ? "bg-primary-foreground/15 text-primary-foreground"
+                    : uberEatsLive
+                      ? "bg-black text-white"
+                      : "bg-red-600 text-white"
+                }`}
+              >
+                <Bike className="h-4 w-4" />
+                {uberEatsLive === null
+                  ? "Uber Eats…"
+                  : uberEatsLive
+                    ? "Uber Eats online"
+                    : "Uber Eats offline"}
+              </span>
+                </>
+              )}
             </div>
           </div>
           <div className="mx-auto hidden max-w-[110rem] flex-wrap items-center gap-2 px-3 pb-3 text-xs font-semibold sm:gap-3 sm:px-4 lg:flex">
@@ -1589,7 +1621,7 @@ function KDS() {
               className="hidden flex-wrap items-center gap-1 lg:flex"
               aria-label="Order source filter"
             >
-              {FEEDS.map(({ key, label, Icon }) => {
+              {availableFeeds.map(({ key, label, Icon }) => {
                 const count = tickets.filter((t) => matchesFeed(key, t)).length;
                 const on = feed === key;
                 return (
@@ -1603,7 +1635,7 @@ function KDS() {
                     }`}
                   >
                     <Icon className="h-3.5 w-3.5" />
-                    {label}
+                    {!courtFeatures && key === "public" ? "Till" : label}
                     <span
                       className={`rounded-full px-1 text-[9px] leading-4 ${
                         on ? "bg-primary text-primary-foreground" : "bg-primary-foreground/20"
@@ -1641,8 +1673,8 @@ function KDS() {
               hot food
             </span>
             <span className="hidden items-center gap-1.5 xl:inline-flex">
-              <span className="h-3 w-3 rounded-full bg-amber-400 ring-2 ring-white/60" /> No cooking
-              (drinks &amp; cold)
+              <span className="h-3 w-3 rounded-full bg-amber-400 ring-2 ring-white/60" /> No cooking /
+              cold
             </span>
             <span className="hidden items-center gap-1.5 xl:inline-flex">
               <span className="h-3 w-3 rounded-full bg-emerald-500 ring-2 ring-white/60" /> Ready →
@@ -1682,7 +1714,9 @@ function KDS() {
           const minsUntilDue = scheduledAt
             ? Math.round((scheduledAt.getTime() - now) / 60000)
             : null;
-          const channel = CHANNEL[channelOf(t)];
+          const channelKey = channelOf(t);
+          const channel = CHANNEL[channelKey];
+          const channelLabel = !courtFeatures && channelKey === "public" ? "Till" : channel.label;
           return (
             <div
               key={t.id}
@@ -1691,12 +1725,12 @@ function KDS() {
               {/* Area + cook state share one strip so the ticket stays short */}
               <div className="-mx-3 -mt-3 mb-1.5 grid grid-cols-2 overflow-hidden rounded-t-xl text-[10px] font-black uppercase tracking-[0.12em] sm:-mx-3 sm:-mt-3">
                 <span className={`truncate px-2 py-1 text-center ${channel.chip}`}>
-                  {channel.label}
+                  {channelLabel}
                 </span>
                 <span
                   className={`truncate px-2 py-1 text-center text-white ${cook ? "bg-blue-600" : "bg-amber-500"}`}
                 >
-                  {cook ? "Cook / hot" : "No cooking"}
+                  {cook ? "Cook / hot" : "No cooking / cold"}
                 </span>
               </div>
               <div className="mb-1.5">
@@ -1733,7 +1767,7 @@ function KDS() {
                 )}
                 {reassignFor === t.id && (
                   <div className="mt-1.5 grid grid-cols-2 gap-1.5 rounded-xl border border-border bg-slate-50 p-2">
-                    {REASSIGN_CHANNELS.map((key) => {
+                    {availableReassignChannels.map((key) => {
                       const target = CHANNEL[key];
                       const current = channelOf(t) === key;
                       return (
@@ -1881,9 +1915,7 @@ function KDS() {
                       return <Icon className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />;
                     })()}
                     <span className="truncate">
-                      {t.source === "sumup_pos" && t.type === "collection"
-                        ? "TAKEAWAY"
-                        : (TYPE_LABEL[t.type] ?? t.type.replace("_", " ").toUpperCase())}
+                      {TYPE_LABEL[t.type] ?? t.type.replace("_", " ").toUpperCase()}
                     </span>
                   </p>
                   <p className="shrink-0 text-[11px] font-black leading-none">
@@ -1896,9 +1928,9 @@ function KDS() {
                 <button
                   onClick={() => markDineIn(t.id, t.type)}
                   className="kds-hide-tablet mt-1 rounded-full bg-black/15 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wide hover:bg-black/25"
-                  title="Switch this ticket between dine in and pickup"
+                  title="Switch this ticket between dine in and takeaway"
                 >
-                  {t.type === "dine_in" ? "Change to pickup" : "Mark as dine in"}
+                  {t.type === "dine_in" ? "Change to takeaway" : "Mark as dine in"}
                 </button>
               </div>
               <p className="mt-1.5 text-xs font-black uppercase tracking-wide text-foreground">
@@ -1909,11 +1941,15 @@ function KDS() {
                   Recalled · {t.status.replace(/_/g, " ")}
                 </p>
               )}
-              {t.pos_terminal && (
+              {courtFeatures && t.pos_terminal && (
                 <p
                   className={`kds-hide-tablet mt-1.5 rounded-lg px-2 py-1 text-center font-display text-sm font-black uppercase tracking-wide ${channel.chip}`}
                 >
-                  {t.pos_terminal === "public" ? "Public side" : `${t.pos_terminal} side`}
+                  {t.pos_terminal === "judge"
+                    ? "Judges"
+                    : t.pos_terminal === "jury"
+                      ? "Jury"
+                      : "Public"}
                 </p>
               )}
               {t.source === "deliveroo" && (
@@ -1924,7 +1960,8 @@ function KDS() {
               <p className="mt-1 inline-block self-start rounded bg-slate-900 px-1.5 py-0.5 font-mono text-[11px] font-black tracking-widest text-white">
                 {orderCode(t)}
               </p>
-              {(t.jury_room ?? t.court_location) &&
+              {courtFeatures &&
+                (t.jury_room ?? t.court_location) &&
                 (t.type === "delivery" || t.type === "dine_in") && (
                   <div className="mt-1.5 rounded-lg border-2 border-red-600 bg-red-50 p-1.5 text-red-900">
                     <p className="text-[9px] font-black uppercase tracking-widest">
@@ -1961,7 +1998,7 @@ function KDS() {
                 )}
               {(t.delivery_notes || whenLabel(t) !== "ASAP") && (
                 <p className="mt-1.5 rounded-lg border-2 border-amber-400 bg-amber-100 px-2 py-1 text-[11px] font-black uppercase leading-tight text-amber-900">
-                  NOTE: {noteText(t)}
+                  ORDER NOTE: {noteText(t)}
                 </p>
               )}
               <ul
@@ -1985,9 +2022,14 @@ function KDS() {
                                 {i.station_code}
                               </span>
                             )}
+                            <span
+                              className={`ml-1 align-middle rounded px-1 py-px text-[9px] font-black ${i.cook ? "bg-blue-600 text-white" : "bg-amber-400 text-slate-900"}`}
+                            >
+                              {i.cook ? "HOT" : "NO COOK"}
+                            </span>
                             {i.notes ? (
-                              <em className="block text-[11px] font-medium text-muted-foreground">
-                                — {i.notes}
+                              <em className="mt-0.5 block rounded border border-amber-300 bg-amber-100 px-1.5 py-1 text-[11px] font-black not-italic text-amber-950">
+                                MODIFICATION / NOTE: {i.notes}
                               </em>
                             ) : null}
                           </span>
@@ -2291,9 +2333,9 @@ function KDS() {
       </button>
       <nav
         aria-label="Kitchen display navigation"
-        className="kds-tabbar fixed inset-x-0 bottom-0 z-40 grid grid-cols-7 gap-0.5 border-t border-border bg-primary px-1 pb-[env(safe-area-inset-bottom)] pt-1.5 text-primary-foreground min-[860px]:max-lg:bottom-auto min-[860px]:max-lg:top-0 min-[860px]:max-lg:z-50 min-[860px]:max-lg:border-b min-[860px]:max-lg:border-t-0 min-[860px]:max-lg:pb-1.5 lg:hidden"
+        className={`kds-tabbar fixed inset-x-0 bottom-0 z-40 grid ${courtFeatures ? "grid-cols-7" : "grid-cols-4"} gap-0.5 border-t border-border bg-primary px-1 pb-[env(safe-area-inset-bottom)] pt-1.5 text-primary-foreground min-[860px]:max-lg:bottom-auto min-[860px]:max-lg:top-0 min-[860px]:max-lg:z-50 min-[860px]:max-lg:border-b min-[860px]:max-lg:border-t-0 min-[860px]:max-lg:pb-1.5 lg:hidden`}
       >
-        {FEEDS.map(({ key, label, Icon }) => {
+        {availableFeeds.map(({ key, label, Icon }) => {
           const count = tickets.filter((t) => matchesFeed(key, t)).length;
           const on = feed === key;
           return (
@@ -2323,7 +2365,7 @@ function KDS() {
                   </span>
                 )}
               </span>
-              {label}
+              {!courtFeatures && key === "public" ? "Till" : label}
             </button>
           );
         })}

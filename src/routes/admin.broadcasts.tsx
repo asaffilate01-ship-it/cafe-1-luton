@@ -39,7 +39,7 @@ function Broadcasts() {
     if (!loading && !user) navigate({ to: "/admin/login", search: { next: "/admin/broadcasts" } });
   }, [loading, user, navigate]);
 
-  const allowed = has("admin") || has("staff");
+  const allowed = has("admin");
 
   const { data: rows } = useQuery({
     queryKey: ["admin-broadcasts"],

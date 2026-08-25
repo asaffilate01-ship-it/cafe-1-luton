@@ -57,7 +57,7 @@ function AdminBlog() {
   useEffect(() => {
     if (!loading && !user) navigate({ to: "/admin/login", search: { next: "/admin/blog" } });
   }, [loading, user, navigate]);
-  const allowed = has("admin") || has("staff");
+  const allowed = has("admin");
 
   const { data: rows } = useQuery({
     queryKey: ["admin-blog"],

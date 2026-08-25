@@ -82,7 +82,7 @@ export const confirmPayment = createServerFn({ method: "POST" })
   });
 
 /**
- * Manager-only refund ledger with partial-refund accounting and idempotency.
+ * Authorised till refund ledger with partial-refund accounting and idempotency.
  * Provider calls happen once; the database then atomically posts the result.
  */
 export const refundOrder = createServerFn({ method: "POST" })
@@ -98,13 +98,11 @@ export const refundOrder = createServerFn({ method: "POST" })
       .parse(d),
   )
   .handler(async ({ data, context }) => {
-    const { data: isAdmin } = await context.supabase.rpc("has_role", {
-      _user_id: context.userId,
-      _role: "admin",
-    });
-    if (!isAdmin) throw new Error("Manager approval required");
-    const { requireManagerMfa } = await import("./elevated-auth.server");
-    requireManagerMfa(context.claims);
+    const [{ data: isAdmin }, { data: isStaff }] = await Promise.all([
+      context.supabase.rpc("has_role", { _user_id: context.userId, _role: "admin" }),
+      context.supabase.rpc("has_role", { _user_id: context.userId, _role: "staff" }),
+    ]);
+    if (!isAdmin && !isStaff) throw new Error("Staff access required");
 
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data: prior } = await supabaseAdmin

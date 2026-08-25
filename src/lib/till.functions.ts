@@ -141,6 +141,26 @@ export const recordTillCashEvent = createServerFn({ method: "POST" })
     return event;
   });
 
+/** Recent branch till sales for authorised staff cancellations and refunds. */
+export const listRecentTillOrders = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .validator((d: unknown) => z.object({ site_id: z.string().uuid() }).parse(d))
+  .handler(async ({ data, context }) => {
+    await assertStaff(context);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: orders, error } = await supabaseAdmin
+      .from("orders")
+      .select(
+        "id, order_number, created_at, customer_name, type, total_cents, refunded_cents, payment_status, payment_method, status, source",
+      )
+      .eq("site_id", data.site_id)
+      .in("source", ["counter", "sumup_pos"])
+      .order("created_at", { ascending: false })
+      .limit(40);
+    if (error) throw new Error(error.message);
+    return orders ?? [];
+  });
+
 /** Card readers (SumUp Solo) paired to this merchant account. */
 export const listPairedReaders = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])

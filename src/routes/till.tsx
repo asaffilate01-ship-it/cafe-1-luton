@@ -13,6 +13,7 @@ import {
 import {
   closeTillShift,
   getTillShift,
+  listRecentTillOrders,
   listPairedReaders,
   openTillShift,
   pairSumupReader,
@@ -22,6 +23,7 @@ import {
   checkReaderPayment,
   cancelReaderPayment,
 } from "@/lib/till.functions";
+import { refundOrder } from "@/lib/payments.functions";
 import { openCashDrawer } from "@/lib/drawer";
 import {
   iminPrintTickets,
@@ -106,6 +108,8 @@ import {
   StickyNote,
   Scale,
   BadgePercent,
+  History,
+  RotateCcw,
 } from "lucide-react";
 
 export const Route = createFileRoute("/till")({
@@ -442,6 +446,7 @@ function Till() {
     reason: string;
   }>(null);
   const [discountOpen, setDiscountOpen] = useState(false);
+  const [recentOrdersOpen, setRecentOrdersOpen] = useState(false);
   const [voucherOpen, setVoucherOpen] = useState(false);
   const [customize, setCustomize] = useState<Item | null>(null);
   const [shift, setShift] = useState<TillShift | null>(null);
@@ -1176,6 +1181,14 @@ function Till() {
                 }}
               />
               <TillMenuItem
+                icon={History}
+                label="Recent sales · cancel or refund"
+                onClick={() => {
+                  setMenuOpen(false);
+                  setRecentOrdersOpen(true);
+                }}
+              />
+              <TillMenuItem
                 icon={MonitorPlay}
                 label={displayConnected ? "Customer screen · on" : "Open customer screen"}
                 onClick={() => {
@@ -1593,7 +1606,7 @@ function Till() {
                           if (e.key === "Enter" || e.key === "Escape") setNoteKey(null);
                         }}
                         maxLength={140}
-                        placeholder="e.g. no butter, well done"
+                        placeholder="e.g. remove lettuce, add mayo, sauce on the side"
                         aria-label={`Kitchen note for ${l.name}`}
                         className="h-10 min-w-0 flex-1 rounded-xl border border-amber-400/40 bg-neutral-900 px-2.5 text-sm outline-none placeholder:text-white/30 focus:border-amber-300"
                       />
@@ -1671,7 +1684,7 @@ function Till() {
                         value={line.notes}
                         onChange={(e) => setLineNote(line.key, e.target.value)}
                         maxLength={140}
-                        placeholder="e.g. no butter, well done"
+                        placeholder="e.g. remove lettuce, add mayo, sauce on the side"
                         aria-label={`Kitchen note for ${line.name}`}
                         className="min-h-20 w-full rounded-2xl border border-amber-400/40 bg-neutral-950 p-3 text-base outline-none placeholder:text-white/30 focus:border-amber-300"
                       />
@@ -1874,6 +1887,12 @@ function Till() {
                 setManualDiscount(value);
                 setDiscountOpen(false);
               }}
+            />
+          )}
+          {recentOrdersOpen && (
+            <RecentTillOrdersModal
+              siteId={sites.siteId}
+              onClose={() => setRecentOrdersOpen(false)}
             />
           )}
 
@@ -2318,6 +2337,159 @@ function QrCastModal({ onClose }: { onClose: () => void }) {
 /** One payment method row in the charge sheet. */
 type TillTabAccount = Awaited<ReturnType<typeof listAccounts>>[number];
 type TillTabStatement = Awaited<ReturnType<typeof getAccountStatement>>;
+type RecentTillOrder = Awaited<ReturnType<typeof listRecentTillOrders>>[number];
+
+/** Staff-facing history for correcting unpaid sales and refunding settled ones. */
+function RecentTillOrdersModal({ siteId, onClose }: { siteId: string; onClose: () => void }) {
+  const listOrders = useServerFn(listRecentTillOrders);
+  const refund = useServerFn(refundOrder);
+  const cancel = useServerFn(cancelCounterOrder);
+  const [orders, setOrders] = useState<RecentTillOrder[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [workingId, setWorkingId] = useState<string | null>(null);
+
+  const load = useCallback(async () => {
+    setLoading(true);
+    try {
+      setOrders(await listOrders({ data: { site_id: siteId } }));
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Could not load recent sales");
+    } finally {
+      setLoading(false);
+    }
+  }, [listOrders, siteId]);
+
+  useEffect(() => {
+    void load();
+  }, [load]);
+
+  async function refundSale(order: RecentTillOrder) {
+    const remaining = Math.max(0, order.total_cents - order.refunded_cents);
+    const raw = await askPrompt({
+      title: `Refund order #${order.order_number}`,
+      description: `Up to ${money(remaining)} can be refunded. Card amounts return through SumUp; cash amounts are posted to the till ledger.`,
+      label: "Refund amount (£)",
+      defaultValue: (remaining / 100).toFixed(2),
+      inputMode: "decimal",
+      confirmLabel: "Continue",
+    });
+    if (raw === null) return;
+    const amountCents = Math.round(Number(raw) * 100);
+    if (!Number.isFinite(amountCents) || amountCents < 1 || amountCents > remaining) {
+      return toast.error(`Enter an amount between £0.01 and ${money(remaining)}`);
+    }
+    const reason = await askPrompt({
+      title: "Reason for refund",
+      description: "This is saved in the refund audit record.",
+      label: "Reason",
+      placeholder: "e.g. item unavailable or customer complaint",
+      confirmLabel: "Issue refund",
+    });
+    if (!reason || reason.trim().length < 5) return toast.error("Add a refund reason");
+    setWorkingId(order.id);
+    try {
+      const result = await refund({
+        data: {
+          order_id: order.id,
+          amount_cents: amountCents,
+          reason: reason.trim(),
+          idempotency_key: crypto.randomUUID(),
+        },
+      });
+      toast.success(`${money(result.amount_cents)} refunded · ${result.note}`);
+      await load();
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Refund failed");
+    } finally {
+      setWorkingId(null);
+    }
+  }
+
+  async function cancelSale(order: RecentTillOrder) {
+    const reason = await askPrompt({
+      title: `Cancel order #${order.order_number}?`,
+      description: "Use refund instead if payment has already been taken.",
+      label: "Reason",
+      placeholder: "e.g. entered by mistake",
+      confirmLabel: "Cancel order",
+    });
+    if (!reason || reason.trim().length < 3) return;
+    setWorkingId(order.id);
+    try {
+      await cancel({ data: { order_id: order.id, reason: reason.trim() } });
+      toast.success("Order cancelled");
+      await load();
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Cancellation failed");
+    } finally {
+      setWorkingId(null);
+    }
+  }
+
+  return (
+    <div className="fixed inset-0 z-[120] grid place-items-center bg-black/75 p-3" role="dialog" aria-modal="true">
+      <div className="flex max-h-[90dvh] w-full max-w-2xl flex-col overflow-hidden rounded-3xl border border-white/10 bg-neutral-900 text-white shadow-2xl">
+        <div className="flex items-center justify-between border-b border-white/10 px-5 py-4">
+          <div>
+            <p className="font-display text-xl font-black">Recent till sales</p>
+            <p className="text-xs text-white/50">Staff can cancel unpaid orders and refund settled sales.</p>
+          </div>
+          <button onClick={onClose} aria-label="Close recent sales" className="grid h-10 w-10 place-items-center rounded-xl border border-white/10">
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+        <div className="min-h-0 flex-1 overflow-y-auto p-3">
+          {loading ? (
+            <p className="flex items-center justify-center gap-2 py-12 text-sm text-white/60"><Loader2 className="h-4 w-4 animate-spin" /> Loading sales…</p>
+          ) : orders.length === 0 ? (
+            <p className="py-12 text-center text-sm text-white/60">No recent till sales at this branch.</p>
+          ) : (
+            <ul className="space-y-2">
+              {orders.map((order) => {
+                const remaining = Math.max(0, order.total_cents - order.refunded_cents);
+                const settled = ["paid", "refunded", "on_account"].includes(order.payment_status);
+                const busy = workingId === order.id;
+                return (
+                  <li key={order.id} className="grid gap-3 rounded-2xl border border-white/10 bg-white/5 p-3 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center">
+                    <div className="min-w-0">
+                      <p className="flex flex-wrap items-center gap-2 font-bold">
+                        <span>#{order.order_number}</span>
+                        <span className="truncate">{order.customer_name || "Till customer"}</span>
+                        <span className="rounded-full bg-white/10 px-2 py-0.5 text-[10px] uppercase text-white/60">{order.type === "dine_in" ? "Dine in" : "Takeaway"}</span>
+                      </p>
+                      <p className="mt-1 text-xs text-white/50">
+                        {new Date(order.created_at).toLocaleString([], { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" })} · {order.payment_method || "unpaid"} · {order.payment_status.replace(/_/g, " ")}
+                      </p>
+                      <p className="mt-1 font-display text-lg font-black tabular-nums">
+                        {money(order.total_cents)}
+                        {order.refunded_cents > 0 && <span className="ml-2 text-xs font-semibold text-amber-300">{money(order.refunded_cents)} refunded</span>}
+                      </p>
+                    </div>
+                    <div className="flex gap-2 sm:justify-end">
+                      {!settled && order.status !== "cancelled" && (
+                        <button disabled={busy} onClick={() => void cancelSale(order)} className="inline-flex h-10 items-center gap-1.5 rounded-xl border border-red-400/50 px-3 text-xs font-bold text-red-300 disabled:opacity-40">
+                          {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <X className="h-4 w-4" />} Cancel
+                        </button>
+                      )}
+                      {settled && remaining > 0 && (
+                        <button disabled={busy} onClick={() => void refundSale(order)} className="inline-flex h-10 items-center gap-1.5 rounded-xl bg-amber-400 px-3 text-xs font-black text-neutral-950 disabled:opacity-40">
+                          {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <RotateCcw className="h-4 w-4" />} Refund
+                        </button>
+                      )}
+                    </div>
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+        </div>
+        <div className="border-t border-white/10 p-3">
+          <button onClick={() => void load()} disabled={loading} className="h-10 w-full rounded-xl border border-white/10 text-xs font-bold uppercase tracking-wide text-white/70 disabled:opacity-40">Refresh sales</button>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 /** Account picker and ledger preview for both public and judge-side tills. */
 /**
@@ -3076,7 +3248,7 @@ function ItemCustomizeModal({
       <textarea
         value={notes}
         onChange={(event) => setNotes(event.target.value.slice(0, 200))}
-        placeholder="e.g. allergy: no dairy; sauce on side"
+        placeholder="e.g. remove lettuce, add mayo, allergy: no dairy"
         className="mt-2 min-h-20 w-full rounded-xl border border-white/10 bg-neutral-800 p-3 text-sm outline-none focus:border-primary"
       />
       <div className="mt-4 flex items-center gap-3">

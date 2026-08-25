@@ -115,7 +115,7 @@ function AdminVouchers() {
   useEffect(() => {
     if (!loading && !user) navigate({ to: "/admin/login", search: { next: "/admin/vouchers" } });
   }, [loading, user, navigate]);
-  const allowed = has("admin") || has("staff");
+  const allowed = has("admin");
   const manager = has("admin");
 
   const [date, setDate] = useState(today());

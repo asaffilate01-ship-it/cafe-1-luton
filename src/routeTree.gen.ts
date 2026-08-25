@@ -37,7 +37,6 @@ import { Route as KdsRouteImport } from './routes/kds'
 import { Route as LandlordRouteImport } from './routes/landlord'
 import { Route as LunchLutonRouteImport } from './routes/lunch-luton'
 import { Route as MenuRouteImport } from './routes/menu'
-import { Route as OrderDirectRouteImport } from './routes/order-direct'
 import { Route as PlatformRouteImport } from './routes/platform'
 import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
@@ -229,11 +228,6 @@ const LunchLutonRoute = LunchLutonRouteImport.update({
 const MenuRoute = MenuRouteImport.update({
   id: '/menu',
   path: '/menu',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const OrderDirectRoute = OrderDirectRouteImport.update({
-  id: '/order-direct',
-  path: '/order-direct',
   getParentRoute: () => rootRouteImport,
 } as any)
 const PlatformRoute = PlatformRouteImport.update({
@@ -532,7 +526,6 @@ export interface FileRoutesByFullPath {
   '/landlord': typeof LandlordRoute
   '/lunch-luton': typeof LunchLutonRoute
   '/menu': typeof MenuRoute
-  '/order-direct': typeof OrderDirectRoute
   '/platform': typeof PlatformRoute
   '/privacy': typeof PrivacyRoute
   '/reset-password': typeof ResetPasswordRoute
@@ -615,7 +608,6 @@ export interface FileRoutesByTo {
   '/landlord': typeof LandlordRoute
   '/lunch-luton': typeof LunchLutonRoute
   '/menu': typeof MenuRoute
-  '/order-direct': typeof OrderDirectRoute
   '/platform': typeof PlatformRoute
   '/privacy': typeof PrivacyRoute
   '/reset-password': typeof ResetPasswordRoute
@@ -699,7 +691,6 @@ export interface FileRoutesById {
   '/landlord': typeof LandlordRoute
   '/lunch-luton': typeof LunchLutonRoute
   '/menu': typeof MenuRoute
-  '/order-direct': typeof OrderDirectRoute
   '/platform': typeof PlatformRoute
   '/privacy': typeof PrivacyRoute
   '/reset-password': typeof ResetPasswordRoute
@@ -784,7 +775,6 @@ export interface FileRouteTypes {
     | '/landlord'
     | '/lunch-luton'
     | '/menu'
-    | '/order-direct'
     | '/platform'
     | '/privacy'
     | '/reset-password'
@@ -867,7 +857,6 @@ export interface FileRouteTypes {
     | '/landlord'
     | '/lunch-luton'
     | '/menu'
-    | '/order-direct'
     | '/platform'
     | '/privacy'
     | '/reset-password'
@@ -950,7 +939,6 @@ export interface FileRouteTypes {
     | '/landlord'
     | '/lunch-luton'
     | '/menu'
-    | '/order-direct'
     | '/platform'
     | '/privacy'
     | '/reset-password'
@@ -1034,7 +1022,6 @@ export interface RootRouteChildren {
   LandlordRoute: typeof LandlordRoute
   LunchLutonRoute: typeof LunchLutonRoute
   MenuRoute: typeof MenuRoute
-  OrderDirectRoute: typeof OrderDirectRoute
   PlatformRoute: typeof PlatformRoute
   PrivacyRoute: typeof PrivacyRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
@@ -1285,13 +1272,6 @@ declare module '@tanstack/react-router' {
       path: '/menu'
       fullPath: '/menu'
       preLoaderRoute: typeof MenuRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/order-direct': {
-      id: '/order-direct'
-      path: '/order-direct'
-      fullPath: '/order-direct'
-      preLoaderRoute: typeof OrderDirectRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/platform': {
@@ -1690,7 +1670,6 @@ const rootRouteChildren: RootRouteChildren = {
   LandlordRoute: LandlordRoute,
   LunchLutonRoute: LunchLutonRoute,
   MenuRoute: MenuRoute,
-  OrderDirectRoute: OrderDirectRoute,
   PlatformRoute: PlatformRoute,
   PrivacyRoute: PrivacyRoute,
   ResetPasswordRoute: ResetPasswordRoute,
