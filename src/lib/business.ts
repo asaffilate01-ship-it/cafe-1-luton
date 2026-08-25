@@ -202,3 +202,10 @@ export function buildScheduleSlots(opts: {
   }
   return slots;
 }
+
+/**
+ * Columns of `business_settings` that are safe for signed-out visitors.
+ * The VAT number and internal court-staff discount are deliberately excluded.
+ */
+export const PUBLIC_SETTINGS_COLUMNS =
+  "id,name,accepting_orders,allow_preorder_when_closed,prep_minutes,delivery_minutes,min_order_cents,delivery_fee_cents,free_delivery_threshold_cents,closed_message,updated_at,delivery_open_time,delivery_close_time,delivery_origin_postcode,delivery_radius_m,site_id,vat_registered,deliveroo_url,justeat_url";

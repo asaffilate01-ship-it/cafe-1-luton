@@ -6,6 +6,7 @@ import { createClient } from "@supabase/supabase-js";
 import type { Database } from "@/integrations/supabase/types";
 import { validateModifierSelection, type ModifierRule } from "./modifier-rules";
 import { orderingHoursForLocation } from "./nap";
+import { PUBLIC_SETTINGS_COLUMNS } from "./business";
 
 function createServerSupabase(bearer?: string) {
   const url = process.env.SUPABASE_URL!;
@@ -219,7 +220,10 @@ export const createOrder = createServerFn({ method: "POST" })
 
     // Load branch-specific settings and hours where available, otherwise use
     // the existing default records for backwards compatibility.
-    let settingsQuery = supabase.from("business_settings").select("*").limit(1);
+    let settingsQuery = supabase
+      .from("business_settings")
+      .select(PUBLIC_SETTINGS_COLUMNS)
+      .limit(1);
     if (selectedSiteId) {
       settingsQuery = settingsQuery.eq("site_id", selectedSiteId);
     }
@@ -276,9 +280,16 @@ export const createOrder = createServerFn({ method: "POST" })
         .maybeSingle();
       if (staffRow) {
         staff_member_id = staffRow.id;
-        staff_discount_percent = Number(
-          staffRow.discount_percent ?? settings?.court_staff_discount_percent ?? 10,
-        );
+        let defaultPercent: number | null = null;
+        if (staffRow.discount_percent == null) {
+          const { data: discountRow } = await supabaseAdmin
+            .from("business_settings")
+            .select("court_staff_discount_percent")
+            .limit(1)
+            .maybeSingle();
+          defaultPercent = discountRow?.court_staff_discount_percent ?? null;
+        }
+        staff_discount_percent = Number(staffRow.discount_percent ?? defaultPercent ?? 10);
       }
     }
     const courtStaffDelivery = !!staff_member_id && !!data.court_location;
