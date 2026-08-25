@@ -95,7 +95,7 @@ export function LiveMap({
           if (cancelled || painted) return;
           // Google paints its own failure panel inside the container, so wipe it
           // before React swaps in the fallback map.
-          instance.setMap?.(null as never);
+          
           if (el.current) el.current.innerHTML = "";
           map.current = null;
           setError("Map unavailable");
