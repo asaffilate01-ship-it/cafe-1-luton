@@ -65,6 +65,20 @@ type Item = {
   sort_order: number;
   active: boolean;
 };
+type PrepKind = "cook" | "prep" | "none";
+const DIETARY_CHOICES = [
+  "Halal",
+  "Vegan",
+  "Vegetarian",
+  "Gluten-free",
+  "Dairy-free",
+  "Nut-free",
+] as const;
+
+function prepKindOf(item: Pick<Item, "needs_cooking" | "prep_seconds">): PrepKind {
+  if (item.needs_cooking) return "cook";
+  return (item.prep_seconds ?? 0) > 0 ? "prep" : "none";
+}
 type Mod = {
   id: string;
   category_id: string | null;
@@ -358,6 +372,8 @@ function MenuManagerInner() {
                       sort_order: sort,
                       active: true,
                       is_veg: false,
+                      needs_cooking: false,
+                      prep_seconds: 180,
                     });
                     if (error) return toast.error(error.message);
                     refresh();
@@ -739,6 +755,69 @@ function ItemRow({ it, onChanged }: { it: Item; onChanged: () => void }) {
           className="rounded-lg border border-input bg-background px-3 py-2 text-sm"
           placeholder="Dietary tags, comma separated"
         />
+        <div className="flex flex-wrap gap-1.5 sm:col-span-2" aria-label="Dietary options">
+          {DIETARY_CHOICES.map((tag) => {
+            const checked = (form.dietary_tags ?? []).includes(tag);
+            return (
+              <button
+                key={tag}
+                type="button"
+                aria-pressed={checked}
+                onClick={() => {
+                  const next = checked
+                    ? (form.dietary_tags ?? []).filter((value) => value !== tag)
+                    : [...(form.dietary_tags ?? []), tag];
+                  void save({ dietary_tags: next });
+                }}
+                className={`rounded-full border px-3 py-1.5 text-xs font-semibold transition ${
+                  checked
+                    ? "border-emerald-600 bg-emerald-600 text-white"
+                    : "border-border bg-background text-muted-foreground hover:border-emerald-500"
+                }`}
+              >
+                {checked ? "✓ " : ""}{tag}
+              </button>
+            );
+          })}
+        </div>
+        <fieldset className="sm:col-span-2">
+          <legend className="mb-1.5 text-xs font-bold uppercase tracking-wide text-muted-foreground">
+            Kitchen preparation
+          </legend>
+          <div className="grid grid-cols-3 gap-1.5 rounded-xl bg-muted p-1.5">
+            {([
+              ["cook", "Cooked", "bg-rose-600 text-white"],
+              ["prep", "Prep required", "bg-amber-400 text-slate-950"],
+              ["none", "No prep", "bg-emerald-600 text-white"],
+            ] as const).map(([kind, label, activeClass]) => {
+              const active = prepKindOf(form) === kind;
+              return (
+                <button
+                  key={kind}
+                  type="button"
+                  aria-pressed={active}
+                  onClick={() => {
+                    const patch =
+                      kind === "cook"
+                        ? { needs_cooking: true, prep_seconds: form.prep_seconds > 0 ? form.prep_seconds : 600 }
+                        : kind === "prep"
+                          ? { needs_cooking: false, prep_seconds: form.prep_seconds > 0 ? form.prep_seconds : 180 }
+                          : { needs_cooking: false, prep_seconds: 0 };
+                    void save(patch);
+                  }}
+                  className={`min-h-10 rounded-lg px-2 text-xs font-bold transition ${
+                    active ? activeClass : "bg-background text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  {label}
+                </button>
+              );
+            })}
+          </div>
+          <p className="mt-1 text-[11px] text-muted-foreground">
+            Cooked = meals and hot food · Prep required = sandwiches and drinks · No prep = packaged items.
+          </p>
+        </fieldset>
         <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-muted-foreground sm:col-span-2">
           <button
             type="button"
@@ -776,20 +855,6 @@ function ItemRow({ it, onChanged }: { it: Item; onChanged: () => void }) {
               }}
             />
             Loyalty drink
-          </label>
-          <label
-            className="inline-flex items-center gap-1"
-            title="Hot/cooked item — kitchen tickets containing it show BLUE"
-          >
-            <input
-              type="checkbox"
-              checked={!!form.needs_cooking}
-              onChange={(e) => {
-                setForm({ ...form, needs_cooking: e.target.checked });
-                save({ needs_cooking: e.target.checked });
-              }}
-            />
-            Needs cooking
           </label>
           <label
             className="inline-flex items-center gap-1"

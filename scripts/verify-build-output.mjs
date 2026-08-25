@@ -45,7 +45,7 @@ const requiredPrivatePatterns = [
 const failures = [];
 const blocks = content.split(/(?=^\/)/m);
 
-for (const pattern of ["/sw.js", "/manifest.webmanifest", "/kds.webmanifest"]) {
+for (const pattern of ["/sw.js", "/manifest.webmanifest", "/kds.webmanifest", "/till.webmanifest"]) {
   const block = blocks.find((candidate) => candidate.startsWith(`${pattern}\n`));
   if (!block) {
     failures.push(`${pattern}: mutable public asset route block is missing`);
@@ -94,5 +94,5 @@ if (failures.length) {
 }
 
 console.log(
-  `Build output verification passed for ${requiredPrivatePatterns.length} private route families and 3 mutable public assets.`,
+  `Build output verification passed for ${requiredPrivatePatterns.length} private route families and 4 mutable public assets.`,
 );

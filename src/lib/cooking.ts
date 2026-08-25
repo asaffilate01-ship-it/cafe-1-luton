@@ -50,6 +50,67 @@ export function looksCooked(name: string): boolean {
   return COOKED_WORDS.some((w) => tokens.has(w) || tokens.has(singular(w)));
 }
 
+export type PrepKind = "cook" | "prep" | "none";
+
+/** Packaged items can go straight to the pass without kitchen preparation. */
+const NO_PREP_WORDS = [
+  "crisps",
+  "crisp",
+  "can",
+  "cans",
+  "bottle",
+  "bottled",
+  "water",
+  "chocolate",
+  "flapjack",
+  "cookie",
+  "cookies",
+  "biscuit",
+  "biscuits",
+];
+
+/** Made-to-order lines that need assembly or pouring, but no cooking stage. */
+const PREP_WORDS = [
+  "sandwich",
+  "sandwiches",
+  "coffee",
+  "latte",
+  "tea",
+  "cappuccino",
+  "americano",
+  "mocha",
+  "smoothie",
+  "salad",
+];
+
+export function looksNoPrep(name: string): boolean {
+  const tokens = new Set(normaliseItemName(name).split(" ").filter(Boolean));
+  return NO_PREP_WORDS.some((word) => tokens.has(word));
+}
+
+function looksPrepOnly(name: string): boolean {
+  const tokens = new Set(normaliseItemName(name).split(" ").filter(Boolean));
+  return PREP_WORDS.some((word) => tokens.has(word));
+}
+
+/**
+ * Three-state kitchen routing, stored compatibly in the existing menu fields:
+ * cooked = needs_cooking, prep = a positive prep time, none = zero prep time.
+ */
+export function prepKindForItem(item: {
+  name: string;
+  needs_cooking?: boolean | null;
+  prep_seconds?: number | null;
+  matched?: boolean;
+}): PrepKind {
+  if (item.needs_cooking) return "cook";
+  if ((item.prep_seconds ?? 0) > 0) return "prep";
+  if (item.matched) return "none";
+  if (looksNoPrep(item.name)) return "none";
+  if (looksPrepOnly(item.name)) return "prep";
+  return looksCooked(item.name) ? "cook" : "prep";
+}
+
 /**
  * Best-effort lookup of a POS line against our menu names: exact normalised
  * match first, then the menu name whose words overlap the line the most.

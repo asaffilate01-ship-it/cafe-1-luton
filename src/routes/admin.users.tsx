@@ -1,11 +1,11 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { askConfirm } from "@/lib/confirm";
+import { askConfirm, askPrompt } from "@/lib/confirm";
 import { AdminNav } from "@/components/admin-nav";
 import { useEffect, useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useSession, useRoles } from "@/hooks/use-auth";
 import { toast } from "sonner";
-import { ShieldCheck, UserCog, Trash2, Plus } from "lucide-react";
+import { ShieldCheck, UserCog, Trash2, Plus, Pencil } from "lucide-react";
 
 export const Route = createFileRoute("/admin/users")({
   head: () => ({
@@ -103,6 +103,25 @@ function UsersAdmin() {
     setEmail("");
   }
 
+  async function rename(userId: string, current: string | null) {
+    const fullName = await askPrompt({
+      title: "Chef/staff display name",
+      description: "This name and its initials appear in the KDS preparer dropdown.",
+      label: "Full name",
+      placeholder: "e.g. Sam Ahmed",
+      defaultValue: current ?? "",
+      confirmLabel: "Save name",
+    });
+    if (!fullName?.trim()) return;
+    const { error } = await supabase
+      .from("profiles")
+      .update({ full_name: fullName.trim() })
+      .eq("id", userId);
+    if (error) return toast.error(error.message);
+    toast.success("Staff name updated");
+    load();
+  }
+
   if (loading || rolesLoading)
     return <div className="p-12 text-center text-muted-foreground">Loading…</div>;
   if (!has("admin"))
@@ -163,6 +182,10 @@ function UsersAdmin() {
           <p className="mt-2 text-xs text-muted-foreground">
             User must have already signed up at /auth (or been created as a tab customer).
           </p>
+          <p className="mt-2 rounded-xl bg-primary-soft px-3 py-2 text-xs font-medium text-primary">
+            Kitchen chefs: grant the <strong>staff</strong> role and set their name below. They will
+            automatically appear in the KDS “Prepared by” dropdown.
+          </p>
         </div>
 
         <div className="mt-6 overflow-hidden rounded-2xl border border-border bg-card">
@@ -203,7 +226,14 @@ function UsersAdmin() {
                     </div>
                   </td>
                   <td className="p-3 text-right">
-                    <div className="inline-flex gap-1">
+                    <div className="inline-flex flex-wrap justify-end gap-1">
+                      <button
+                        disabled={busy}
+                        onClick={() => void rename(r.id, r.full_name)}
+                        className="inline-flex items-center gap-1 rounded-full border border-border px-2 py-1 text-xs font-semibold hover:border-primary hover:text-primary disabled:opacity-50"
+                      >
+                        <Pencil className="h-3 w-3" /> Name
+                      </button>
                       {ASSIGNABLE.filter((rl) => !r.roles.includes(rl)).map((rl) => (
                         <button
                           key={rl}

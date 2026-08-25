@@ -1069,6 +1069,54 @@ export const listDrivers = createServerFn({ method: "GET" })
     return (profs ?? []) as { id: string; full_name: string | null; email: string | null }[];
   });
 
+/** Staff/admin accounts shown in the KDS preparer selector. */
+export const listKitchenStaff = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const [{ data: isStaff }, { data: isAdmin }] = await Promise.all([
+      context.supabase.rpc("has_role", { _user_id: context.userId, _role: "staff" }),
+      context.supabase.rpc("has_role", { _user_id: context.userId, _role: "admin" }),
+    ]);
+    if (!isStaff && !isAdmin) throw new Error("Forbidden");
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: roles, error } = await supabaseAdmin
+      .from("user_roles")
+      .select("user_id")
+      .in("role", ["staff", "admin"]);
+    if (error) throw new Error(error.message);
+    const ids = [...new Set((roles ?? []).map((r) => r.user_id))];
+    if (!ids.length) return [] as Array<{ id: string; display_name: string; initials: string }>;
+    const { data: profiles, error: profileError } = await supabaseAdmin
+      .from("profiles")
+      .select("id, full_name, email")
+      .in("id", ids);
+    if (profileError) throw new Error(profileError.message);
+
+    const initialsFor = (name: string) => {
+      const words = name.trim().split(/\s+/).filter(Boolean);
+      const raw = words.length > 1
+        ? words.slice(0, 3).map((word) => word[0]).join("")
+        : (words[0] ?? "STA").slice(0, 3);
+      return raw.replace(/[^a-z0-9]/gi, "").toUpperCase().slice(0, 3) || "STA";
+    };
+    const used = new Set<string>();
+    return (profiles ?? [])
+      .map((profile) => ({
+        id: profile.id,
+        display_name: profile.full_name?.trim() || profile.email?.split("@")[0] || "Staff",
+      }))
+      .sort((a, b) => a.display_name.localeCompare(b.display_name))
+      .map((profile) => {
+        const base = initialsFor(profile.display_name);
+        let initials = base;
+        for (let suffix = 2; used.has(initials); suffix += 1) {
+          initials = `${base.slice(0, 2)}${suffix}`.slice(0, 3);
+        }
+        used.add(initials);
+        return { ...profile, initials };
+      });
+  });
+
 /**
  * A driver picks up an unassigned delivery job themselves (shift working).
  * Fails if another driver claimed it first.
