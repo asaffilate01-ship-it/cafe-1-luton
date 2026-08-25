@@ -92,7 +92,13 @@ export function LiveMap({
           if (!cancelled) setReady(true);
         });
         timer = setTimeout(() => {
-          if (!cancelled && !painted) setError("Map unavailable");
+          if (cancelled || painted) return;
+          // Google paints its own failure panel inside the container, so wipe it
+          // before React swaps in the fallback map.
+          instance.setMap?.(null as never);
+          if (el.current) el.current.innerHTML = "";
+          map.current = null;
+          setError("Map unavailable");
         }, 3500);
       })
       .catch((e) => !cancelled && setError(e instanceof Error ? e.message : "Map unavailable"));
@@ -153,7 +159,7 @@ export function LiveMap({
       .join(",");
     const marker = `${centre.lat.toFixed(5)},${centre.lng.toFixed(5)}`;
     return (
-      <div
+      <section
         key="fallback-map"
         className={`relative overflow-hidden rounded-2xl border border-border ${className}`}
       >
@@ -173,7 +179,7 @@ export function LiveMap({
             Open in Google Maps
           </a>
         )}
-      </div>
+      </section>
     );
   }
   return <div key="google-map" ref={el} className={`rounded-2xl border border-border ${className}`} />;
