@@ -129,17 +129,30 @@ export function LiveMap({
   }, [points, ready]);
 
   if (error) {
+    // The Google browser key is domain-restricted, so on a domain it does not
+    // cover the interactive map cannot start. Fall back to a keyless OpenStreetMap
+    // view so visitors still see the location rather than an empty panel.
+    const focus = points[0];
+    const centre = focus ?? { lat: 51.8787, lng: -0.4200 };
+    const span = points.length > 1 ? 0.03 : 0.006;
+    const bbox = [centre.lng - span, centre.lat - span / 2, centre.lng + span, centre.lat + span / 2]
+      .map((n) => n.toFixed(5))
+      .join(",");
+    const marker = `${centre.lat.toFixed(5)},${centre.lng.toFixed(5)}`;
     return (
-      <div
-        className={`grid place-items-center gap-2 rounded-2xl border border-border bg-secondary p-4 text-center text-sm text-muted-foreground ${className}`}
-      >
-        <span>Live map unavailable</span>
+      <div className={`relative overflow-hidden rounded-2xl border border-border ${className}`}>
+        <iframe
+          title={focus?.label ?? "Map"}
+          src={`https://www.openstreetmap.org/export/embed.html?bbox=${bbox}&layer=mapnik&marker=${marker}`}
+          loading="lazy"
+          className="h-full w-full border-0"
+        />
         {fallbackHref && (
           <a
             href={fallbackHref}
             target="_blank"
             rel="noopener noreferrer"
-            className="font-semibold text-primary underline underline-offset-4"
+            className="absolute bottom-2 right-2 rounded-full bg-background/90 px-3 py-1.5 text-xs font-semibold text-primary shadow-sm backdrop-blur"
           >
             Open in Google Maps
           </a>
