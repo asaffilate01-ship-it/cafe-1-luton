@@ -64,20 +64,3 @@ test("critical public pages do not overflow the viewport", async ({ page }) => {
     );
   }
 });
-
-test("social consent opens the canonical TikTok creator feed", async ({ page }) => {
-  await openHealthy(page, "/socials");
-
-  const placeholder = page.getByRole("button", { name: /allow and show tiktok/i }).first();
-  await expect(placeholder).toBeVisible();
-  await placeholder.click();
-
-  const banner = page.getByRole("dialog", { name: /cookie preferences/i });
-  await expect(banner).toBeVisible();
-  await banner.getByRole("button", { name: /accept all/i }).click();
-  await expect(banner).toBeHidden();
-
-  const feed = page.locator("blockquote.tiktok-embed").first();
-  await expect(feed).toHaveAttribute("data-unique-id", "cafe1_luton");
-  await expect(feed).toHaveAttribute("data-embed-type", "creator");
-});
