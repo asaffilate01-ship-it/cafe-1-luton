@@ -4,7 +4,7 @@
 
 - Removed the generated duplicate Phase 19 migration that blocked Production checks. The canonical descriptive migration remains unchanged.
 - Enforced Monday-Friday 08:00-17:00 for dine-in, pickup and takeaway.
-- Enforced Monday-Friday 08:30-16:30 delivery, from AL1 3JU, capped at 805 metres (half a mile).
+- Enforced Monday-Friday 08:30-16:30 delivery, from LU1 2AA, capped at 805 metres (half a mile).
 - Closed Saturdays, Sundays and configured England/Wales bank holidays; published 2027 and 2028 dates are seeded.
 - Recorded that Cafe 1 is not currently VAT registered and stopped customer terms from suggesting that VAT is charged.
 - Restricted trading-rule edits to managers with an AAL2 session.
@@ -18,7 +18,7 @@
 | Service                      | Days                             | Hours         | Additional rule                                                |
 | ---------------------------- | -------------------------------- | ------------- | -------------------------------------------------------------- |
 | Dine-in, pickup and takeaway | Monday-Friday                    | 08:00-17:00   | Closed weekends and bank holidays                              |
-| Delivery                     | Monday-Friday                    | 08:30-16:30   | Maximum 805 metres from AL1 3JU                                |
+| Delivery                     | Monday-Friday                    | 08:30-16:30   | Maximum 805 metres from LU1 2AA                                |
 | Juror standard allowance     | Weekdays excluding bank holidays | Daily         | £5.71; no carry-over; Juror ID is voucher code; valid 12 weeks |
 | Juror extended day           | Approved date only               | Over 10 hours | £12.17; manager MFA and audit reason required                  |
 

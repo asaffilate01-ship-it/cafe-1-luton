@@ -10,7 +10,7 @@ This phase closes the next set of code-level release gaps. It does not replace l
 - Customer-display basket replay, storage-event fallback and a live presence heartbeat so the till reports whether the display is open.
 - KDS partial-failure handling so failed ticket updates remain visible instead of being incorrectly removed.
 - Google Pay configuration in the existing SumUp-hosted checkout, backed by server-side amount, currency, reference, status and checkout-ID verification.
-- Release validation for `GOOGLE_PAY_MERCHANT_ID`, corrected AL1 3JU postcode and refreshed dependency locks.
+- Release validation for `GOOGLE_PAY_MERCHANT_ID`, corrected LU1 2AA postcode and refreshed dependency locks.
 - A production dependency override for `js-yaml` 5.x and DOMPurify lock refresh; `npm audit --omit=dev --audit-level=high` reports zero vulnerabilities at the time of this release.
 
 ## Apply and verify
@@ -29,7 +29,7 @@ Do not commit `.env`, secrets, device bridge pairing tokens, card data or custom
 
 ## Enable Google Pay
 
-1. Complete Google Pay merchant and production-domain approval for `cafe1stalbans.co.uk`.
+1. Complete Google Pay merchant and production-domain approval for `cafe1luton.co.uk`.
 2. Confirm that SumUp has enabled Google Pay/alternative payment methods for the production account.
 3. Add `GOOGLE_PAY_MERCHANT_ID` to the production environment. Use the Google-issued merchant ID, not the SumUp merchant code.
 4. Deploy and test one real low-value Google Pay charge, the corresponding order receipt and a refund.

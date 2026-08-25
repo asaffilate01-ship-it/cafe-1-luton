@@ -158,9 +158,9 @@ function profile(platform: SocialPlatform, raw: unknown, fallback = ""): SocialP
 
 export function createSocialProfiles(env: Record<string, unknown>): SocialProfile[] {
   return [
-    profile("facebook", env.VITE_SOCIAL_FACEBOOK_URL, "https://www.facebook.com/cafe1stalbans"),
-    profile("instagram", env.VITE_SOCIAL_INSTAGRAM_URL, "https://www.instagram.com/cafe1stalbans/"),
-    profile("tiktok", env.VITE_SOCIAL_TIKTOK_URL, "https://www.tiktok.com/@Cafe1_Stalbans"),
+    profile("facebook", env.VITE_SOCIAL_FACEBOOK_URL, "https://www.facebook.com/cafe1luton"),
+    profile("instagram", env.VITE_SOCIAL_INSTAGRAM_URL, "https://www.instagram.com/cafe1luton/"),
+    profile("tiktok", env.VITE_SOCIAL_TIKTOK_URL, "https://www.tiktok.com/@cafe1luton"),
     profile("youtube", env.VITE_SOCIAL_YOUTUBE_URL),
   ].filter((item): item is SocialProfile => Boolean(item));
 }
@@ -213,4 +213,4 @@ export const SOCIAL_POSTS = parseSocialPosts(import.meta.env.VITE_SOCIAL_EMBEDS_
 export const SOCIAL_PROFILES = createSocialProfiles(import.meta.env);
 
 export const GOOGLE_REVIEWS_URL =
-  "https://www.google.com/search?q=Cafe+1+St+Albans+Crown+Court+AL1+3JU";
+  "https://www.google.com/search?q=Cafe+1+Luton+Crown+Court+LU1+2AA";

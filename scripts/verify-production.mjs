@@ -33,9 +33,9 @@ export function responseBudgetBytes(specification) {
 export const PRODUCTION_CHECKS = [
   { path: "/", statuses: [200], contentType: /text\/html/i, inspectPostcode: true },
   { path: "/menu", statuses: [200], contentType: /text\/html/i },
-  { path: "/breakfast-st-albans", statuses: [200], contentType: /text\/html/i },
-  { path: "/halal-food-st-albans", statuses: [200], contentType: /text\/html/i },
-  { path: "/lunch-st-albans", statuses: [200], contentType: /text\/html/i },
+  { path: "/breakfast-luton", statuses: [200], contentType: /text\/html/i },
+  { path: "/halal-food-luton", statuses: [200], contentType: /text\/html/i },
+  { path: "/lunch-luton", statuses: [200], contentType: /text\/html/i },
   { path: "/blog", statuses: [200], contentType: /text\/html/i },
   { path: "/about", statuses: [200], contentType: /text\/html/i },
   { path: "/contact", statuses: [200], contentType: /text\/html/i },
@@ -342,21 +342,21 @@ export async function verifyProduction({
         const body = await response.text();
         measuredBodyBytes = Buffer.byteLength(body, "utf8");
         if (specification.inspectPostcode) {
-          if (!body.includes("AL1 3JU")) fail("confirmed postcode AL1 3JU is missing");
+          if (!body.includes("LU1 2AA")) fail("confirmed postcode LU1 2AA is missing");
           if (body.includes("AL1 3JW")) fail("legacy postcode AL1 3JW is still rendered");
         }
         if (specification.inspectRobots) {
           if (!/Disallow:\s*\/admin/i.test(body)) fail("robots.txt does not block admin routes");
-          if (!body.includes("https://cafe1stalbans.co.uk/sitemap.xml")) {
+          if (!body.includes("https://cafe1luton.co.uk/sitemap.xml")) {
             fail("robots.txt does not reference the canonical sitemap");
           }
         }
         if (specification.inspectSitemap) {
           for (const required of [
-            "https://cafe1stalbans.co.uk/breakfast-st-albans",
-            "https://cafe1stalbans.co.uk/halal-food-st-albans",
-            "https://cafe1stalbans.co.uk/lunch-st-albans",
-            "https://cafe1stalbans.co.uk/blog",
+            "https://cafe1luton.co.uk/breakfast-luton",
+            "https://cafe1luton.co.uk/halal-food-luton",
+            "https://cafe1luton.co.uk/lunch-luton",
+            "https://cafe1luton.co.uk/blog",
           ]) {
             if (!body.includes(`<loc>${required}</loc>`)) {
               fail(`sitemap is missing ${required}`);
@@ -413,10 +413,10 @@ export async function verifyProduction({
             fail("release health response is not valid JSON");
           }
           if (payload) {
-            if (payload.status !== "ok" || payload.service !== "cafe1-st-albans") {
+            if (payload.status !== "ok" || payload.service !== "cafe1-luton") {
               fail("release health identity is invalid");
             }
-            if (payload.postcode !== "AL1 3JU") {
+            if (payload.postcode !== "LU1 2AA") {
               fail("release health postcode is invalid");
             }
             if (!/^[0-9a-f]{40}$/i.test(payload.release ?? "")) {

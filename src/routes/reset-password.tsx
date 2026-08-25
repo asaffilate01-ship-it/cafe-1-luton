@@ -7,12 +7,12 @@ import { PasswordField } from "@/components/password-field";
 export const Route = createFileRoute("/reset-password")({
   head: () => ({
     meta: [
-      { title: "Set a new password — Café 1 St Albans" },
-      { name: "description", content: "Choose a new password for your Café 1 St Albans account." },
-      { property: "og:title", content: "Set a new password — Café 1 St Albans" },
+      { title: "Set a new password — Café 1 Luton" },
+      { name: "description", content: "Choose a new password for your Café 1 Luton account." },
+      { property: "og:title", content: "Set a new password — Café 1 Luton" },
       {
         property: "og:description",
-        content: "Choose a new password for your Café 1 St Albans account.",
+        content: "Choose a new password for your Café 1 Luton account.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },

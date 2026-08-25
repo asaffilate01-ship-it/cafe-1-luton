@@ -63,7 +63,7 @@ export async function readerCheckout(input: {
 }): Promise<{ client_transaction_id: string }> {
   const affiliateKey = process.env["SUMUP_AFFILIATE_KEY"];
   // Cloud API pushes the final transaction result here in real time.
-  const siteUrl = process.env["PUBLIC_SITE_URL"] ?? "https://cafe1stalbans.co.uk";
+  const siteUrl = process.env["PUBLIC_SITE_URL"] ?? "https://cafe1luton.co.uk";
   const returnUrl = `${siteUrl.replace(/\/$/, "")}/api/public/sumup-reader-webhook`;
   const out = await call<{ data?: { client_transaction_id?: string } }>(
     merchantPath(`/${input.readerId}/checkout`),

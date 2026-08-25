@@ -261,7 +261,7 @@ function LandlordPage() {
         </p>
         <h1 className="mt-1 font-display text-3xl font-bold">Landlord control centre</h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          Cafe 1 St Albans is tenant one. Every duplicated deployment reports back here for billing
+          Cafe 1 Luton is tenant one. Every duplicated deployment reports back here for billing
           and cross-tenant reporting.
         </p>
 

@@ -2,7 +2,6 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import {
   ArrowRight,
   BadgeCheck,
-  Bike,
   Clock3,
   Gift,
   Percent,
@@ -29,20 +28,20 @@ import {
 } from "@/lib/seo";
 
 const path = "/order-direct";
-const title = "Order Direct from Café 1 St Albans | No App Fees";
+const title = "Order Direct from Café 1 Luton | No App Fees";
 const description =
-  "Order direct from Café 1 St Albans and skip third-party app fees: counter prices, loyalty points, live delivery tracking, tabs and card, Apple Pay or Google Pay checkout.";
+  "Order direct from Café 1 Luton and skip third-party app fees: choose your branch, dine in or takeaway, earn loyalty points, and pay securely online.";
 
 const faqs = [
   {
-    question: "Why order direct from Café 1 instead of a delivery app?",
+    question: "Why order direct from Café 1 instead of a third-party app?",
     answer:
-      "Ordering on cafe1stalbans.co.uk uses our own kitchen system, so you pay café prices without third-party service or app fees, and every order supports the café directly rather than an aggregator's commission.",
+      "Ordering on cafe1luton.co.uk uses our own kitchen system, so you pay café prices without third-party service or app fees, and every order supports the café directly rather than an aggregator's commission.",
   },
   {
     question: "Is ordering direct cheaper?",
     answer:
-      "Our online menu uses the same prices as the counter, and we do not add aggregator service fees. Any delivery charge is shown clearly at checkout before you pay.",
+      "Our online menu uses the same prices as the counter, and we do not add aggregator service fees.",
   },
   {
     question: "How do I pay when ordering direct?",
@@ -50,9 +49,9 @@ const faqs = [
       "Checkout takes card payments through SumUp, including Apple Pay and Google Pay on supported devices. Court staff and approved house accounts can also charge to a tab and settle later.",
   },
   {
-    question: "Can I track my delivery?",
+    question: "Which Luton branch can I order from?",
     answer:
-      "Yes. Local deliveries within half a mile of the café include live driver tracking on your order page, plus status updates as the kitchen prepares and sends the order.",
+      "Choose Luton Crown Court or Futures House in Marsh Farm before selecting dine in or takeaway. Online delivery is not offered.",
   },
   {
     question: "Do I need to install an app?",
@@ -72,7 +71,7 @@ export const Route = createFileRoute("/order-direct")({
           name: title,
           description,
           path,
-          about: ["Order food direct in St Albans", "Halal takeaway St Albans", "No app fees"],
+          about: ["Order food direct in Luton", "Halal takeaway Luton", "No app fees"],
         }),
       ),
       jsonLdScript(
@@ -99,9 +98,9 @@ const benefits = [
     body: "Every direct order collects points towards money off. Third-party apps do not earn you anything with us.",
   },
   {
-    icon: Bike,
-    title: "Live tracking, our own drivers",
-    body: "Local deliveries are run by Café 1, so you watch the real driver on the map instead of guessing.",
+    icon: Store,
+    title: "Choose your Luton branch",
+    body: "Order from Luton Crown Court or Futures House in Marsh Farm, then choose dine in or takeaway.",
   },
   {
     icon: Clock3,
@@ -124,17 +123,33 @@ const comparison = [
   { label: "Menu price", direct: "Same as the counter", apps: "Often marked up" },
   { label: "Service fee", direct: "None", apps: "Added per order" },
   { label: "Loyalty points", direct: "Earned on every order", apps: "Not available" },
-  { label: "Live driver map", direct: "Yes, our own driver", apps: "Varies" },
+  { label: "Branch choice", direct: "Both Luton cafés", apps: "May not show both" },
   { label: "Scheduled collection", direct: "Choose your slot", apps: "Limited" },
   { label: "Tabs and weekly invoices", direct: "Supported", apps: "Not supported" },
   { label: "Who gets the money", direct: "The café", apps: "Commission to the platform" },
 ];
 
 const steps = [
-  { icon: Smartphone, title: "Browse the live menu", body: "Real-time availability, allergen notes and photos." },
-  { icon: Store, title: "Pick how you want it", body: "Dine in, collect or local delivery, ASAP or a set time." },
-  { icon: Wallet, title: "Pay in a tap", body: "Card, Apple Pay or Google Pay — or charge it to your tab." },
-  { icon: BadgeCheck, title: "Track to the door", body: "Kitchen updates and live driver tracking until it lands." },
+  {
+    icon: Smartphone,
+    title: "Browse the live menu",
+    body: "Real-time availability, allergen notes and photos.",
+  },
+  {
+    icon: Store,
+    title: "Choose branch and order type",
+    body: "Luton Crown Court or Futures House, then dine in or takeaway.",
+  },
+  {
+    icon: Wallet,
+    title: "Pay in a tap",
+    body: "Card, Apple Pay or Google Pay — or charge it to your tab.",
+  },
+  {
+    icon: BadgeCheck,
+    title: "Follow the kitchen updates",
+    body: "See your order progress until it is ready to enjoy or collect.",
+  },
 ];
 
 function OrderDirect() {
@@ -168,9 +183,9 @@ function OrderDirect() {
                 <span className="text-primary">None of the app fees.</span>
               </h1>
               <p className="mt-5 max-w-xl text-lg leading-relaxed text-muted-foreground">
-                Café 1 runs its own ordering, kitchen and delivery. Order here and you get counter
-                pricing, loyalty points, live tracking and a receipt that supports the café instead
-                of a delivery platform's commission.
+                Café 1 runs its own ordering and kitchen system. Order here for counter pricing,
+                loyalty points and clear kitchen updates while supporting your chosen Luton branch
+                directly.
               </p>
               <div className="mt-8 flex flex-wrap gap-3">
                 <Link
@@ -193,14 +208,14 @@ function OrderDirect() {
                   <BadgeCheck className="h-4 w-4 text-primary" /> Open to the public
                 </span>
                 <span className="flex items-center gap-2">
-                  <Bike className="h-4 w-4 text-primary" /> Local delivery within half a mile
+                  <Store className="h-4 w-4 text-primary" /> Dine in or takeaway
                 </span>
               </div>
             </div>
             <div className="relative">
               <img
                 src={heroImage}
-                alt="Café 1 St Albans food ready for collection and local delivery"
+                alt="Café 1 Luton food ready for dine-in or takeaway"
                 width={1200}
                 height={960}
                 loading="eager"
@@ -232,7 +247,7 @@ function OrderDirect() {
         <section className="border-y border-border bg-soft" aria-labelledby="direct-comparison">
           <div className="mx-auto max-w-5xl px-4 py-16">
             <h2 id="direct-comparison" className="font-display text-4xl font-bold">
-              Direct vs delivery apps
+              Direct vs third-party apps
             </h2>
             <p className="mt-3 max-w-2xl text-muted-foreground">
               An honest side-by-side of how ordering on this site compares with ordering the same
@@ -241,7 +256,7 @@ function OrderDirect() {
             <div className="card-3d mt-8 overflow-hidden p-0">
               <table className="w-full border-collapse text-left text-sm">
                 <caption className="sr-only">
-                  Comparison of ordering direct from Café 1 versus third-party delivery apps
+                  Comparison of ordering direct from Café 1 versus third-party ordering apps
                 </caption>
                 <thead>
                   <tr className="bg-primary/10">
@@ -252,7 +267,7 @@ function OrderDirect() {
                       Café 1 direct
                     </th>
                     <th scope="col" className="px-4 py-3 font-semibold text-muted-foreground">
-                      Delivery apps
+                      Third-party apps
                     </th>
                   </tr>
                 </thead>
@@ -320,7 +335,7 @@ function OrderDirect() {
             <div className="card-3d mt-10 p-8 text-center">
               <h2 className="font-display text-3xl font-bold">Ready when you are.</h2>
               <p className="mx-auto mt-3 max-w-md text-muted-foreground">
-                Browse the live menu, choose dine in, collection or delivery, and pay in a tap.
+                Choose your Luton branch, then dine in or order a takeaway and pay in a tap.
               </p>
               <Link
                 to="/menu"

@@ -14,7 +14,7 @@ compact, correctly layered mobile till.
    workflow.
 5. Deploy the final commit.
 6. Set production `PUBLIC_RELEASE_SHA` to the exact 40-character SHA of that deployed commit.
-7. Run `EXPECTED_RELEASE_SHA=<exact-sha> npm run smoke:production -- https://cafe1stalbans.co.uk`.
+7. Run `EXPECTED_RELEASE_SHA=<exact-sha> npm run smoke:production -- https://cafe1luton.co.uk`.
 
 ## If using the full-source ZIP
 

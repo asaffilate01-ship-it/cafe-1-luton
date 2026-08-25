@@ -10,7 +10,7 @@ function validEnvironment(overrides = {}) {
     SUPABASE_URL: "https://cafe1.supabase.co",
     SUPABASE_PUBLISHABLE_KEY: "publishable-key",
     SUPABASE_SERVICE_ROLE_KEY: "service-role-key",
-    PUBLIC_APP_URL: "https://cafe1stalbans.co.uk",
+    PUBLIC_APP_URL: "https://cafe1luton.co.uk",
     PUBLIC_RELEASE_SHA: "3e0b4f1e1c51a1b9437faa8a2eb0e7ee5c7c55c6",
     SUMUP_API_KEY: "live-sumup-key",
     SUMUP_MERCHANT_CODE: "merchant-code",
@@ -22,11 +22,11 @@ function validEnvironment(overrides = {}) {
     LOVABLE_API_KEY: "email-key",
     RESEND_API_KEY: "resend-key",
     GOOGLE_MAPS_API_KEY: "maps-key",
-    GOOGLE_PLACE_ID: "ChIJcafe1StAlbans12345",
+    GOOGLE_PLACE_ID: "ChIJcafe1Luton12345",
     VITE_GA_MEASUREMENT_ID: "G-ABC12345",
     VITE_SOCIAL_EMBEDS_JSON: "[]",
     YOUTUBE_API_KEY: "youtube-production-key-1234567890",
-    YOUTUBE_CHANNEL_HANDLE: "@Cafe1_Stalbans",
+    YOUTUBE_CHANNEL_HANDLE: "@cafe1luton",
     INSTAGRAM_ACCESS_TOKEN: "instagram-production-token-1234567890",
     INSTAGRAM_GRAPH_VERSION: "v23.0",
     ...overrides,
@@ -116,7 +116,7 @@ test("rejects incomplete or malformed automatic social configurations", () => {
   const missingYouTubeKey = validateProductionEnvironment(
     validEnvironment({
       YOUTUBE_API_KEY: "",
-      YOUTUBE_CHANNEL_HANDLE: "@Cafe1_Stalbans",
+      YOUTUBE_CHANNEL_HANDLE: "@cafe1luton",
     }),
   );
   assert.ok(missingYouTubeKey.errors.some((message) => message.includes("YOUTUBE_API_KEY")));

@@ -30,7 +30,7 @@
 | 3 | Google Maps browser key referrers | `RefererNotAllowedMapError` on /contact until apex, www and *.lovable.app are allowed |
 | 4 | SumUp live card + Solo reader | Keys set; one live end-to-end sale, refund and end-of-day still untested |
 | 5 | Apple Pay / Google Pay | Domain file served, merchant ID set; provider approval pending |
-| 6 | Resend domain SPF/DKIM/DMARC | Verify for cafe1stalbans.co.uk so receipts are not spam-filed |
+| 6 | Resend domain SPF/DKIM/DMARC | Verify for cafe1luton.co.uk so receipts are not spam-filed |
 | 7 | Watcher install + sign-in on shop PC | Deliveroo Hub and Just Eat Partner Centre sessions |
 | 8 | Live push test | iOS home-screen install + Android Chrome |
 | 9 | Dual-ticket print | Live KITCHEN + COUNTER print on the iMin |

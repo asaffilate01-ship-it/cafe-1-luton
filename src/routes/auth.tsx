@@ -14,15 +14,15 @@ export const Route = createFileRoute("/auth")({
   validateSearch: search,
   head: () => ({
     meta: [
-      { title: "Sign in — Café 1 St Albans" },
+      { title: "Sign in — Café 1 Luton" },
       {
         name: "description",
-        content: "Sign in or create an account to order from Café 1 St Albans.",
+        content: "Sign in or create an account to order from Café 1 Luton.",
       },
-      { property: "og:title", content: "Sign in — Café 1 St Albans" },
+      { property: "og:title", content: "Sign in — Café 1 Luton" },
       {
         property: "og:description",
-        content: "Sign in or create an account to order from Café 1 St Albans.",
+        content: "Sign in or create an account to order from Café 1 Luton.",
       },
       { property: "og:type", content: "website" },
       { name: "robots", content: "noindex" },

@@ -1,7 +1,7 @@
 {
   "name": "Café 1 Kitchen Display",
   "short_name": "Café 1 KDS",
-  "description": "Kitchen display for Café 1 St Albans — live tickets from the website, till, court and delivery apps.",
+  "description": "Kitchen display for Café 1 Luton — live tickets from the website, till, court and delivery apps.",
   "start_url": "/kds?source=pwa",
   "scope": "/kds",
   "id": "/kds",

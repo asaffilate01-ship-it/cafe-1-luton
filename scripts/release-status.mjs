@@ -13,7 +13,7 @@ import { PRODUCTION_CHECKS } from "./verify-production.mjs";
 import { buildGoLiveDecision, evaluateProductionSmoke } from "./release-readiness.mjs";
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
-const canonicalOrigin = "https://cafe1stalbans.co.uk";
+const canonicalOrigin = "https://cafe1luton.co.uk";
 
 function git(args) {
   return execFileSync("git", args, { cwd: root, encoding: "utf8" }).trim();

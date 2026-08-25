@@ -13,13 +13,13 @@ import { toast } from "sonner";
 export const Route = createFileRoute("/judges-menu")({
   head: () => ({
     meta: [
-      { title: "Judges' Only Menu — Café 1, St Albans" },
+      { title: "Judges' Only Menu — Café 1, Luton" },
       {
         name: "description",
         content:
-          "Private judges' ordering menu at Café 1, St Albans Crown Court. Sign in with the shared judges' login and your personal judge code to order on your weekly tab.",
+          "Private judges' ordering menu at Café 1, Luton Crown Court. Sign in with the shared judges' login and your personal judge code to order on your weekly tab.",
       },
-      { property: "og:title", content: "Judges' Only Menu — Café 1, St Albans" },
+      { property: "og:title", content: "Judges' Only Menu — Café 1, Luton" },
       {
         property: "og:description",
         content: "Gated judges' menu — judge code required. Orders are added to your weekly tab.",

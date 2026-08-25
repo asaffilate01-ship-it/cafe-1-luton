@@ -1,8 +1,8 @@
 # Attendance QR — privacy note for HMCTS sign-off
 
-**Controller:** Café 1 St Albans (Café 1), AL1 3JU — info@cafe1stalbans.co.uk
-**Scheme:** HMCTS Juror Voucher Scheme, St Albans Crown Court
-**System:** cafe1stalbans.co.uk (Café 1 ordering platform)
+**Controller:** Café 1 Luton (Café 1), LU1 2AA — info@cafe1luton.co.uk
+**Scheme:** HMCTS Juror Voucher Scheme, Luton Crown Court
+**System:** cafe1luton.co.uk (Café 1 ordering platform)
 **Document status:** issued for HMCTS Jury Office / HMCTS privacy sign-off
 
 ## 1. Purpose
@@ -74,7 +74,7 @@ no juror-identifying data.
 | --- | --- | --- | --- | --- |
 | Jury Office manager |  | HMCTS |  |  |
 | Privacy / DPO reviewer |  | HMCTS |  |  |
-| Café 1 owner |  | Café 1 St Albans |  |  |
+| Café 1 owner |  | Café 1 Luton |  |  |
 
 Attendance QR functionality must not be enabled for live juror use until this page is signed
 and the completed copy is attached to the `legal_hmcts_retention` operational acceptance gate

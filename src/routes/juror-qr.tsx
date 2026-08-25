@@ -45,7 +45,7 @@ const POSTERS = [
       "Collect at Café 1, or delivery to the Jury Lounge",
       "at Crown Court or the Jury Rooms at the Magistrates'.",
     ],
-    foot: "Café 1 · St Albans Crown Court · AL1 3JU",
+    foot: "Café 1 · Luton Crown Court · LU1 2AA",
   },
   {
     path: "/juror",
@@ -68,7 +68,7 @@ const POSTERS = [
 ];
 
 function QrPostersPage() {
-  const [origin, setOrigin] = useState("https://cafe1stalbans.co.uk");
+  const [origin, setOrigin] = useState("https://cafe1luton.co.uk");
   useEffect(() => {
     if (typeof window !== "undefined") setOrigin(window.location.origin);
   }, []);
@@ -120,7 +120,7 @@ function QrPostersPage() {
                 {p.path}
               </p>
               <p className="mt-3 text-sm text-muted-foreground">{p.foot}</p>
-              <p className="mt-4 font-display text-lg font-black">Café 1 · St Albans Crown Court</p>
+              <p className="mt-4 font-display text-lg font-black">Café 1 · Luton Crown Court</p>
             </div>
           </article>
         ))}

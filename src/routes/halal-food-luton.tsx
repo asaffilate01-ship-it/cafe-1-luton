@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 
 import heroImage from "@/assets/cafe1-hero.webp";
 import { LocalSearchPage } from "@/components/local-search-page";
-import { config } from "@/lib/local-pages/halal-food-st-albans";
+import { config } from "@/lib/local-pages/halal-food-luton";
 import { localBusinessJsonLd } from "@/lib/nap";
 import {
   absoluteUrl,
@@ -14,12 +14,12 @@ import {
   webPageJsonLd,
 } from "@/lib/seo";
 
-const path = "/halal-food-st-albans";
-const title = "Halal Food in St Albans | Breakfast & Lunch | Café 1";
+const path = "/halal-food-luton";
+const title = "Halal Food in Luton | Breakfast & Lunch | Café 1";
 const description =
-  "Find halal food in St Albans at Café 1: all-day breakfast, Desi dishes, sandwiches, curries and café lunches. Open weekdays at Crown Court, AL1 3JU.";
+  "Find halal food in Luton at Café 1: all-day breakfast, Desi dishes, sandwiches, curries and café lunches at Crown Court or Futures House.";
 
-export const Route = createFileRoute("/halal-food-st-albans")({
+export const Route = createFileRoute("/halal-food-luton")({
   head: () => ({
     meta: seoMeta({ title, description, path, image: heroImage }),
     links: [canonicalLink(path), { rel: "preload", as: "image", href: heroImage }],
@@ -30,21 +30,21 @@ export const Route = createFileRoute("/halal-food-st-albans")({
           name: title,
           description,
           path,
-          about: ["Halal food in St Albans", "Halal café", "Halal lunch"],
+          about: ["Halal food in Luton", "Halal café", "Halal lunch"],
         }),
       ),
       jsonLdScript(faqJsonLd(config.faqs)),
       jsonLdScript(
         breadcrumbJsonLd([
           { name: "Home", path: "/" },
-          { name: "Halal food in St Albans", path },
+          { name: "Halal food in Luton", path },
         ]),
       ),
     ],
   }),
-  component: HalalFoodStAlbans,
+  component: HalalFoodLuton,
 });
 
-function HalalFoodStAlbans() {
+function HalalFoodLuton() {
   return <LocalSearchPage config={config} />;
 }

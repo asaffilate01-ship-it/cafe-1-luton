@@ -60,7 +60,7 @@ export function AdminMfaCard({
         if (pending.status !== "verified")
           await supabase.auth.mfa.unenroll({ factorId: pending.id });
       }
-      const baseName = label.trim() || "cafe1stalbans.jury.voucher.scheme";
+      const baseName = label.trim() || "cafe1luton.jury.voucher.scheme";
       const taken = new Set(
         (factors?.totp ?? []).map((f) => (f as { friendly_name?: string }).friendly_name ?? ""),
       );
@@ -74,7 +74,7 @@ export function AdminMfaCard({
         friendlyName,
         // Controls the name shown inside the authenticator app (issuer),
         // instead of the default project/site hostname.
-        issuer: "cafe1stalbans.jury.voucher.scheme",
+        issuer: "cafe1luton.jury.voucher.scheme",
       });
       if (enrollError) throw enrollError;
       setEnrollment({

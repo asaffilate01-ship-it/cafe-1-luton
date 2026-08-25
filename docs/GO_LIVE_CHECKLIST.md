@@ -18,7 +18,7 @@ Do not enable live ordering or live SumUp charging until every mandatory box is 
 - [ ] Take a production Supabase backup and confirm it can be restored.
 - [ ] Restore recent data to staging and run `supabase db push`.
 - [ ] Run `supabase test db`; retain the output with the release record.
-- [ ] Confirm the St Albans site and delivery origin both use `AL1 3JU`.
+- [ ] Confirm the Luton site and delivery origin both use `LU1 2AA`.
 - [ ] Test anonymous, customer, staff, driver and manager RLS separately.
 - [ ] Confirm customers cannot query internal menu costs, barcodes or KDS routing fields.
 - [ ] Apply the modifier-classification migration, then mark each modifier **Veg** only after its ingredients have been checked; confirm no modifier has a null classification.
@@ -28,7 +28,7 @@ Do not enable live ordering or live SumUp charging until every mandatory box is 
 - [ ] Give every operator a named account; remove shared or unused accounts.
 - [ ] Enrol and verify authenticator MFA for every manager in **Admin → Security**.
 - [ ] Set `REQUIRE_ADMIN_MFA=true` only after every manager can reach AAL2.
-- [ ] Restrict the Google Maps browser key to `https://cafe1stalbans.co.uk/*` and only required APIs.
+- [ ] Restrict the Google Maps browser key to `https://cafe1luton.co.uk/*` and only required APIs.
 - [ ] Enable GitHub secret scanning and Supabase security notifications.
 - [ ] Verify CSP, HSTS, frame blocking and `Cache-Control: no-store` on protected routes at the production edge.
 - [ ] Verify anonymous `/`, `/menu`, `/socials` and `/blog` HTML exposes the five-minute CDN policy, while cookie-bearing requests and every private route bypass shared caching.
@@ -55,7 +55,7 @@ Do not enable live ordering or live SumUp charging until every mandatory box is 
 
 - [ ] Verify menu names, prices, the confirmed non-VAT-registered accounting treatment, allergens, dietary labels and availability.
 - [ ] Test a vegetarian item with both vegetarian and non-vegetarian modifiers on the customer menu and till; confirm the Veg labels and non-veg warning are correct through basket and checkout.
-- [ ] Verify Mon–Fri 08:00–17:00 dine-in/pickup/takeaway, 08:30–16:30 delivery, weekend/bank-holiday closure, the 805-metre radius and AL1 3JU map origin.
+- [ ] Verify Mon–Fri 08:00–17:00 dine-in/pickup/takeaway, 08:30–16:30 delivery, weekend/bank-holiday closure, the 805-metre radius and LU1 2AA map origin.
 - [ ] Test delivery, collection, dine-in and jury-room orders from phone and desktop.
 - [ ] On `/menu`, choose **Just browsing**, confirm no order mode is silently created, then add an item and prove checkout requires pickup, delivery or dine-in before submission.
 - [ ] Test barcode search, held/recovered baskets and every KDS station.
@@ -71,15 +71,15 @@ Do not enable live ordering or live SumUp charging until every mandatory box is 
 - [ ] Confirm the scheduled **Production smoke** workflow has a recent successful run and retained JSON evidence.
 - [ ] Verify email delivery, bounce handling and the correct sender/domain records.
 - [ ] Configure official social profiles, automatic YouTube/Instagram feeds and `GOOGLE_PLACE_ID` using `docs/SOCIALS_AUTO_SETUP.md`; verify `/about` and `/socials`, the marketing-consent gate, source links and Google review attribution on phone and desktop.
-- [ ] On `/socials`, choose **Allow and show TikTok**; confirm the cookie banner closes, the canonical `@cafe1_stalbans` creator feed replaces the paused card, and no **Profile not available** error appears.
-- [ ] Correct the public TikTok bio's legacy postcode and `08:30–17:00` hours to `AL1 3JU` and the confirmed public hours: Mon–Fri 08:00–17:00, delivery 08:30–16:30, weekends and England/Wales bank holidays closed. Verify Facebook, Instagram and YouTube profiles show the same NAP and hours.
+- [ ] On `/socials`, choose **Allow and show TikTok**; confirm the cookie banner closes, the canonical `@cafe1luton` creator feed replaces the paused card, and no **Profile not available** error appears.
+- [ ] Correct the public TikTok bio's legacy postcode and `08:30–17:00` hours to `LU1 2AA` and the confirmed public hours: Mon–Fri 08:00–17:00, delivery 08:30–16:30, weekends and England/Wales bank holidays closed. Verify Facebook, Instagram and YouTube profiles show the same NAP and hours.
 - [ ] If Deliveroo Orders API is enabled, complete `docs/DELIVEROO_ORDERS_API_SETUP.md`: verify exact-byte HMAC rejection, accepted-only KDS release, cross-channel duplicate handling, tablet sync status, scheduled orders, cancellation and staff-triggered ready-for-collection.
 - [ ] While the Hub watcher fallback is used, complete `docs/DELIVEROO_WATCHER_SETUP.md`: prove accepted-only KDS release, exact items/modifiers/notes/total, refresh/restart deduplication, cancellation removal, minute heartbeats, sign-out warning and automatic Windows restart. Record the chosen flow under `deliveroo_kds_integration`.
 - [ ] Before enabling Just Eat ingestion, set `JUSTEAT_INGEST_MODE=hub_watcher` and a 32+ character `JUSTEAT_BRIDGE_SECRET`, then complete `docs/JUSTEAT_WATCHER_SETUP.md`: prove accepted-only KDS release, exact items/modifiers/notes/total, refresh/restart deduplication, cancellation removal, minute heartbeats, sign-out warning and automatic Windows restart. Record evidence under `just_eat_kds_integration`; continue using Orderpad to notify the customer/rider that an order is ready.
 
 ## 7. Compliance and launch operations
 
-- [ ] Confirm privacy, cookies, terms, complaints, company/legal name, phone, opening hours and AL1 3JU.
+- [ ] Confirm privacy, cookies, terms, complaints, company/legal name, phone, opening hours and LU1 2AA.
 - [ ] Confirm the cookie banner works before optional scripts, granular choices persist for 180 days, withdrawal removes social/analytics players, and the Cloudflare `__cf_bm` inventory entry matches the live edge.
 - [ ] Obtain HMCTS/privacy approval before enabling attendance QR functionality: issue `docs/HMCTS_ATTENDANCE_QR_PRIVACY_NOTE.md` to the Jury Office and HMCTS privacy reviewer, collect all three signatures, and attach the signed copy to the `legal_hmcts_retention` gate.
 - [ ] With HMCTS, prove one activated Juror ID is the voucher code for exactly 12 weeks, cannot redeem on a weekend or configured England/Wales bank holiday, cannot exceed its daily allowance, and cannot be used online without that day's attendance proof.
@@ -92,7 +92,7 @@ Do not enable live ordering or live SumUp charging until every mandatory box is 
 
 - [ ] Apply `20260809234000_local_search_content_phase24.sql` and confirm all six published articles render.
 - [ ] Confirm `/menu` and `/blog` contain their catalogue/article links in server-rendered HTML.
-- [ ] Confirm `/breakfast-st-albans`, `/halal-food-st-albans` and `/lunch-st-albans` return 200 with self-referencing canonicals.
+- [ ] Confirm `/breakfast-luton`, `/halal-food-luton` and `/lunch-luton` return 200 with self-referencing canonicals.
 - [ ] Submit the canonical sitemap in the verified Google Search Console property and inspect the six priority public URLs.
 - [ ] Validate Restaurant, Breadcrumb and Article data with Google's Rich Results Test.
 - [ ] Make Google Business Profile NAP, regular hours, public-holiday hours, menu URL and ordering links match production.

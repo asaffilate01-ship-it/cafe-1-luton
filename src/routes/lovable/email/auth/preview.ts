@@ -18,8 +18,8 @@ const EMAIL_TEMPLATES: Record<string, React.ElementType> = {
 };
 
 // Configuration
-const SITE_NAME = "Cafe 1 St Albans";
-const ROOT_DOMAIN = "cafe1stalbans.co.uk";
+const SITE_NAME = "Cafe 1 Luton";
+const ROOT_DOMAIN = "cafe1luton.co.uk";
 
 // Sample data for preview mode ONLY (not used in actual email sending).
 // URLs are baked in at scaffold time from the project's real data.

@@ -1,4 +1,4 @@
-import { NAP } from "@/lib/nap";
+import { LOCATIONS, NAP } from "@/lib/nap";
 import { Link } from "@tanstack/react-router";
 import itechloungeLogo from "@/assets/itechlounge-logo.webp";
 import {
@@ -237,10 +237,13 @@ export function SiteFooter() {
             <span>© {new Date().getFullYear()}</span>
           </div>
           <address className="flex flex-col gap-1 not-italic">
-            <span className="flex items-center gap-1.5">
+            <span className="flex items-start gap-1.5">
               <MapPin className="h-3.5 w-3.5 text-primary" />
-              {NAP.name}, {NAP.streetAddress}, {NAP.addressLocality}, {NAP.addressRegion}{" "}
-              {NAP.postalCode}
+              <span>
+                {LOCATIONS.map((location) => `${location.shortName} · ${location.postalCode}`).join(
+                  " | ",
+                )}
+              </span>
             </span>
             <span className="flex flex-wrap items-center gap-x-3">
               <a href={`tel:${NAP.telephone.replace(/\s/g, "")}`} className="hover:text-primary">
@@ -275,14 +278,14 @@ export function SiteFooter() {
           </div>
         </div>
         <nav aria-label="Footer" className="grid grid-cols-2 gap-x-8 gap-y-2 sm:grid-cols-2">
-          <a href="/breakfast-st-albans" className="hover:text-primary">
-            Breakfast in St Albans
+          <a href="/breakfast-luton" className="hover:text-primary">
+            Breakfast in Luton
           </a>
-          <a href="/halal-food-st-albans" className="hover:text-primary">
-            Halal food in St Albans
+          <a href="/halal-food-luton" className="hover:text-primary">
+            Halal food in Luton
           </a>
-          <a href="/lunch-st-albans" className="hover:text-primary">
-            Lunch in St Albans
+          <a href="/lunch-luton" className="hover:text-primary">
+            Lunch in Luton
           </a>
           <Link to="/menu" className="hover:text-primary">
             Menu

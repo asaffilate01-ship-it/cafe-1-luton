@@ -19,11 +19,19 @@ export function LegalPage({
         <h1 className="font-display text-3xl font-bold sm:text-4xl">{title}</h1>
         <p className="mt-2 text-sm text-muted-foreground">Last updated: {updated}</p>
         {intro && <p className="mt-4 text-muted-foreground">{intro}</p>}
-        <div className="legal-body mt-8 space-y-6 text-sm leading-relaxed text-foreground/90">{children}</div>
+        <div className="legal-body mt-8 space-y-6 text-sm leading-relaxed text-foreground/90">
+          {children}
+        </div>
         <div className="mt-12 rounded-2xl border border-border bg-secondary/40 p-5 text-sm">
           <p className="font-semibold">Contact us</p>
           <p className="mt-1 text-muted-foreground">
-            Cafe 1, St Albans Crown Court, AL1 3JU · <a className="text-primary underline underline-offset-2" href="mailto:info@cafe1stalbans.co.uk">info@cafe1stalbans.co.uk</a>
+            Café 1 Luton · Crown Court, LU1 2AA · Futures House, LU3 3QB ·{" "}
+            <a
+              className="text-primary underline underline-offset-2"
+              href="mailto:info@cafe1luton.co.uk"
+            >
+              info@cafe1luton.co.uk
+            </a>
           </p>
         </div>
       </main>

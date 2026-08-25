@@ -27,25 +27,25 @@ function successfulFetch(input) {
   let body = "";
   let contentType = "text/html; charset=utf-8";
 
-  if (url.pathname === "/") body = "<html>Cafe 1, St Albans Crown Court, AL1 3JU</html>";
+  if (url.pathname === "/") body = "<html>Cafe 1, Luton Crown Court, LU1 2AA</html>";
   if (url.pathname === "/robots.txt") {
-    body = "User-agent: *\nDisallow: /admin\nSitemap: https://cafe1stalbans.co.uk/sitemap.xml\n";
+    body = "User-agent: *\nDisallow: /admin\nSitemap: https://cafe1luton.co.uk/sitemap.xml\n";
     contentType = "text/plain; charset=utf-8";
   }
   if (url.pathname === "/sitemap.xml") {
     body = `<?xml version="1.0"?><urlset>
-      <url><loc>https://cafe1stalbans.co.uk/breakfast-st-albans</loc></url>
-      <url><loc>https://cafe1stalbans.co.uk/halal-food-st-albans</loc></url>
-      <url><loc>https://cafe1stalbans.co.uk/lunch-st-albans</loc></url>
-      <url><loc>https://cafe1stalbans.co.uk/blog</loc></url>
+      <url><loc>https://cafe1luton.co.uk/breakfast-luton</loc></url>
+      <url><loc>https://cafe1luton.co.uk/halal-food-luton</loc></url>
+      <url><loc>https://cafe1luton.co.uk/lunch-luton</loc></url>
+      <url><loc>https://cafe1luton.co.uk/blog</loc></url>
     </urlset>`;
     contentType = "application/xml";
   }
   if (url.pathname === "/api/public/health") {
     body = JSON.stringify({
       status: "ok",
-      service: "cafe1-st-albans",
-      postcode: "AL1 3JU",
+      service: "cafe1-luton",
+      postcode: "LU1 2AA",
       release: "3e0b4f1e1c51a1b9437faa8a2eb0e7ee5c7c55c6",
     });
     contentType = "application/json";
@@ -116,10 +116,10 @@ function successfulFetch(input) {
 
 test("accepts only a credential-free HTTPS production origin", () => {
   assert.equal(
-    parseProductionOrigin("https://cafe1stalbans.co.uk/path").href,
-    "https://cafe1stalbans.co.uk/",
+    parseProductionOrigin("https://cafe1luton.co.uk/path").href,
+    "https://cafe1luton.co.uk/",
   );
-  assert.throws(() => parseProductionOrigin("http://cafe1stalbans.co.uk"), /credential-free HTTPS/);
+  assert.throws(() => parseProductionOrigin("http://cafe1luton.co.uk"), /credential-free HTTPS/);
   assert.throws(
     () => parseProductionOrigin("https://user:pass@example.com"),
     /credential-free HTTPS/,
@@ -128,7 +128,7 @@ test("accepts only a credential-free HTTPS production origin", () => {
 
 test("passes the full production contract and records structured checks", async () => {
   const report = await verifyProduction({
-    baseUrl: "https://cafe1stalbans.co.uk",
+    baseUrl: "https://cafe1luton.co.uk",
     expectedRelease: "3e0b4f1e1c51a1b9437faa8a2eb0e7ee5c7c55c6",
     fetchImpl: successfulFetch,
   });
@@ -151,7 +151,7 @@ test("passes the full production contract and records structured checks", async 
 
 test("enforces response-size budgets and reports observability metrics", async () => {
   const report = await verifyProduction({
-    baseUrl: "https://cafe1stalbans.co.uk",
+    baseUrl: "https://cafe1luton.co.uk",
     fetchImpl: async (input) => {
       const response = await successfulFetch(input);
       if (new URL(input).pathname !== "/icon-512.png") return response;
@@ -178,7 +178,7 @@ test("enforces response-size budgets and reports observability metrics", async (
 test("rejects invalid production response-time budgets", async () => {
   await assert.rejects(
     verifyProduction({
-      baseUrl: "https://cafe1stalbans.co.uk",
+      baseUrl: "https://cafe1luton.co.uk",
       fetchImpl: successfulFetch,
       timeoutMs: 100,
       maxDurationMs: 101,
@@ -263,7 +263,7 @@ test("covers every install surface and public legal/help page", () => {
 
 test("rejects stale PWA assets and invalid deployed manifests", async () => {
   const report = await verifyProduction({
-    baseUrl: "https://cafe1stalbans.co.uk",
+    baseUrl: "https://cafe1luton.co.uk",
     fetchImpl: async (input) => {
       const response = await successfulFetch(input);
       const url = new URL(input);
@@ -290,7 +290,7 @@ test("rejects stale PWA assets and invalid deployed manifests", async () => {
 
 test("rejects an unversioned or mismatched deployment", async () => {
   const report = await verifyProduction({
-    baseUrl: "https://cafe1stalbans.co.uk",
+    baseUrl: "https://cafe1luton.co.uk",
     expectedRelease: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
     fetchImpl: successfulFetch,
   });
@@ -304,7 +304,7 @@ test("rejects an unversioned or mismatched deployment", async () => {
 
 test("reports protected caching and postcode regressions", async () => {
   const report = await verifyProduction({
-    baseUrl: "https://cafe1stalbans.co.uk",
+    baseUrl: "https://cafe1luton.co.uk",
     fetchImpl: async (input) => {
       const response = await successfulFetch(input);
       const url = new URL(input);
@@ -333,7 +333,7 @@ test("reports protected caching and postcode regressions", async () => {
 
 test("rejects protected content served from an intermediary cache", async () => {
   const report = await verifyProduction({
-    baseUrl: "https://cafe1stalbans.co.uk",
+    baseUrl: "https://cafe1luton.co.uk",
     fetchImpl: async (input) => {
       const response = await successfulFetch(input);
       const url = new URL(input);

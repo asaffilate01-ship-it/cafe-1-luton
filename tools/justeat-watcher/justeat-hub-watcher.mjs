@@ -24,7 +24,7 @@ function readConfig() {
   try {
     const parsed = JSON.parse(fs.readFileSync(CONFIG_FILE, "utf8"));
     return {
-      cafe1Url: String(parsed.cafe1Url || "https://cafe1stalbans.co.uk").replace(/\/$/, ""),
+      cafe1Url: String(parsed.cafe1Url || "https://cafe1luton.co.uk").replace(/\/$/, ""),
       hubUrl: String(
         parsed.hubUrl || "https://partner.just-eat.co.uk/orders",
       ),

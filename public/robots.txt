@@ -24,4 +24,4 @@ Disallow: /api/
 Disallow: /watcher-download
 Disallow: /downloads/
 
-Sitemap: https://cafe1stalbans.co.uk/sitemap.xml
+Sitemap: https://cafe1luton.co.uk/sitemap.xml

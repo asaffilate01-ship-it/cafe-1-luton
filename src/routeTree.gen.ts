@@ -13,7 +13,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AboutRouteImport } from './routes/about'
 import { Route as AccountRouteImport } from './routes/account'
 import { Route as AuthRouteImport } from './routes/auth'
-import { Route as BreakfastStAlbansRouteImport } from './routes/breakfast-st-albans'
+import { Route as BreakfastLutonRouteImport } from './routes/breakfast-luton'
 import { Route as CartRouteImport } from './routes/cart'
 import { Route as CheckoutRouteImport } from './routes/checkout'
 import { Route as ComplaintsRouteImport } from './routes/complaints'
@@ -26,7 +26,7 @@ import { Route as FaqRouteImport } from './routes/faq'
 import { Route as GdprRouteImport } from './routes/gdpr'
 import { Route as GooglePayReviewRouteImport } from './routes/google-pay-review'
 import { Route as GooglePayTestRouteImport } from './routes/google-pay-test'
-import { Route as HalalFoodStAlbansRouteImport } from './routes/halal-food-st-albans'
+import { Route as HalalFoodLutonRouteImport } from './routes/halal-food-luton'
 import { Route as JudgesRouteImport } from './routes/judges'
 import { Route as JudgesMenuRouteImport } from './routes/judges-menu'
 import { Route as JurorRouteImport } from './routes/juror'
@@ -35,7 +35,7 @@ import { Route as JurorQrRouteImport } from './routes/juror-qr'
 import { Route as JuryMenuRouteImport } from './routes/jury-menu'
 import { Route as KdsRouteImport } from './routes/kds'
 import { Route as LandlordRouteImport } from './routes/landlord'
-import { Route as LunchStAlbansRouteImport } from './routes/lunch-st-albans'
+import { Route as LunchLutonRouteImport } from './routes/lunch-luton'
 import { Route as MenuRouteImport } from './routes/menu'
 import { Route as OrderDirectRouteImport } from './routes/order-direct'
 import { Route as PlatformRouteImport } from './routes/platform'
@@ -110,9 +110,9 @@ const AuthRoute = AuthRouteImport.update({
   path: '/auth',
   getParentRoute: () => rootRouteImport,
 } as any)
-const BreakfastStAlbansRoute = BreakfastStAlbansRouteImport.update({
-  id: '/breakfast-st-albans',
-  path: '/breakfast-st-albans',
+const BreakfastLutonRoute = BreakfastLutonRouteImport.update({
+  id: '/breakfast-luton',
+  path: '/breakfast-luton',
   getParentRoute: () => rootRouteImport,
 } as any)
 const CartRoute = CartRouteImport.update({
@@ -175,9 +175,9 @@ const GooglePayTestRoute = GooglePayTestRouteImport.update({
   path: '/google-pay-test',
   getParentRoute: () => rootRouteImport,
 } as any)
-const HalalFoodStAlbansRoute = HalalFoodStAlbansRouteImport.update({
-  id: '/halal-food-st-albans',
-  path: '/halal-food-st-albans',
+const HalalFoodLutonRoute = HalalFoodLutonRouteImport.update({
+  id: '/halal-food-luton',
+  path: '/halal-food-luton',
   getParentRoute: () => rootRouteImport,
 } as any)
 const JudgesRoute = JudgesRouteImport.update({
@@ -220,9 +220,9 @@ const LandlordRoute = LandlordRouteImport.update({
   path: '/landlord',
   getParentRoute: () => rootRouteImport,
 } as any)
-const LunchStAlbansRoute = LunchStAlbansRouteImport.update({
-  id: '/lunch-st-albans',
-  path: '/lunch-st-albans',
+const LunchLutonRoute = LunchLutonRouteImport.update({
+  id: '/lunch-luton',
+  path: '/lunch-luton',
   getParentRoute: () => rootRouteImport,
 } as any)
 const MenuRoute = MenuRouteImport.update({
@@ -501,7 +501,7 @@ export interface FileRoutesByFullPath {
   '/about': typeof AboutRoute
   '/account': typeof AccountRoute
   '/auth': typeof AuthRoute
-  '/breakfast-st-albans': typeof BreakfastStAlbansRoute
+  '/breakfast-luton': typeof BreakfastLutonRoute
   '/cart': typeof CartRoute
   '/checkout': typeof CheckoutRoute
   '/complaints': typeof ComplaintsRoute
@@ -514,7 +514,7 @@ export interface FileRoutesByFullPath {
   '/gdpr': typeof GdprRoute
   '/google-pay-review': typeof GooglePayReviewRoute
   '/google-pay-test': typeof GooglePayTestRoute
-  '/halal-food-st-albans': typeof HalalFoodStAlbansRoute
+  '/halal-food-luton': typeof HalalFoodLutonRoute
   '/judges': typeof JudgesRoute
   '/judges-menu': typeof JudgesMenuRoute
   '/juror': typeof JurorRoute
@@ -523,7 +523,7 @@ export interface FileRoutesByFullPath {
   '/jury-menu': typeof JuryMenuRoute
   '/kds': typeof KdsRoute
   '/landlord': typeof LandlordRoute
-  '/lunch-st-albans': typeof LunchStAlbansRoute
+  '/lunch-luton': typeof LunchLutonRoute
   '/menu': typeof MenuRoute
   '/order-direct': typeof OrderDirectRoute
   '/platform': typeof PlatformRoute
@@ -583,7 +583,7 @@ export interface FileRoutesByTo {
   '/about': typeof AboutRoute
   '/account': typeof AccountRoute
   '/auth': typeof AuthRoute
-  '/breakfast-st-albans': typeof BreakfastStAlbansRoute
+  '/breakfast-luton': typeof BreakfastLutonRoute
   '/cart': typeof CartRoute
   '/checkout': typeof CheckoutRoute
   '/complaints': typeof ComplaintsRoute
@@ -596,7 +596,7 @@ export interface FileRoutesByTo {
   '/gdpr': typeof GdprRoute
   '/google-pay-review': typeof GooglePayReviewRoute
   '/google-pay-test': typeof GooglePayTestRoute
-  '/halal-food-st-albans': typeof HalalFoodStAlbansRoute
+  '/halal-food-luton': typeof HalalFoodLutonRoute
   '/judges': typeof JudgesRoute
   '/judges-menu': typeof JudgesMenuRoute
   '/juror': typeof JurorRoute
@@ -605,7 +605,7 @@ export interface FileRoutesByTo {
   '/jury-menu': typeof JuryMenuRoute
   '/kds': typeof KdsRoute
   '/landlord': typeof LandlordRoute
-  '/lunch-st-albans': typeof LunchStAlbansRoute
+  '/lunch-luton': typeof LunchLutonRoute
   '/menu': typeof MenuRoute
   '/order-direct': typeof OrderDirectRoute
   '/platform': typeof PlatformRoute
@@ -666,7 +666,7 @@ export interface FileRoutesById {
   '/about': typeof AboutRoute
   '/account': typeof AccountRoute
   '/auth': typeof AuthRoute
-  '/breakfast-st-albans': typeof BreakfastStAlbansRoute
+  '/breakfast-luton': typeof BreakfastLutonRoute
   '/cart': typeof CartRoute
   '/checkout': typeof CheckoutRoute
   '/complaints': typeof ComplaintsRoute
@@ -679,7 +679,7 @@ export interface FileRoutesById {
   '/gdpr': typeof GdprRoute
   '/google-pay-review': typeof GooglePayReviewRoute
   '/google-pay-test': typeof GooglePayTestRoute
-  '/halal-food-st-albans': typeof HalalFoodStAlbansRoute
+  '/halal-food-luton': typeof HalalFoodLutonRoute
   '/judges': typeof JudgesRoute
   '/judges-menu': typeof JudgesMenuRoute
   '/juror': typeof JurorRoute
@@ -688,7 +688,7 @@ export interface FileRoutesById {
   '/jury-menu': typeof JuryMenuRoute
   '/kds': typeof KdsRoute
   '/landlord': typeof LandlordRoute
-  '/lunch-st-albans': typeof LunchStAlbansRoute
+  '/lunch-luton': typeof LunchLutonRoute
   '/menu': typeof MenuRoute
   '/order-direct': typeof OrderDirectRoute
   '/platform': typeof PlatformRoute
@@ -750,7 +750,7 @@ export interface FileRouteTypes {
     | '/about'
     | '/account'
     | '/auth'
-    | '/breakfast-st-albans'
+    | '/breakfast-luton'
     | '/cart'
     | '/checkout'
     | '/complaints'
@@ -763,7 +763,7 @@ export interface FileRouteTypes {
     | '/gdpr'
     | '/google-pay-review'
     | '/google-pay-test'
-    | '/halal-food-st-albans'
+    | '/halal-food-luton'
     | '/judges'
     | '/judges-menu'
     | '/juror'
@@ -772,7 +772,7 @@ export interface FileRouteTypes {
     | '/jury-menu'
     | '/kds'
     | '/landlord'
-    | '/lunch-st-albans'
+    | '/lunch-luton'
     | '/menu'
     | '/order-direct'
     | '/platform'
@@ -832,7 +832,7 @@ export interface FileRouteTypes {
     | '/about'
     | '/account'
     | '/auth'
-    | '/breakfast-st-albans'
+    | '/breakfast-luton'
     | '/cart'
     | '/checkout'
     | '/complaints'
@@ -845,7 +845,7 @@ export interface FileRouteTypes {
     | '/gdpr'
     | '/google-pay-review'
     | '/google-pay-test'
-    | '/halal-food-st-albans'
+    | '/halal-food-luton'
     | '/judges'
     | '/judges-menu'
     | '/juror'
@@ -854,7 +854,7 @@ export interface FileRouteTypes {
     | '/jury-menu'
     | '/kds'
     | '/landlord'
-    | '/lunch-st-albans'
+    | '/lunch-luton'
     | '/menu'
     | '/order-direct'
     | '/platform'
@@ -914,7 +914,7 @@ export interface FileRouteTypes {
     | '/about'
     | '/account'
     | '/auth'
-    | '/breakfast-st-albans'
+    | '/breakfast-luton'
     | '/cart'
     | '/checkout'
     | '/complaints'
@@ -927,7 +927,7 @@ export interface FileRouteTypes {
     | '/gdpr'
     | '/google-pay-review'
     | '/google-pay-test'
-    | '/halal-food-st-albans'
+    | '/halal-food-luton'
     | '/judges'
     | '/judges-menu'
     | '/juror'
@@ -936,7 +936,7 @@ export interface FileRouteTypes {
     | '/jury-menu'
     | '/kds'
     | '/landlord'
-    | '/lunch-st-albans'
+    | '/lunch-luton'
     | '/menu'
     | '/order-direct'
     | '/platform'
@@ -997,7 +997,7 @@ export interface RootRouteChildren {
   AboutRoute: typeof AboutRoute
   AccountRoute: typeof AccountRoute
   AuthRoute: typeof AuthRoute
-  BreakfastStAlbansRoute: typeof BreakfastStAlbansRoute
+  BreakfastLutonRoute: typeof BreakfastLutonRoute
   CartRoute: typeof CartRoute
   CheckoutRoute: typeof CheckoutRoute
   ComplaintsRoute: typeof ComplaintsRoute
@@ -1010,7 +1010,7 @@ export interface RootRouteChildren {
   GdprRoute: typeof GdprRoute
   GooglePayReviewRoute: typeof GooglePayReviewRoute
   GooglePayTestRoute: typeof GooglePayTestRoute
-  HalalFoodStAlbansRoute: typeof HalalFoodStAlbansRoute
+  HalalFoodLutonRoute: typeof HalalFoodLutonRoute
   JudgesRoute: typeof JudgesRoute
   JudgesMenuRoute: typeof JudgesMenuRoute
   JurorRoute: typeof JurorRoute
@@ -1019,7 +1019,7 @@ export interface RootRouteChildren {
   JuryMenuRoute: typeof JuryMenuRoute
   KdsRoute: typeof KdsRoute
   LandlordRoute: typeof LandlordRoute
-  LunchStAlbansRoute: typeof LunchStAlbansRoute
+  LunchLutonRoute: typeof LunchLutonRoute
   MenuRoute: typeof MenuRoute
   OrderDirectRoute: typeof OrderDirectRoute
   PlatformRoute: typeof PlatformRoute
@@ -1105,11 +1105,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/breakfast-st-albans': {
-      id: '/breakfast-st-albans'
-      path: '/breakfast-st-albans'
-      fullPath: '/breakfast-st-albans'
-      preLoaderRoute: typeof BreakfastStAlbansRouteImport
+    '/breakfast-luton': {
+      id: '/breakfast-luton'
+      path: '/breakfast-luton'
+      fullPath: '/breakfast-luton'
+      preLoaderRoute: typeof BreakfastLutonRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/cart': {
@@ -1196,11 +1196,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof GooglePayTestRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/halal-food-st-albans': {
-      id: '/halal-food-st-albans'
-      path: '/halal-food-st-albans'
-      fullPath: '/halal-food-st-albans'
-      preLoaderRoute: typeof HalalFoodStAlbansRouteImport
+    '/halal-food-luton': {
+      id: '/halal-food-luton'
+      path: '/halal-food-luton'
+      fullPath: '/halal-food-luton'
+      preLoaderRoute: typeof HalalFoodLutonRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/judges': {
@@ -1259,11 +1259,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LandlordRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/lunch-st-albans': {
-      id: '/lunch-st-albans'
-      path: '/lunch-st-albans'
-      fullPath: '/lunch-st-albans'
-      preLoaderRoute: typeof LunchStAlbansRouteImport
+    '/lunch-luton': {
+      id: '/lunch-luton'
+      path: '/lunch-luton'
+      fullPath: '/lunch-luton'
+      preLoaderRoute: typeof LunchLutonRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/menu': {
@@ -1645,7 +1645,7 @@ const rootRouteChildren: RootRouteChildren = {
   AboutRoute: AboutRoute,
   AccountRoute: AccountRoute,
   AuthRoute: AuthRoute,
-  BreakfastStAlbansRoute: BreakfastStAlbansRoute,
+  BreakfastLutonRoute: BreakfastLutonRoute,
   CartRoute: CartRoute,
   CheckoutRoute: CheckoutRoute,
   ComplaintsRoute: ComplaintsRoute,
@@ -1658,7 +1658,7 @@ const rootRouteChildren: RootRouteChildren = {
   GdprRoute: GdprRoute,
   GooglePayReviewRoute: GooglePayReviewRoute,
   GooglePayTestRoute: GooglePayTestRoute,
-  HalalFoodStAlbansRoute: HalalFoodStAlbansRoute,
+  HalalFoodLutonRoute: HalalFoodLutonRoute,
   JudgesRoute: JudgesRoute,
   JudgesMenuRoute: JudgesMenuRoute,
   JurorRoute: JurorRoute,
@@ -1667,7 +1667,7 @@ const rootRouteChildren: RootRouteChildren = {
   JuryMenuRoute: JuryMenuRoute,
   KdsRoute: KdsRoute,
   LandlordRoute: LandlordRoute,
-  LunchStAlbansRoute: LunchStAlbansRoute,
+  LunchLutonRoute: LunchLutonRoute,
   MenuRoute: MenuRoute,
   OrderDirectRoute: OrderDirectRoute,
   PlatformRoute: PlatformRoute,

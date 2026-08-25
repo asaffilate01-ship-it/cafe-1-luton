@@ -29,7 +29,6 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { OrderSetupGate } from "@/components/order-setup-gate";
-import { useJurySession } from "@/lib/jury-session";
 import { describeContext, useOrderContext } from "@/lib/order-context";
 import { hasMenuBrowsingIntent, setMenuBrowsingIntent } from "@/lib/menu-intent";
 import {
@@ -43,9 +42,9 @@ import { formatCount, matchesMenuQuery } from "@/lib/menu-discovery";
 import { localBusinessJsonLd } from "@/lib/nap";
 import { breadcrumbJsonLd, canonicalLink, jsonLdScript, seoMeta, webPageJsonLd } from "@/lib/seo";
 
-const title = "Halal Breakfast, Lunch & Café Menu in St Albans | Café 1";
+const title = "Halal Breakfast, Lunch & Café Menu in Luton | Café 1";
 const description =
-  "Browse Café 1's St Albans menu: halal breakfast, Desi dishes, omelettes, curries, sandwiches, paninis, jackets, coffee and more. Order online.";
+  "Browse Café 1's Luton menu: halal breakfast, Desi dishes, omelettes, curries, sandwiches, paninis, jackets, coffee and more. Order online.";
 const PUBLIC_MENU_STALE_TIME_MS = 60_000;
 
 async function loadPublicMenu() {
@@ -84,7 +83,7 @@ export const Route = createFileRoute("/menu")({
     meta: seoMeta({ title, description, path: "/menu" }),
     links: [canonicalLink("/menu")],
     scripts: [
-      jsonLdScript(localBusinessJsonLd("https://cafe1stalbans.co.uk/icon-512.png")),
+      jsonLdScript(localBusinessJsonLd("https://cafe1luton.co.uk/icon-512.png")),
       jsonLdScript(webPageJsonLd({ name: title, description, path: "/menu" })),
       jsonLdScript(
         breadcrumbJsonLd([
@@ -104,7 +103,6 @@ function MenuPage() {
   const [gateOpen, setGateOpen] = useState(false);
   const [intentReady, setIntentReady] = useState(false);
   const [browsingOnly, setBrowsingOnly] = useState(false);
-  const jurySessionActive = useJurySession();
   useEffect(() => {
     setBrowsingOnly(hasMenuBrowsingIntent());
     setIntentReady(true);
@@ -371,11 +369,12 @@ function MenuPage() {
         <div className="mx-auto max-w-6xl px-4 pt-4 pb-3 sm:pt-10 sm:pb-4">
           <PromoCarousel />
           <p className="text-[11px] font-medium uppercase tracking-widest text-primary sm:text-xs">
-            Cafe1 · St Albans
+            Cafe1 · Luton
           </p>
           <h1 className="mt-0.5 font-display text-2xl font-bold sm:mt-1 sm:text-5xl">Menu</h1>
           <p className="mt-1 hidden max-w-xl text-sm text-muted-foreground sm:mt-2 sm:block">
-            Freshly made all day. Delivery, collection or dine-in.
+            Freshly made all day. Choose Luton Crown Court or Futures House, then dine in or take
+            away.
           </p>
           <div className="mt-2 sm:mt-3">
             <StoreStatus />
@@ -398,7 +397,6 @@ function MenuPage() {
         onClose={() => setGateOpen(false)}
         onBrowse={!ctx ? browseMenuOnly : undefined}
         dismissible={!!ctx}
-        juryOnly={!!jurySessionActive}
       />
 
       {/* Sticky search + category pills */}

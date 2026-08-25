@@ -30,7 +30,7 @@ type PlacesResponse = {
 
 const GATEWAY_URL = "https://connector-gateway.lovable.dev/google_maps";
 const DIRECT_PLACES_URL = "https://places.googleapis.com/v1/places";
-const FALLBACK_URL = "https://www.google.com/search?q=Cafe+1+St+Albans+Crown+Court+AL1+3JU";
+const FALLBACK_URL = "https://www.google.com/search?q=Cafe+1+Luton+Crown+Court+LU1+2AA";
 const CACHE_MS = 15 * 60 * 1000;
 const FIELD_MASK =
   "rating,userRatingCount,googleMapsUri,reviews.rating,reviews.text,reviews.publishTime,reviews.relativePublishTimeDescription,reviews.authorAttribution";

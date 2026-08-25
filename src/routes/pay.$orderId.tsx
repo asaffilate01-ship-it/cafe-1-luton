@@ -18,17 +18,17 @@ export const Route = createFileRoute("/pay/$orderId")({
   },
   head: () => ({
     meta: [
-      { title: "Pay for your order — Café 1 St Albans" },
+      { title: "Pay for your order — Café 1 Luton" },
       {
         name: "description",
         content:
-          "Securely pay for your Café 1 St Albans order by card, Apple Pay or Google Pay, with confirmation sent straight to our kitchen.",
+          "Securely pay for your Café 1 Luton order by card, Apple Pay or Google Pay, with confirmation sent straight to our kitchen.",
       },
-      { property: "og:title", content: "Pay for your order — Café 1 St Albans" },
+      { property: "og:title", content: "Pay for your order — Café 1 Luton" },
       {
         property: "og:description",
         content:
-          "Securely pay for your Café 1 St Albans order by card, Apple Pay or Google Pay, with confirmation sent straight to our kitchen.",
+          "Securely pay for your Café 1 Luton order by card, Apple Pay or Google Pay, with confirmation sent straight to our kitchen.",
       },
       { property: "og:type", content: "website" },
       { name: "robots", content: "noindex" },
@@ -100,7 +100,7 @@ function loadSumUpSdk(): Promise<void> {
 // SumUp requires the Google Pay button to be configured with the merchant ID
 // issued by Google after domain registration (NOT the SumUp merchant code).
 // Without it the wallet button is silently skipped and only the card form renders.
-const GOOGLE_PAY_MERCHANT_NAME = "Cafe 1 St Albans";
+const GOOGLE_PAY_MERCHANT_NAME = "Cafe 1 Luton";
 
 // Google's onboarding requires screenshots of the button before they issue the
 // merchant ID. Appending #sumup-widget:google-pay-demo-mode renders a
@@ -188,7 +188,7 @@ function PayView() {
       // button still works instead of erroring.
       const host = typeof window !== "undefined" ? window.location.hostname : "";
       const isApprovedGooglePayOrigin =
-        host === "cafe1stalbans.co.uk" || host === "www.cafe1stalbans.co.uk";
+        host === "cafe1luton.co.uk" || host === "www.cafe1luton.co.uk";
       if (!isApprovedGooglePayOrigin) googlePayMerchantId = null;
       setWalletConfigured(Boolean(googlePayMerchantId));
       if (cancelled || mountedRef.current || !window.SumUpCard) return;

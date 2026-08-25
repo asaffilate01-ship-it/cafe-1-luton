@@ -2,7 +2,7 @@
 
 Release commit: ____________________ Date: __________ Release owner: ____________________
 
-Production URL: `https://cafe1stalbans.co.uk`
+Production URL: `https://cafe1luton.co.uk`
 
 Complete this record with real evidence. A code build cannot prove payment settlement, physical hardware, staff competence or recoverability.
 

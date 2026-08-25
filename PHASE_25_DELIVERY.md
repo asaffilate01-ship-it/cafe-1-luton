@@ -37,7 +37,7 @@ same commit, and run:
 
 ```bash
 EXPECTED_RELEASE_SHA=<final-sha> \
-  PRODUCTION_BASE_URL=https://cafe1stalbans.co.uk \
+  PRODUCTION_BASE_URL=https://cafe1luton.co.uk \
   npm run smoke:production
 npm run release:live-delta
 npm run operational:status
@@ -49,7 +49,7 @@ Follow `docs/DELIVEROO_ORDERS_API_SETUP.md`. Deliveroo must enable the productio
 supply OAuth/webhook credentials. Configure `DELIVEROO_INGEST_MODE=orders_api`, the tablet site
 mode, production client credentials and webhook secret. The callback is:
 
-`https://cafe1stalbans.co.uk/api/public/deliveroo/webhook`
+`https://cafe1luton.co.uk/api/public/deliveroo/webhook`
 
 Do not run the old Restaurant Hub watcher after the official flow is accepted. Record a sandbox
 test and one staffed real order against the `deliveroo_kds_integration` operational gate.

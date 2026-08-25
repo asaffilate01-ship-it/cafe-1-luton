@@ -1,6 +1,6 @@
 # Tenant & landlord model — duplicating Cafe 1 for another business
 
-Cafe 1 St Albans is **tenant one** of the platform. The codebase is a
+Cafe 1 Luton is **tenant one** of the platform. The codebase is a
 **clone-per-business template**: every new client gets their own copy of the app
 and their own database, and the landlord (you) keeps a single control centre
 that tracks all of them.
@@ -10,7 +10,7 @@ that tracks all of them.
 | Role | Where | What it does |
 | --- | --- | --- |
 | **Landlord** (SaaS operator) | `/landlord` on the master deployment | Creates tenants, sets plans, suspends non-payers, raises invoices, sees cross-tenant reporting |
-| **Tenant** (the business) | Their own deployment, e.g. `cafe1stalbans.co.uk` | Runs their ordering site, till, KDS, drivers — completely isolated data |
+| **Tenant** (the business) | Their own deployment, e.g. `cafe1luton.co.uk` | Runs their ordering site, till, KDS, drivers — completely isolated data |
 
 The first admin to open `/landlord` can claim landlord access once. After that,
 new landlord operators are added by inserting them into `landlord_admins`.
@@ -42,7 +42,7 @@ new landlord operators are added by inserting them into `landlord_admins`.
    - `public/robots.txt`, `public/manifest.webmanifest`, `public/kds.webmanifest`.
 4. **Reset business data** on the clone: `business_settings`, `business_hours`,
    `sites`, `menu_categories`, `menu_items`, `menu_modifiers`. Court/juror
-   features are St Albans specific — leave those tables empty for other clients.
+   features are Luton specific — leave those tables empty for other clients.
 5. **Set the clone's secrets**: SumUp keys, Google Maps key, Resend key, VAPID
    pair, marketplace bridge secrets. None are shared between tenants.
 6. **Point the domain** at the clone and record it on the tenant record.

@@ -54,7 +54,7 @@ that same commit and run:
 
 ```bash
 EXPECTED_RELEASE_SHA=<final-sha> \
-  PRODUCTION_BASE_URL=https://cafe1stalbans.co.uk \
+  PRODUCTION_BASE_URL=https://cafe1luton.co.uk \
   npm run smoke:production
 npm run release:live-delta
 npm run operational:status

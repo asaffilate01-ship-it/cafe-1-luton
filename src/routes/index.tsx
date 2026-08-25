@@ -1,7 +1,6 @@
 import { createFileRoute, Link, redirect } from "@tanstack/react-router";
 import {
   ArrowRight,
-  Bike,
   Coffee,
   Croissant,
   MapPin,
@@ -24,9 +23,9 @@ import heroImage from "@/assets/cafe1-hero.webp";
 import { localBusinessJsonLd } from "@/lib/nap";
 import { absoluteUrl, canonicalLink, jsonLdScript, seoMeta, webPageJsonLd } from "@/lib/seo";
 
-const title = "Halal Café in St Albans | Breakfast & Lunch | Café 1";
+const title = "Halal Café in Luton | Breakfast & Lunch | Café 1";
 const description =
-  "Visit Café 1 for halal breakfast and lunch in St Albans: all-day breakfast, Desi favourites, hot meals and coffee at Crown Court, AL1 3JU.";
+  "Visit Café 1 in Luton for halal breakfast, Desi favourites, hot meals and coffee at Luton Crown Court or Futures House in Marsh Farm.";
 
 const DISHBEE_HOSTS = ["dishbee.itechlounge.co.uk", "www.dishbee.itechlounge.co.uk"];
 
@@ -54,7 +53,7 @@ export const Route = createFileRoute("/")({
           name: title,
           description,
           path: "/",
-          about: ["Halal café in St Albans", "Breakfast in St Albans", "Lunch in St Albans"],
+          about: ["Halal café in Luton", "Breakfast in Luton", "Lunch in Luton"],
         }),
       ),
     ],
@@ -81,7 +80,8 @@ function Home() {
             </h1>
             <p className="mt-5 max-w-lg text-lg text-muted-foreground">
               Enjoy all-day breakfasts, hot meals, paninis, parathas, cakes, coffees and more from
-              Café 1 at St Albans Crown Court. Open to the public — everyone welcome.
+              Café 1 at Luton Crown Court and Futures House in Marsh Farm. Both locations are open
+              to the public — everyone welcome.
             </p>
             <div className="mt-8 flex flex-wrap gap-3">
               <Link
@@ -105,10 +105,10 @@ function Home() {
                 <BadgeCheck className="h-4 w-4 text-primary" /> Open to the public
               </div>
               <div className="flex items-center gap-2">
-                <Bike className="h-4 w-4 text-primary" /> Local delivery
+                <MapPin className="h-4 w-4 text-primary" /> Two Luton locations
               </div>
               <div className="flex items-center gap-2">
-                <MapPin className="h-4 w-4 text-primary" /> Cafe 1, St Albans Crown Court, AL1 3JU
+                <MapPin className="h-4 w-4 text-primary" /> LU1 2AA · LU3 3QB
               </div>
             </div>
           </div>
@@ -160,9 +160,9 @@ function Home() {
               body: "Fresh desi food cooked to order, alongside paninis, wraps and all-day breakfasts.",
             },
             {
-              icon: Bike,
-              title: "Local delivery",
-              body: "Eligible addresses within half a mile can order online and track delivery from a phone.",
+              icon: MapPin,
+              title: "Two Luton cafés",
+              body: "Choose Luton Crown Court or Futures House in Marsh Farm when you start your order.",
             },
           ].map((f) => (
             <div key={f.title} className="card-3d card-3d-hover p-6">
@@ -176,7 +176,7 @@ function Home() {
         </div>
       </section>
 
-      <section className="mx-auto max-w-6xl px-4 py-20" aria-labelledby="st-albans-food-guides">
+      <section className="mx-auto max-w-6xl px-4 py-20" aria-labelledby="luton-food-guides">
         <div className="card-3d mb-16 grid gap-6 p-8 sm:p-10 lg:grid-cols-[1.2fr_1fr] lg:items-center">
           <div>
             <p className="text-sm font-semibold uppercase tracking-[0.18em] text-primary">
@@ -186,8 +186,8 @@ function Home() {
               Same food, café prices, no app fees.
             </h2>
             <p className="mt-3 max-w-xl text-muted-foreground">
-              Ordering here means counter pricing, loyalty points on every order, live driver
-              tracking and support that goes straight to the café — not a delivery platform.
+              Ordering here means counter pricing, loyalty points on every order and support that
+              goes straight to your chosen café — without third-party app fees.
             </p>
             <Link
               to="/order-direct"
@@ -200,7 +200,7 @@ function Home() {
             {[
               "No third-party service fees",
               "Loyalty points on every direct order",
-              "Live tracking with our own drivers",
+              "Choose your Luton branch first",
               "Tabs and weekly statements for offices",
             ].map((point) => (
               <li key={point} className="flex items-center gap-3 rounded-2xl bg-soft px-4 py-3">
@@ -212,31 +212,31 @@ function Home() {
         </div>
         <div className="max-w-3xl">
           <p className="text-sm font-semibold uppercase tracking-[0.18em] text-primary">
-            Eat in St Albans
+            Eat in Luton
           </p>
-          <h2 id="st-albans-food-guides" className="mt-2 font-display text-4xl font-bold">
+          <h2 id="luton-food-guides" className="mt-2 font-display text-4xl font-bold">
             Breakfast, halal food and lunch—made simple.
           </h2>
           <p className="mt-4 leading-relaxed text-muted-foreground">
-            Explore what we serve, how to order and what to know before visiting our café inside St
-            Albans Crown Court.
+            Explore what we serve, how to order and what to know before visiting Luton Crown Court
+            or Futures House in Marsh Farm.
           </p>
         </div>
         <div className="mt-8 grid gap-5 md:grid-cols-3">
           {[
             {
-              href: "/breakfast-st-albans",
-              title: "Breakfast in St Albans",
+              href: "/breakfast-luton",
+              title: "Breakfast in Luton",
               body: "Cooked breakfast, Desi breakfast, parathas and omelettes served all day.",
             },
             {
-              href: "/halal-food-st-albans",
-              title: "Halal food in St Albans",
+              href: "/halal-food-luton",
+              title: "Halal food in Luton",
               body: "How our halal menu works across breakfast, sandwiches and hot meals.",
             },
             {
-              href: "/lunch-st-albans",
-              title: "Lunch in St Albans",
+              href: "/lunch-luton",
+              title: "Lunch in Luton",
               body: "Hot lunches, paninis, wraps, rolls and collection for a busy weekday.",
             },
           ].map((guide) => (

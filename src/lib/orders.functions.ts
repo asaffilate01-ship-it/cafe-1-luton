@@ -53,6 +53,7 @@ const CartItemSchema = z.object({
 });
 
 const CreateOrderSchema = z.object({
+  site_location: z.enum(["luton-crown-court", "futures-house"]).default("luton-crown-court"),
   type: z.enum(["delivery", "collection", "dine_in"]),
   customer_name: z.string().min(1).max(100),
   customer_phone: z.string().max(30).optional().default(""),
@@ -123,17 +124,23 @@ export const createOrder = createServerFn({ method: "POST" })
       .in("id", ids);
     if (menuErr) throw new Error(menuErr.message);
     const menuRows = (menu ?? []) as OrderMenuRow[];
-    const categoryIds = [...new Set(menuRows.map((item) => item.category_id).filter(Boolean))] as string[];
+    const categoryIds = [
+      ...new Set(menuRows.map((item) => item.category_id).filter(Boolean)),
+    ] as string[];
     const [itemModifiers, categoryModifiers] = await Promise.all([
       supabase
         .from("menu_modifiers")
-        .select("id,name,price_cents,active,category_id,item_id,group_name,group_type,required,min_selections,max_selections,is_exclusive")
+        .select(
+          "id,name,price_cents,active,category_id,item_id,group_name,group_type,required,min_selections,max_selections,is_exclusive",
+        )
         .eq("active", true)
         .in("item_id", ids),
       categoryIds.length
         ? supabase
             .from("menu_modifiers")
-            .select("id,name,price_cents,active,category_id,item_id,group_name,group_type,required,min_selections,max_selections,is_exclusive")
+            .select(
+              "id,name,price_cents,active,category_id,item_id,group_name,group_type,required,min_selections,max_selections,is_exclusive",
+            )
             .eq("active", true)
             .in("category_id", categoryIds)
             .is("item_id", null)
@@ -174,10 +181,7 @@ export const createOrder = createServerFn({ method: "POST" })
         }
         return mod;
       });
-      const modifierErrors = validateModifierSelection(
-        applicable,
-        requestedIds,
-      );
+      const modifierErrors = validateModifierSelection(applicable, requestedIds);
       if (modifierErrors.length) throw new Error(modifierErrors[0]);
       const unit = m.price_cents + chosen.reduce((s, mod) => s + mod.price_cents, 0);
       subtotal += unit * i.qty;
@@ -195,9 +199,31 @@ export const createOrder = createServerFn({ method: "POST" })
       };
     });
 
-    // Load business settings + hours for pricing + open/closed enforcement.
+    // Route the order to the selected Luton branch when matching site records
+    // are configured. The branch label is also retained on every ticket so it
+    // remains visible on older backends that still rely on the default site.
+    const selectedLocation =
+      data.site_location === "futures-house"
+        ? { label: "Futures House, Marsh Farm", postcode: "LU3 3QB" }
+        : { label: "Luton Crown Court", postcode: "LU1 2AA" };
+    const { supabaseAdmin: siteAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: selectedSite } = await siteAdmin
+      .from("sites")
+      .select("id")
+      .eq("active", true)
+      .eq("postcode", selectedLocation.postcode)
+      .limit(1)
+      .maybeSingle();
+    const selectedSiteId = selectedSite?.id ?? null;
+
+    // Load branch-specific settings and hours where available, otherwise use
+    // the existing default records for backwards compatibility.
+    let settingsQuery = supabase.from("business_settings").select("*").limit(1);
+    if (selectedSiteId) {
+      settingsQuery = settingsQuery.eq("site_id", selectedSiteId);
+    }
     const [{ data: settings }, { data: hoursRows }] = await Promise.all([
-      supabase.from("business_settings").select("*").limit(1).maybeSingle(),
+      settingsQuery.maybeSingle(),
       supabase.from("business_hours").select("*").order("day_of_week"),
     ]);
 
@@ -564,9 +590,10 @@ export const createOrder = createServerFn({ method: "POST" })
       const compactSumupDescription =
         sumupDescription.length > 500 ? `${sumupDescription.slice(0, 497)}...` : sumupDescription;
       try {
-        const publicAppUrl = (
-          process.env["PUBLIC_APP_URL"] ?? "https://cafe1stalbans.co.uk"
-        ).replace(/\/+$/, "");
+        const publicAppUrl = (process.env["PUBLIC_APP_URL"] ?? "https://cafe1luton.co.uk").replace(
+          /\/+$/,
+          "",
+        );
         const co = await createSumUpCheckout({
           reference,
           amount_cents: payable,
@@ -619,7 +646,9 @@ export const createOrder = createServerFn({ method: "POST" })
         address_line2: data.address_line2 || null,
         city: data.city || null,
         postcode: data.postcode || null,
-        delivery_notes: data.delivery_notes || null,
+        delivery_notes: [`Branch: ${selectedLocation.label}`, data.delivery_notes?.trim() || ""]
+          .filter(Boolean)
+          .join(" · "),
         jury_room: data.jury_room || null,
         court_location: data.court_location || null,
         staff_member_id,
@@ -643,6 +672,7 @@ export const createOrder = createServerFn({ method: "POST" })
         sumup_reference: reference,
         sumup_checkout_id: checkout_id,
         tracking_token_hash,
+        ...(selectedSiteId ? { site_id: selectedSiteId } : {}),
         promo_code: applied_promo,
         promo_discount_cents: free_delivery_promo ? 0 : promo_discount,
         ...(account_id
@@ -689,7 +719,13 @@ export const createOrder = createServerFn({ method: "POST" })
     if (itemsErr) throw new Error(itemsErr.message);
 
     // Remember the delivery address for signed-in customers who asked us to.
-    if (userId && data.save_address && data.type === "delivery" && data.address_line1 && data.city) {
+    if (
+      userId &&
+      data.save_address &&
+      data.type === "delivery" &&
+      data.address_line1 &&
+      data.city
+    ) {
       try {
         await sbWrite.from("customer_addresses").insert({
           user_id: userId,

@@ -10,7 +10,7 @@ on:
       base_url:
         description: Deployed Cafe 1 HTTPS origin
         required: true
-        default: https://cafe1stalbans.co.uk
+        default: https://cafe1luton.co.uk
         type: string
       database_check_run_url:
         description: Successful Production checks URL for this exact commit
@@ -57,8 +57,8 @@ jobs:
             echo "release_tag must use semantic version form such as v1.0.0."
             exit 1
           fi
-          if [ "$PRODUCTION_BASE_URL" != "https://cafe1stalbans.co.uk" ]; then
-            echo "Production promotion is restricted to https://cafe1stalbans.co.uk."
+          if [ "$PRODUCTION_BASE_URL" != "https://cafe1luton.co.uk" ]; then
+            echo "Production promotion is restricted to https://cafe1luton.co.uk."
             exit 1
           fi
 

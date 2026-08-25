@@ -108,14 +108,14 @@ select ok(
     select 1
     from public.menu_categories category
     join public.sites site on site.id = category.site_id
-    where site.code = 'STALBANS' and category.active = true
+    where site.code = 'LUTON' and category.active = true
       and category.name = 'Cold Pasta Pot'
   ) and exists (
     select 1
     from public.menu_items item
     join public.menu_categories category on category.id = item.category_id
     join public.sites site on site.id = item.site_id
-    where site.code = 'STALBANS' and item.active = true
+    where site.code = 'LUTON' and item.active = true
       and category.name = 'Iced Matcha Latte' and item.name = 'Iced Matcha Latte'
   ),
   'canonical catalogue labels remain available'

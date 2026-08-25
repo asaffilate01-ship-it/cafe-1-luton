@@ -107,5 +107,5 @@ Evidence = SumUp transaction references (not card details).
 
 - **Google Pay** — merchant approval still pending; `/google-pay-review` hosts
   the review screens they asked for.
-- **Google Search Console** — verify `cafe1stalbans.co.uk`, submit
+- **Google Search Console** — verify `cafe1luton.co.uk`, submit
   `/sitemap.xml`, and set the canonical (non-www) property as primary.

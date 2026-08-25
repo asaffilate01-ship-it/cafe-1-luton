@@ -16,13 +16,13 @@ import {
 export const Route = createFileRoute("/court-staff")({
   head: () => ({
     meta: [
-      { title: "Court staff ordering — Café 1 St Albans" },
+      { title: "Court staff ordering — Café 1 Luton" },
       {
         name: "description",
         content:
-          "Court staff scheme at Café 1 St Albans: register with your work email, order to your floor or room, and get staff pricing with free internal delivery.",
+          "Court staff scheme at Café 1 Luton: register with your work email, order to your floor or room, and get staff pricing with free internal delivery.",
       },
-      { property: "og:title", content: "Court staff ordering — Café 1 St Albans" },
+      { property: "og:title", content: "Court staff ordering — Café 1 Luton" },
       {
         property: "og:description",
         content:

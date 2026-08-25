@@ -1,9 +1,11 @@
 import { useSyncExternalStore } from "react";
+import { locationById, type CafeLocationId } from "./nap";
 
 export type OrderMode = "collection" | "delivery" | "dine_in";
 export type ScheduleMode = "asap" | "scheduled";
 
 export type OrderContext = {
+  location?: CafeLocationId;
   mode: OrderMode;
   schedule_mode: ScheduleMode;
   scheduled_for?: string;
@@ -28,7 +30,14 @@ function load() {
       if (typeof parsed.updated_at === "number" && Date.now() - parsed.updated_at > TTL_MS) {
         localStorage.removeItem(KEY);
       } else {
-        state = parsed;
+        state = {
+          ...parsed,
+          location: locationById(parsed.location).id,
+          // Public delivery is no longer offered by the two Luton branches.
+          mode: parsed.mode === "delivery" ? "collection" : parsed.mode,
+          postcode: undefined,
+          distance_m: undefined,
+        };
       }
     }
   } catch {
@@ -69,8 +78,9 @@ export function useOrderContext() {
 
 export function describeContext(ctx: OrderContext | null): string {
   if (!ctx) return "Set up order";
+  const location = locationById(ctx.location).shortName;
   const modeLabel =
-    ctx.mode === "collection" ? "Pickup" : ctx.mode === "dine_in" ? "Dine in" : "Delivery";
+    ctx.mode === "collection" ? "Takeaway" : ctx.mode === "dine_in" ? "Dine in" : "Delivery";
   const when =
     ctx.schedule_mode === "asap"
       ? "ASAP"
@@ -78,5 +88,5 @@ export function describeContext(ctx: OrderContext | null): string {
         ? new Date(ctx.scheduled_for).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
         : "Later";
   const post = ctx.mode === "delivery" && ctx.postcode ? ` · ${ctx.postcode.toUpperCase()}` : "";
-  return `${modeLabel} · ${when}${post}`;
+  return `${location} · ${modeLabel} · ${when}${post}`;
 }

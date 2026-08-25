@@ -28,8 +28,16 @@ type IminWindow = Window & {
   sunmiPrinter?: IminPrinter;
   AndroidPrinter?: IminPrinter;
   innerPrinter?: IminPrinter;
-  iminDualScreen?: { show?: (url: string) => void; open?: (url: string) => void; start?: (url: string) => void };
-  IminDualScreen?: { show?: (url: string) => void; open?: (url: string) => void; start?: (url: string) => void };
+  iminDualScreen?: {
+    show?: (url: string) => void;
+    open?: (url: string) => void;
+    start?: (url: string) => void;
+  };
+  IminDualScreen?: {
+    show?: (url: string) => void;
+    open?: (url: string) => void;
+    start?: (url: string) => void;
+  };
 };
 
 function w(): IminWindow | null {
@@ -39,7 +47,9 @@ function w(): IminWindow | null {
 export function getIminPrinter(): IminPrinter | null {
   const g = w();
   if (!g) return null;
-  return g.iminPrinter ?? g.imin?.printer ?? g.innerPrinter ?? g.sunmiPrinter ?? g.AndroidPrinter ?? null;
+  return (
+    g.iminPrinter ?? g.imin?.printer ?? g.innerPrinter ?? g.sunmiPrinter ?? g.AndroidPrinter ?? null
+  );
 }
 
 export function isIminDevice(): boolean {
@@ -78,16 +88,25 @@ function money(cents: number): string {
 
 export function ticketToText(t: Ticket): string {
   const out: string[] = [];
-  out.push("CAFE 1 ST ALBANS");
+  out.push("CAFE 1 LUTON");
   out.push(t.heading);
   out.push("-".repeat(COLS));
   out.push(`ORDER #${t.order_number}`);
   if (t.fulfilment) out.push(t.fulfilment.toUpperCase());
   if (t.terminal) out.push(t.terminal.toUpperCase());
-  out.push(new Date().toLocaleString("en-GB", { hour: "2-digit", minute: "2-digit", day: "2-digit", month: "short" }));
+  out.push(
+    new Date().toLocaleString("en-GB", {
+      hour: "2-digit",
+      minute: "2-digit",
+      day: "2-digit",
+      month: "short",
+    }),
+  );
   out.push("-".repeat(COLS));
   for (const l of t.lines) {
-    out.push(row(`${l.qty} x ${l.name}`, l.price_cents != null ? money(l.price_cents * l.qty) : ""));
+    out.push(
+      row(`${l.qty} x ${l.name}`, l.price_cents != null ? money(l.price_cents * l.qty) : ""),
+    );
     if (l.notes) out.push(`   * ${l.notes}`);
   }
   out.push("-".repeat(COLS));

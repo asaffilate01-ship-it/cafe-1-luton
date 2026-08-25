@@ -190,7 +190,7 @@ function AdminCourtStaff() {
                               id: l.id,
                               label: l.label,
                               building: l.building ?? "",
-                              postcode: l.postcode ?? "AL1 3JU",
+                              postcode: l.postcode ?? "LU1 2AA",
                               sort_order: l.sort_order ?? 0,
                               active: !l.active,
                             },
@@ -242,7 +242,7 @@ function AdminCourtStaff() {
                     data: {
                       label: location.label.trim(),
                       building: location.building.trim(),
-                      postcode: "AL1 3JU",
+                      postcode: "LU1 2AA",
                       sort_order: location.sort_order,
                       active: true,
                     },

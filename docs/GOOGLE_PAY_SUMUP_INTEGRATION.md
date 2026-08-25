@@ -1,4 +1,4 @@
-# Café 1 St Albans — SumUp Google Pay integration
+# Café 1 Luton — SumUp Google Pay integration
 
 This package is for the existing React/TypeScript Café 1 checkout. It uses the
 official SumUp Payment Widget, which in turn renders Google's official Google
@@ -28,7 +28,7 @@ Example:
   customerEmail={order.customer_email}
   amount={(order.total_cents / 100).toFixed(2)}
   googlePayMerchantId={googlePayMerchantId}
-  merchantName="Cafe 1 St Albans"
+  merchantName="Cafe 1 Luton"
 />
 ```
 
@@ -47,14 +47,14 @@ Use a real payment page containing a valid, unprocessed SumUp checkout. Append:
 For example:
 
 ```text
-https://cafe1stalbans.co.uk/pay/REAL_ORDER_ID?token=REAL_ORDER_TOKEN#sumup-widget:google-pay-demo-mode
+https://cafe1luton.co.uk/pay/REAL_ORDER_ID?token=REAL_ORDER_TOKEN#sumup-widget:google-pay-demo-mode
 ```
 
 Capture the official button rendered inside the payment widget. Do not use the
 old `/google-pay-review` simulated Visa 4242, simulated payment sheet or static
 success screen. In the Google Pay & Wallet Console submit:
 
-- Domain: `cafe1stalbans.co.uk`
+- Domain: `cafe1luton.co.uk`
 - Integration type: `Gateway`
 - Gateway: `SumUp`
 
@@ -78,7 +78,7 @@ Keep HTTPS enabled and do not put the payment page inside another site's frame.
 ## Production checklist
 
 - SumUp has enabled Google Pay for the live merchant account.
-- Google has approved `cafe1stalbans.co.uk`.
+- Google has approved `cafe1luton.co.uk`.
 - The Google merchant ID passed to the component matches the approved domain.
 - The page uses a genuine server-created SumUp checkout ID.
 - The confirmation handler verifies payment status server-side.

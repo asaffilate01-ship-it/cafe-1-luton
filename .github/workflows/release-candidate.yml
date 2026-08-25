@@ -6,7 +6,7 @@ on:
       base_url:
         description: Deployed HTTPS origin to verify
         required: true
-        default: https://cafe1stalbans.co.uk
+        default: https://cafe1luton.co.uk
         type: string
       database_check_run_url:
         description: Successful Production checks workflow URL containing the database job

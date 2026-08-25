@@ -224,7 +224,7 @@ export const adminSaveCourtLocation = createServerFn({ method: "POST" })
         id: z.string().uuid().optional(),
         label: z.string().trim().min(2).max(60),
         building: z.string().trim().max(80).default(""),
-        postcode: z.string().trim().max(12).default("AL1 3JU"),
+        postcode: z.string().trim().max(12).default("LU1 2AA"),
         sort_order: z.number().int().min(0).max(999).default(0),
         active: z.boolean().default(true),
       })

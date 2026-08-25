@@ -1,11 +1,11 @@
 import {
   ArrowRight,
   BadgeCheck,
-  Bike,
   Clock3,
   Coffee,
   MapPin,
   Salad,
+  Store,
   UtensilsCrossed,
 } from "lucide-react";
 
@@ -25,9 +25,9 @@ export type LocalSearchPageConfig = {
 };
 
 const guideLinks = [
-  { href: "/breakfast-st-albans", label: "Breakfast in St Albans" },
-  { href: "/halal-food-st-albans", label: "Halal food in St Albans" },
-  { href: "/lunch-st-albans", label: "Lunch in St Albans" },
+  { href: "/breakfast-luton", label: "Breakfast in Luton" },
+  { href: "/halal-food-luton", label: "Halal food in Luton" },
+  { href: "/lunch-luton", label: "Lunch in Luton" },
 ];
 
 export function LocalSearchPage({ config }: { config: LocalSearchPageConfig }) {
@@ -107,18 +107,18 @@ export function LocalSearchPage({ config }: { config: LocalSearchPageConfig }) {
             {[
               {
                 Icon: Clock3,
-                title: "Monday to Friday",
-                text: "Open 8am–5pm. Closed weekends and public holidays.",
+                title: "Two Luton locations",
+                text: "Luton Crown Court and Futures House, Marsh Farm.",
               },
               {
                 Icon: MapPin,
-                title: "AL1 3JU",
-                text: "Inside St Albans Crown Court on Bricket Road.",
+                title: "LU1 2AA · LU3 3QB",
+                text: "Both Café 1 branches are open to the public.",
               },
               {
-                Icon: Bike,
-                title: "Four ways to order",
-                text: "Dine in, take away, collect or choose local delivery.",
+                Icon: Store,
+                title: "Dine in or takeaway",
+                text: "Choose your branch first, then how you want to order.",
               },
               {
                 Icon: Coffee,
@@ -224,14 +224,14 @@ export function LocalSearchPage({ config }: { config: LocalSearchPageConfig }) {
             <div className="grid gap-8 lg:grid-cols-[1fr_auto] lg:items-end">
               <div>
                 <p className="text-sm font-semibold uppercase tracking-[0.18em] opacity-80">
-                  Café 1 St Albans
+                  Café 1 Luton
                 </p>
                 <h2 className="mt-2 font-display text-3xl font-bold sm:text-4xl">
-                  Order online or visit us at the Crown Court.
+                  Choose your Luton Café 1.
                 </h2>
                 <p className="mt-3 max-w-2xl opacity-90">
-                  {NAP.streetAddress}, {NAP.addressLocality}, {NAP.postalCode}. Collection, dine-in
-                  and takeaway are available 8am–5pm; delivery runs 8:30am–4:30pm on open weekdays.
+                  Visit Luton Crown Court at {NAP.postalCode} or Futures House in Marsh Farm at LU3
+                  3QB. Order for dine-in or takeaway from the live menu.
                 </p>
               </div>
               <a
@@ -257,7 +257,7 @@ export function LocalSearchPage({ config }: { config: LocalSearchPageConfig }) {
               href="/blog"
               className="rounded-full border border-border bg-card px-4 py-2 text-sm font-semibold hover:border-primary hover:text-primary"
             >
-              St Albans food journal
+              Luton food journal
             </a>
           </nav>
         </section>

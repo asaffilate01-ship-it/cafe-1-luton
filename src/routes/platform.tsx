@@ -392,7 +392,7 @@ function PlatformContent() {
                   })}
                 </ul>
                 <a
-                  href="https://cafe1stalbans.co.uk"
+                  href="https://cafe1luton.co.uk"
                   className="mt-6 inline-flex items-center gap-2 text-sm font-semibold text-primary"
                 >
                   {t.contact.cardLink} <ArrowRight className="h-4 w-4" />

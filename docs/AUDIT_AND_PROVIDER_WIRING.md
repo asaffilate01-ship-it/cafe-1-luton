@@ -18,13 +18,13 @@
 ## 3. Needs action by you (config, not code)
 | # | Item | What to do |
 |---|------|-----------|
-| 1 | Google Maps browser key | `RefererNotAllowedMapError` on /contact. In Google Cloud → Credentials → the browser key → HTTP referrers, add `https://cafe1stalbans.co.uk/*`, `https://www.cafe1stalbans.co.uk/*`, `https://*.lovable.app/*`. Restrict APIs to Maps JavaScript + Places + Geocoding. |
-| 2 | SumUp online checkout | Live `SUMUP_API_KEY` + `SUMUP_MERCHANT_CODE` are set. Confirm they are **live** (not sandbox) and that the return URL `https://cafe1stalbans.co.uk/order/{id}` is allowed in the SumUp app settings. Run one 1p live card order end to end. |
+| 1 | Google Maps browser key | `RefererNotAllowedMapError` on /contact. In Google Cloud → Credentials → the browser key → HTTP referrers, add `https://cafe1luton.co.uk/*`, `https://www.cafe1luton.co.uk/*`, `https://*.lovable.app/*`. Restrict APIs to Maps JavaScript + Places + Geocoding. |
+| 2 | SumUp online checkout | Live `SUMUP_API_KEY` + `SUMUP_MERCHANT_CODE` are set. Confirm they are **live** (not sandbox) and that the return URL `https://cafe1luton.co.uk/order/{id}` is allowed in the SumUp app settings. Run one 1p live card order end to end. |
 | 3 | SumUp Solo / POS | Pair Solo over Bluetooth from /till → Settings, then run: card sale, cash sale (drawer kick), refund, end-of-day report. |
 | 4 | Google Pay | `GOOGLE_PAY_MERCHANT_ID` set; submit /google-pay-review for production access if not already approved. |
 | 5 | Apple Pay | Domain association file is served; verify domain in the SumUp/Apple merchant console for both apex and www. |
 | 6 | Web push | VAPID keys set. Test "order ready" push on iOS (must be installed to Home Screen) and Android Chrome. |
-| 7 | Email (Resend) | `RESEND_API_KEY` set. Verify sending domain SPF/DKIM/DMARC for cafe1stalbans.co.uk so receipts don't land in spam. |
+| 7 | Email (Resend) | `RESEND_API_KEY` set. Verify sending domain SPF/DKIM/DMARC for cafe1luton.co.uk so receipts don't land in spam. |
 | 8 | Deliveroo / Just Eat watchers | Install both zips from /watcher-download on the shop PC, sign in once, place a test order each, confirm KDS colour coding (Deliveroo green, Just Eat via hub ingest). |
 | 9 | Cron | `CRON_SECRET` set; confirm scheduled jobs (nightly juror audit, weekly house-account billing, report rollups) ran in the last 24h from /admin/reports. |
 | 10 | Printing | Two tickets per job (KITCHEN + COUNTER) — run a live print from /kds on the iMin and confirm cut/feed. |

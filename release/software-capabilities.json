@@ -527,7 +527,7 @@
           "path": "e2e/go-live.spec.ts",
           "includes": [
             "social consent opens the canonical TikTok creator feed",
-            "cafe1_stalbans",
+            "cafe1_luton",
             "cookie preferences"
           ]
         },
@@ -798,24 +798,24 @@
           ]
         },
         {
-          "path": "src/routes/breakfast-st-albans.tsx",
-          "includes": ["Breakfast in St Albans", "localBusinessJsonLd", "webPageJsonLd"]
+          "path": "src/routes/breakfast-luton.tsx",
+          "includes": ["Breakfast in Luton", "localBusinessJsonLd", "webPageJsonLd"]
         },
         {
-          "path": "src/routes/halal-food-st-albans.tsx",
-          "includes": ["Halal food in St Albans", "local-pages/halal-food-st-albans"]
+          "path": "src/routes/halal-food-luton.tsx",
+          "includes": ["Halal food in Luton", "local-pages/halal-food-luton"]
         },
         {
-          "path": "src/lib/local-pages/halal-food-st-albans.ts",
+          "path": "src/lib/local-pages/halal-food-luton.ts",
           "includes": ["Every food item served at Café 1 is halal"]
         },
         {
-          "path": "src/routes/lunch-st-albans.tsx",
-          "includes": ["Lunch in St Albans", "local-pages/lunch-st-albans"]
+          "path": "src/routes/lunch-luton.tsx",
+          "includes": ["Lunch in Luton", "local-pages/lunch-luton"]
         },
         {
-          "path": "src/lib/local-pages/lunch-st-albans.ts",
-          "includes": ["Local lunch delivery in St Albans"]
+          "path": "src/lib/local-pages/lunch-luton.ts",
+          "includes": ["Local lunch delivery in Luton"]
         },
         {
           "path": "src/routes/blog.index.tsx",
@@ -824,9 +824,9 @@
         {
           "path": "supabase/migrations/20260809234000_local_search_content_phase24.sql",
           "includes": [
-            "food-near-st-albans-crown-court",
-            "desi-breakfast-guide-st-albans",
-            "quick-weekday-lunch-st-albans"
+            "food-near-luton-crown-court",
+            "desi-breakfast-guide-luton",
+            "quick-weekday-lunch-luton"
           ]
         },
         {

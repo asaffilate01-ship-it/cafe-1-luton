@@ -16,7 +16,7 @@ secrets, but each URL is validated against the expected platform domain.
 ```text
 VITE_SOCIAL_FACEBOOK_URL=https://www.facebook.com/YOUR_PAGE
 VITE_SOCIAL_INSTAGRAM_URL=https://www.instagram.com/YOUR_ACCOUNT/
-VITE_SOCIAL_TIKTOK_URL=https://www.tiktok.com/@cafe1_stalbans
+VITE_SOCIAL_TIKTOK_URL=https://www.tiktok.com/@cafe1luton
 VITE_SOCIAL_YOUTUBE_URL=https://www.youtube.com/@YOUR_CHANNEL
 ```
 
@@ -35,7 +35,7 @@ unique entries from `facebook`, `instagram`, `tiktok` and `youtube`.
   },
   {
     "platform": "tiktok",
-    "url": "https://www.tiktok.com/@cafe1_stalbans/video/VIDEO_ID",
+    "url": "https://www.tiktok.com/@cafe1luton/video/VIDEO_ID",
     "title": "Behind the counter"
   },
   {
@@ -51,7 +51,7 @@ same final Git commit after changing public build variables.
 
 ## 3. Live Google reviews
 
-Find the Google Place ID for the St Albans Café 1 listing and set:
+Find the Google Place ID for the Luton Café 1 listing and set:
 
 ```text
 GOOGLE_PLACE_ID=the-google-place-id

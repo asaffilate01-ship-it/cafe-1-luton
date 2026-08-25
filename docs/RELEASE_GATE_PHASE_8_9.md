@@ -5,7 +5,7 @@ These phases close the remaining buildable observability and browser-journey gap
 ## Phase 8 — desktop and mobile browser journeys
 
 - `playwright.config.ts` runs the same read-only launch journeys in desktop Chromium and a Pixel 7 viewport.
-- The journeys cover the homepage and confirmed `AL1 3JU` address, menu discovery, empty basket, legal pages, anonymous manager-route protection and horizontal mobile overflow.
+- The journeys cover the homepage and confirmed `LU1 2AA` address, menu discovery, empty basket, legal pages, anonymous manager-route protection and horizontal mobile overflow.
 - **Browser journeys** runs for pull requests, every push to `main` and manual dispatches. Traces, screenshots, video and a machine-readable report are retained when available.
 - **Release candidate evidence** reruns the browser journeys against the deployed HTTPS origin, so a successful local build cannot hide a broken deployment.
 
@@ -25,5 +25,5 @@ The tests never submit an order, charge a card, change stock or mutate productio
 2. Wait for **Production checks**, **CodeQL** and **Browser journeys** to pass on the cleanup commit.
 3. Rotate/restrict the Google browser key that was previously published and redeploy that exact green commit.
 4. Run **Production smoke** manually once; the scheduled run then provides continuous regression detection.
-5. Run **Release candidate evidence** against `https://cafe1stalbans.co.uk` and retain the artifact with the release tag and rollback commit.
+5. Run **Release candidate evidence** against `https://cafe1luton.co.uk` and retain the artifact with the release tag and rollback commit.
 6. Complete the real payment, refund, hardware, MFA, backup/restore and staff evidence in `docs/OPERATIONAL_ACCEPTANCE_RECORD.md`.

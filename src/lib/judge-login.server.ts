@@ -2,7 +2,7 @@
  * Shared judges' portal login. Every judge signs in with the same account and
  * then identifies themselves with their own personal tab code.
  */
-export const JUDGE_LOGIN_EMAIL = "judge@cafe1stalbans.co.uk";
+export const JUDGE_LOGIN_EMAIL = "judge@cafe1luton.co.uk";
 
 /** Idempotently make sure the shared judges login exists and is confirmed. */
 export async function ensureJudgeLoginExists(): Promise<void> {

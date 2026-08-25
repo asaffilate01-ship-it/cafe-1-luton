@@ -11,20 +11,20 @@ practical questions; they must not be rewritten as duplicate landing pages.
 
 | Search intent                            | Primary page                            | Supporting content                                                        |
 | ---------------------------------------- | --------------------------------------- | ------------------------------------------------------------------------- |
-| halal café / cafe in St Albans           | `/`                                     | About, menu, contact and local guides                                     |
-| breakfast in St Albans / halal breakfast | `/breakfast-st-albans`                  | `/blog/halal-breakfast-st-albans`, `/blog/desi-breakfast-guide-st-albans` |
-| halal food in St Albans                  | `/halal-food-st-albans`                 | Halal breakfast and courthouse food articles                              |
-| lunch in St Albans / halal lunch         | `/lunch-st-albans`                      | Quick weekday lunch and office delivery articles                          |
-| food near St Albans Crown Court          | `/blog/food-near-st-albans-crown-court` | Contact and lunch pages                                                   |
-| coffee in St Albans                      | `/blog/italian-coffee-in-st-albans`     | Menu and breakfast page                                                   |
-| office food delivery near AL1 3JU        | `/blog/office-delivery-crown-court`     | Lunch page and live menu                                                  |
+| halal café / cafe in Luton           | `/`                                     | About, menu, contact and local guides                                     |
+| breakfast in Luton / halal breakfast | `/breakfast-luton`                  | `/blog/halal-breakfast-luton`, `/blog/desi-breakfast-guide-luton` |
+| halal food in Luton                  | `/halal-food-luton`                 | Halal breakfast and courthouse food articles                              |
+| lunch in Luton / halal lunch         | `/lunch-luton`                      | Quick weekday lunch and office delivery articles                          |
+| food near Luton Crown Court          | `/blog/food-near-luton-crown-court` | Contact and lunch pages                                                   |
+| coffee in Luton                      | `/blog/italian-coffee-in-luton`     | Menu and breakfast page                                                   |
+| office food delivery near LU1 2AA        | `/blog/office-delivery-crown-court`     | Lunch page and live menu                                                  |
 
 ## Technical controls delivered
 
 - Shared title, description, canonical, Open Graph, X/Twitter and crawler metadata helpers.
 - Accurate `Restaurant`, `WebSite`, `WebPage`, `BreadcrumbList` and `Article` JSON-LD.
-- Correct NAP: Café 1 St Albans, St Albans Crown Court, Bricket Road, St Albans,
-  Hertfordshire AL1 3JU, +44 1727 400117.
+- Correct NAP: Café 1 Luton, Luton Crown Court, 7–9 George Street, Luton,
+  Hertfordshire LU1 2AA, +44 1727 400117.
 - Accurate weekday hours and half-mile delivery area in business structured data.
 - No unsupported aggregate rating, review, halal certification or wallet-payment claims.
 - Server-rendered public menu and blog index so their content is present before browser JavaScript.
@@ -44,7 +44,7 @@ practical questions; they must not be rewritten as duplicate landing pages.
 2. Commit the complete Phase 24 update to `main` without amending or force-pushing published
    history.
 3. Copy that new 40-character commit into production `PUBLIC_RELEASE_SHA`.
-4. Deploy that exact commit and run `npm run smoke:production -- https://cafe1stalbans.co.uk` with
+4. Deploy that exact commit and run `npm run smoke:production -- https://cafe1luton.co.uk` with
    `EXPECTED_RELEASE_SHA` set to the same commit.
 5. Open the homepage, menu, three landing pages, blog index and at least one article. Confirm titles,
    visible content, images, links and structured data are present in the rendered HTML.
@@ -54,9 +54,9 @@ practical questions; they must not be rewritten as duplicate landing pages.
 These steps cannot be completed only by shipping code; they require access to the verified Search
 Console property.
 
-1. Submit `https://cafe1stalbans.co.uk/sitemap.xml`.
-2. Inspect and request indexing for `/`, `/menu`, `/breakfast-st-albans`,
-   `/halal-food-st-albans`, `/lunch-st-albans` and `/blog`.
+1. Submit `https://cafe1luton.co.uk/sitemap.xml`.
+2. Inspect and request indexing for `/`, `/menu`, `/breakfast-luton`,
+   `/halal-food-luton`, `/lunch-luton` and `/blog`.
 3. Test the homepage, each landing page and one article with Google's Rich Results Test. Fix any
    invalid items before requesting another crawl.
 4. Check Page indexing after Google recrawls. Investigate server errors, unexpected `noindex`,
@@ -74,7 +74,7 @@ The website and Business Profile must describe the same real business.
   closed.
 - Choose the most accurate primary category and only relevant secondary categories. Do not add a
   category just because it contains a target phrase.
-- Link the menu field to `https://cafe1stalbans.co.uk/menu` and the main website to the canonical
+- Link the menu field to `https://cafe1luton.co.uk/menu` and the main website to the canonical
   homepage. Use the appropriate order link if the profile supports it.
 - Add recent, truthful food, counter, entrance and team photographs. Do not use stock images as if
   they show the premises.

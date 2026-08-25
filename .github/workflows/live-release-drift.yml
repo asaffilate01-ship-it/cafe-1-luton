@@ -43,7 +43,7 @@ jobs:
 
       - name: Compare deployed release
         env:
-          PRODUCTION_BASE_URL: https://cafe1stalbans.co.uk
+          PRODUCTION_BASE_URL: https://cafe1luton.co.uk
           EXPECTED_RELEASE_SHA: ${{ steps.release.outputs.sha }}
         run: |
           mkdir -p release-evidence

@@ -6,18 +6,18 @@ const scriptPath = fileURLToPath(import.meta.url);
 const defaultRoot = resolve(dirname(scriptPath), "..");
 
 const LOCAL_ROUTES = [
-  ["breakfast-st-albans", "Breakfast in St Albans"],
-  ["halal-food-st-albans", "Halal food in St Albans"],
-  ["lunch-st-albans", "Lunch in St Albans"],
+  ["breakfast-luton", "Breakfast in Luton"],
+  ["halal-food-luton", "Halal food in Luton"],
+  ["lunch-luton", "Lunch in Luton"],
 ];
 
 const BLOG_SLUGS = [
-  "italian-coffee-in-st-albans",
-  "halal-breakfast-st-albans",
+  "italian-coffee-in-luton",
+  "halal-breakfast-luton",
   "office-delivery-crown-court",
-  "food-near-st-albans-crown-court",
-  "desi-breakfast-guide-st-albans",
-  "quick-weekday-lunch-st-albans",
+  "food-near-luton-crown-court",
+  "desi-breakfast-guide-luton",
+  "quick-weekday-lunch-luton",
 ];
 
 export function verifySeoRepository(root = defaultRoot) {
@@ -42,7 +42,7 @@ export function verifySeoRepository(root = defaultRoot) {
   ]);
   requireMarkers("src/lib/nap.ts", [
     '"@type": "Restaurant"',
-    "AL1 3JU",
+    "LU1 2AA",
     "openingHoursSpecification",
     "sameAs",
   ]);
@@ -75,7 +75,7 @@ export function verifySeoRepository(root = defaultRoot) {
   for (const path of ["/admin", "/till", "/kds", "/display", "/checkout", "/api/"]) {
     if (!robots.includes(`Disallow: ${path}`)) failures.push(`robots.txt: missing ${path}`);
   }
-  if (!robots.includes("Sitemap: https://cafe1stalbans.co.uk/sitemap.xml")) {
+  if (!robots.includes("Sitemap: https://cafe1luton.co.uk/sitemap.xml")) {
     failures.push("robots.txt: canonical sitemap is missing");
   }
 

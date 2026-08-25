@@ -109,7 +109,7 @@ Repair-InstallAccess
 
 $configFile = Join-Path $installDir "watcher.config.json"
 @{
-  cafe1Url = "https://cafe1stalbans.co.uk"
+  cafe1Url = "https://cafe1luton.co.uk"
   hubUrl = "https://restaurant-hub.deliveroo.net/orders"
   refreshMs = 45000
 } | ConvertTo-Json | Set-Content -Path $configFile -Encoding UTF8

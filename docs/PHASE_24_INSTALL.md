@@ -15,7 +15,7 @@ commit plus the Phase 24 local-search implementation.
 7. Run the production smoke check with the exact release candidate SHA:
 
    ```bash
-   EXPECTED_RELEASE_SHA=<exact-new-main-sha> npm run smoke:production -- https://cafe1stalbans.co.uk
+   EXPECTED_RELEASE_SHA=<exact-new-main-sha> npm run smoke:production -- https://cafe1luton.co.uk
    ```
 
 8. Complete the Search Console and Google Business Profile actions in

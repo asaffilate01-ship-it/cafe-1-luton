@@ -318,7 +318,8 @@ function Checkout() {
         if (cancelled || res.member?.status !== "approved") return;
         setStaffDiscountPercent(res.discount_percent);
         const locs = await fetchCourtLocations();
-        if (!cancelled) setCourtLocations(locs.locations.map((l) => ({ id: l.id, label: l.label })));
+        if (!cancelled)
+          setCourtLocations(locs.locations.map((l) => ({ id: l.id, label: l.label })));
       } catch {
         // Not a scheme member — normal pricing applies.
       }
@@ -507,7 +508,7 @@ function Checkout() {
     if (!c.items.length) return;
     if (!ctx) {
       setGateOpen(true);
-      toast.error("Choose pickup, delivery or dine-in before continuing.");
+      toast.error("Choose a Café 1 location and select dine-in or takeaway before continuing.");
       return;
     }
     if (
@@ -515,7 +516,7 @@ function Checkout() {
       mode === "delivery" &&
       !isCourtDeliveryAddress(form.address_line1, form.postcode)
     ) {
-      toast.error("Voucher deliveries must go to St Albans Crown Court or the Magistrates' Court.");
+      toast.error("Voucher deliveries must go to Luton Crown Court or the Magistrates' Court.");
       return;
     }
     if (staffApproved && mode === "delivery" && courtLocations.length > 0 && !courtLocation) {
@@ -526,6 +527,7 @@ function Checkout() {
     try {
       const res = await place({
         data: {
+          site_location: ctx.location ?? "luton-crown-court",
           type: mode,
           customer_name: onTab ? tabSession!.name : form.customer_name,
           customer_phone: onTab ? "" : form.customer_phone,
@@ -638,12 +640,7 @@ function Checkout() {
               <Settings2 className="h-3.5 w-3.5" /> Change
             </button>
           </div>
-          <OrderSetupGate
-            open={gateOpen}
-            onClose={() => setGateOpen(false)}
-            dismissible={!!ctx}
-            juryOnly={!!jurySessionActive}
-          />
+          <OrderSetupGate open={gateOpen} onClose={() => setGateOpen(false)} dismissible={!!ctx} />
           {!status.open && (
             <div
               className={`rounded-2xl border p-4 text-sm ${settings?.allow_preorder_when_closed ? "border-amber-500/40 bg-amber-500/10 text-amber-900" : "border-destructive/40 bg-destructive/10 text-destructive"}`}
@@ -719,14 +716,13 @@ function Checkout() {
                         : `${emailDiscount.percent}% off`
                   } this order and `
                 : ""}
-              you'll earn{" "}
-              {pointsEarn} points.
+              you'll earn {pointsEarn} points.
             </div>
           )}
           <div className="rounded-2xl border border-border bg-card p-5">
             <p className="font-semibold">How would you like your order?</p>
             <div className="mt-3 grid grid-cols-3 gap-2">
-              {(["collection", "delivery", "dine_in"] as const).map((m) => (
+              {(["collection", "dine_in"] as const).map((m) => (
                 <button
                   type="button"
                   key={m}
@@ -737,7 +733,7 @@ function Checkout() {
                       : "border-border bg-background hover:border-primary"
                   }`}
                 >
-                  {m === "collection" ? "Pickup" : m === "dine_in" ? "Dine in" : "Delivery"}
+                  {m === "collection" ? "Takeaway" : "Dine in"}
                 </button>
               ))}
             </div>
@@ -902,98 +898,98 @@ function Checkout() {
                 </div>
               ) : (
                 <>
-                {savedAddresses.length > 0 && (
-                  <div className="mt-3 space-y-2">
-                    <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                      Saved addresses
-                    </p>
-                    <div className="grid gap-2 sm:grid-cols-2">
-                      {savedAddresses.map((a) => {
-                        const selected =
-                          form.address_line1 === a.address_line1 && form.postcode === a.postcode;
-                        return (
-                          <button
-                            key={a.id}
-                            type="button"
-                            onClick={() => {
-                              setForm((f) => ({
-                                ...f,
-                                company_name: a.company_name ?? "",
-                                address_line1: a.address_line1,
-                                city: a.city,
-                                postcode: a.postcode,
-                                delivery_notes: a.delivery_notes ?? f.delivery_notes,
-                              }));
-                              setSaveThisAddress(false);
-                              void verifyPostcode(a.postcode);
-                            }}
-                            className={`rounded-xl border px-4 py-3 text-left text-sm ${selected ? "border-primary bg-primary/10 font-semibold text-primary" : "border-border bg-background hover:border-primary"}`}
-                          >
-                            <span className="block font-semibold">{a.label}</span>
-                            <span className="block text-xs text-muted-foreground">
-                              {a.address_line1}, {a.postcode}
-                            </span>
-                          </button>
-                        );
-                      })}
+                  {savedAddresses.length > 0 && (
+                    <div className="mt-3 space-y-2">
+                      <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                        Saved addresses
+                      </p>
+                      <div className="grid gap-2 sm:grid-cols-2">
+                        {savedAddresses.map((a) => {
+                          const selected =
+                            form.address_line1 === a.address_line1 && form.postcode === a.postcode;
+                          return (
+                            <button
+                              key={a.id}
+                              type="button"
+                              onClick={() => {
+                                setForm((f) => ({
+                                  ...f,
+                                  company_name: a.company_name ?? "",
+                                  address_line1: a.address_line1,
+                                  city: a.city,
+                                  postcode: a.postcode,
+                                  delivery_notes: a.delivery_notes ?? f.delivery_notes,
+                                }));
+                                setSaveThisAddress(false);
+                                void verifyPostcode(a.postcode);
+                              }}
+                              className={`rounded-xl border px-4 py-3 text-left text-sm ${selected ? "border-primary bg-primary/10 font-semibold text-primary" : "border-border bg-background hover:border-primary"}`}
+                            >
+                              <span className="block font-semibold">{a.label}</span>
+                              <span className="block text-xs text-muted-foreground">
+                                {a.address_line1}, {a.postcode}
+                              </span>
+                            </button>
+                          );
+                        })}
+                      </div>
                     </div>
+                  )}
+                  <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                    <input
+                      required
+                      placeholder="Postcode"
+                      value={form.postcode}
+                      onChange={(e) => {
+                        setForm({ ...form, postcode: e.target.value });
+                        setArea(null);
+                      }}
+                      onBlur={(e) => void verifyPostcode(e.target.value)}
+                      className="h-11 rounded-xl border border-border bg-background px-4"
+                    />
+                    <input
+                      placeholder="Office / company name (optional)"
+                      value={form.company_name}
+                      onChange={(e) => setForm({ ...form, company_name: e.target.value })}
+                      className="h-11 rounded-xl border border-border bg-background px-4"
+                    />
+                    <input
+                      required
+                      placeholder="Street address"
+                      value={form.address_line1}
+                      onChange={(e) => setForm({ ...form, address_line1: e.target.value })}
+                      className="h-11 rounded-xl border border-border bg-background px-4 sm:col-span-2"
+                    />
+                    <input
+                      required
+                      placeholder="City"
+                      value={form.city}
+                      onChange={(e) => setForm({ ...form, city: e.target.value })}
+                      className="h-11 rounded-xl border border-border bg-background px-4"
+                    />
+                    <textarea
+                      placeholder="Delivery notes — buzzer, floor, gate code (optional)"
+                      value={form.delivery_notes}
+                      onChange={(e) => setForm({ ...form, delivery_notes: e.target.value })}
+                      className="min-h-20 rounded-xl border border-border bg-background p-3 sm:col-span-2"
+                    />
                   </div>
-                )}
-                <div className="mt-3 grid gap-3 sm:grid-cols-2">
-                  <input
-                    required
-                    placeholder="Postcode"
-                    value={form.postcode}
-                    onChange={(e) => {
-                      setForm({ ...form, postcode: e.target.value });
-                      setArea(null);
-                    }}
-                    onBlur={(e) => void verifyPostcode(e.target.value)}
-                    className="h-11 rounded-xl border border-border bg-background px-4"
-                  />
-                  <input
-                    placeholder="Office / company name (optional)"
-                    value={form.company_name}
-                    onChange={(e) => setForm({ ...form, company_name: e.target.value })}
-                    className="h-11 rounded-xl border border-border bg-background px-4"
-                  />
-                  <input
-                    required
-                    placeholder="Street address"
-                    value={form.address_line1}
-                    onChange={(e) => setForm({ ...form, address_line1: e.target.value })}
-                    className="h-11 rounded-xl border border-border bg-background px-4 sm:col-span-2"
-                  />
-                  <input
-                    required
-                    placeholder="City"
-                    value={form.city}
-                    onChange={(e) => setForm({ ...form, city: e.target.value })}
-                    className="h-11 rounded-xl border border-border bg-background px-4"
-                  />
-                  <textarea
-                    placeholder="Delivery notes — buzzer, floor, gate code (optional)"
-                    value={form.delivery_notes}
-                    onChange={(e) => setForm({ ...form, delivery_notes: e.target.value })}
-                    className="min-h-20 rounded-xl border border-border bg-background p-3 sm:col-span-2"
-                  />
-                </div>
-                <label className="mt-3 flex items-center gap-2 text-xs text-muted-foreground">
-                  <input
-                    type="checkbox"
-                    checked={saveThisAddress}
-                    onChange={(e) => setSaveThisAddress(e.target.checked)}
-                    disabled={!user}
-                    className="h-4 w-4 rounded border-border"
-                  />
-                  {user
-                    ? "Save this address for next time"
-                    : "Sign in to save addresses for next time"}
-                </label>
+                  <label className="mt-3 flex items-center gap-2 text-xs text-muted-foreground">
+                    <input
+                      type="checkbox"
+                      checked={saveThisAddress}
+                      onChange={(e) => setSaveThisAddress(e.target.checked)}
+                      disabled={!user}
+                      className="h-4 w-4 rounded border-border"
+                    />
+                    {user
+                      ? "Save this address for next time"
+                      : "Sign in to save addresses for next time"}
+                  </label>
                 </>
               )}
               <p className="mt-3 text-xs text-muted-foreground">
-                We deliver up to ½ mile from {settings?.delivery_origin_postcode ?? "AL1 3JU"},
+                We deliver up to ½ mile from {settings?.delivery_origin_postcode ?? "LU1 2AA"},
                 between {(settings?.delivery_open_time ?? "08:30").slice(0, 5)}–
                 {(settings?.delivery_close_time ?? "16:30").slice(0, 5)}. Typical delivery time{" "}
                 {settings?.delivery_minutes ?? 45} min.
