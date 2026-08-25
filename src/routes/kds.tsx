@@ -1459,7 +1459,7 @@ function KDS() {
               </div>
             </div>
             {/* Complete, touch-friendly top toolbar; horizontally scrollable on small screens. */}
-            <div className="kds-pillrow col-span-2 -mx-0.5 flex items-center gap-2 overflow-x-auto border-t border-primary-foreground/15 pt-2 pb-0.5 min-[900px]:flex-wrap min-[900px]:justify-end min-[900px]:overflow-visible [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            <div className="hidden">
               <button
                 type="button"
                 onClick={() => setManualOpen(true)}
@@ -1594,7 +1594,15 @@ function KDS() {
               )}
             </div>
           </div>
-          <div className="mx-auto flex max-w-[110rem] flex-nowrap items-center gap-2 overflow-x-auto border-t border-primary-foreground/15 px-3 pt-2 pb-3 text-xs font-semibold sm:gap-3 sm:px-4 lg:flex-wrap lg:overflow-visible [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+          <div className="mx-auto flex max-w-[110rem] flex-wrap items-center gap-2 border-t border-primary-foreground/15 px-3 py-2 text-xs font-semibold sm:px-4">
+            <button
+              type="button"
+              onClick={() => setManualOpen(true)}
+              disabled={!canCompleteOrders}
+              className="inline-flex h-10 items-center gap-1.5 rounded-xl bg-primary-foreground px-3 font-bold text-primary shadow-sm active:scale-[0.97] disabled:opacity-40"
+            >
+              <Plus className="h-4 w-4" /> Add order
+            </button>
             <button
               onClick={() => setAll("preparing", "ready")}
               disabled={
@@ -1615,94 +1623,98 @@ function KDS() {
               <span className="sm:hidden">All complete</span>
               <span className="hidden sm:inline">Mark all complete</span>
             </button>
-            <button
-              onClick={() => setRecall(true)}
-              disabled={recall}
-              className={`rounded-full px-3 py-1.5 text-xs font-bold ${
-                recall
-                  ? "bg-primary-foreground text-primary opacity-70"
-                  : "bg-primary-foreground/15 text-primary-foreground hover:bg-primary-foreground/25"
-              }`}
-              title="Pull the last 15 orders of today back onto the board so you can reopen a mistake"
-            >
-              <span className="sm:hidden">Recall 15</span>
-              <span className="hidden sm:inline">Recall last 15</span>
-            </button>
-            {recall && (
-              <button
-                onClick={() => setRecall(false)}
-                className="rounded-full bg-primary-foreground/15 px-3 py-1.5 text-xs font-bold text-primary-foreground hover:bg-primary-foreground/25"
-                title="Clear the recalled orders and show only live tickets"
+            <label className="flex h-10 min-w-[9.5rem] items-center gap-2 rounded-xl bg-primary-foreground/10 px-3">
+              <span className="font-bold">View</span>
+              <select
+                value={feed}
+                onChange={(event) => setFeed(event.target.value as FeedKey)}
+                aria-label="Order source filter"
+                className="min-w-0 flex-1 bg-transparent font-bold text-primary-foreground outline-none"
               >
-                <span className="sm:hidden">Unrecall</span>
-                <span className="hidden sm:inline">Unrecall last 15</span>
-              </button>
-            )}
-            <span className="mx-1 hidden h-4 w-px bg-primary-foreground/30 sm:block" />
-            <div
-              className="flex shrink-0 flex-wrap items-center gap-1"
-              aria-label="Order source filter"
-            >
-              {availableFeeds.map(({ key, label, Icon }) => {
-                const count = tickets.filter((t) => matchesFeed(key, t)).length;
-                const on = feed === key;
-                return (
-                  <button
-                    key={key}
-                    type="button"
-                    onClick={() => setFeed(key)}
-                    aria-pressed={on}
-                    className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[10px] font-black tracking-wide ${
-                      on ? "bg-primary-foreground text-primary" : "bg-primary-foreground/10"
-                    }`}
-                  >
-                    <Icon className="h-3.5 w-3.5" />
-                    {!courtFeatures && key === "public" ? "Till" : label}
-                    <span
-                      className={`rounded-full px-1 text-[9px] leading-4 ${
-                        on ? "bg-primary text-primary-foreground" : "bg-primary-foreground/20"
-                      }`}
-                    >
-                      {count}
-                    </span>
-                  </button>
-                );
-              })}
-            </div>
-            <span className="mx-1 hidden h-4 w-px bg-primary-foreground/30 lg:block" />
-            <div className="flex flex-wrap items-center gap-1" aria-label="Kitchen station filter">
-              {STATIONS.map((value) => (
+                {availableFeeds.map(({ key, label }) => (
+                  <option key={key} value={key} className="text-foreground">
+                    {!courtFeatures && key === "public" ? "Till" : label} ({tickets.filter((ticket) => matchesFeed(key, ticket)).length})
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label className="flex h-10 min-w-[10rem] items-center gap-2 rounded-xl bg-primary-foreground/10 px-3">
+              <span className="font-bold">Station</span>
+              <select
+                value={station}
+                onChange={(event) => {
+                  const value = event.target.value as Station;
+                  setStation(value);
+                  window.localStorage.setItem("cafe1-kds-station", value);
+                }}
+                aria-label="Kitchen station filter"
+                className="min-w-0 flex-1 bg-transparent font-bold text-primary-foreground outline-none"
+              >
+                {STATIONS.map((value) => (
+                  <option key={value} value={value} className="text-foreground">
+                    {value === "ALL" ? "All stations" : value}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <details className="relative ml-auto">
+              <summary className="flex h-10 cursor-pointer list-none items-center gap-1.5 rounded-xl bg-primary-foreground/10 px-3 font-bold hover:bg-primary-foreground/20 [&::-webkit-details-marker]:hidden">
+                <Settings2 className="h-4 w-4" /> More <ChevronsDown className="h-4 w-4" />
+              </summary>
+              <div className="absolute right-0 z-50 mt-2 grid w-[min(21rem,calc(100vw-1rem))] gap-1 rounded-2xl border border-border bg-card p-2 text-card-foreground shadow-2xl">
                 <button
-                  key={value}
                   type="button"
-                  onClick={() => {
-                    setStation(value);
-                    window.localStorage.setItem("cafe1-kds-station", value);
-                  }}
-                  className={`rounded-full px-2.5 py-1 text-[10px] font-black tracking-wide ${
-                    station === value
-                      ? "bg-primary-foreground text-primary"
-                      : "bg-primary-foreground/10"
-                  }`}
+                  onClick={() => setRecall(!recall)}
+                  className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left text-sm font-semibold hover:bg-muted"
                 >
-                  {value}
+                  <RefreshCw className="h-4 w-4" /> {recall ? "Return to live orders" : "Recall last 15 orders"}
                 </button>
-              ))}
-            </div>
-            <span className="mx-1 hidden h-4 w-px bg-primary-foreground/30 xl:block" />
-            <span className="hidden items-center gap-1.5 xl:inline-flex">
-              <span className="h-3 w-3 rounded-full bg-rose-600 ring-2 ring-white/60" /> Cooked
-            </span>
-            <span className="hidden items-center gap-1.5 xl:inline-flex">
-              <span className="h-3 w-3 rounded-full bg-amber-400 ring-2 ring-white/60" /> Prep required
-            </span>
-            <span className="hidden items-center gap-1.5 xl:inline-flex">
-              <span className="h-3 w-3 rounded-full bg-emerald-600 ring-2 ring-white/60" /> No prep
-            </span>
-            <span className="hidden items-center gap-1.5 xl:inline-flex">
-              <span className="h-3 w-3 rounded-full bg-emerald-500 ring-2 ring-white/60" /> Ready →
-              complete
-            </span>
+                <FullscreenToggle menu />
+                <AlertsToggle menu />
+                <WakeToggle menu />
+                <InstallAppButton
+                  manifest="/kds.webmanifest"
+                  label="Install KDS app"
+                  className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-sm font-semibold hover:bg-muted"
+                />
+                <button
+                  type="button"
+                  onClick={() => window.location.reload()}
+                  className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left text-sm font-semibold hover:bg-muted"
+                >
+                  <RefreshCw className="h-4 w-4" /> Refresh display
+                </button>
+                <button
+                  type="button"
+                  onClick={toggleChrome}
+                  className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left text-sm font-semibold hover:bg-muted"
+                >
+                  <ChevronsUp className="h-4 w-4" /> Hide top bar
+                </button>
+                <button
+                  type="button"
+                  onClick={toggleTabletLayout}
+                  className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left text-sm font-semibold hover:bg-muted"
+                >
+                  <Maximize2 className="h-4 w-4" /> {tabletKds ? "Use desktop layout" : "Use tablet layout"}
+                </button>
+                <div className="mt-1 border-t border-border px-3 pt-2 text-xs text-muted-foreground">
+                  <div className="flex items-center justify-between gap-3"><span>Order feed</span><SyncPill lastSync={lastSync} ok={syncOk} now={now} compact /></div>
+                  {courtFeatures && (
+                    <div className="mt-2 grid gap-1">
+                      <span>Deliveroo: {deliverooLive ? "online" : deliverooLive === null ? "checking" : "offline"}</span>
+                      <span>Just Eat: {justEatLive ? "online" : justEatLive === null ? "checking" : "offline"}</span>
+                      <span>Uber Eats: {uberEatsLive ? "online" : uberEatsLive === null ? "checking" : "offline"}</span>
+                    </div>
+                  )}
+                  <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1">
+                    <span className="inline-flex items-center gap-1"><span className="h-2.5 w-2.5 rounded-full bg-rose-600" /> Cooked</span>
+                    <span className="inline-flex items-center gap-1"><span className="h-2.5 w-2.5 rounded-full bg-amber-400" /> Prep</span>
+                    <span className="inline-flex items-center gap-1"><span className="h-2.5 w-2.5 rounded-full bg-emerald-600" /> No prep</span>
+                  </div>
+                </div>
+              </div>
+            </details>
           </div>
         </header>
       )}
@@ -2401,12 +2413,12 @@ function KDS() {
   );
 }
 
-function AlertsToggle() {
-  return <AlertsToggleInner />;
+function AlertsToggle({ menu = false }: { menu?: boolean } = {}) {
+  return <AlertsToggleInner menu={menu} />;
 }
 
 /** Lets the kitchen tablet go edge-to-edge so Chrome's address bar is hidden. */
-function FullscreenToggle() {
+function FullscreenToggle({ menu = false }: { menu?: boolean } = {}) {
   const [full, setFull] = useState(false);
   useEffect(() => {
     const onChange = () => setFull(Boolean(document.fullscreenElement));
@@ -2421,7 +2433,11 @@ function FullscreenToggle() {
         if (document.fullscreenElement) void document.exitFullscreen();
         else void document.documentElement.requestFullscreen?.().catch(() => {});
       }}
-      className="flex shrink-0 items-center gap-1.5 rounded-full bg-primary-foreground/15 px-3 py-2 text-xs font-bold text-primary-foreground active:scale-[0.97]"
+      className={
+        menu
+          ? "flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left text-sm font-semibold hover:bg-muted"
+          : "flex shrink-0 items-center gap-1.5 rounded-full bg-primary-foreground/15 px-3 py-2 text-xs font-bold text-primary-foreground active:scale-[0.97]"
+      }
       title="Hide the browser address bar and use the whole screen"
     >
       {full ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
@@ -2460,13 +2476,17 @@ function SyncPill({
   );
 }
 
-function AlertsToggleInner() {
+function AlertsToggleInner({ menu = false }: { menu?: boolean } = {}) {
   const { perm, request } = useNotificationPermission();
   return (
-    <div className="flex items-center gap-1">
+    <div className={menu ? "grid grid-cols-2 gap-1" : "flex items-center gap-1"}>
       <button
         onClick={request}
-        className="flex items-center gap-1 rounded-full bg-primary-foreground/10 px-3 py-1.5 text-xs font-semibold hover:bg-primary-foreground/20"
+        className={
+          menu
+            ? "flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-semibold hover:bg-muted"
+            : "flex items-center gap-1 rounded-full bg-primary-foreground/10 px-3 py-1.5 text-xs font-semibold hover:bg-primary-foreground/20"
+        }
         title={perm === "granted" ? "Alerts on" : "Enable alerts"}
       >
         {perm === "granted" ? <Bell className="h-4 w-4" /> : <BellOff className="h-4 w-4" />}
@@ -2480,7 +2500,11 @@ function AlertsToggleInner() {
       </button>
       <button
         onClick={() => playChime()}
-        className="rounded-full bg-primary-foreground/10 px-3 py-1.5 text-xs font-semibold hover:bg-primary-foreground/20"
+        className={
+          menu
+            ? "rounded-xl px-3 py-2 text-sm font-semibold hover:bg-muted"
+            : "rounded-full bg-primary-foreground/10 px-3 py-1.5 text-xs font-semibold hover:bg-primary-foreground/20"
+        }
         title="Play the new-order chime"
       >
         Test sound
@@ -2488,13 +2512,17 @@ function AlertsToggleInner() {
     </div>
   );
 }
-function WakeToggle() {
+function WakeToggle({ menu = false }: { menu?: boolean } = {}) {
   const { supported, enabled, active, toggle } = useWakeLock();
   if (!supported) return null;
   return (
     <button
       onClick={toggle}
-      className={`flex items-center gap-1 rounded-full px-3 py-1.5 text-xs font-semibold ${enabled ? "bg-primary-foreground text-primary" : "bg-primary-foreground/10 hover:bg-primary-foreground/20"}`}
+      className={
+        menu
+          ? "flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left text-sm font-semibold hover:bg-muted"
+          : `flex items-center gap-1 rounded-full px-3 py-1.5 text-xs font-semibold ${enabled ? "bg-primary-foreground text-primary" : "bg-primary-foreground/10 hover:bg-primary-foreground/20"}`
+      }
       title={
         enabled
           ? active

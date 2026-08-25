@@ -29,14 +29,13 @@ import {
   openCustomerScreen,
   type Ticket as PrintTicket,
 } from "@/lib/imin";
-import { postToDisplay, subscribeToDisplay, type DisplayMessage } from "@/lib/customer-display";
+import { postToDisplay } from "@/lib/customer-display";
 import {
   checkDeviceBridge,
   getDeviceBridgeConfig,
   printViaDeviceBridge,
   setDeviceBridgeConfig,
 } from "@/lib/device-bridge";
-import { lookupVoucher } from "@/lib/vouchers.functions";
 import { getAccountStatement, listAccounts, quickAddAccount } from "@/lib/accounts.functions";
 import { chargeOrderToAccount, findSimilarAccountOrder } from "@/lib/judge-tab.functions";
 import { QrCode } from "@/components/qr-code";
@@ -47,7 +46,6 @@ import {
   ReaderLinkGuide,
 } from "@/components/reader-connection";
 import { isReaderOnline } from "@/lib/reader-status";
-import { JUROR_DAILY_ALLOWANCE_CENTS, JUROR_FOOD_DISCOUNT_PERCENT } from "@/lib/juror";
 import { money } from "@/lib/format";
 import { calculateCounterDue } from "@/lib/counter-pricing";
 import { askConfirm, askPrompt } from "@/lib/confirm";
@@ -93,7 +91,6 @@ import {
   ReceiptText,
   UtensilsCrossed,
   ChevronLeft,
-  Ticket,
   ShieldCheck,
   Wifi,
   WifiOff,
@@ -105,7 +102,6 @@ import {
   RotateCw,
   Leaf,
   StickyNote,
-  Scale,
   BadgePercent,
   History,
   RotateCcw,
@@ -237,23 +233,30 @@ const SIDE_TONE: Record<Side, string> = {
   judge: "bg-fuchsia-700 text-slate-950",
   public: "bg-teal-600 text-slate-950",
 };
-const SIDE_LABEL: Record<Side, string> = { jury: "Jury", judge: "Judge", public: "Public" };
+const SIDE_LABEL: Record<Side, string> = { jury: "Jury", judge: "Judges", public: "Public" };
 const FAVOURITES_CATEGORY = "__favourites__";
+
+/** Jury-only catalogue items are managed elsewhere and must not appear on the counter till. */
+function isHiddenTillCategory(name: string): boolean {
+  return /^(jury|juror)\s+menu$/i.test(name.trim());
+}
 const FULFIL: { id: Fulfilment; label: string; Icon: typeof ShoppingBag }[] = [
   { id: "dine_in", label: "Dine in", Icon: HandPlatter },
   { id: "collection", label: "Takeaway", Icon: ShoppingBag },
 ];
-/** Till-facing choices: judges room is a dine-in order routed to the judge side. */
-type FulfilChoice = Fulfilment | "judges_room";
-const FULFIL_CHOICES: { id: FulfilChoice; label: string; Icon: typeof ShoppingBag }[] = [
-  { id: "dine_in", label: "Dine in", Icon: HandPlatter },
-  { id: "collection", label: "Takeaway", Icon: ShoppingBag },
-  { id: "judges_room", label: "Judges room", Icon: Scale },
-];
+type FulfilChoice = Fulfilment;
+const FULFIL_CHOICES = FULFIL;
 
 function isFuturesHouse(site: { code: string; postcode: string | null } | null): boolean {
   return (
     site?.code.toUpperCase() === "FUTURES_HOUSE" || site?.postcode?.toUpperCase() === "LU3 3QB"
+  );
+}
+
+function isCrownCourt(site: { code: string; postcode: string | null } | null): boolean {
+  return (
+    site?.code.toUpperCase() === "LUTON_CROWN_COURT" ||
+    site?.postcode?.toUpperCase() === "LU1 2AA"
   );
 }
 
@@ -422,10 +425,11 @@ function Till() {
     return (window.localStorage.getItem("cafe1-pos-side") as Side) || "public";
   });
   const futuresHouse = isFuturesHouse(sites.site);
-  const terminal: TillTerminal = futuresHouse ? "futures_public" : side;
-  const availableFulfilChoices = futuresHouse
-    ? FULFIL_CHOICES.filter((choice) => choice.id !== "judges_room")
-    : FULFIL_CHOICES;
+  const crownCourt = isCrownCourt(sites.site);
+  /** One physical till per branch; Crown Court destination is stored on each order. */
+  const shiftTerminal: TillTerminal = futuresHouse ? "futures_public" : "public";
+  const orderDestination: TillTerminal = futuresHouse ? "futures_public" : side;
+  const availableFulfilChoices = FULFIL_CHOICES;
   const [evoConnected, setEvoConnected] = useState(() =>
     typeof window === "undefined" ? false : Boolean(window.localStorage.getItem("cafe1-evo-reader")),
   );
@@ -448,7 +452,6 @@ function Till() {
   }>(null);
   const [discountOpen, setDiscountOpen] = useState(false);
   const [recentOrdersOpen, setRecentOrdersOpen] = useState(false);
-  const [voucherOpen, setVoucherOpen] = useState(false);
   const [customize, setCustomize] = useState<Item | null>(null);
   const [shift, setShift] = useState<TillShift | null>(null);
   const [shiftLoading, setShiftLoading] = useState(true);
@@ -546,14 +549,26 @@ function Till() {
           .order("sort_order"),
       ]);
       if (!active) return;
-      setCats((c ?? []) as Cat[]);
-      setItems((i ?? []).filter((item) => item.active) as Item[]);
+      const visibleCategories = ((c ?? []) as Cat[]).filter(
+        (category) => !isHiddenTillCategory(category.name),
+      );
+      const hiddenCategoryIds = new Set(
+        ((c ?? []) as Cat[])
+          .filter((category) => isHiddenTillCategory(category.name))
+          .map((category) => category.id),
+      );
+      setCats(visibleCategories);
+      setItems(
+        (i ?? []).filter(
+          (item) => item.active && !hiddenCategoryIds.has(item.category_id ?? ""),
+        ) as Item[],
+      );
       setModifiers((m ?? []) as Modifier[]);
       setCatId((current) =>
         current === FAVOURITES_CATEGORY ||
-        (current && (c ?? []).some((category) => category.id === current))
+        (current && visibleCategories.some((category) => category.id === current))
           ? current
-          : ((c ?? [])[0]?.id ?? null),
+          : (visibleCategories[0]?.id ?? null),
       );
     };
     void loadMenu();
@@ -574,14 +589,16 @@ function Till() {
   const loadShift = useCallback(async () => {
     setShiftLoading(true);
     try {
-      setShift((await getShift({ data: { terminal, site_id: sites.siteId } })) as TillShift | null);
+      setShift(
+        (await getShift({ data: { terminal: shiftTerminal, site_id: sites.siteId } })) as TillShift | null,
+      );
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Could not load the till shift");
       setShift(null);
     } finally {
       setShiftLoading(false);
     }
-  }, [getShift, sites.siteId, terminal]);
+  }, [getShift, shiftTerminal, sites.siteId]);
   useEffect(() => {
     void loadShift();
   }, [loadShift]);
@@ -862,7 +879,7 @@ function Till() {
         if (!drawer.ok) toast.error(drawer.message);
       }
       if (res.voucher_cents > 0) {
-        toast.success(`Juror voucher — ${money(res.voucher_cents)} redeemed`);
+        toast.success(`Allowance — ${money(res.voucher_cents)} applied`);
       }
       setLines([]);
       setName("");
@@ -893,7 +910,7 @@ function Till() {
             order_notes: table.trim() || undefined,
             payment_method,
             manual_card_reference: manualCardReference,
-            pos_terminal: terminal,
+            pos_terminal: orderDestination,
             voucher_code: voucher?.code,
             voucher_pin: voucher?.pin,
             ...manualDiscountArgs,
@@ -921,7 +938,7 @@ function Till() {
       online,
       shift,
       table,
-      terminal,
+      orderDestination,
       type,
       voucher,
     ],
@@ -942,7 +959,7 @@ function Till() {
             order_notes: table.trim() || undefined,
             cash_component_cents: splitCash,
             manual_card_reference: manualCardReference,
-            pos_terminal: terminal,
+            pos_terminal: orderDestination,
             voucher_code: voucher?.code,
             voucher_pin: voucher?.pin,
             ...manualDiscountArgs,
@@ -971,7 +988,7 @@ function Till() {
       shift,
       splitCash,
       table,
-      terminal,
+      orderDestination,
       type,
       voucher,
     ],
@@ -1018,7 +1035,7 @@ function Till() {
             customer_name: account.name,
             type,
             order_notes: table.trim() || undefined,
-            pos_terminal: terminal,
+            pos_terminal: orderDestination,
             voucher_code: voucher?.code,
             voucher_pin: voucher?.pin,
             ...manualDiscountArgs,
@@ -1050,42 +1067,21 @@ function Till() {
       prepareOrder,
       shift,
       table,
-      terminal,
+      orderDestination,
       type,
       voucher,
     ],
   );
 
-  async function changeSide(next: Side) {
-    if (next === side) return;
-    if (
-      lines.length &&
-      !(await askConfirm({
-        title: `Switch to the ${SIDE_LABEL[next]} till?`,
-        description: "Changing the till side clears the current basket and voucher.",
-        confirmLabel: "Switch and clear",
-      }))
-    )
-      return;
-    setLines([]);
-    setVoucher(null);
-    setManualDiscount(null);
-    setPay(null);
-    setTendered(0);
+  function changeSide(next: Side) {
     setSide(next);
   }
 
-  const fulfilChoice: FulfilChoice = side === "judge" ? "judges_room" : type;
+  const fulfilChoice: FulfilChoice = type;
   const fulfilLabel =
     FULFIL_CHOICES.find((item) => item.id === fulfilChoice)?.label ?? String(type);
 
-  async function selectFulfilment(next: FulfilChoice) {
-    if (next === "judges_room") {
-      await changeSide("judge");
-      setType("dine_in");
-      return;
-    }
-    if (side === "judge") await changeSide("public");
+  function selectFulfilment(next: FulfilChoice) {
     setType(next);
   }
 
@@ -1162,19 +1158,25 @@ function Till() {
             {sites.site?.name ?? "Assigned branch"}
           </span>
         )}
-        <div
-          className={`col-span-3 row-start-2 grid w-full gap-1 rounded-xl border border-slate-200 bg-white/95 p-1 shadow-inner shadow-slate-300/60 min-[960px]:col-span-1 min-[960px]:row-auto min-[960px]:flex min-[960px]:w-auto min-[960px]:shrink-0 ${futuresHouse ? "grid-cols-1" : "grid-cols-2"}`}
-        >
-          {(futuresHouse ? (["public"] as const) : (["jury", "public"] as const)).map((s) => (
-            <button
-              key={s}
-              onClick={() => changeSide(s)}
-              className={`h-9 w-full rounded-lg px-2 text-center text-[11px] font-black uppercase tracking-wide transition active:scale-95 min-[960px]:h-8 min-[960px]:w-auto min-[960px]:px-3 ${side === s ? `${SIDE_TONE[s]} shadow-md` : "text-slate-500 hover:bg-slate-100 hover:text-slate-950"}`}
-            >
-              {SIDE_LABEL[s]}
-            </button>
-          ))}
-        </div>
+        {crownCourt && (
+          <div
+            aria-label="Food hand-off location"
+            className="col-span-3 row-start-2 grid w-full grid-cols-3 gap-1 rounded-xl border border-slate-200 bg-white/95 p-1 shadow-inner shadow-slate-300/60 min-[960px]:col-span-1 min-[960px]:row-auto min-[960px]:flex min-[960px]:w-auto min-[960px]:shrink-0"
+          >
+            <span className="col-span-3 px-1 pt-0.5 text-[9px] font-black uppercase tracking-widest text-slate-400 min-[960px]:self-center min-[960px]:px-2 min-[960px]:pt-0">
+              Hand-off
+            </span>
+            {(["jury", "judge", "public"] as const).map((destination) => (
+              <button
+                key={destination}
+                onClick={() => changeSide(destination)}
+                className={`h-9 w-full rounded-lg px-2 text-center text-[11px] font-black uppercase tracking-wide transition active:scale-95 min-[960px]:h-8 min-[960px]:w-auto min-[960px]:px-3 ${side === destination ? `${SIDE_TONE[destination]} shadow-md` : "text-slate-500 hover:bg-slate-100 hover:text-slate-950"}`}
+              >
+                {SIDE_LABEL[destination]}
+              </button>
+            ))}
+          </div>
+        )}
         <button
           onClick={() => setShiftPanel(shift ? "close" : "open")}
           className={`mx-auto min-w-0 max-w-full truncate rounded-full px-2.5 py-1.5 text-[10px] font-bold uppercase tracking-wide transition hover:brightness-125 min-[380px]:px-3 min-[380px]:text-[11px] min-[960px]:mx-0 min-[960px]:shrink-0 ${shift ? "bg-emerald-100 text-emerald-800" : "bg-amber-100 text-amber-800"}`}
@@ -1358,7 +1360,7 @@ function Till() {
             className="shrink-0 border-b border-slate-200 bg-white/95 px-2 py-1.5 min-[960px]:hidden"
           >
             <div
-              className={`grid gap-1.5 rounded-xl border border-slate-200 bg-white/95 p-1 ${futuresHouse ? "grid-cols-2" : "grid-cols-3"}`}
+              className="grid grid-cols-2 gap-1.5 rounded-xl border border-slate-200 bg-white/95 p-1"
             >
               {availableFulfilChoices.map(({ id, label, Icon }) => (
                 <button
@@ -1522,7 +1524,7 @@ function Till() {
           <div className="relative z-10 shrink-0 space-y-1.5 border-b border-slate-200 bg-white p-2.5 shadow-md shadow-black/10 md:p-2.5">
             <div
               data-pos-region="order-fulfilment"
-              className={`grid gap-1.5 rounded-2xl border border-slate-200 bg-slate-100 p-1.5 md:gap-1 md:p-1 ${futuresHouse ? "grid-cols-2" : "grid-cols-3"}`}
+              className="grid grid-cols-2 gap-1.5 rounded-2xl border border-slate-200 bg-slate-100 p-1.5 md:gap-1 md:p-1"
             >
               {availableFulfilChoices.map(({ id, label, Icon }) => (
                 <button
@@ -1855,47 +1857,10 @@ function Till() {
             </div>
           )}
 
-          {(voucher || lines.length > 0) && (
+          {lines.length > 0 && (
             <div
               className={`shrink-0 space-y-1.5 border-t border-slate-200 px-3 pt-2 text-sm ${pay === "cash" ? "hidden min-[960px]:block" : ""}`}
             >
-              {voucher ? (
-                <>
-                  <div className="flex items-center justify-between text-slate-600">
-                    <span className="inline-flex items-center gap-1.5 font-semibold text-indigo-300">
-                      <Ticket className="h-3.5 w-3.5" /> Juror {voucher.code}
-                    </span>
-                    <button
-                      onClick={() => setVoucher(null)}
-                      className="text-xs font-semibold text-slate-500 underline"
-                    >
-                      Remove
-                    </button>
-                  </div>
-                  <div className="flex justify-between text-slate-700">
-                    <span>Subtotal</span>
-                    <span className="tabular-nums">{money(total)}</span>
-                  </div>
-                  <div className="flex justify-between text-indigo-300">
-                    <span>Voucher allowance</span>
-                    <span className="tabular-nums">−{money(voucherApplied)}</span>
-                  </div>
-                  {jurorDiscount > 0 && (
-                    <div className="flex justify-between text-indigo-300">
-                      <span>Juror {JUROR_FOOD_DISCOUNT_PERCENT}% off food</span>
-                      <span className="tabular-nums">−{money(jurorDiscount)}</span>
-                    </div>
-                  )}
-                </>
-              ) : (
-                <button
-                  onClick={() => setVoucherOpen(true)}
-                  className="inline-flex h-10 w-full items-center justify-center gap-2 rounded-xl border border-indigo-500/40 text-xs font-bold uppercase tracking-wide text-indigo-300 hover:border-indigo-400 md:h-9"
-                >
-                  <Ticket className="h-4 w-4" /> Juror voucher
-                </button>
-              )}
-
               {manualDiscount ? (
                 <div className="flex items-center justify-between text-amber-300">
                   <span className="truncate">
@@ -2101,28 +2066,16 @@ function Till() {
                   void startSplitPayment();
                 }}
               />
-              {!futuresHouse && (
-                <>
-                  {!voucher && (
-                    <PayChoice
-                      icon={Ticket}
-                      label="Apply juror voucher"
-                      onClick={() => {
-                        setPayOpen(false);
-                        setVoucherOpen(true);
-                      }}
-                    />
-                  )}
-                  <PayChoice
-                    icon={ReceiptText}
-                    label="House tab"
-                    hint="Choose an account · bill now, settle later"
-                    onClick={() => {
-                      setPayOpen(false);
-                      setTabOpen(true);
-                    }}
-                  />
-                </>
+              {crownCourt && (
+                <PayChoice
+                  icon={ReceiptText}
+                  label="House tab"
+                  hint="Choose an account · bill now, settle later"
+                  onClick={() => {
+                    setPayOpen(false);
+                    setTabOpen(true);
+                  }}
+                />
               )}
             </div>
             <button
@@ -2161,15 +2114,6 @@ function Till() {
           onConfirm={(account: { id: string; name: string }) => void chargeAccountTab(account)}
         />
       )}
-      {voucherOpen && (
-        <VoucherModal
-          onClose={() => setVoucherOpen(false)}
-          onApply={(v) => {
-            setVoucher(v);
-            setVoucherOpen(false);
-          }}
-        />
-      )}
       {customize && (
         <ItemCustomizeModal
           item={customize}
@@ -2201,7 +2145,11 @@ function Till() {
           onClose={() => setShiftPanel(null)}
           onOpen={async (openingFloat) => {
             await openShift({
-              data: { terminal, site_id: sites.siteId, opening_float_cents: openingFloat },
+              data: {
+                terminal: shiftTerminal,
+                site_id: sites.siteId,
+                opening_float_cents: openingFloat,
+              },
             });
             setShiftPanel(null);
             await loadShift();
@@ -2243,12 +2191,6 @@ function Till() {
 /* ------------------------------------------------- QR cast to 2nd screen */
 
 const QR_PRESETS: { id: string; label: string; path: string; subtitle: string }[] = [
-  {
-    id: "juror",
-    label: "Juror voucher scheme",
-    path: "/juror?src=till",
-    subtitle: "Scan to check your allowance and opt in",
-  },
   {
     id: "judges",
     label: "Judges menu",
@@ -2499,7 +2441,7 @@ function RecentTillOrdersModal({ siteId, onClose }: { siteId: string; onClose: (
   );
 }
 
-/** Account picker and ledger preview for both public and judge-side tills. */
+/** Crown Court account picker and ledger preview. */
 /**
  * Ad-hoc discount at the till. A reason is required so every discount is
  * auditable, and the server re-prices it — this dialog is display only.
@@ -4005,139 +3947,5 @@ function LockScreen({ onUnlock }: { onUnlock: () => void }) {
         </button>
       </form>
     </div>
-  );
-}
-
-/* ------------------------------------------------------- juror voucher */
-
-function VoucherModal({
-  onClose,
-  onApply,
-}: {
-  onClose: () => void;
-  onApply: (v: AppliedVoucher) => void;
-}) {
-  const lookup = useServerFn(lookupVoucher);
-  const [code, setCode] = useState("");
-  const [pin, setPin] = useState("");
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const url = typeof window === "undefined" ? "" : `${window.location.origin}/juror?src=till`;
-
-  useEffect(() => {
-    if (url) postToDisplay({ type: "juror", url });
-  }, [url]);
-
-  /* The juror can key their own code + PIN on the customer screen — staff never see it. */
-  useEffect(() => {
-    return subscribeToDisplay(
-      (msg: DisplayMessage) => {
-        if (msg.type !== "juror_applied") return;
-        onApply({
-          code: msg.code,
-          pin: msg.pin,
-          remaining_cents: msg.remaining_cents,
-          allocated_cents: msg.allocated_cents,
-          opted_in: msg.opted_in,
-        });
-        toast.success(`${money(msg.remaining_cents)} allowance left today`);
-      },
-      { replay: false },
-    );
-  }, [onApply]);
-
-  async function apply() {
-    const c = code.trim().toUpperCase();
-    if (!c || !/^\d{6}$/.test(pin)) return;
-    setBusy(true);
-    setError(null);
-    try {
-      const res = await lookup({ data: { code: c, pin } });
-      if (!res.found) {
-        setError(("message" in res && res.message) || "That voucher code isn't recognised.");
-      } else if (!res.usable) {
-        setError(res.message ?? "That code can't be used today.");
-      } else if (res.remaining_cents <= 0) {
-        setError("Today's allowance has already been used on this code.");
-      } else {
-        onApply({
-          code: res.code,
-          pin,
-          remaining_cents: res.remaining_cents,
-          allocated_cents: res.allocated_cents,
-          opted_in: res.opted_in,
-        });
-        toast.success(`${money(res.remaining_cents)} allowance left today`);
-      }
-    } catch {
-      setError("Could not check that code. Try again.");
-    } finally {
-      setBusy(false);
-    }
-  }
-
-  return (
-    <Modal title="Juror voucher" onClose={onClose}>
-      <div className="grid gap-5 sm:grid-cols-[auto_1fr] sm:items-start">
-        <div className="mx-auto w-fit rounded-2xl bg-white p-3">
-          {url && <QrCode value={url} size={150} alt="Scan to open the juror voucher page" />}
-        </div>
-        <div className="text-sm text-slate-600">
-          <p className="font-semibold text-slate-950">Ask the customer to scan</p>
-          <p className="mt-1">
-            The same QR is on the customer screen. Scanning opts them into the scheme and shows
-            their remaining allowance after they enter their Juror ID and separate PIN —{" "}
-            {money(JUROR_DAILY_ALLOWANCE_CENTS)} each sitting day, plus{" "}
-            {JUROR_FOOD_DISCOUNT_PERCENT}% off food above it.
-          </p>
-          <p className="mt-2 inline-flex items-center gap-1.5 text-xs text-slate-500">
-            <ShieldCheck className="h-3.5 w-3.5" /> Pseudonymous — Café 1 records no juror name.
-          </p>
-        </div>
-      </div>
-
-      <label className="mt-6 block text-xs font-bold uppercase tracking-widest text-slate-500">
-        Or key in the HMCTS Juror ID / voucher code and separate PIN
-      </label>
-      <div className="mt-2 grid gap-2 sm:grid-cols-[1fr_120px_auto]">
-        <input
-          value={code}
-          onChange={(e) => {
-            setCode(e.target.value.toUpperCase());
-            setError(null);
-          }}
-          onKeyDown={(e) => {
-            if (e.key === "Enter") void apply();
-          }}
-          placeholder="Enter Juror ID"
-          className="h-12 flex-1 rounded-xl border border-slate-200 bg-slate-100 px-4 font-mono text-base uppercase outline-none focus:border-primary"
-        />
-        <input
-          aria-label="Six-digit voucher PIN"
-          value={pin}
-          onChange={(e) => {
-            setPin(e.target.value.replace(/\D/g, "").slice(0, 6));
-            setError(null);
-          }}
-          onKeyDown={(e) => {
-            if (e.key === "Enter") void apply();
-          }}
-          inputMode="numeric"
-          autoComplete="off"
-          maxLength={6}
-          placeholder="PIN"
-          className="h-12 rounded-xl border border-slate-200 bg-slate-100 px-4 text-center font-mono text-base tracking-widest outline-none focus:border-primary"
-        />
-        <button
-          onClick={() => void apply()}
-          disabled={busy || !code.trim() || pin.length !== 6}
-          className="inline-flex h-12 items-center gap-2 rounded-xl bg-primary px-5 font-bold text-primary-foreground disabled:opacity-50"
-        >
-          {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Ticket className="h-4 w-4" />}{" "}
-          Apply
-        </button>
-      </div>
-      {error && <p className="mt-2 text-sm text-red-400">{error}</p>}
-    </Modal>
   );
 }
