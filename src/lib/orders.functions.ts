@@ -6,6 +6,7 @@ import { createClient } from "@supabase/supabase-js";
 import type { Database } from "@/integrations/supabase/types";
 import { validateModifierSelection, type ModifierRule } from "./modifier-rules";
 import { orderingHoursForLocation } from "./nap";
+import { PUBLIC_SETTINGS_COLUMNS } from "./business";
 
 function createServerSupabase(bearer?: string) {
   const url = process.env.SUPABASE_URL!;

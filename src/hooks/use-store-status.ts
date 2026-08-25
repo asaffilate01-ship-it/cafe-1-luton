@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { computeStoreStatus, type BankHoliday, type BusinessSettings, type HourRow } from "@/lib/business";
+import { computeStoreStatus, PUBLIC_SETTINGS_COLUMNS, type BankHoliday, type BusinessSettings, type HourRow } from "@/lib/business";
 
 export function useStoreStatus() {
   const { data } = useQuery({
