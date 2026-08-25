@@ -280,9 +280,16 @@ export const createOrder = createServerFn({ method: "POST" })
         .maybeSingle();
       if (staffRow) {
         staff_member_id = staffRow.id;
-        staff_discount_percent = Number(
-          staffRow.discount_percent ?? settings?.court_staff_discount_percent ?? 10,
-        );
+        let defaultPercent: number | null = null;
+        if (staffRow.discount_percent == null) {
+          const { data: discountRow } = await supabaseAdmin
+            .from("business_settings")
+            .select("court_staff_discount_percent")
+            .limit(1)
+            .maybeSingle();
+          defaultPercent = discountRow?.court_staff_discount_percent ?? null;
+        }
+        staff_discount_percent = Number(staffRow.discount_percent ?? defaultPercent ?? 10);
       }
     }
     const courtStaffDelivery = !!staff_member_id && !!data.court_location;
