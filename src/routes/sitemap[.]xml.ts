@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import type {} from "@tanstack/react-start";
+import { STATIC_BLOG_POSTS } from "@/lib/static-blog-posts";
 
 const BASE_URL = "https://cafe1luton.co.uk";
 const STATIC_LAST_MODIFIED = "2026-08-09";
@@ -53,7 +54,17 @@ export const Route = createFileRoute("/sitemap.xml")({
           .eq("published", true);
 
         const urls = PUBLIC_ROUTES.map((path) => urlEntry(path, STATIC_LAST_MODIFIED));
+        const publishedPosts = new Map(
+          STATIC_BLOG_POSTS.map((post) => [
+            post.slug,
+            { slug: post.slug, updated_at: post.updated_at, published_at: post.published_at },
+          ]),
+        );
         for (const post of posts ?? []) {
+          if (post.slug.toLowerCase().includes("st-albans")) continue;
+          if (!publishedPosts.has(post.slug)) publishedPosts.set(post.slug, post);
+        }
+        for (const post of publishedPosts.values()) {
           if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(post.slug)) continue;
           urls.push(
             urlEntry(

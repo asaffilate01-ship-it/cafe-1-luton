@@ -201,7 +201,6 @@ function Home() {
               "No third-party service fees",
               "Loyalty points on eligible website orders",
               "Choose your Luton branch first",
-              "Tabs and weekly statements for offices",
             ].map((point) => (
               <li key={point} className="flex items-center gap-3 rounded-2xl bg-soft px-4 py-3">
                 <BadgeCheck className="h-4 w-4 shrink-0 text-primary" />

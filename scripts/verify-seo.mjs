@@ -12,12 +12,15 @@ const LOCAL_ROUTES = [
 ];
 
 const BLOG_SLUGS = [
-  "italian-coffee-in-luton",
+  "cafe-1-luton-two-locations",
+  "cafe-1-futures-house-marsh-farm",
+  "cafe-1-luton-crown-court",
+  "breakfast-in-luton-cafe-1",
   "halal-breakfast-luton",
-  "office-delivery-crown-court",
-  "food-near-luton-crown-court",
-  "desi-breakfast-guide-luton",
-  "quick-weekday-lunch-luton",
+  "cafe-1-famous-cheese-flan-luton",
+  "friday-roast-special-luton",
+  "chicken-pie-lunch-luton",
+  "lunch-in-luton-cafe-1-guide",
 ];
 
 export function verifySeoRepository(root = defaultRoot) {
@@ -79,24 +82,24 @@ export function verifySeoRepository(root = defaultRoot) {
     failures.push("robots.txt: canonical sitemap is missing");
   }
 
-  const migrationPath = "supabase/migrations/20260809234000_local_search_content_phase24.sql";
-  const migration = read(migrationPath);
+  const articlePath = "src/lib/static-blog-posts.ts";
+  const articles = read(articlePath);
   for (const slug of BLOG_SLUGS) {
-    if (!migration.includes(`'${slug}'`)) failures.push(`${migrationPath}: missing ${slug}`);
+    if (!articles.includes(`slug: "${slug}"`)) failures.push(`${articlePath}: missing ${slug}`);
   }
-  const articleBodies = [...migration.matchAll(/\$seo\$\s*([\s\S]*?)\s*\$seo\$/g)].map(
+  const articleBodies = [...articles.matchAll(/body_md:\s*`([\s\S]*?)`,\n\s*},/g)].map(
     (match) => match[1],
   );
   if (articleBodies.length !== BLOG_SLUGS.length) {
-    failures.push(`${migrationPath}: expected ${BLOG_SLUGS.length} article bodies`);
+    failures.push(`${articlePath}: expected ${BLOG_SLUGS.length} article bodies`);
   }
   for (const [index, body] of articleBodies.entries()) {
     const wordCount = body.split(/\s+/).filter(Boolean).length;
     if (wordCount < 300)
-      failures.push(`${migrationPath}: article ${index + 1} has only ${wordCount} words`);
+      failures.push(`${articlePath}: article ${index + 1} has only ${wordCount} words`);
   }
 
-  for (const image of new Set(migration.match(/\/blog\/[a-z0-9-]+\.jpg/g) ?? [])) {
+  for (const image of new Set(articles.match(/\/blog\/[a-z0-9-]+\.jpg/g) ?? [])) {
     if (!existsSync(resolve(root, `public${image}`)))
       failures.push(`blog image is missing: public${image}`);
   }

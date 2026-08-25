@@ -23,9 +23,13 @@ import {
   jsonLdScript,
   seoMeta,
 } from "@/lib/seo";
+import { getStaticBlogPost, mergeBlogPostSummaries } from "@/lib/static-blog-posts";
 
 export const Route = createFileRoute("/blog/$slug")({
   loader: async ({ params }) => {
+    const builtInPost = getStaticBlogPost(params.slug);
+    if (builtInPost) return { post: builtInPost };
+
     const { data, error } = await supabase
       .from("blog_posts")
       .select(
@@ -64,6 +68,7 @@ export const Route = createFileRoute("/blog/$slug")({
         path: url,
         type: "article",
         image: post.cover_url ?? undefined,
+        imageAlt: post.title,
       }),
       links: [canonicalLink(url)],
       scripts: [
@@ -130,18 +135,23 @@ function BlogPost() {
     queryFn: async () => {
       const { data } = await supabase
         .from("blog_posts")
-        .select("id,slug,title,cover_url")
+        .select("id,slug,title,excerpt,cover_url,author,tags,published_at,created_at,updated_at")
         .eq("published", true)
         .neq("id", post.id)
         .order("published_at", { ascending: false, nullsFirst: false })
-        .limit(3);
+        .limit(12);
       const oldPlace = ["st", "albans"].join(" ");
       const oldSlug = ["st", "albans"].join("-");
-      return (data ?? []).filter(
-        (item) =>
-          !item.title.toLowerCase().includes(oldPlace) &&
-          !item.slug.toLowerCase().includes(oldSlug),
-      );
+      const remote = (data ?? []).filter((item) => {
+        const searchable = [item.title, item.excerpt, ...(item.tags ?? [])]
+          .filter(Boolean)
+          .join(" ")
+          .toLowerCase();
+        return !searchable.includes(oldPlace) && !item.slug.toLowerCase().includes(oldSlug);
+      });
+      return mergeBlogPostSummaries(remote)
+        .filter((item) => item.slug !== post.slug)
+        .slice(0, 3);
     },
   });
 

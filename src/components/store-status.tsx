@@ -9,7 +9,7 @@ export function StoreStatus({ className = "" }: { className?: string }) {
     return (
       <div className={`flex flex-wrap items-center gap-3 text-sm ${className}`}>
         <span className="inline-flex items-center gap-1.5 rounded-full bg-green-50 px-3 py-1 font-semibold text-green-700">
-          <CheckCircle2 className="h-4 w-4" /> Open now
+          <CheckCircle2 className="h-4 w-4" /> Open
         </span>
         <span className="inline-flex items-center gap-1.5 text-muted-foreground">
           <Clock className="h-4 w-4" /> Ready in {prep}–{prep + del} min
@@ -23,7 +23,7 @@ export function StoreStatus({ className = "" }: { className?: string }) {
   return (
     <div className={`flex flex-wrap items-center gap-3 text-sm ${className}`}>
       <span className="inline-flex items-center gap-1.5 rounded-full bg-muted px-3 py-1 font-semibold text-muted-foreground">
-        <XCircle className="h-4 w-4" /> {status.reason === "bank_holiday" ? `Closed — ${status.holidayName ?? "bank holiday"}` : status.reason === "closed_day" ? "Closed today" : "Closed"}
+        <XCircle className="h-4 w-4" /> {status.reason === "bank_holiday" ? `Closed — ${status.holidayName ?? "bank holiday"}` : "Closed now"}
       </span>
       {status.nextOpenLabel && (
         <span className="text-muted-foreground">Opens {status.nextOpenLabel}</span>

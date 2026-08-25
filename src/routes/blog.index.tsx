@@ -5,6 +5,7 @@ import { SiteHeader, SiteFooter } from "@/components/site-header";
 import { Calendar, ArrowRight } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { breadcrumbJsonLd, canonicalLink, jsonLdScript, seoMeta, webPageJsonLd } from "@/lib/seo";
+import { mergeBlogPostSummaries } from "@/lib/static-blog-posts";
 
 const title = "Luton Food Guide | Breakfast, Lunch & Café News";
 const description =
@@ -16,16 +17,19 @@ async function loadPublishedPosts() {
     .select("id,slug,title,excerpt,cover_url,author,tags,published_at,created_at,updated_at")
     .eq("published", true)
     .order("published_at", { ascending: false, nullsFirst: false });
-  if (error) throw error;
+  if (error) {
+    console.warn("[blog] Published posts could not be loaded; using built-in Luton articles", error);
+  }
   const oldPlace = ["st", "albans"].join(" ");
   const oldSlug = ["st", "albans"].join("-");
-  return ((data ?? []) as Post[]).filter((post) => {
+  const remotePosts = ((data ?? []) as Post[]).filter((post) => {
     const searchable = [post.title, post.excerpt, ...(post.tags ?? [])]
       .filter(Boolean)
       .join(" ")
       .toLowerCase();
     return !searchable.includes(oldPlace) && !post.slug.toLowerCase().includes(oldSlug);
   });
+  return mergeBlogPostSummaries(remotePosts);
 }
 
 export const Route = createFileRoute("/blog/")({
