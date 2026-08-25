@@ -1,0 +1,2 @@
+REVOKE ALL ON FUNCTION public.prepare_counter_order(uuid,uuid,text,text,text,text,text,text,text,jsonb,text,integer,text) FROM PUBLIC, anon, authenticated;
+GRANT EXECUTE ON FUNCTION public.prepare_counter_order(uuid,uuid,text,text,text,text,text,text,text,jsonb,text,integer,text) TO service_role;
