@@ -688,32 +688,78 @@ export const syncSumupPos = createServerFn({ method: "POST" })
               .update({ delivery_notes: backfill })
               .eq("id", existing.id);
           }
-          const lineNotes = (sale.products ?? [])
-            .map((product) => ({
-              name: (product.name ?? "").trim().toLowerCase(),
-              note: sumupLineNote(product),
-              category: sumupCategory(product) ?? guessCategory(product.name ?? "") ?? null,
-            }))
-            .filter((line) => line.name && (line.note || line.category));
-          if (lineNotes.length) {
-            const { data: existingLines } = await supabaseAdmin
-              .from("order_items")
-              .select("id, name, notes, category_label")
-              .eq("order_id", existing.id);
+          const { data: existingLines } = await supabaseAdmin
+            .from("order_items")
+            .select("id, name, notes, category_label, menu_item_id")
+            .eq("order_id", existing.id);
+
+          const menuByName = await menuByNameIndex();
+          const basket = sale.products ?? [];
+          const placeholderOnly =
+            (existingLines ?? []).length > 0 &&
+            (existingLines ?? []).every((line) => isPlaceholderLine(line));
+
+          // The first sweep can land before SumUp exposes the basket, leaving a
+          // single summary line. Once the real basket appears, rebuild the
+          // ticket so the kitchen sees the proper items and categories.
+          if (placeholderOnly && basket.length) {
+            const rebuilt = basket.map((product) => {
+              const matches = menuByName.get((product.name ?? "").trim().toLowerCase()) ?? [];
+              const matched = matches.length === 1 ? matches[0] : undefined;
+              return {
+                order_id: existing.id,
+                menu_item_id: matched?.id ?? null,
+                category_label:
+                  matched?.category ??
+                  sumupCategory(product) ??
+                  guessCategory(product.name ?? "") ??
+                  null,
+                name: product.name || "Item",
+                qty: Math.max(1, Number(product.quantity ?? 1)),
+                unit_price_cents: Math.round(Number(product.price ?? 0) * 100),
+                notes: sumupLineNote(product),
+              };
+            });
+            await supabaseAdmin.from("order_items").delete().eq("order_id", existing.id);
+            await supabaseAdmin.from("order_items").insert(rebuilt);
+          } else {
+            const lineNotes = basket
+              .map((product) => {
+                const matches = menuByName.get((product.name ?? "").trim().toLowerCase()) ?? [];
+                const matched = matches.length === 1 ? matches[0] : undefined;
+                return {
+                  name: (product.name ?? "").trim().toLowerCase(),
+                  note: sumupLineNote(product),
+                  menuItemId: matched?.id ?? null,
+                  category:
+                    matched?.category ??
+                    sumupCategory(product) ??
+                    guessCategory(product.name ?? "") ??
+                    null,
+                };
+              })
+              .filter((line) => line.name && (line.note || line.category || line.menuItemId));
             for (const line of existingLines ?? []) {
               const match = lineNotes.find(
                 (candidate) => candidate.name === (line.name ?? "").trim().toLowerCase(),
               );
               if (!match) continue;
-              const patch: { notes?: string; category_label?: string } = {};
+              const patch: {
+                notes?: string;
+                category_label?: string;
+                menu_item_id?: string;
+              } = {};
               if (match.note && match.note !== line.notes) patch.notes = match.note;
-              if (match.category && !line.category_label) patch.category_label = match.category;
+              if (match.category && !usefulLabel(line.category_label))
+                patch.category_label = match.category;
+              if (match.menuItemId && !line.menu_item_id) patch.menu_item_id = match.menuItemId;
               if (Object.keys(patch).length) {
                 await supabaseAdmin.from("order_items").update(patch).eq("id", line.id);
               }
             }
           }
         }
+
         skipped += paymentParts.length;
         continue;
       }
