@@ -72,38 +72,20 @@ export function LiveMap({
 
   useEffect(() => {
     let cancelled = false;
-    let timer: ReturnType<typeof setTimeout> | undefined;
     loadMaps()
       .then(() => {
         if (cancelled || !el.current) return;
-        const instance = new window.google.maps.Map(el.current, {
+        map.current = new window.google.maps.Map(el.current, {
           center: points[0] ?? { lat: 51.7486, lng: -0.3345 },
           zoom: 15,
           disableDefaultUI: true,
           zoomControl: true,
         });
-        map.current = instance;
-        // If the key is not authorised for this domain Google paints its own
-        // error panel and never renders tiles, so treat "no tiles" as a failure
-        // and switch to the keyless fallback map.
-        let painted = false;
-        window.google.maps.event.addListenerOnce(instance, "tilesloaded", () => {
-          painted = true;
-          if (!cancelled) setReady(true);
-        });
-        timer = setTimeout(() => {
-          if (cancelled || painted) return;
-          // Google paints its own failure panel inside the container, so wipe it
-          // before React swaps in the fallback map.
-          if (el.current) el.current.innerHTML = "";
-          map.current = null;
-          setError("Map unavailable");
-        }, 3500);
+        setReady(true);
       })
       .catch((e) => !cancelled && setError(e instanceof Error ? e.message : "Map unavailable"));
     return () => {
       cancelled = true;
-      if (timer) clearTimeout(timer);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);

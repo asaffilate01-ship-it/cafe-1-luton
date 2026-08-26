@@ -17,7 +17,6 @@ import {
   listRecentTillOrders,
   openTillShift,
   recordTillCashEvent,
-  settleOnlineOrderAtTill,
 } from "@/lib/till.functions";
 import { refundOrder } from "@/lib/payments.functions";
 import { openCashDrawer } from "@/lib/drawer";
@@ -2097,7 +2096,6 @@ function Till() {
           {recentOrdersOpen && (
             <RecentTillOrdersModal
               siteId={sites.siteId}
-              shiftId={shift?.id ?? null}
               onClose={() => setRecentOrdersOpen(false)}
             />
           )}
@@ -2533,17 +2531,14 @@ type RecentTillOrder = Awaited<ReturnType<typeof listRecentTillOrders>>[number];
 /** Staff-facing history for correcting unpaid sales and refunding settled ones. */
 function RecentTillOrdersModal({
   siteId,
-  shiftId,
   onClose,
 }: {
   siteId: string;
-  shiftId: string | null;
   onClose: () => void;
 }) {
   const listOrders = useServerFn(listRecentTillOrders);
   const refund = useServerFn(refundOrder);
   const cancel = useServerFn(cancelCounterOrder);
-  const settleOnline = useServerFn(settleOnlineOrderAtTill);
   const [orders, setOrders] = useState<RecentTillOrder[]>([]);
   const [loading, setLoading] = useState(true);
   const [workingId, setWorkingId] = useState<string | null>(null);
@@ -2626,59 +2621,6 @@ function RecentTillOrdersModal({
     }
   }
 
-  async function takeOnlinePayment(order: RecentTillOrder, method: "cash" | "card" | "split") {
-    if (!shiftId) return toast.error("Open the till shift before taking payment");
-    let cashComponentCents = 0;
-    let cardReference: string | undefined;
-    if (method === "cash") {
-      if (
-        !(await askConfirm(
-          `Take ${money(order.total_cents)} cash for order #${order.order_number}?`,
-        ))
-      )
-        return;
-    } else {
-      if (method === "split") {
-        const cash = await askPrompt({
-          title: `Split payment for #${order.order_number}`,
-          description: `Order total ${money(order.total_cents)}. Enter the cash part; the rest is paid by EVO card.`,
-          label: "Cash amount (£)",
-          inputMode: "decimal",
-          confirmLabel: "Continue",
-        });
-        if (cash === null) return;
-        cashComponentCents = Math.round(Number(cash) * 100);
-      }
-      const reference = await askPrompt({
-        title: `EVO payment for #${order.order_number}`,
-        description:
-          "Take the card payment on the Mobile/3500, then enter its approved receipt reference.",
-        label: "EVO receipt reference",
-        confirmLabel: "Mark paid",
-      });
-      if (!reference?.trim()) return;
-      cardReference = reference.trim();
-    }
-    setWorkingId(order.id);
-    try {
-      await settleOnline({
-        data: {
-          order_id: order.id,
-          shift_id: shiftId,
-          payment_method: method,
-          cash_component_cents: cashComponentCents,
-          card_reference: cardReference,
-        },
-      });
-      toast.success(`Order #${order.order_number} paid`);
-      await load();
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Could not record payment");
-    } finally {
-      setWorkingId(null);
-    }
-  }
-
   return (
     <div
       className="fixed inset-0 z-[120] grid place-items-center bg-black/75 p-3"
@@ -2750,19 +2692,6 @@ function RecentTillOrdersModal({
                     </div>
                     <div className="flex gap-2 sm:justify-end">
                       {!settled && order.status !== "cancelled" && (
-                        <>
-                          {["cash", "card", "split"].map((method) => (
-                            <button
-                              key={method}
-                              disabled={busy || !shiftId}
-                              onClick={() =>
-                                void takeOnlinePayment(order, method as "cash" | "card" | "split")
-                              }
-                              className="inline-flex h-10 items-center rounded-xl bg-primary px-2.5 text-xs font-bold text-primary-foreground disabled:opacity-40"
-                            >
-                              {method[0].toUpperCase() + method.slice(1)}
-                            </button>
-                          ))}
                           <button
                             disabled={busy}
                             onClick={() => void cancelSale(order)}
@@ -2775,7 +2704,6 @@ function RecentTillOrdersModal({
                             )}{" "}
                             Cancel
                           </button>
-                        </>
                       )}
                       {settled && remaining > 0 && (
                         <button

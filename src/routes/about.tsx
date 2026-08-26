@@ -13,7 +13,6 @@ import {
 
 import { SiteFooter, SiteHeader } from "@/components/site-header";
 import hero from "@/assets/cafe1-hero.webp";
-import aboutInterior from "@/assets/about-interior.webp.asset.json";
 import { localBusinessJsonLd } from "@/lib/nap";
 import {
   absoluteUrl,
@@ -30,16 +29,12 @@ const description =
 
 export const Route = createFileRoute("/about")({
   head: () => ({
-    meta: [
-      ...seoMeta({
-        title,
-        description,
-        path: "/about",
-        keywords: ["independent cafe Luton", "Cafe 1 Crown Court", "Cafe 1 Futures House"],
-      }),
-      { property: "og:image", content: aboutInterior.url },
-      { name: "twitter:image", content: aboutInterior.url },
-    ],
+    meta: seoMeta({
+      title,
+      description,
+      path: "/about",
+      keywords: ["independent cafe Luton", "Cafe 1 Crown Court", "Cafe 1 Futures House"],
+    }),
     links: [canonicalLink("/about")],
     scripts: [
       jsonLdScript(localBusinessJsonLd(absoluteUrl(hero))),
@@ -111,8 +106,8 @@ function About() {
             <div className="relative">
               <div className="overflow-hidden rounded-[2rem] border border-white/50 bg-card p-2 shadow-2xl shadow-primary/10">
                 <img
-                  src={aboutInterior.url}
-                  alt="Inside Café 1 at Luton Crown Court — counter, seating and fresh food display"
+                  src={hero}
+                  alt="A selection of Café 1 breakfasts, lunches and hot meals"
                   className="aspect-[4/3] w-full rounded-[1.6rem] object-cover"
                   width={1200}
                   height={960}

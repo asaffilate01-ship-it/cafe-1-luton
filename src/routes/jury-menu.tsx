@@ -113,7 +113,7 @@ function JuryMenuPage() {
         schedule_mode: "asap",
         jury_room: ROOMS[0].label,
       });
-      toast.success("Eating in the Jury Lounge — pay at the counter");
+      toast.success("Eating in the Jury Lounge — pay securely online at checkout");
       return;
     }
     const room = ROOMS.find((r) => r.id === kind)!;
@@ -224,7 +224,7 @@ function JuryMenuPage() {
           <p className="mt-3 text-xs text-primary-foreground/70">
             {session.opted_in
               ? `Daily allowance ${money(JUROR_DAILY_ALLOWANCE_CENTS)} on sitting days. Enter your Juror ID and PIN at checkout to apply it.`
-              : "You're verified as a juror, so this menu is open. You're not on the voucher scheme yet, so there's no allowance or 10% food discount — opt in on the juror page, or simply pay at the counter."}
+              : "You're verified as a juror, so this menu is open. You're not on the voucher scheme yet, so there's no allowance or 10% food discount — opt in on the juror page, or pay securely by card online."}
           </p>
         </div>
       </section>
