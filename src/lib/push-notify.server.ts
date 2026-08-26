@@ -72,7 +72,8 @@ export async function notifyOrderStatus(orderId: string, status: string): Promis
     const { data: subs } = await supabaseAdmin
       .from("push_subscriptions")
       .select("id, endpoint, p256dh, auth")
-      .eq("user_id", order.customer_id);
+      .eq("user_id", order.customer_id)
+      .contains("topics", ["orders"]);
     for (const sub of subs ?? []) {
       const res = await sendWebPush(sub, { title, body, url: link, tag: `order-${order.id}` });
       if (res.ok) delivered = true;
