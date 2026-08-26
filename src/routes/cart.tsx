@@ -113,28 +113,28 @@ function CartPage() {
               <span className="text-muted-foreground">Subtotal</span>
               <span className="font-display text-2xl font-bold">{money(subtotal)}</span>
             </div>
-            {user || loading ? (
-              <Link
-                to="/checkout"
-                className="mt-4 flex h-12 w-full items-center justify-center rounded-full bg-primary font-semibold text-primary-foreground shadow-brand transition hover:bg-primary-hover"
-              >
-                Checkout
-              </Link>
-            ) : (
-              <div className="mt-4 rounded-2xl border border-primary/30 bg-primary/5 p-4 text-center">
+            <Link
+              to="/checkout"
+              className="mt-4 flex h-12 w-full items-center justify-center rounded-full bg-primary font-semibold text-primary-foreground shadow-brand transition hover:bg-primary-hover"
+            >
+              Checkout
+            </Link>
+            {!user && !loading && (
+              <div className="mt-3 rounded-2xl border border-primary/30 bg-primary/5 p-4 text-center">
                 <p className="text-sm text-muted-foreground">
-                  Browsing is open to everyone — to place an order, sign in or register with your
-                  email and a password.
+                  You can order as a guest. Sign in or register first to earn 1 loyalty point per £1
+                  and keep your order history.
                 </p>
                 <Link
                   to="/auth"
                   search={{ next: "/checkout" }}
-                  className="mt-3 flex h-12 w-full items-center justify-center rounded-full bg-primary font-semibold text-primary-foreground shadow-brand transition hover:bg-primary-hover"
+                  className="mt-3 flex h-11 w-full items-center justify-center rounded-full border border-primary/40 font-semibold text-primary transition hover:bg-primary/10"
                 >
-                  Sign in or register to checkout
+                  Sign in or register for points
                 </Link>
               </div>
             )}
+
 
           </>
         )}

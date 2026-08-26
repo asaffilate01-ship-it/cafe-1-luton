@@ -563,39 +563,6 @@ function Checkout() {
       </div>
     );
 
-  if (!loading && !user && !tabSession && !jurySessionActive)
-    return (
-      <div className="min-h-screen bg-background">
-        <SiteHeader />
-        <div className="mx-auto max-w-md px-4 py-20 text-center">
-          <h1 className="font-display text-3xl font-bold">Sign in to place your order</h1>
-          <p className="mt-3 text-sm text-muted-foreground">
-            Browsing the menu is always open. To order, create a free account with your email and
-            password — it keeps your order history and loyalty points in one place.
-          </p>
-          <Link
-            to="/auth"
-            search={{ next: "/checkout" }}
-            className="mt-6 inline-flex h-12 w-full items-center justify-center rounded-full bg-primary font-semibold text-primary-foreground shadow-brand transition hover:bg-primary-hover"
-          >
-            Sign in or register
-          </Link>
-          <Link
-            to="/menu"
-            className="mt-3 inline-flex h-11 w-full items-center justify-center rounded-full border border-border font-semibold hover:border-primary"
-          >
-            Keep browsing the menu
-          </Link>
-          <p className="mt-4 text-xs text-muted-foreground">
-            Got a business tab code?{" "}
-            <Link to="/tab" className="font-semibold text-primary underline">
-              Sign in with your account code
-            </Link>
-            .
-          </p>
-        </div>
-      </div>
-    );
 
 
 
@@ -780,14 +747,19 @@ function Checkout() {
           ) : (
             <div className="rounded-2xl border border-border bg-card p-5">
               <p className="font-semibold">Your details</p>
+              <p className="mt-1 text-sm text-muted-foreground">
+                We call your name and order number when it's ready — please give both at the
+                counter when you collect.
+              </p>
               <div className="mt-3 grid gap-3 sm:grid-cols-2">
                 <input
                   required
-                  placeholder="Contact person's name"
+                  placeholder="Your name (called out at collection)"
                   value={form.customer_name}
                   onChange={(e) => setForm({ ...form, customer_name: e.target.value })}
                   className="h-11 rounded-xl border border-border bg-background px-4"
                 />
+
                 <input
                   required={!voucher}
                   placeholder={voucher ? "Phone (optional)" : "Phone"}

@@ -204,7 +204,8 @@ function OrderView() {
           {orderCode(order)}
         </p>
         <p className="mt-1 text-xs text-muted-foreground">
-          Show this code when you collect, or give it to the driver.
+          At the counter, give your name{order.customer_name ? ` (${order.customer_name})` : ""} and
+          order number #{order.order_number} — or show this code.
         </p>
         <p className="mt-1 text-muted-foreground">
           {order.customer_name} ·{" "}
