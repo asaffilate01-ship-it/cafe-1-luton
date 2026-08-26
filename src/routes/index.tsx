@@ -129,7 +129,7 @@ function Home() {
                   <p className="text-xs uppercase tracking-wider text-muted-foreground">
                     Customer favourite
                   </p>
-                  <p className="font-semibold">Full Desi Breakfast · £9.99</p>
+                  <p className="font-semibold">Full Desi Breakfast · £8.95</p>
                 </div>
               </div>
             </div>
