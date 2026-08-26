@@ -165,6 +165,9 @@ function AdminLogin() {
                 required
                 autoComplete="username"
                 inputMode="email"
+                autoCapitalize="none"
+                autoCorrect="off"
+                spellCheck={false}
                 className="h-11 w-full rounded-xl border border-border bg-background px-4"
               />
             </div>
