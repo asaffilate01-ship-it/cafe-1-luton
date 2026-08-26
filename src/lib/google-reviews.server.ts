@@ -1,3 +1,5 @@
+import { getGoogleMapsApiKey } from "./google-maps-env.server";
+
 export type PublicGoogleReview = {
   author: string;
   authorUrl: string | null;
@@ -84,8 +86,6 @@ export function normalisePlacesResponse(
     reviews,
   };
 }
-
-import { getGoogleMapsApiKey } from "./google-maps-env.server";
 
 export async function loadGoogleReviews(
   fetchImpl: typeof fetch = fetch,
