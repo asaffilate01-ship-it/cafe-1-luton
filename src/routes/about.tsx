@@ -29,7 +29,13 @@ const description =
 
 export const Route = createFileRoute("/about")({
   head: () => ({
-    meta: seoMeta({ title, description, path: "/about", image: hero.url }),
+    meta: seoMeta({
+      title,
+      description,
+      path: "/about",
+      image: hero.url,
+      keywords: ["independent cafe Luton", "Cafe 1 Crown Court", "Cafe 1 Futures House"],
+    }),
     links: [canonicalLink("/about")],
     scripts: [
       jsonLdScript(localBusinessJsonLd(absoluteUrl(hero.url))),
