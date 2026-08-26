@@ -4,7 +4,7 @@
  */
 import { sendWebPush } from "./web-push.server";
 
-const FROM = "CAFE 1 LUTON <no-reply@cafe1luton.co.uk>";
+const FROM = "CAFE 1 LUTON <hello@cafe1luton.co.uk>";
 const RESEND_GATEWAY = "https://connector-gateway.lovable.dev/resend";
 
 async function sendEmailFallback(to: string, subject: string, message: string, link: string) {
