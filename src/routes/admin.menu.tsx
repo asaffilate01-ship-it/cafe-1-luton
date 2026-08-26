@@ -16,10 +16,9 @@ import {
   GripVertical,
   ChevronUp,
   ChevronDown,
-  Download,
+  RefreshCw,
 } from "lucide-react";
-import { getStaffMenuItems } from "@/lib/menu-operations.functions";
-import { buildSumUpNativeItemsCsv } from "@/lib/sumup-export";
+import { getStaffMenuItems, syncFuturesHouseMenu } from "@/lib/menu-operations.functions";
 
 export const Route = createFileRoute("/admin/menu")({
   head: () => ({
@@ -101,28 +100,19 @@ function MenuManager() {
   return <MenuManagerInner />;
 }
 
-function downloadCsv(filename: string, csv: string) {
-  // BOM keeps £ signs and accents intact when the POS importer or Excel reads the file.
-  const url = URL.createObjectURL(new Blob(["\uFEFF", csv], { type: "text/csv;charset=utf-8" }));
-  const link = document.createElement("a");
-  link.href = url;
-  link.download = filename;
-  document.body.appendChild(link);
-  link.click();
-  link.remove();
-  URL.revokeObjectURL(url);
-}
-
 function MenuManagerInner() {
   const { user, loading } = useSession();
   const { roles, loading: rolesLoading } = useRoles(user);
   const canManage = roles.includes("admin");
   const navigate = useNavigate();
   const getMenuItems = useServerFn(getStaffMenuItems);
+  const syncFuturesMenu = useServerFn(syncFuturesHouseMenu);
+  const [syncingFutures, setSyncingFutures] = useState(false);
 
   const [cats, setCats] = useState<Cat[]>([]);
   const [items, setItems] = useState<Item[]>([]);
   const [mods, setMods] = useState<Mod[]>([]);
+  const [masterSiteId, setMasterSiteId] = useState<string | null>(null);
   const [selectedCat, setSelectedCat] = useState<string | null>(null);
   const [dragId, setDragId] = useState<string | null>(null);
   const [dragOverId, setDragOverId] = useState<string | null>(null);
@@ -172,15 +162,40 @@ function MenuManagerInner() {
   }, [loading, user, navigate]);
 
   const refresh = useCallback(async () => {
+    const { data: crownSite, error: siteError } = await supabase
+      .from("sites")
+      .select("id")
+      .eq("postcode", "LU1 2AA")
+      .eq("active", true)
+      .maybeSingle();
+    if (siteError || !crownSite) {
+      toast.error(siteError?.message ?? "Luton Crown Court is not configured");
+      return;
+    }
+    setMasterSiteId(crownSite.id);
     const [c, i, m] = await Promise.all([
-      supabase.from("menu_categories").select("*").order("sort_order"),
-      getMenuItems(),
+      supabase.from("menu_categories").select("*").eq("site_id", crownSite.id).order("sort_order"),
+      getMenuItems({ data: { site_id: crownSite.id } }),
       supabase.from("menu_modifiers").select("*").order("sort_order"),
     ]);
-    setCats((c.data ?? []) as Cat[]);
-    setItems(i as Item[]);
-    setMods((m.data ?? []) as Mod[]);
-    if (c.data?.length) setSelectedCat((current) => current ?? c.data[0].id);
+    const nextCats = (c.data ?? []) as Cat[];
+    const nextItems = i as Item[];
+    const categoryIds = new Set(nextCats.map((category) => category.id));
+    const itemIds = new Set(nextItems.map((item) => item.id));
+    setCats(nextCats);
+    setItems(nextItems);
+    setMods(
+      ((m.data ?? []) as Mod[]).filter(
+        (modifier) =>
+          (modifier.category_id && categoryIds.has(modifier.category_id)) ||
+          (modifier.item_id && itemIds.has(modifier.item_id)),
+      ),
+    );
+    setSelectedCat((current) =>
+      current && nextCats.some((category) => category.id === current)
+        ? current
+        : (nextCats[0]?.id ?? null),
+    );
   }, [getMenuItems]);
 
   useEffect(() => {
@@ -192,9 +207,7 @@ function MenuManagerInner() {
     return (
       <div className="mx-auto max-w-xl px-4 py-16">
         <h1 className="font-display text-3xl font-bold">Access denied</h1>
-        <p className="mt-2 text-muted-foreground">
-          You need an admin role to manage the menu.
-        </p>
+        <p className="mt-2 text-muted-foreground">You need an admin role to manage the menu.</p>
         <Link to="/" className="mt-4 inline-block text-primary">
           ← Home
         </Link>
@@ -219,7 +232,7 @@ function MenuManagerInner() {
               <ChevronLeft className="h-4 w-4" /> Admin
             </Link>
             <h1 className="mt-1 truncate font-display text-2xl font-bold sm:text-3xl">
-              Menu manager
+              Menu manager · Crown Court master
             </h1>
           </div>
           <div className="flex shrink-0 items-center gap-3">
@@ -232,21 +245,27 @@ function MenuManagerInner() {
             </p>
             <button
               type="button"
-              onClick={() => {
-                const stamp = new Date().toISOString().slice(0, 10);
-                // Exactly one file in the connected POS items-import layout.
-                downloadCsv(
-                  `items-export-cafe1-${stamp}.csv`,
-                  buildSumUpNativeItemsCsv(cats, items, mods),
-                );
-                toast.success(
-                  `POS import file ready — ${items.length} items, ${mods.length} modifiers`,
-                );
+              disabled={syncingFutures}
+              onClick={async () => {
+                setSyncingFutures(true);
+                try {
+                  const result = await syncFuturesMenu({ data: {} });
+                  toast.success(
+                    `Futures House updated: ${result.categories} categories, ${result.items} items and ${result.modifiers} modifiers`,
+                  );
+                  await refresh();
+                } catch (error) {
+                  toast.error(error instanceof Error ? error.message : "Could not sync the menu");
+                } finally {
+                  setSyncingFutures(false);
+                }
               }}
-              className="inline-flex h-10 items-center gap-2 rounded-xl border border-border px-3 text-sm font-semibold hover:border-primary"
+              className="inline-flex h-10 items-center gap-2 rounded-xl border border-border px-3 text-sm font-semibold hover:border-primary disabled:opacity-60"
             >
-              <Download className="h-4 w-4" />
-              <span className="hidden sm:inline">Export for POS</span>
+              <RefreshCw className={`h-4 w-4 ${syncingFutures ? "animate-spin" : ""}`} />
+              <span className="hidden sm:inline">
+                {syncingFutures ? "Syncing…" : "Copy menu to Futures House"}
+              </span>
             </button>
           </div>
         </div>
@@ -270,7 +289,12 @@ function MenuManagerInner() {
                 const sort = (cats.at(-1)?.sort_order ?? 0) + 10;
                 const { data, error } = await supabase
                   .from("menu_categories")
-                  .insert({ name: name.trim(), sort_order: sort, active: true })
+                  .insert({
+                    name: name.trim(),
+                    sort_order: sort,
+                    active: true,
+                    ...(masterSiteId ? { site_id: masterSiteId } : {}),
+                  })
                   .select()
                   .single();
                 if (error) return toast.error(error.message);
@@ -367,6 +391,7 @@ function MenuManagerInner() {
                     const sort = (catItems.at(-1)?.sort_order ?? 0) + 10;
                     const { error } = await supabase.from("menu_items").insert({
                       category_id: cat.id,
+                      ...(masterSiteId ? { site_id: masterSiteId } : {}),
                       name: "New item",
                       price_cents: 0,
                       sort_order: sort,
@@ -775,7 +800,8 @@ function ItemRow({ it, onChanged }: { it: Item; onChanged: () => void }) {
                     : "border-border bg-background text-muted-foreground hover:border-emerald-500"
                 }`}
               >
-                {checked ? "✓ " : ""}{tag}
+                {checked ? "✓ " : ""}
+                {tag}
               </button>
             );
           })}
@@ -785,11 +811,13 @@ function ItemRow({ it, onChanged }: { it: Item; onChanged: () => void }) {
             Kitchen preparation
           </legend>
           <div className="grid grid-cols-3 gap-1.5 rounded-xl bg-muted p-1.5">
-            {([
-              ["cook", "Cooked", "bg-rose-600 text-white"],
-              ["prep", "Prep required", "bg-amber-400 text-slate-950"],
-              ["none", "No prep", "bg-emerald-600 text-white"],
-            ] as const).map(([kind, label, activeClass]) => {
+            {(
+              [
+                ["cook", "Cooked", "bg-rose-600 text-white"],
+                ["prep", "Prep required", "bg-amber-400 text-slate-950"],
+                ["none", "No prep", "bg-emerald-600 text-white"],
+              ] as const
+            ).map(([kind, label, activeClass]) => {
               const active = prepKindOf(form) === kind;
               return (
                 <button
@@ -799,14 +827,22 @@ function ItemRow({ it, onChanged }: { it: Item; onChanged: () => void }) {
                   onClick={() => {
                     const patch =
                       kind === "cook"
-                        ? { needs_cooking: true, prep_seconds: form.prep_seconds > 0 ? form.prep_seconds : 600 }
+                        ? {
+                            needs_cooking: true,
+                            prep_seconds: form.prep_seconds > 0 ? form.prep_seconds : 600,
+                          }
                         : kind === "prep"
-                          ? { needs_cooking: false, prep_seconds: form.prep_seconds > 0 ? form.prep_seconds : 180 }
+                          ? {
+                              needs_cooking: false,
+                              prep_seconds: form.prep_seconds > 0 ? form.prep_seconds : 180,
+                            }
                           : { needs_cooking: false, prep_seconds: 0 };
                     void save(patch);
                   }}
                   className={`min-h-10 rounded-lg px-2 text-xs font-bold transition ${
-                    active ? activeClass : "bg-background text-muted-foreground hover:text-foreground"
+                    active
+                      ? activeClass
+                      : "bg-background text-muted-foreground hover:text-foreground"
                   }`}
                 >
                   {label}
@@ -815,7 +851,8 @@ function ItemRow({ it, onChanged }: { it: Item; onChanged: () => void }) {
             })}
           </div>
           <p className="mt-1 text-[11px] text-muted-foreground">
-            Cooked = meals and hot food · Prep required = sandwiches and drinks · No prep = packaged items.
+            Cooked = meals and hot food · Prep required = sandwiches and drinks · No prep = packaged
+            items.
           </p>
         </fieldset>
         <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-muted-foreground sm:col-span-2">

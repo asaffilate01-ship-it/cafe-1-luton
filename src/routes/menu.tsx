@@ -44,7 +44,7 @@ import {
   type ModifierRule,
 } from "@/lib/modifier-rules";
 import { formatCount, matchesMenuQuery } from "@/lib/menu-discovery";
-import { localBusinessJsonLd } from "@/lib/nap";
+import { localBusinessJsonLd, locationById, type CafeLocationId } from "@/lib/nap";
 import { breadcrumbJsonLd, canonicalLink, jsonLdScript, seoMeta, webPageJsonLd } from "@/lib/seo";
 
 const title = "Halal Breakfast, Lunch & Café Menu in Luton | Café 1";
@@ -52,11 +52,21 @@ const description =
   "Browse Café 1's Luton menu: halal breakfast, Desi dishes, omelettes, curries, sandwiches, paninis, jackets, coffee and more. Order online.";
 const PUBLIC_MENU_STALE_TIME_MS = 60_000;
 
-async function loadPublicMenu() {
+async function loadPublicMenu(location: CafeLocationId = "luton-crown-court") {
+  const branch = locationById(location);
+  const { data: site } = await supabase
+    .from("sites")
+    .select("id")
+    .eq("postcode", branch.postalCode)
+    .eq("active", true)
+    .maybeSingle();
+  if (!site) return { cats: [], items: [], mods: [] };
+
   const [cats, items, mods] = await Promise.all([
     supabase
       .from("menu_categories")
       .select("id,name,description,sort_order")
+      .eq("site_id", site.id)
       .eq("active", true)
       .order("sort_order"),
     supabase
@@ -64,6 +74,7 @@ async function loadPublicMenu() {
       .select(
         "id,category_id,name,description,price_cents,image_url,is_veg,needs_cooking,juror_menu,group_label,allergens,dietary_tags,sort_order",
       )
+      .eq("site_id", site.id)
       .eq("active", true)
       .order("sort_order"),
     supabase
@@ -74,13 +85,23 @@ async function loadPublicMenu() {
       .eq("active", true)
       .order("sort_order"),
   ]);
-  return { cats: cats.data ?? [], items: items.data ?? [], mods: mods.data ?? [] };
+  const categoryIds = new Set((cats.data ?? []).map((category) => category.id));
+  const itemIds = new Set((items.data ?? []).map((item) => item.id));
+  return {
+    cats: cats.data ?? [],
+    items: items.data ?? [],
+    mods: (mods.data ?? []).filter(
+      (modifier) =>
+        (modifier.category_id && categoryIds.has(modifier.category_id)) ||
+        (modifier.item_id && itemIds.has(modifier.item_id)),
+    ),
+  };
 }
 
 type PublicMenu = Awaited<ReturnType<typeof loadPublicMenu>>;
 
 export const Route = createFileRoute("/menu")({
-  loader: loadPublicMenu,
+  loader: () => loadPublicMenu(),
   validateSearch: (s: { juror?: unknown }): { juror?: boolean } => ({
     juror: s.juror === true || s.juror === "true" ? true : undefined,
   }),
@@ -134,9 +155,9 @@ function MenuPage() {
     if (!browsingOnly) setGateOpen(true);
   }, [browsingOnly, ctx, intentReady]);
   const { data, isLoading } = useQuery<PublicMenu>({
-    queryKey: ["menu"],
-    queryFn: loadPublicMenu,
-    initialData: initialMenu,
+    queryKey: ["menu", ctx?.location ?? "luton-crown-court"],
+    queryFn: () => loadPublicMenu(ctx?.location ?? "luton-crown-court"),
+    initialData: !ctx?.location || ctx.location === "luton-crown-court" ? initialMenu : undefined,
     // The SSR loader has just fetched this exact menu. Treat it as fresh long
     // enough to avoid immediately repeating all three Supabase queries during
     // hydration; normal focus/refetch behaviour resumes after one minute.

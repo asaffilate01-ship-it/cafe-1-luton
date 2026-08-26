@@ -24,7 +24,6 @@ export const REQUIRED_OPERATIONAL_GATES = [
   "kds_routing_recovery",
   "deliveroo_kds_integration",
   "fulfilment_flows",
-  "manager_mfa_aal2",
   "production_environment",
   "google_key_rotated",
   "supabase_restore_rls",

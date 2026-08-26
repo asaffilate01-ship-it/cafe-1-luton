@@ -91,6 +91,10 @@ export type TicketLine = { name: string; qty: number; price_cents?: number; note
 export type Ticket = {
   heading: string; // e.g. "KITCHEN" / "COUNTER"
   order_number: number;
+  branch_name?: string;
+  address_lines?: string[];
+  website?: string;
+  logo?: boolean;
   fulfilment?: string;
   terminal?: string | null;
   lines: TicketLine[];
@@ -106,13 +110,23 @@ function row(left: string, right: string): string {
   return l + " ".repeat(Math.max(1, COLS - l.length - right.length)) + right;
 }
 
+function centre(value: string): string {
+  const text = value.slice(0, COLS);
+  return `${" ".repeat(Math.max(0, Math.floor((COLS - text.length) / 2)))}${text}`;
+}
+
 function money(cents: number): string {
   return `£${(cents / 100).toFixed(2)}`;
 }
 
 export function ticketToText(t: Ticket): string {
   const out: string[] = [];
-  out.push("CAFE 1 LUTON");
+  // Text printers receive a clear wordmark; the browser receipt uses the full logo image.
+  out.push(centre("CAFE 1"));
+  if (t.branch_name) out.push(centre(t.branch_name.toUpperCase()));
+  for (const addressLine of t.address_lines ?? []) out.push(centre(addressLine));
+  if (t.website) out.push(centre(t.website));
+  out.push("-".repeat(COLS));
   out.push(t.heading);
   out.push("-".repeat(COLS));
   out.push(`ORDER #${t.order_number}`);

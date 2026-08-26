@@ -89,8 +89,6 @@ export const generateDailyControlSummary = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .validator((value: unknown) => DashboardInput.parse(value))
   .handler(async ({ data, context }) => {
-    const { requireManagerMfa } = await import("./elevated-auth.server");
-    requireManagerMfa(context.claims);
     return callOperationsRpc<DailyControlSummary>(
       context.supabase,
       "cafe1_generate_daily_summary",

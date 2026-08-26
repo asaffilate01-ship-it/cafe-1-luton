@@ -6,7 +6,7 @@ import { GATE_PLANS, buildLaunchPlan, renderLaunchPlan } from "./generate-launch
 test("defines an executable plan for every current acceptance gate", () => {
   const gates = Object.keys(GATE_PLANS).map((id) => ({ id, status: "pending", evidence: "" }));
   const plan = buildLaunchPlan({ gates }, "2026-08-16T18:00:00.000Z");
-  assert.equal(plan.summary.total, 28);
+  assert.equal(plan.summary.total, 27);
   assert.equal(plan.summary.percent_complete, 0);
   assert.equal(plan.decision, "no-go");
   assert.equal(plan.next_gate.id, "application_ci");
@@ -20,11 +20,14 @@ test("calculates completion and renders a field-safe markdown pack", () => {
   }));
   const plan = buildLaunchPlan({ gates }, "2026-08-16T18:00:00.000Z");
   assert.equal(plan.summary.passed, 3);
-  assert.equal(plan.summary.percent_complete, 10.7);
-  assert.match(renderLaunchPlan(plan), /3\/28 gates passed \(10\.7%\)/);
+  assert.equal(plan.summary.percent_complete, 11.1);
+  assert.match(renderLaunchPlan(plan), /3\/27 gates passed \(11\.1%\)/);
   assert.match(renderLaunchPlan(plan), /Never place credentials/);
 });
 
 test("refuses unknown gates so new launch risks cannot silently disappear", () => {
-  assert.throws(() => buildLaunchPlan({ gates: [{ id: "unknown", status: "pending" }] }), /No launch plan/);
+  assert.throws(
+    () => buildLaunchPlan({ gates: [{ id: "unknown", status: "pending" }] }),
+    /No launch plan/,
+  );
 });

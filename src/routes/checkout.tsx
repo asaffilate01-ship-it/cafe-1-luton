@@ -5,7 +5,7 @@ import { createOrder } from "@/lib/orders.functions";
 import { lookupVoucher } from "@/lib/vouchers.functions";
 import { checkDeliveryPostcode } from "@/lib/delivery.functions";
 import { supabase } from "@/integrations/supabase/client";
-import { getEmailDiscount, validatePromo } from "@/lib/checkout.functions";
+import { getEmailDiscount } from "@/lib/checkout.functions";
 import { cart, useCart } from "@/lib/cart";
 import { money } from "@/lib/format";
 import { SiteHeader } from "@/components/site-header";
@@ -60,7 +60,6 @@ function Checkout() {
   const findVoucher = useServerFn(lookupVoucher);
   const checkArea = useServerFn(checkDeliveryPostcode);
   const fetchEmailDiscount = useServerFn(getEmailDiscount);
-  const checkPromo = useServerFn(validatePromo);
   const ctx = useOrderContext();
   const jurySessionActive = useJurySession();
   const [gateOpen, setGateOpen] = useState(false);
@@ -91,14 +90,6 @@ function Checkout() {
       }),
     [branchHours, holidays, settings, mode],
   );
-  const [promoInput, setPromoInput] = useState("");
-  const [promo, setPromo] = useState<null | {
-    code: string;
-    discount_cents: number;
-    discount_type: string;
-    message: string | null;
-  }>(null);
-  const [promoBusy, setPromoBusy] = useState(false);
   const [form, setForm] = useState({
     customer_name: "",
     customer_phone: "",
@@ -354,14 +345,9 @@ function Checkout() {
   const freeThreshold = settings?.free_delivery_threshold_cents ?? null;
   const freeDeliveryByThreshold =
     mode === "delivery" && !!freeThreshold && subtotal >= (freeThreshold ?? 0);
-  const freeDeliveryByPromo = promo?.discount_type === "free_delivery";
   const freeDeliveryByMember = emailDiscount?.discount_type === "free_delivery";
   const delivery =
-    mode === "delivery" &&
-    !freeDeliveryByThreshold &&
-    !freeDeliveryByPromo &&
-    !freeDeliveryByMember &&
-    !staffApproved
+    mode === "delivery" && !freeDeliveryByThreshold && !freeDeliveryByMember && !staffApproved
       ? baseDelivery
       : 0;
   const onTab = !!tabSession;
@@ -376,8 +362,6 @@ function Checkout() {
     staffDiscountPercent,
   );
   const loyaltyDiscount = Math.round(subtotal * (discountPercent / 100)) + memberFixedDiscount;
-  const promoDiscount =
-    promo && !freeDeliveryByPromo ? Math.min(promo.discount_cents, subtotal) : 0;
   // Free drinks earned (every 11th) auto-apply to the cheapest eligible drinks.
   const drinkUnitPrices = c.items
     .filter((i) => drinkItemIds.includes(i.menu_item_id))
@@ -387,7 +371,7 @@ function Checkout() {
   const freeDrinkDiscount = drinkUnitPrices.slice(0, freeDrinksUsed).reduce((s, p) => s + p, 0);
   const stampsAfter =
     ((stamps?.drink_stamps ?? 0) + Math.max(0, drinkUnitPrices.length - freeDrinksUsed)) % 10;
-  const discount = Math.min(subtotal, loyaltyDiscount + promoDiscount + freeDrinkDiscount);
+  const discount = Math.min(subtotal, loyaltyDiscount + freeDrinkDiscount);
   const grossTotal = Math.max(0, subtotal - discount) + delivery;
   // Court voucher: the juror's HMCTS Juror ID is also their voucher code.
   const [voucherInput, setVoucherInput] = useState("");
@@ -405,12 +389,6 @@ function Checkout() {
   const [voucherBusy, setVoucherBusy] = useState(false);
   const [juryRoom, setJuryRoom] = useState(ctx?.jury_room ?? "");
   // Jury Lounge orders: verified jurors may settle at the Café 1 counter.
-  const jurorMenuId = jurySessionActive?.juror_id ?? jurySessionActive?.code ?? null;
-  const counterEligible = !!jurorMenuId && !onTab && (!!ctx?.jury_room || !!juryRoom.trim());
-  const [payAtCounter, setPayAtCounter] = useState(false);
-  useEffect(() => {
-    if (!counterEligible && payAtCounter) setPayAtCounter(false);
-  }, [counterEligible, payAtCounter]);
   const [voucherError, setVoucherError] = useState<string | null>(null);
   async function applyVoucher() {
     const code = voucherInput.trim().toUpperCase();
@@ -489,41 +467,6 @@ function Checkout() {
   // Prevent unused import warning when navigate not used
   void navigate;
 
-  async function applyPromo() {
-    const code = promoInput.trim().toUpperCase();
-    if (!code) return;
-    setPromoBusy(true);
-    try {
-      const row = await checkPromo({
-        data: {
-          code,
-          subtotal_cents: subtotal,
-          order_type: mode,
-          email: emailForDiscount || undefined,
-        },
-      });
-      if (!row.valid) {
-        toast.error(
-          row.message || "Sorry, that promo code isn't valid. Please check it and try again.",
-        );
-        setPromo(null);
-        return;
-      }
-      setPromo({
-        code: row.code,
-        discount_cents: row.discount_cents,
-        discount_type: row.discount_type,
-        message: row.message,
-      });
-      toast.success(row.message || "Promo applied");
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : "That code isn't valid.");
-      setPromo(null);
-    } finally {
-      setPromoBusy(false);
-    }
-  }
-
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     if (!c.items.length) return;
@@ -568,7 +511,6 @@ function Checkout() {
             modifier_ids: i.modifiers?.map((m) => m.id),
           })),
           account_code: tabSession?.code,
-          promo_code: promo?.code,
           tip_cents: tipCents,
           points_to_redeem: pointsToRedeem,
           save_address: saveThisAddress && mode === "delivery",
@@ -576,11 +518,10 @@ function Checkout() {
           voucher_code: voucher?.code,
           voucher_pin: voucher?.pin,
           jury_room:
-            (voucher || (payAtCounter && counterEligible)) && (juryRoom.trim() || ctx?.jury_room)
+            voucher && (juryRoom.trim() || ctx?.jury_room)
               ? (juryRoom.trim() || ctx?.jury_room)!.slice(0, 60)
               : undefined,
-          pay_at_counter: payAtCounter && counterEligible,
-          juror_id: payAtCounter && counterEligible ? (jurorMenuId ?? undefined) : undefined,
+          pay_at_counter: !onTab && finalTotal > 0,
           court_location: staffApproved && mode === "delivery" ? courtLocation : undefined,
         },
       });
@@ -603,13 +544,6 @@ function Checkout() {
         toast.success("Order sent to the kitchen — pay at the Café 1 counter");
         navigate({
           to: "/order/$orderId",
-          params: { orderId: res.order_id },
-          search: { token: res.tracking_token },
-        });
-      } else {
-        // Send them to the on-site card payment page.
-        navigate({
-          to: "/pay/$orderId",
           params: { orderId: res.order_id },
           search: { token: res.tracking_token },
         });
@@ -1046,63 +980,6 @@ function Checkout() {
               </li>
             ))}
           </ul>
-          {!onTab && (
-            <div className="mt-4 border-t border-border pt-4">
-              <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                Promo code
-              </p>
-              {promo ? (
-                <div className="mt-2 flex items-center justify-between gap-2 rounded-xl border border-primary/40 bg-primary/10 p-2 text-sm">
-                  <div>
-                    <span className="font-mono font-bold text-primary">{promo.code}</span>
-                    <p className="text-xs text-muted-foreground">{promo.message}</p>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setPromo(null);
-                      setPromoInput("");
-                    }}
-                    className="text-xs font-semibold text-primary underline"
-                  >
-                    Remove
-                  </button>
-                </div>
-              ) : (
-                <div className="mt-2 flex gap-2">
-                  <input
-                    value={promoInput}
-                    onChange={(e) => setPromoInput(e.target.value.toUpperCase())}
-                    placeholder="Enter code"
-                    className="h-10 flex-1 rounded-lg border border-border bg-background px-3 font-mono text-sm uppercase"
-                  />
-                  <button
-                    type="button"
-                    onClick={applyPromo}
-                    disabled={promoBusy || !promoInput.trim()}
-                    className="h-10 rounded-lg bg-primary px-4 text-sm font-semibold text-primary-foreground hover:bg-primary-hover disabled:opacity-50"
-                  >
-                    Apply
-                  </button>
-                </div>
-              )}
-            </div>
-          )}
-          {!onTab && !jurySessionActive && (
-            <div className="mt-4 border-t border-border pt-4">
-              <p className="text-xs text-muted-foreground">
-                Juror or court scheme?{" "}
-                <Link
-                  to="/jury-menu"
-                  search={{} as never}
-                  className="font-semibold text-primary underline"
-                >
-                  Verify your Juror ID
-                </Link>{" "}
-                to use your daily allowance — voucher codes cannot be entered here.
-              </p>
-            </div>
-          )}
           {!onTab && jurySessionActive && (
             <div className="mt-4 border-t border-border pt-4">
               <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
@@ -1225,12 +1102,6 @@ function Checkout() {
                 <span>−{money(loyaltyDiscount)}</span>
               </div>
             )}
-            {promoDiscount > 0 && (
-              <div className="flex justify-between text-primary">
-                <span>Promo {promo?.code}</span>
-                <span>−{money(promoDiscount)}</span>
-              </div>
-            )}
             {freeDrinkDiscount > 0 && (
               <div className="flex justify-between text-primary">
                 <span>Free drink{freeDrinksUsed > 1 ? `s × ${freeDrinksUsed}` : ""} (loyalty)</span>
@@ -1240,7 +1111,7 @@ function Checkout() {
             {mode === "delivery" && (
               <div className="flex justify-between">
                 <span className="text-muted-foreground">
-                  Delivery{freeDeliveryByPromo || freeDeliveryByThreshold ? " (free)" : ""}
+                  Delivery{freeDeliveryByThreshold ? " (free)" : ""}
                 </span>
                 <span>{money(delivery)}</span>
               </div>
@@ -1377,22 +1248,16 @@ function Checkout() {
               </p>
             )}
           </div>
-          {counterEligible && (
-            <label className="mt-4 flex cursor-pointer items-start gap-3 rounded-2xl border border-primary/40 bg-primary/5 p-4 text-sm">
-              <input
-                type="checkbox"
-                checked={payAtCounter}
-                onChange={(e) => setPayAtCounter(e.target.checked)}
-                className="mt-0.5 h-4 w-4 accent-[hsl(var(--primary))]"
-              />
+          {!onTab && finalTotal > 0 && (
+            <div className="mt-4 flex items-start gap-3 rounded-2xl border border-primary/40 bg-primary/5 p-4 text-sm">
               <span>
                 <span className="font-semibold text-primary">Pay at the Café 1 counter</span>
                 <span className="mt-1 block text-muted-foreground">
-                  Jury Lounge orders only. We start your order straight away and you settle at the
-                  counter by card or cash when you collect it.
+                  Your order goes straight to the selected branch. Pay by card or cash when you
+                  collect it or before dining in.
                 </span>
               </span>
-            </label>
+            </div>
           )}
           <button
             type="submit"
@@ -1412,16 +1277,12 @@ function Checkout() {
                     ? `Add £${((minOrder - subtotal) / 100).toFixed(2)} more`
                     : onTab
                       ? "Add to tab"
-                      : payAtCounter && counterEligible
-                        ? "Place order — pay at the counter"
-                        : "Place order & pay"}
+                      : "Place order — pay at the counter"}
           </button>
           <p className="mt-2 text-center text-xs text-muted-foreground">
             {onTab
               ? "Billed to your account — settle later"
-              : user
-                ? "Secure checkout"
-                : "Guest checkout · Secure payment"}
+              : "Payment is taken securely at your selected Café 1 branch"}
           </p>
         </aside>
       </div>

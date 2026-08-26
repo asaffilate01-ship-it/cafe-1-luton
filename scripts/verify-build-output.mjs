@@ -31,7 +31,6 @@ const requiredPrivatePatterns = [
   "/till/*",
   "/kds/*",
   "/display/*",
-  "/pay/*",
   "/order/*",
   "/print/*",
   "/account/*",

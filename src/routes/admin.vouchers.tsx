@@ -513,7 +513,7 @@ function AdminVouchers() {
           <div className="mt-8 rounded-2xl border border-amber-300 bg-amber-50 p-5 text-sm text-amber-900">
             <p className="font-semibold">Staff read-only access</p>
             <p className="mt-1">
-              A manager using MFA must activate, extend, reactivate or increase a juror allowance.
+              An administrator must activate, extend, reactivate or increase a juror allowance.
             </p>
           </div>
         )}

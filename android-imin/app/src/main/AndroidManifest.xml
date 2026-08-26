@@ -12,6 +12,7 @@
 
     <application
         android:allowBackup="false"
+        android:icon="@drawable/cafe1_launcher"
         android:label="Cafe 1 Luton Till"
         android:networkSecurityConfig="@xml/network_security_config"
         android:supportsRtl="true"

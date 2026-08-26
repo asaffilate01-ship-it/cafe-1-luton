@@ -75,7 +75,11 @@ export function verifySeoRepository(root = defaultRoot) {
     "Route.useLoaderData()",
     "initialData: initialPosts",
   ]);
-  requireMarkers("src/routes/menu.tsx", ["loader: loadPublicMenu", "initialData: initialMenu"]);
+  requireMarkers("src/routes/menu.tsx", [
+    "loader: () => loadPublicMenu()",
+    "initialData:",
+    'ctx.location === "luton-crown-court"',
+  ]);
   requireMarkers("src/routes/blog.$slug.tsx", [
     "articleJsonLd",
     "canonicalLink(url)",

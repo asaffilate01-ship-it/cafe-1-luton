@@ -537,7 +537,7 @@ function JurorPage() {
             <Card icon={Server} title="Secure hosting">
               The system runs on AWS cloud infrastructure in the UK/EEA with managed patching,
               encryption in transit and at rest, automated backups, row-level database access
-              control and an immutable audit log. Admin accounts use two-factor authentication and
+              control and an immutable audit log. Admin accounts use role-based access and
               your PIN is only ever stored as a cryptographic hash.
             </Card>
             <Card icon={Lock} title="Safe card payments">

@@ -4,6 +4,7 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { getRequest } from "@tanstack/react-start/server";
 import { createClient } from "@supabase/supabase-js";
 import type { Database } from "@/integrations/supabase/types";
+import { PUBLIC_SETTINGS_COLUMNS } from "./business";
 import { validateModifierSelection, type ModifierRule } from "./modifier-rules";
 import { orderingHoursForLocation } from "./nap";
 import { requireStaffOrderAccess, requireStaffSiteAccess } from "./staff-site-access.server";
@@ -228,7 +229,7 @@ export const createOrder = createServerFn({ method: "POST" })
     // Load branch-specific settings and hours.
     const settingsQuery = supabase
       .from("business_settings")
-      .select("*")
+      .select(PUBLIC_SETTINGS_COLUMNS)
       .eq("site_id", selectedSiteId)
       .limit(1);
     const { data: settings } = await settingsQuery.maybeSingle();
@@ -284,9 +285,19 @@ export const createOrder = createServerFn({ method: "POST" })
         .maybeSingle();
       if (staffRow) {
         staff_member_id = staffRow.id;
-        staff_discount_percent = Number(
-          staffRow.discount_percent ?? settings?.court_staff_discount_percent ?? 10,
-        );
+        // court_staff_discount_percent is not anon-readable; fetch it
+        // server-side only when an approved staff member actually orders.
+        let defaultPercent: number | null = null;
+        if (staffRow.discount_percent == null) {
+          const { data: privateSettings } = await supabaseAdmin
+            .from("business_settings")
+            .select("court_staff_discount_percent")
+            .eq("site_id", selectedSiteId)
+            .limit(1)
+            .maybeSingle();
+          defaultPercent = privateSettings?.court_staff_discount_percent ?? null;
+        }
+        staff_discount_percent = Number(staffRow.discount_percent ?? defaultPercent ?? 10);
       }
     }
     const courtStaffDelivery = !!staff_member_id && !!data.court_location;
@@ -418,8 +429,7 @@ export const createOrder = createServerFn({ method: "POST" })
     const { hashTrackingToken } = await import("./order-access.server");
     const tracking_token = randomBytes(32).toString("base64url");
     const tracking_token_hash = hashTrackingToken(tracking_token);
-    // Pre-generated so the SumUp checkout can carry a wallet redirect URL that
-    // points back at this exact order.
+    // Pre-generated so branch payment and tracking refer to this exact order.
     const order_id = randomUUID();
 
     // Court vouchers: code + separately issued PIN, with a tokenised reservation
@@ -579,65 +589,11 @@ export const createOrder = createServerFn({ method: "POST" })
       }
     }
 
-    // Create SumUp checkout FIRST — if it fails, don't create a phantom unpaid order.
-    let checkout_id: string | null = null;
-    // Jury Lounge: a verified juror may order to the lounge and pay at the
-    // Café 1 counter. The Juror ID is re-checked here — the client claim alone
-    // never unlocks it.
-    let pay_at_counter = false;
-    if (data.pay_at_counter && !account_id && data.juror_id && data.jury_room) {
-      try {
-        const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-        const { callOperationsRpc } = await import("./ops-rpc");
-        const rows = await callOperationsRpc<{ ok: boolean }>(
-          supabaseAdmin,
-          "cafe1_verify_juror_id",
-          { _code: data.juror_id },
-        );
-        pay_at_counter = !!(Array.isArray(rows) ? rows[0]?.ok : false);
-      } catch (e) {
-        console.error("[orders] juror counter-pay check failed", e);
-      }
-      if (!pay_at_counter) {
-        await releaseVoucher();
-        await refundPoints();
-        throw new Error(
-          "We couldn't confirm that Juror ID, so this order can't be paid at the counter.",
-        );
-      }
-    }
-    if (!account_id && !pay_at_counter && payable > 0) {
-      const { createSumUpCheckout } = await import("./sumup.server");
-      const itemSummary = lines
-        .map((l) => `${l.qty}x ${l.name}${l.notes ? ` (${l.notes})` : ""}`)
-        .join("; ");
-      const sumupDescription = `WEBSITE ORDER — ${data.customer_name} — ${itemSummary}`;
-      const compactSumupDescription =
-        sumupDescription.length > 500 ? `${sumupDescription.slice(0, 497)}...` : sumupDescription;
-      try {
-        const publicAppUrl = (process.env["PUBLIC_APP_URL"] ?? "https://cafe1luton.co.uk").replace(
-          /\/+$/,
-          "",
-        );
-        const co = await createSumUpCheckout({
-          reference,
-          amount_cents: payable,
-          description: compactSumupDescription,
-          customer_email: data.customer_email || undefined,
-          return_url: `${publicAppUrl}/order/${order_id}?token=${tracking_token}`,
-          // Required for Apple Pay / Google Pay eligibility on the checkout.
-          redirect_url: `${publicAppUrl}/order/${order_id}?token=${tracking_token}`,
-        });
-        checkout_id = co.id;
-      } catch (e) {
-        console.error("[SumUp] checkout create failed", e);
-        await releaseVoucher();
-        await refundPoints();
-        throw new Error(
-          "We couldn't start the card payment. Please try again in a moment, or contact us if it keeps failing.",
-        );
-      }
-    }
+    // Online Luton orders are sent to the correct KDS and paid at the selected
+    // branch. EVO handles the card in person; the website has no separate card
+    // processor integration.
+    const checkout_id: string | null = null;
+    const pay_at_counter = !account_id && payable > 0;
 
     // Voucher covers the whole order (and it isn't on a tab) — nothing to charge.
     const fully_covered =
@@ -693,11 +649,13 @@ export const createOrder = createServerFn({ method: "POST" })
         voucher_holder_id,
         points_earned,
         loyalty_stamps_pending: stamps_earned,
+        loyalty_free_drinks_used: free_drinks_used,
         total_cents: payable,
         sumup_reference: reference,
         sumup_checkout_id: checkout_id,
         tracking_token_hash,
         site_id: selectedSiteId,
+        source: "website",
         promo_code: applied_promo,
         promo_discount_cents: free_delivery_promo ? 0 : promo_discount,
         ...(account_id
@@ -774,14 +732,14 @@ export const createOrder = createServerFn({ method: "POST" })
     // drink can't be spent twice while a payment is in flight.
     const settled_now = !!account_id || fully_covered;
     if (userId && (settled_now || free_drinks_used > 0)) {
-      const { data: prof } = await supabase
+      const { data: prof } = await sbWrite
         .from("profiles")
         .select(
           "loyalty_points, lifetime_points, free_drinks_redeemed, drink_stamps, free_drinks_available",
         )
         .eq("id", userId)
         .maybeSingle();
-      await supabase
+      await sbWrite
         .from("profiles")
         .update(
           settled_now

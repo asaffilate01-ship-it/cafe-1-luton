@@ -128,13 +128,6 @@
       "checked_at": ""
     },
     {
-      "id": "manager_mfa_aal2",
-      "status": "pending",
-      "evidence": "",
-      "checked_by": "",
-      "checked_at": ""
-    },
-    {
       "id": "production_environment",
       "status": "pending",
       "evidence": "",
