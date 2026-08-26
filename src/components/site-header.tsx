@@ -1,6 +1,5 @@
 import { LOCATIONS, NAP } from "@/lib/nap";
 import { Link } from "@tanstack/react-router";
-import itechloungeLogo from "@/assets/itechlounge-logo.webp";
 import {
   ShoppingBag,
   ReceiptText,
@@ -320,28 +319,6 @@ export function SiteFooter() {
             Cookie settings
           </button>
         </nav>
-      </div>
-      <div className="border-t border-border bg-secondary/50 py-4 text-center text-xs text-muted-foreground">
-        <span className="mx-auto max-w-6xl px-4">
-          A project by{" "}
-          <a
-            href="https://itechlounge.co.uk"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center gap-1.5 align-middle font-medium text-foreground transition hover:text-primary"
-          >
-            <img
-              src={itechloungeLogo}
-              alt="iTechLounge"
-              width={112}
-              height={112}
-              className="h-7 w-auto"
-              loading="lazy"
-              decoding="async"
-            />
-            iTechLounge
-          </a>
-        </span>
       </div>
     </footer>
   );
