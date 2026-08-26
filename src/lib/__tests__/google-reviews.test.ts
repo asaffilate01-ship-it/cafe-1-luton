@@ -5,6 +5,7 @@ import { loadGoogleReviews, resetGoogleReviewsCacheForTests } from "../google-re
 const originalEnvironment = {
   GOOGLE_PLACE_ID: process.env.GOOGLE_PLACE_ID,
   GOOGLE_MAPS_API_KEY: process.env.GOOGLE_MAPS_API_KEY,
+  GOOGLE_MAPS_API_KEY_1: process.env.GOOGLE_MAPS_API_KEY_1,
   LOVABLE_API_KEY: process.env.LOVABLE_API_KEY,
 };
 
@@ -60,6 +61,7 @@ describe("Google Reviews provider fallback", () => {
   it("fails safely when the server key is absent", async () => {
     process.env.GOOGLE_PLACE_ID = "ChIJcafe1Luton12345";
     delete process.env.GOOGLE_MAPS_API_KEY;
+    delete process.env.GOOGLE_MAPS_API_KEY_1;
     const fetchImpl = vi.fn();
 
     const result = await loadGoogleReviews(fetchImpl as typeof fetch);
