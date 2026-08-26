@@ -22,13 +22,15 @@ function AdminSettings() {
   useEffect(() => { if (!loading && !user) navigate({ to: "/admin/login", search: { next: "/admin/settings" } }); }, [loading, user, navigate]);
   const allowed = has("admin");
 
+  const { sites, siteId, setSiteId } = useSites();
+
   const { data } = useQuery({
-    queryKey: ["admin-settings"],
+    queryKey: ["admin-settings", siteId],
     enabled: !!user && allowed,
     queryFn: async () => {
       const [s, h] = await Promise.all([
-        supabase.from("business_settings").select("*").limit(1).maybeSingle(),
-        supabase.from("business_hours").select("*").order("day_of_week"),
+        supabase.from("business_settings").select("*").eq("site_id", siteId).limit(1).maybeSingle(),
+        supabase.from("business_hours").select("*").eq("site_id", siteId).order("day_of_week"),
       ]);
       return { settings: s.data as BusinessSettings | null, hours: (h.data ?? []) as HourRow[] };
     },
@@ -38,7 +40,7 @@ function AdminSettings() {
   const [hours, setHours] = useState<HourRow[]>([]);
   const [busy, setBusy] = useState(false);
 
-  useEffect(() => { if (data?.settings) setS(data.settings); if (data?.hours) setHours(data.hours); }, [data]);
+  useEffect(() => { setS(data?.settings ?? null); setHours(data?.hours ?? []); }, [data]);
 
   async function save() {
     if (!s) return;
@@ -66,7 +68,7 @@ function AdminSettings() {
     for (const h of hours) {
       const { error } = await supabase.from("business_hours").update({
         open_time: h.open_time, close_time: h.close_time, closed: h.closed,
-      }).eq("day_of_week", h.day_of_week);
+      }).eq("site_id", siteId).eq("day_of_week", h.day_of_week);
       if (error) { setBusy(false); return toast.error(error.message); }
     }
     setBusy(false);
