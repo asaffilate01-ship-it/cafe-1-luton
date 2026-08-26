@@ -58,10 +58,13 @@ export const Route = createFileRoute("/api/public/sumup-webhook")({
             : await supabaseAdmin.from("orders").select("id").eq("sumup_checkout_id", resolvedId);
           const { awardLoyaltyForOrder } = await import("@/lib/loyalty.server");
           const { sendOrderReceipt } = await import("@/lib/order-receipt.server");
+          const { notifyKitchenNewOrder } = await import("@/lib/push-notify.server");
           for (const r of paidRows ?? []) {
             await awardLoyaltyForOrder(r.id);
             // Receipt is idempotent; a webhook retry never double-sends.
             await sendOrderReceipt(r.id);
+            // Kitchen devices get a ticket alert as soon as the money lands.
+            await notifyKitchenNewOrder(r.id);
           }
 
           return Response.json({ ok: true });

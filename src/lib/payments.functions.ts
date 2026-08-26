@@ -78,6 +78,8 @@ export const confirmPayment = createServerFn({ method: "POST" })
     if (updateError) throw new Error(updateError.message);
     const { awardLoyaltyForOrder } = await import("./loyalty.server");
     await awardLoyaltyForOrder(order.id);
+    const { notifyKitchenNewOrder } = await import("./push-notify.server");
+    await notifyKitchenNewOrder(order.id);
     await recordAttempt("payment", identity, true);
     return { paid: true, status: "preparing" as const };
   });

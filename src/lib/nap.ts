@@ -69,7 +69,13 @@ const WEEKDAYS = [
   "Saturday",
 ] as const;
 
-/** Browser-safe branch hours for ordering and live open/closed calculations. */
+/** Branch → Cafe 1 site row, so admin-managed hours/settings resolve per branch. */
+export const BRANCH_SITE_IDS: Record<CafeLocationId, string> = {
+  "luton-crown-court": "cafe1000-0000-4000-8000-000000000001",
+  "futures-house": "bc24b444-ffc2-4912-9b0a-143513df4f20",
+};
+
+/** Fallback branch hours used only when admin has not saved hours for a branch. */
 export function orderingHoursForLocation(id: CafeLocationId) {
   const location = locationById(id);
   return WEEKDAYS.map((day, day_of_week) => {

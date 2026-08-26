@@ -3,7 +3,7 @@
  * confirmed. Idempotent: orders.receipt_sent_at is claimed before sending, so
  * webhook retries and the reconciliation poller can never double-send.
  */
-const FROM = "CAFE 1 LUTON <no-reply@cafe1luton.co.uk>";
+const FROM = "CAFE 1 LUTON <hello@cafe1luton.co.uk>";
 const RESEND_GATEWAY = "https://connector-gateway.lovable.dev/resend";
 
 const money = (c: number) => `£${(c / 100).toFixed(2)}`;

@@ -2,6 +2,7 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useRef } from "react";
 import { SiteHeader, SiteFooter } from "@/components/site-header";
 import { cart, useCart } from "@/lib/cart";
+import { useSession } from "@/hooks/use-auth";
 import { money } from "@/lib/format";
 import { Minus, Plus, Trash2 } from "lucide-react";
 
@@ -29,6 +30,7 @@ export const Route = createFileRoute("/cart")({
 
 function CartPage() {
   const c = useCart();
+  const { user, loading } = useSession();
   const navigate = useNavigate();
   const hadItems = useRef(false);
   useEffect(() => {
@@ -111,12 +113,29 @@ function CartPage() {
               <span className="text-muted-foreground">Subtotal</span>
               <span className="font-display text-2xl font-bold">{money(subtotal)}</span>
             </div>
-            <Link
-              to="/checkout"
-              className="mt-4 flex h-12 w-full items-center justify-center rounded-full bg-primary font-semibold text-primary-foreground shadow-brand transition hover:bg-primary-hover"
-            >
-              Checkout
-            </Link>
+            {user || loading ? (
+              <Link
+                to="/checkout"
+                className="mt-4 flex h-12 w-full items-center justify-center rounded-full bg-primary font-semibold text-primary-foreground shadow-brand transition hover:bg-primary-hover"
+              >
+                Checkout
+              </Link>
+            ) : (
+              <div className="mt-4 rounded-2xl border border-primary/30 bg-primary/5 p-4 text-center">
+                <p className="text-sm text-muted-foreground">
+                  Browsing is open to everyone — to place an order, sign in or register with your
+                  email and a password.
+                </p>
+                <Link
+                  to="/auth"
+                  search={{ next: "/checkout" }}
+                  className="mt-3 flex h-12 w-full items-center justify-center rounded-full bg-primary font-semibold text-primary-foreground shadow-brand transition hover:bg-primary-hover"
+                >
+                  Sign in or register to checkout
+                </Link>
+              </div>
+            )}
+
           </>
         )}
       </div>

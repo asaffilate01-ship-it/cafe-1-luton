@@ -24,8 +24,16 @@ const toB64 = (buf: ArrayBuffer | null) =>
         .replace(/=+$/, "")
     : "";
 
-/** "Order ready" / "on the way" browser alerts for the signed-in customer. */
-export function useWebPush() {
+export type PushTopic = "orders" | "offers" | "kitchen";
+
+/**
+ * Browser/mobile push alerts for the signed-in user.
+ * `topics` decides what this device is signed up for: order progress, offers,
+ * or kitchen tickets (staff only, optionally scoped to one branch).
+ */
+export function useWebPush(options?: { topics?: PushTopic[]; siteId?: string | null }) {
+  const topics = options?.topics ?? (["orders"] as PushTopic[]);
+  const siteId = options?.siteId ?? null;
   const fetchKey = useServerFn(getPushPublicKey);
   const save = useServerFn(savePushSubscription);
   const remove = useServerFn(removePushSubscription);
@@ -68,6 +76,8 @@ export function useWebPush() {
           p256dh: json.keys?.p256dh ?? toB64(sub.getKey("p256dh")),
           auth: json.keys?.auth ?? toB64(sub.getKey("auth")),
           user_agent: navigator.userAgent.slice(0, 300),
+          topics,
+          site_id: siteId,
         },
       });
       setEnabled(true);
@@ -77,7 +87,7 @@ export function useWebPush() {
     } finally {
       setBusy(false);
     }
-  }, [fetchKey, save]);
+  }, [fetchKey, save, topics, siteId]);
 
   const disable = useCallback(async () => {
     setBusy(true);

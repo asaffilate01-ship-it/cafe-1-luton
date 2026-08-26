@@ -12,8 +12,8 @@ import { ReauthenticationEmail } from '@/lib/email-templates/reauthentication'
 // Configuration
 const SITE_NAME = 'CAFE 1 LUTON'
 const ROOT_DOMAIN = 'cafe1luton.co.uk'
-const FROM = `${SITE_NAME} <no-reply@${ROOT_DOMAIN}>`
-const REPLY_TO = `info@${ROOT_DOMAIN}`
+const FROM = `${SITE_NAME} <hello@${ROOT_DOMAIN}>`
+const REPLY_TO = `hello@${ROOT_DOMAIN}`
 const SITE_URL = `https://${ROOT_DOMAIN}`
 const RESEND_GATEWAY = 'https://connector-gateway.lovable.dev/resend'
 

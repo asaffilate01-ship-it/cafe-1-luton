@@ -14,7 +14,7 @@ import { tab, useTab } from "@/lib/tab";
 import { toast } from "sonner";
 import { useStoreStatus } from "@/hooks/use-store-status";
 import { buildScheduleSlots, computeStoreStatus } from "@/lib/business";
-import { orderingHoursForLocation } from "@/lib/nap";
+import { BRANCH_SITE_IDS, orderingHoursForLocation } from "@/lib/nap";
 import { useOrderContext, describeContext } from "@/lib/order-context";
 import { OrderSetupGate } from "@/components/order-setup-gate";
 import { requiresOrderSetup } from "@/lib/menu-intent";
@@ -55,7 +55,13 @@ function Checkout() {
   const navigate = useNavigate();
   const { user, loading } = useSession();
   const tabSession = useTab();
-  const { status: defaultStatus, settings, hours, holidays } = useStoreStatus();
+  const ctxEarly = useOrderContext();
+  const {
+    status: defaultStatus,
+    settings,
+    hours,
+    holidays,
+  } = useStoreStatus(ctxEarly?.location ? BRANCH_SITE_IDS[ctxEarly.location] : undefined);
   const place = useServerFn(createOrder);
   const findVoucher = useServerFn(lookupVoucher);
   const checkArea = useServerFn(checkDeliveryPostcode);
@@ -67,7 +73,7 @@ function Checkout() {
   const [scheduleMode, setScheduleMode] = useState<ScheduleMode>(ctx?.schedule_mode ?? "asap");
   const [scheduledFor, setScheduledFor] = useState<string>(ctx?.scheduled_for ?? "");
   const branchHours = useMemo(
-    () => (ctx?.location ? orderingHoursForLocation(ctx.location) : hours),
+    () => (hours.length ? hours : ctx?.location ? orderingHoursForLocation(ctx.location) : hours),
     [ctx?.location, hours],
   );
   const status = useMemo(
@@ -556,6 +562,42 @@ function Checkout() {
         </div>
       </div>
     );
+
+  if (!loading && !user && !tabSession && !jurySessionActive)
+    return (
+      <div className="min-h-screen bg-background">
+        <SiteHeader />
+        <div className="mx-auto max-w-md px-4 py-20 text-center">
+          <h1 className="font-display text-3xl font-bold">Sign in to place your order</h1>
+          <p className="mt-3 text-sm text-muted-foreground">
+            Browsing the menu is always open. To order, create a free account with your email and
+            password — it keeps your order history and loyalty points in one place.
+          </p>
+          <Link
+            to="/auth"
+            search={{ next: "/checkout" }}
+            className="mt-6 inline-flex h-12 w-full items-center justify-center rounded-full bg-primary font-semibold text-primary-foreground shadow-brand transition hover:bg-primary-hover"
+          >
+            Sign in or register
+          </Link>
+          <Link
+            to="/menu"
+            className="mt-3 inline-flex h-11 w-full items-center justify-center rounded-full border border-border font-semibold hover:border-primary"
+          >
+            Keep browsing the menu
+          </Link>
+          <p className="mt-4 text-xs text-muted-foreground">
+            Got a business tab code?{" "}
+            <Link to="/tab" className="font-semibold text-primary underline">
+              Sign in with your account code
+            </Link>
+            .
+          </p>
+        </div>
+      </div>
+    );
+
+
 
   return (
     <div className="min-h-screen bg-background">

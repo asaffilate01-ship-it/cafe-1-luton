@@ -49,6 +49,7 @@ import {
 import { ManualOrderDialog } from "@/components/manual-order-dialog";
 import { EditOrderDialog } from "@/components/edit-order-dialog";
 import { InstallAppButton } from "@/components/install-app-button";
+import { PushAlertsButton } from "@/components/push-alerts-button";
 import { useWakeLock } from "@/hooks/use-wake-lock";
 import { orderCode } from "@/lib/order-code";
 import { getStaffMenuItems } from "@/lib/menu-operations.functions";
@@ -1380,6 +1381,7 @@ function BranchKDS() {
                 )}
                 <SyncPill lastSync={lastSync} ok={syncOk} now={now} />
                 <AlertsToggle />
+              <PushAlertsButton topics={["kitchen"]} siteId={sites.siteId} label="Phone alerts" />
                 <WakeToggle />
                 <button
                   onClick={() => setManualOpen(true)}
@@ -1484,6 +1486,7 @@ function BranchKDS() {
               </button>
               <FullscreenToggle />
               <AlertsToggle />
+              <PushAlertsButton topics={["kitchen"]} siteId={sites.siteId} label="Phone alerts" />
               <WakeToggle />
               <InstallAppButton
                 manifest="/kds.webmanifest"

@@ -2171,6 +2171,8 @@ export type Database = {
           endpoint: string
           id: string
           p256dh: string
+          site_id: string | null
+          topics: string[]
           updated_at: string
           user_agent: string | null
           user_id: string
@@ -2181,6 +2183,8 @@ export type Database = {
           endpoint: string
           id?: string
           p256dh: string
+          site_id?: string | null
+          topics?: string[]
           updated_at?: string
           user_agent?: string | null
           user_id: string
@@ -2191,11 +2195,21 @@ export type Database = {
           endpoint?: string
           id?: string
           p256dh?: string
+          site_id?: string | null
+          topics?: string[]
           updated_at?: string
           user_agent?: string | null
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "push_subscriptions_site_id_fkey"
+            columns: ["site_id"]
+            isOneToOne: false
+            referencedRelation: "sites"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       recipe_components: {
         Row: {
