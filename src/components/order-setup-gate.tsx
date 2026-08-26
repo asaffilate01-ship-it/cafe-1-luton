@@ -227,6 +227,30 @@ export function OrderSetupGate({
                   </button>
                 ))}
               </div>
+              {location === "luton-crown-court" && (
+                <div className="rounded-2xl border border-border bg-muted/40 p-4">
+                  <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
+                    Want it delivered?
+                  </p>
+                  <p className="mt-1 text-sm text-muted-foreground">
+                    Café 1 at Luton Crown Court is available on our delivery partners.
+                  </p>
+                  <div className="mt-3 grid gap-2 sm:grid-cols-3">
+                    {DELIVERY_PARTNERS.map((partner) => (
+                      <a
+                        key={partner.name}
+                        href={partner.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex min-h-11 items-center justify-center rounded-full border border-border bg-background px-3 text-sm font-semibold transition hover:border-primary hover:text-primary"
+                      >
+                        {partner.name}
+                      </a>
+                    ))}
+                  </div>
+                </div>
+              )}
+
               <div className="flex gap-2">
                 <button
                   type="button"
