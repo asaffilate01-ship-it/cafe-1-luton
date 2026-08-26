@@ -202,7 +202,9 @@ export function SiteFooter() {
   };
   const profiles = SOCIAL_PROFILES.map((profile) => ({
     href: profile.url,
-    label: `Café 1 on ${profile.label}`,
+    label: `${profile.label}: ${profile.profileId}`,
+    profileId: profile.profileId,
+    platform: profile.label,
     Icon: icons[profile.platform],
   }));
   return (
@@ -257,6 +259,19 @@ export function SiteFooter() {
                 className="grid h-9 w-9 place-items-center rounded-full border border-border bg-card text-muted-foreground transition-colors hover:border-primary hover:text-primary"
               >
                 <Icon className="h-4 w-4" />
+              </a>
+            ))}
+          </div>
+          <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs">
+            {profiles.map(({ href, label, platform, profileId }) => (
+              <a
+                key={label}
+                href={href}
+                target="_blank"
+                rel="noreferrer noopener"
+                className="hover:text-primary"
+              >
+                {platform}: {profileId}
               </a>
             ))}
           </div>

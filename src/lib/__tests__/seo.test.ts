@@ -4,9 +4,7 @@ import { absoluteUrl, articleJsonLd, breadcrumbJsonLd, safeJsonLd, seoMeta } fro
 
 describe("SEO helpers", () => {
   it("creates canonical absolute URLs on the production origin", () => {
-    expect(absoluteUrl("/breakfast-luton")).toBe(
-      "https://cafe1luton.co.uk/breakfast-luton",
-    );
+    expect(absoluteUrl("/breakfast-luton")).toBe("https://cafe1luton.co.uk/breakfast-luton");
     expect(absoluteUrl("menu")).toBe("https://cafe1luton.co.uk/menu");
   });
 
@@ -25,6 +23,9 @@ describe("SEO helpers", () => {
       content: "https://cafe1luton.co.uk/breakfast-luton",
     });
     expect(meta).toContainEqual({ name: "twitter:card", content: "summary_large_image" });
+    expect(meta).toContainEqual({ property: "og:image:width", content: "1200" });
+    expect(meta).toContainEqual({ property: "og:image:height", content: "630" });
+    expect(meta.find((item) => item.name === "keywords")?.content).toContain("halal cafe Luton");
   });
 
   it("builds ordered breadcrumbs with absolute item URLs", () => {

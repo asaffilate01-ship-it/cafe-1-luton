@@ -1,6 +1,7 @@
 import { expect, test, type Page } from "@playwright/test";
 
 const USER_ID = "11111111-1111-4111-8111-111111111111";
+const CROWN_COURT_SITE_ID = "cafe1000-0000-4000-8000-000000000001";
 
 function base64url(value: unknown) {
   return Buffer.from(JSON.stringify(value)).toString("base64url");
@@ -16,7 +17,7 @@ async function installStaffSession(page: Page) {
     exp: expiresAt,
   })}.e2e`;
   await page.addInitScript(
-    ({ accessToken: token, expiresAt: expiry, userId }) => {
+    ({ accessToken: token, expiresAt: expiry, userId, siteId }) => {
       localStorage.setItem(
         "sb-e2e-auth-token",
         JSON.stringify({
@@ -30,14 +31,14 @@ async function installStaffSession(page: Page) {
             aud: "authenticated",
             role: "authenticated",
             email: "staff@e2e.invalid",
-            app_metadata: {},
+            app_metadata: { site_id: siteId },
             user_metadata: {},
             created_at: new Date().toISOString(),
           },
         }),
       );
     },
-    { accessToken, expiresAt, userId: USER_ID },
+    { accessToken, expiresAt, userId: USER_ID, siteId: CROWN_COURT_SITE_ID },
   );
   await page.route("https://e2e.invalid/**", async (route) => {
     const url = route.request().url();
@@ -132,15 +133,17 @@ for (const viewport of [
       "true",
     );
     await expect(bar).toBeVisible();
-    await expect(bar).toContainText("View order");
-    await expect(bar).toContainText("Dine in");
+    await expect(bar.getByRole("button", { name: "Categories" })).toBeVisible();
+    await expect(bar.getByRole("button", { name: "Browse" })).toBeVisible();
+    await expect(bar.getByRole("button", { name: /Order/ })).toContainText("£0.00");
+    await expect(bar.getByRole("button", { name: "More" })).toBeVisible();
     const [headerBox, barBox] = await Promise.all([header.boundingBox(), bar.boundingBox()]);
     expect(headerBox?.x).toBeGreaterThanOrEqual(0);
     expect((headerBox?.x ?? 0) + (headerBox?.width ?? 0)).toBeLessThanOrEqual(viewport.width + 1);
     expect(barBox?.x).toBeGreaterThanOrEqual(0);
     expect((barBox?.x ?? 0) + (barBox?.width ?? 0)).toBeLessThanOrEqual(viewport.width + 1);
 
-    await bar.click();
+    await bar.getByRole("button", { name: /Order/ }).click();
     const order = page.locator('[data-pos-region="order"]');
     await expect(order).toBeVisible();
     const backToMenu = order.locator('[data-pos-action="back-to-menu"]');
@@ -155,13 +158,9 @@ for (const viewport of [
       viewport.width + 1,
     );
     const orderBox = await order.boundingBox();
-    if (viewport.width < 640) {
-      expect(orderBox?.x).toBe(0);
-      expect(orderBox?.width).toBe(viewport.width);
-    } else {
-      expect(orderBox?.width).toBeLessThanOrEqual(480);
-      expect((orderBox?.x ?? 0) + (orderBox?.width ?? 0)).toBeLessThanOrEqual(viewport.width + 1);
-    }
+    expect(orderBox?.width).toBeLessThanOrEqual(496);
+    expect(orderBox?.width).toBeGreaterThanOrEqual(Math.min(viewport.width * 0.9, 470));
+    expect((orderBox?.x ?? 0) + (orderBox?.width ?? 0)).toBeLessThanOrEqual(viewport.width + 1);
     const layers = await page.evaluate(() => ({
       order: Number.parseInt(
         getComputedStyle(document.querySelector<HTMLElement>('[data-pos-region="order"]')!).zIndex,
@@ -200,11 +199,11 @@ for (const viewport of [
     await expect(bar).toBeVisible();
     expect((await catalogue.boundingBox())?.width).toBeGreaterThan(viewport.width - 2);
 
-    await bar.click();
+    await bar.getByRole("button", { name: /Order/ }).click();
     await expect(order).toBeVisible();
     const orderBox = await order.boundingBox();
-    expect(orderBox?.width).toBeLessThanOrEqual(480);
-    expect(orderBox?.width).toBeGreaterThanOrEqual(478);
+    expect(orderBox?.width).toBeLessThanOrEqual(496);
+    expect(orderBox?.width).toBeGreaterThanOrEqual(494);
     expect((orderBox?.x ?? 0) + (orderBox?.width ?? 0)).toBeLessThanOrEqual(viewport.width + 1);
     await expectNoHorizontalOverflow(page);
   });

@@ -40,6 +40,7 @@ import { getAccountStatement, listAccounts, quickAddAccount } from "@/lib/accoun
 import { chargeOrderToAccount, findSimilarAccountOrder } from "@/lib/judge-tab.functions";
 import { QrCode } from "@/components/qr-code";
 import { InstallAppButton } from "@/components/install-app-button";
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import {
   ReaderConnectionAlert,
   ReaderStatusPill,
@@ -47,6 +48,7 @@ import {
 } from "@/components/reader-connection";
 import { isReaderOnline } from "@/lib/reader-status";
 import { money } from "@/lib/format";
+import { LOCATIONS, SITE_URL } from "@/lib/nap";
 import { calculateCounterDue } from "@/lib/counter-pricing";
 import { askConfirm, askPrompt } from "@/lib/confirm";
 import { useCustomerDisplayStatus } from "@/hooks/use-customer-display-status";
@@ -56,7 +58,7 @@ import {
 } from "@/hooks/use-customer-display-relay";
 import { usePosDeviceStatus } from "@/hooks/use-pos-device-status";
 import { useTillFavourites } from "@/hooks/use-till-favourites";
-import { DEFAULT_SITE_ID, useSites } from "@/hooks/use-sites";
+import { useSites } from "@/hooks/use-sites";
 import { toast } from "sonner";
 import { getStaffMenuItems } from "@/lib/menu-operations.functions";
 import {
@@ -105,6 +107,7 @@ import {
   BadgePercent,
   History,
   RotateCcw,
+  PanelLeftOpen,
 } from "lucide-react";
 
 export const Route = createFileRoute("/till")({
@@ -320,6 +323,31 @@ function TillPage() {
       </div>
     );
   }
+  if (
+    !rolesLoading &&
+    has("staff") &&
+    !has("admin") &&
+    typeof user.app_metadata?.site_id !== "string"
+  ) {
+    return (
+      <div className="grid min-h-screen place-items-center bg-white px-6 text-center text-slate-950">
+        <div className="max-w-md rounded-3xl border border-amber-200 bg-amber-50 p-8 shadow-xl">
+          <ShieldCheck className="mx-auto h-10 w-10 text-amber-700" />
+          <p className="mt-4 font-display text-2xl font-bold">Branch assignment required</p>
+          <p className="mt-2 text-sm text-slate-600">
+            This staff login is not assigned to Crown Court or Futures House. Ask an admin to set
+            the branch under Admin → Users & roles, then sign in again.
+          </p>
+          <button
+            onClick={() => supabase.auth.signOut()}
+            className="mt-5 rounded-full bg-primary px-6 py-2 text-sm font-semibold text-primary-foreground"
+          >
+            Sign out
+          </button>
+        </div>
+      </div>
+    );
+  }
   return <Till />;
 }
 
@@ -394,7 +422,7 @@ function Till() {
   const { has } = useRoles(user);
   const assignedSiteId =
     typeof user?.app_metadata?.site_id === "string" ? user.app_metadata.site_id : null;
-  const sites = useSites(has("admin") ? null : (assignedSiteId ?? DEFAULT_SITE_ID));
+  const sites = useSites(has("admin") ? undefined : assignedSiteId);
   const create = useServerFn(createCounterOrder);
   const createSplit = useServerFn(createCounterSplitOrder);
   const getShift = useServerFn(getTillShift);
@@ -425,6 +453,7 @@ function Till() {
   });
   const futuresHouse = isFuturesHouse(sites.site);
   const crownCourt = isCrownCourt(sites.site);
+  const receiptLocation = futuresHouse ? LOCATIONS[1] : LOCATIONS[0];
   /** One physical till per branch; Crown Court destination is stored on each order. */
   const shiftTerminal: TillTerminal = futuresHouse ? "futures_public" : "public";
   const orderDestination: TillTerminal = futuresHouse ? "futures_public" : side;
@@ -444,6 +473,7 @@ function Till() {
   const [lastOrder, setLastOrder] = useState<{ n: number; total: number; id: string } | null>(null);
   const [tendered, setTendered] = useState(0);
   const [showOrder, setShowOrder] = useState(false);
+  const [categoryDrawerOpen, setCategoryDrawerOpen] = useState(false);
   const [voucher, setVoucher] = useState<AppliedVoucher | null>(null);
   /** One-off discount keyed in by the operator for this basket only. */
   const [manualDiscount, setManualDiscount] = useState<null | {
@@ -854,6 +884,13 @@ function Till() {
       const tickets: PrintTicket[] = (["KITCHEN", "COUNTER"] as const).map((heading) => ({
         heading,
         order_number: res.order_number,
+        branch_name: receiptLocation.name,
+        address_lines: [
+          receiptLocation.streetAddress,
+          `${receiptLocation.addressLocality}, ${receiptLocation.postalCode}`,
+        ],
+        website: SITE_URL.replace(/^https?:\/\//, ""),
+        logo: heading === "COUNTER",
         fulfilment: `${FULFIL.find((f) => f.id === type)?.label ?? type}${
           laterIso
             ? ` · FOR ${new Date(laterIso).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}`
@@ -873,8 +910,13 @@ function Till() {
         const bridgePrint = await printViaDeviceBridge(tickets);
         printed = bridgePrint.ok;
         if (!printed) {
-          window.open(`/print/${res.order_id}`, "_blank");
-          toast.error(`Automatic printing failed: ${bridgePrint.message}. Print preview opened.`);
+          toast.error(`Automatic printing failed: ${bridgePrint.message}`, {
+            duration: 15_000,
+            action: {
+              label: "Open receipt",
+              onClick: () => window.open(`/print/${res.order_id}?preview=1`, "_blank"),
+            },
+          });
         }
       }
       if (paymentMethod === "cash" || paymentMethod === "split") {
@@ -895,7 +937,7 @@ function Till() {
       setManualDiscount(null);
       setSplitCash(0);
     },
-    [futuresHouse, lines, side, type, laterTime, scheduleOrder],
+    [futuresHouse, lines, side, type, laterTime, receiptLocation, scheduleOrder],
   );
 
   const finish = useCallback(
@@ -1319,6 +1361,77 @@ function Till() {
         </p>
       )}
 
+      <Sheet open={categoryDrawerOpen} onOpenChange={setCategoryDrawerOpen}>
+        <SheetContent
+          side="left"
+          className="z-[100] w-[90vw] max-w-sm overflow-y-auto border-r-0 bg-slate-50 p-0 text-slate-950 shadow-2xl min-[960px]:hidden"
+        >
+          <SheetHeader className="border-b border-slate-200 bg-gradient-to-br from-primary/15 via-white to-white px-5 pb-5 pt-[calc(1.25rem+env(safe-area-inset-top))] text-left">
+            <span className="grid h-11 w-11 place-items-center rounded-2xl bg-primary text-primary-foreground shadow-lg shadow-primary/25">
+              <PanelLeftOpen className="h-5 w-5" />
+            </span>
+            <SheetTitle className="font-display text-2xl font-black text-slate-950">
+              Till categories
+            </SheetTitle>
+            <p className="text-sm text-slate-500">
+              Choose a category and return straight to the product grid.
+            </p>
+          </SheetHeader>
+          <nav aria-label="Till categories" className="space-y-1.5 p-3 pb-28">
+            <button
+              type="button"
+              onClick={() => {
+                setCatId(FAVOURITES_CATEGORY);
+                setQ("");
+                setCategoryDrawerOpen(false);
+              }}
+              aria-current={catId === FAVOURITES_CATEGORY && !q ? "true" : undefined}
+              className={`flex min-h-14 w-full items-center gap-3 rounded-2xl px-4 text-left text-sm font-black uppercase tracking-wide transition active:scale-[0.98] ${
+                catId === FAVOURITES_CATEGORY && !q
+                  ? "bg-amber-400 text-amber-950 shadow-lg shadow-amber-400/25"
+                  : "bg-white text-amber-700"
+              }`}
+            >
+              <Star className="h-5 w-5 fill-current" />
+              <span className="flex-1">Favourites</span>
+              <span className="grid h-7 min-w-7 place-items-center rounded-full bg-black/10 px-2 text-xs">
+                {favourites.ids.length}
+              </span>
+            </button>
+            {cats.map((category) => {
+              const active = catId === category.id && !q;
+              const itemCount = items.filter((item) => item.category_id === category.id).length;
+              return (
+                <button
+                  key={category.id}
+                  type="button"
+                  onClick={() => {
+                    setCatId(category.id);
+                    setQ("");
+                    setCategoryDrawerOpen(false);
+                  }}
+                  aria-current={active ? "true" : undefined}
+                  className={`flex min-h-14 w-full items-center justify-between gap-3 rounded-2xl px-4 text-left text-sm font-black uppercase tracking-wide transition active:scale-[0.98] ${
+                    active
+                      ? "bg-primary text-primary-foreground shadow-lg shadow-primary/25"
+                      : "bg-white text-slate-700 hover:bg-slate-100"
+                  }`}
+                >
+                  <span className="truncate">{category.name}</span>
+                  <span
+                    className={`grid h-7 min-w-7 place-items-center rounded-full px-2 text-xs ${
+                      active ? "bg-white/20" : "bg-slate-100 text-slate-500"
+                    }`}
+                  >
+                    {itemCount}
+                  </span>
+                </button>
+              );
+            })}
+          </nav>
+        </SheetContent>
+      </Sheet>
+
       <div
         data-pos-region="workspace"
         className="relative grid min-h-0 min-w-0 flex-1 overflow-hidden min-[960px]:grid-cols-[minmax(0,1fr)_340px] xl:grid-cols-[172px_minmax(0,1fr)_392px] 2xl:grid-cols-[192px_minmax(0,1fr)_420px]"
@@ -1379,6 +1492,14 @@ function Till() {
           </div>
           <div className="shrink-0 space-y-2 border-b border-slate-200 p-2.5 min-[960px]:p-3 xl:space-y-0 xl:px-4 xl:py-2.5">
             <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setCategoryDrawerOpen(true)}
+                aria-label="Open till categories"
+                className="grid h-11 w-11 shrink-0 place-items-center rounded-xl border border-slate-200 bg-white text-slate-700 shadow-sm active:scale-95 sm:hidden"
+              >
+                <PanelLeftOpen className="h-5 w-5" />
+              </button>
               <div className="flex min-w-0 flex-1 items-center gap-2 rounded-xl border border-slate-200 bg-white/95 px-3 shadow-inner shadow-slate-200 focus-within:border-primary/60">
                 <Search className="h-4 w-4 shrink-0 text-slate-500" />
                 <input
@@ -1417,7 +1538,7 @@ function Till() {
               </button>
             </div>
             {!q && (
-              <div className="-mx-0.5 flex snap-x snap-mandatory scroll-px-0.5 gap-1.5 overflow-x-auto overscroll-x-contain px-0.5 pb-0.5 xl:hidden">
+              <div className="-mx-0.5 hidden snap-x snap-mandatory scroll-px-0.5 gap-1.5 overflow-x-auto overscroll-x-contain px-0.5 pb-0.5 sm:flex xl:hidden">
                 {cats.map((c) => (
                   <button
                     key={c.id}
@@ -1496,20 +1617,20 @@ function Till() {
           </div>
         </section>
 
-        {/* A scrim makes the tablet checkout sheet an explicit, dismissible task. */}
+        {/* A scrim keeps the slide-out order panel focused on phones and tablets. */}
         {showOrder && (
           <button
             type="button"
             aria-label="Close current order"
             onClick={() => setShowOrder(false)}
-            className="fixed inset-0 z-[84] hidden bg-black/60 backdrop-blur-[2px] sm:block min-[960px]:hidden"
+            className="fixed inset-0 z-[84] bg-black/55 backdrop-blur-[2px] min-[960px]:hidden"
           />
         )}
 
-        {/* Phone checkout is full-screen; tablet checkout is a right sheet; desktop is split. */}
+        {/* Mobile checkout slides in from the right; desktop keeps the efficient split view. */}
         <aside
           data-pos-region="order"
-          className={`fixed inset-0 z-[85] h-dvh min-h-0 w-full max-w-full min-w-0 flex-col overflow-hidden overscroll-contain bg-white shadow-[-12px_0_40px_-24px_rgba(0,0,0,0.9)] sm:left-auto sm:w-[min(30rem,100vw)] sm:border-l sm:border-slate-200 min-[960px]:static min-[960px]:z-auto min-[960px]:flex min-[960px]:h-auto min-[960px]:w-full ${showOrder ? "flex" : "hidden"}`}
+          className={`fixed inset-y-0 right-0 z-[85] flex h-dvh min-h-0 w-[min(31rem,94vw)] max-w-full min-w-0 flex-col overflow-hidden overscroll-contain border-l border-slate-200 bg-white shadow-[-18px_0_50px_-24px_rgba(15,23,42,0.75)] transition-[transform,visibility] duration-300 ease-out min-[960px]:static min-[960px]:z-auto min-[960px]:h-auto min-[960px]:w-full min-[960px]:translate-x-0 min-[960px]:visible min-[960px]:border-l-0 min-[960px]:shadow-none ${showOrder ? "visible translate-x-0" : "invisible translate-x-full pointer-events-none"}`}
         >
           <div className="relative z-10 grid shrink-0 grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-2 border-b border-slate-200 bg-white px-2.5 pb-2.5 pt-[calc(0.625rem+env(safe-area-inset-top))] shadow-lg shadow-slate-300/50 min-[380px]:gap-3 min-[380px]:px-3 min-[960px]:hidden">
             <button
@@ -1819,7 +1940,7 @@ function Till() {
           )}
 
           {pay === "cash" && (
-            <div className="min-h-0 shrink overflow-y-auto border-t border-slate-200 p-2.5 min-[380px]:p-3 md:shrink-0 md:p-2.5">
+            <div className="min-h-0 shrink overflow-y-auto border-t border-slate-200 p-2.5 min-[380px]:p-3 md:p-2.5 min-[960px]:max-h-[min(23rem,42dvh)]">
               <div className="mb-1.5 grid grid-cols-3 items-end gap-2 rounded-2xl border border-slate-100 bg-slate-100 px-3 py-2 md:mb-1.5 md:py-2">
                 <div>
                   <p className="text-[10px] font-bold uppercase tracking-widest text-slate-500">
@@ -1896,10 +2017,8 @@ function Till() {
             </div>
           )}
 
-          {lines.length > 0 && (
-            <div
-              className={`shrink-0 space-y-1.5 border-t border-slate-200 px-3 pt-2 text-sm ${pay === "cash" ? "hidden min-[960px]:block" : ""}`}
-            >
+          {lines.length > 0 && pay === null && (
+            <div className="shrink-0 space-y-1.5 border-t border-slate-200 px-3 pt-2 text-sm">
               {manualDiscount ? (
                 <div className="rounded-2xl border border-amber-300 bg-amber-50 p-2.5 text-amber-950 shadow-sm">
                   <div className="flex items-start gap-2.5">
@@ -1983,7 +2102,7 @@ function Till() {
             />
           )}
 
-          <div className="shrink-0 space-y-2 border-t border-slate-200 bg-slate-100 p-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] md:space-y-1.5 md:p-2.5">
+          <div className="relative z-20 mt-auto shrink-0 space-y-2 border-t border-slate-200 bg-slate-100 p-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] shadow-[0_-12px_28px_-24px_rgba(15,23,42,0.9)] md:space-y-1.5 md:p-2.5">
             {lines.length > 0 && pay !== "cash" && (
               <div className="flex items-baseline justify-between rounded-2xl bg-slate-100 px-4 py-2.5 md:py-2">
                 <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">
@@ -2072,38 +2191,86 @@ function Till() {
         </aside>
       </div>
 
-      {/* mobile order bar */}
-      {!showOrder && (
+      {/* Native-style mobile till dock. */}
+      <nav
+        data-pos-region="mobile-order-bar"
+        aria-label="Till tools"
+        className="fixed inset-x-2 bottom-[calc(0.5rem+env(safe-area-inset-bottom))] z-30 grid h-[4.35rem] grid-cols-4 overflow-hidden rounded-[1.35rem] border border-slate-200 bg-white/95 px-1 shadow-2xl shadow-slate-400/40 backdrop-blur min-[960px]:hidden"
+      >
         <button
-          data-pos-region="mobile-order-bar"
-          onClick={() => setShowOrder(true)}
-          className="fixed inset-x-2 bottom-[calc(0.5rem+env(safe-area-inset-bottom))] z-30 grid h-14 grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-2 rounded-2xl border border-slate-200 bg-primary px-2.5 text-left text-primary-foreground shadow-2xl shadow-primary/30 transition active:scale-[0.99] min-[360px]:h-16 min-[360px]:gap-3 min-[360px]:px-3.5 min-[960px]:hidden"
+          type="button"
+          onClick={() => {
+            setShowOrder(false);
+            setMenuOpen(false);
+            setCategoryDrawerOpen(true);
+          }}
+          className="relative flex flex-col items-center justify-center gap-1 rounded-2xl text-[10px] font-black uppercase tracking-wide text-slate-600 active:scale-95"
         >
-          <span className="relative grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-black/15">
+          <PanelLeftOpen className="h-5 w-5" />
+          Categories
+        </button>
+        <button
+          type="button"
+          onClick={() => {
+            setCategoryDrawerOpen(false);
+            setShowOrder(false);
+            setMenuOpen(false);
+          }}
+          aria-current={!showOrder && !categoryDrawerOpen && !menuOpen ? "page" : undefined}
+          className={`relative flex flex-col items-center justify-center gap-1 rounded-2xl text-[10px] font-black uppercase tracking-wide active:scale-95 ${
+            !showOrder && !categoryDrawerOpen && !menuOpen
+              ? "bg-primary/10 text-primary"
+              : "text-slate-600"
+          }`}
+        >
+          <UtensilsCrossed className="h-5 w-5" />
+          Browse
+          {!showOrder && !categoryDrawerOpen && !menuOpen && (
+            <span className="absolute inset-x-5 top-0 h-0.5 rounded-full bg-primary" />
+          )}
+        </button>
+        <button
+          type="button"
+          onClick={() => {
+            setCategoryDrawerOpen(false);
+            setMenuOpen(false);
+            setShowOrder(true);
+          }}
+          aria-current={showOrder ? "page" : undefined}
+          className={`relative flex flex-col items-center justify-center gap-1 rounded-2xl text-[10px] font-black uppercase tracking-wide active:scale-95 ${
+            showOrder ? "bg-primary/10 text-primary" : "text-slate-600"
+          }`}
+        >
+          <span className="relative">
             <ReceiptText className="h-5 w-5" />
             {count > 0 && (
-              <span className="absolute -right-1 -top-1 grid h-5 min-w-5 place-items-center rounded-full bg-white px-1 text-[10px] font-black text-primary">
+              <span className="absolute -right-2.5 -top-2 grid h-4 min-w-4 place-items-center rounded-full bg-primary px-1 text-[9px] text-primary-foreground">
                 {count > 99 ? "99+" : count}
               </span>
             )}
           </span>
-          <span className="min-w-0">
-            <span className="block truncate text-sm font-black uppercase tracking-wide">
-              View order
-            </span>
-            <span className="block truncate text-[11px] font-semibold text-primary-foreground/75">
-              {count
-                ? `${fulfilLabel} · ${count} item${count === 1 ? "" : "s"}`
-                : `${fulfilLabel} · tap to review`}
-            </span>
-          </span>
-          <span className="font-display text-xl font-black tabular-nums">{money(due)}</span>
+          Order · {money(due)}
         </button>
-      )}
+        <button
+          type="button"
+          onClick={() => {
+            setCategoryDrawerOpen(false);
+            setShowOrder(false);
+            setMenuOpen((value) => !value);
+          }}
+          aria-expanded={menuOpen}
+          className={`relative flex flex-col items-center justify-center gap-1 rounded-2xl text-[10px] font-black uppercase tracking-wide active:scale-95 ${
+            menuOpen ? "bg-slate-900 text-white" : "text-slate-600"
+          }`}
+        >
+          <MoreHorizontal className="h-5 w-5" />
+          More
+        </button>
+      </nav>
 
       {payOpen && (
         <div className="fixed inset-0 z-[110] flex items-end justify-center bg-black/70 p-0 backdrop-blur-sm sm:items-center sm:p-4">
-          <div className="w-full max-w-md rounded-t-3xl border border-slate-200 bg-white p-4 shadow-2xl sm:rounded-3xl">
+          <div className="max-h-[calc(100dvh-1rem)] w-full max-w-md overflow-y-auto rounded-t-3xl border border-slate-200 bg-white p-4 pb-[calc(1rem+env(safe-area-inset-bottom))] shadow-2xl sm:max-h-[90dvh] sm:rounded-3xl sm:pb-4">
             <div className="mb-4 flex items-baseline justify-between">
               <h2 className="font-display text-lg font-black">How are they paying?</h2>
               <span className="font-display text-2xl font-black tabular-nums text-primary">

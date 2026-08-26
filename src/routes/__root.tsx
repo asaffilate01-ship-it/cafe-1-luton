@@ -25,7 +25,12 @@ import { ConfirmHost } from "../components/confirm-dialog";
 import { Toaster } from "../components/ui/sonner";
 import { registerServiceWorker } from "../lib/register-sw";
 import { LegacyBrowserNotice } from "../components/legacy-browser-notice";
-import { jsonLdScript, websiteJsonLd } from "../lib/seo";
+import {
+  DEFAULT_SEO_KEYWORDS,
+  DEFAULT_SOCIAL_IMAGE,
+  jsonLdScript,
+  websiteJsonLd,
+} from "../lib/seo";
 
 function NotFoundComponent() {
   return (
@@ -106,6 +111,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         content:
           "Café 1 is a halal café in Luton serving all-day breakfast, Desi favourites, lunch and coffee at Luton Crown Court and Futures House, Marsh Farm.",
       },
+      { name: "keywords", content: DEFAULT_SEO_KEYWORDS.join(", ") },
       { name: "author", content: "Café 1 Luton team" },
       {
         name: "robots",
@@ -137,11 +143,23 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       },
       {
         property: "og:image",
-        content: "https://cafe1luton.co.uk/icon-512.png",
+        content: DEFAULT_SOCIAL_IMAGE,
+      },
+      { property: "og:image:secure_url", content: DEFAULT_SOCIAL_IMAGE },
+      { property: "og:image:type", content: "image/jpeg" },
+      { property: "og:image:width", content: "1200" },
+      { property: "og:image:height", content: "630" },
+      {
+        property: "og:image:alt",
+        content: "Café 1 Luton halal breakfast, lunch and coffee at two Luton locations",
       },
       {
         name: "twitter:image",
-        content: "https://cafe1luton.co.uk/icon-512.png",
+        content: DEFAULT_SOCIAL_IMAGE,
+      },
+      {
+        name: "twitter:image:alt",
+        content: "Café 1 Luton halal breakfast, lunch and coffee at two Luton locations",
       },
     ],
     links: [
@@ -149,7 +167,10 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         rel: "stylesheet",
         href: appCss,
       },
-      { rel: "icon", href: "/favicon.png", type: "image/png" },
+      { rel: "icon", href: "/favicon.ico", sizes: "any" },
+      { rel: "icon", href: "/favicon-16x16.png", type: "image/png", sizes: "16x16" },
+      { rel: "icon", href: "/favicon-32x32.png", type: "image/png", sizes: "32x32" },
+      { rel: "icon", href: "/favicon.png", type: "image/png", sizes: "256x256" },
       { rel: "apple-touch-icon", href: "/apple-touch-icon.png", sizes: "180x180" },
       { rel: "manifest", href: "/manifest.webmanifest" },
     ],

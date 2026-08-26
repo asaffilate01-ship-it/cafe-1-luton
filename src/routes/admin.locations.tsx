@@ -30,6 +30,18 @@ const EMPTY: Form = {
   marketplace_delivery_enabled: false,
   own_delivery_enabled: false,
 };
+const FUTURES_HOUSE_PRESET: Form = {
+  code: "FUTURES_HOUSE",
+  name: "Café 1 Futures House",
+  legal_name: "Café 1 (UK) Ltd",
+  trading_name: "Café 1 Futures House",
+  postcode: "LU3 3QB",
+  timezone: "Europe/London",
+  active: true,
+  ordering_modes: ["dine_in", "collection"],
+  marketplace_delivery_enabled: false,
+  own_delivery_enabled: false,
+};
 function LocationsPage() {
   const list = useServerFn(listSites);
   const save = useServerFn(saveSite);
@@ -118,6 +130,19 @@ function LocationsPage() {
               <Plus className="h-4 w-4" />
               Add location
             </button>
+            {!sites.some(
+              (site) =>
+                site.code.toUpperCase() === "FUTURES_HOUSE" ||
+                site.postcode?.toUpperCase() === "LU3 3QB",
+            ) && (
+              <button
+                onClick={() => setForm(FUTURES_HOUSE_PRESET)}
+                className="ml-2 inline-flex h-11 items-center gap-2 rounded-xl bg-primary px-4 font-semibold text-primary-foreground"
+              >
+                <Building2 className="h-4 w-4" />
+                Add Futures House till + KDS
+              </button>
+            )}
           </section>
           <form onSubmit={submit} className="h-fit rounded-2xl border border-border bg-card p-5">
             <h2 className="font-display text-xl font-bold">{form.id ? "Edit site" : "New site"}</h2>

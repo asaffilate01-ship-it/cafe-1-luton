@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { requireStaffOrderAccess } from "./staff-site-access.server";
 
 /**
  * Re-verifies a checkout with SumUp. Calls are rate-limited and every amount,
@@ -98,11 +99,7 @@ export const refundOrder = createServerFn({ method: "POST" })
       .parse(d),
   )
   .handler(async ({ data, context }) => {
-    const [{ data: isAdmin }, { data: isStaff }] = await Promise.all([
-      context.supabase.rpc("has_role", { _user_id: context.userId, _role: "admin" }),
-      context.supabase.rpc("has_role", { _user_id: context.userId, _role: "staff" }),
-    ]);
-    if (!isAdmin && !isStaff) throw new Error("Staff access required");
+    await requireStaffOrderAccess(context, data.order_id);
 
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data: prior } = await supabaseAdmin

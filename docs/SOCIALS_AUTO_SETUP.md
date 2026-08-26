@@ -13,8 +13,8 @@ These use the official public profile embeds and do not require API tokens. TikT
 its supported creator-profile embed script rather than an unsupported profile iframe:
 
 ```text
-VITE_SOCIAL_TIKTOK_URL=https://www.tiktok.com/@cafe1luton
-VITE_SOCIAL_FACEBOOK_URL=https://www.facebook.com/cafe1luton
+VITE_SOCIAL_TIKTOK_URL=https://www.tiktok.com/@cafe1.luton
+VITE_SOCIAL_FACEBOOK_URL=https://www.facebook.com/Cafe1luton
 ```
 
 Visitors must allow marketing cookies before either provider is loaded. The paused card now offers

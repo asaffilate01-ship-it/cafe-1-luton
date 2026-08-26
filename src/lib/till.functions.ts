@@ -1,6 +1,11 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import {
+  requireStaffOrderAccess,
+  requireStaffShiftAccess,
+  requireStaffSiteAccess,
+} from "./staff-site-access.server";
 
 type StaffContext = {
   userId: string;
@@ -41,7 +46,7 @@ export const getTillShift = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .validator((d: unknown) => SiteTerminalSchema.parse(d))
   .handler(async ({ data, context }) => {
-    await assertStaff(context);
+    await requireStaffSiteAccess(context, data.site_id);
     const { data: shift, error } = await context.supabase
       .from("till_shifts")
       .select("*")
@@ -65,7 +70,7 @@ export const openTillShift = createServerFn({ method: "POST" })
       .parse(d),
   )
   .handler(async ({ data, context }) => {
-    await assertStaff(context);
+    await requireStaffSiteAccess(context, data.site_id);
     const { data: openedShift, error } = await context.supabase.rpc("open_till_shift", {
       _terminal: data.terminal,
       _opening_float_cents: data.opening_float_cents,
@@ -107,7 +112,7 @@ export const closeTillShift = createServerFn({ method: "POST" })
       .parse(d),
   )
   .handler(async ({ data, context }) => {
-    await assertStaff(context);
+    await requireStaffShiftAccess(context, data.shift_id);
     const { data: shift, error } = await context.supabase.rpc("close_till_shift", {
       _shift_id: data.shift_id,
       _counted_cash_cents: data.counted_cash_cents,
@@ -130,7 +135,7 @@ export const recordTillCashEvent = createServerFn({ method: "POST" })
       .parse(d),
   )
   .handler(async ({ data, context }) => {
-    await assertStaff(context);
+    await requireStaffShiftAccess(context, data.shift_id);
     const { data: event, error } = await context.supabase.rpc("record_till_cash_event", {
       _shift_id: data.shift_id,
       _event_type: data.event_type,
@@ -146,7 +151,7 @@ export const listRecentTillOrders = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .validator((d: unknown) => z.object({ site_id: z.string().uuid() }).parse(d))
   .handler(async ({ data, context }) => {
-    await assertStaff(context);
+    await requireStaffSiteAccess(context, data.site_id);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data: orders, error } = await supabaseAdmin
       .from("orders")
@@ -224,7 +229,7 @@ export const startReaderPayment = createServerFn({ method: "POST" })
       .parse(d),
   )
   .handler(async ({ data, context }) => {
-    await assertStaff(context);
+    await requireStaffOrderAccess(context, data.order_id);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data: order, error: orderError } = await supabaseAdmin
       .from("orders")
@@ -321,6 +326,7 @@ export const checkReaderPayment = createServerFn({ method: "POST" })
     if (!attempt || (attempt.created_by !== context.userId && !(await isAdmin(context)))) {
       throw new Error("Payment attempt not found");
     }
+    await requireStaffOrderAccess(context, attempt.order_id);
     const { settleReaderAttempt } = await import("./reader-settle.server");
     return settleReaderAttempt(attempt);
   });
@@ -348,6 +354,7 @@ export const cancelReaderPayment = createServerFn({ method: "POST" })
         .eq("id", data.payment_attempt_id)
         .eq("created_by", context.userId)
         .maybeSingle();
+      if (attempt?.order_id) await requireStaffOrderAccess(context, attempt.order_id);
       if (attempt?.status === "created") {
         await supabaseAdmin
           .from("payment_attempts")

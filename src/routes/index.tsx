@@ -29,7 +29,17 @@ const description =
 
 export const Route = createFileRoute("/")({
   head: () => ({
-    meta: seoMeta({ title, description, path: "/", image: heroImage }),
+    meta: seoMeta({
+      title,
+      description,
+      path: "/",
+      keywords: [
+        "halal full English breakfast Luton",
+        "breakfast near Luton Crown Court",
+        "cafe Marsh Farm Luton",
+        "cheese flan Luton",
+      ],
+    }),
     links: [
       canonicalLink("/"),
       { rel: "preload", as: "image", href: heroImage, fetchPriority: "high" },
@@ -121,7 +131,7 @@ function Home() {
                   <p className="text-xs uppercase tracking-wider text-muted-foreground">
                     Customer favourite
                   </p>
-                  <p className="font-semibold">Full Desi Breakfast · £8.95</p>
+                  <p className="font-semibold">Full Desi Breakfast · £9.99</p>
                 </div>
               </div>
             </div>

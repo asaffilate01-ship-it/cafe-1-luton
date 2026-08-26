@@ -12,6 +12,7 @@ export type SocialProfile = {
   platform: SocialPlatform;
   label: string;
   url: string;
+  profileId: string;
 };
 
 export type AutomaticSocialProvider = "youtube" | "instagram";
@@ -153,14 +154,17 @@ export function parseSocialPosts(raw: unknown): SocialPost[] {
 function profile(platform: SocialPlatform, raw: unknown, fallback = ""): SocialProfile | null {
   const url = httpsUrl(typeof raw === "string" && raw.trim() ? raw : fallback);
   if (!url || !ALLOWED_PROFILE_HOSTS[platform].has(url.hostname)) return null;
-  return { platform, label: PLATFORM_LABELS[platform], url: url.toString() };
+  const pathId = decodeURIComponent(url.pathname.split("/").filter(Boolean)[0] ?? "");
+  if (!pathId) return null;
+  const profileId = platform === "instagram" && !pathId.startsWith("@") ? `@${pathId}` : pathId;
+  return { platform, label: PLATFORM_LABELS[platform], url: url.toString(), profileId };
 }
 
 export function createSocialProfiles(env: Record<string, unknown>): SocialProfile[] {
   return [
-    profile("facebook", env.VITE_SOCIAL_FACEBOOK_URL, "https://www.facebook.com/cafe1luton"),
+    profile("facebook", env.VITE_SOCIAL_FACEBOOK_URL, "https://www.facebook.com/Cafe1luton"),
     profile("instagram", env.VITE_SOCIAL_INSTAGRAM_URL, "https://www.instagram.com/cafe1luton/"),
-    profile("tiktok", env.VITE_SOCIAL_TIKTOK_URL, "https://www.tiktok.com/@cafe1luton"),
+    profile("tiktok", env.VITE_SOCIAL_TIKTOK_URL, "https://www.tiktok.com/@cafe1.luton"),
     profile("youtube", env.VITE_SOCIAL_YOUTUBE_URL),
   ].filter((item): item is SocialProfile => Boolean(item));
 }

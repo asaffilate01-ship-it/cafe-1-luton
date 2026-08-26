@@ -2,6 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { guessCategory } from "@/lib/cooking";
+import { requireStaffOrderAccess, requireStaffSiteAccess } from "./staff-site-access.server";
 
 const LineSchema = z.object({
   name: z.string().min(1).max(120),
@@ -80,11 +81,7 @@ export const createManualOrder = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .validator((input: unknown) => OrderSchema.parse(input))
   .handler(async ({ data, context }) => {
-    const [{ data: isAdmin }, { data: isStaff }] = await Promise.all([
-      context.supabase.rpc("has_role", { _user_id: context.userId, _role: "admin" }),
-      context.supabase.rpc("has_role", { _user_id: context.userId, _role: "staff" }),
-    ]);
-    if (!isAdmin && !isStaff) throw new Error("Kitchen or manager access required");
+    await requireStaffSiteAccess(context, data.site_id);
 
     const routing = CHANNEL_ROUTING[data.channel];
     const reference = data.reference?.trim().toUpperCase() || "";
@@ -206,11 +203,7 @@ export const updateManualOrder = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .validator((input: unknown) => EditSchema.parse(input))
   .handler(async ({ data, context }) => {
-    const [{ data: isAdmin }, { data: isStaff }] = await Promise.all([
-      context.supabase.rpc("has_role", { _user_id: context.userId, _role: "admin" }),
-      context.supabase.rpc("has_role", { _user_id: context.userId, _role: "staff" }),
-    ]);
-    if (!isAdmin && !isStaff) throw new Error("Kitchen or manager access required");
+    await requireStaffOrderAccess(context, data.order_id);
 
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const total = data.total_cents;
