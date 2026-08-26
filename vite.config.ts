@@ -88,11 +88,14 @@ const clientAbortGuardPlugin = (): Plugin => ({
 // Fallback backend connection values (publishable, safe to commit). The managed
 // .env has intermittently been generated without these, which breaks the built
 // client with "Missing Supabase environment variable(s)". Keep the build green.
-process.env.VITE_SUPABASE_URL ||= "https://hviprglhhlwgsitdfvxp.supabase.co";
-process.env.VITE_SUPABASE_PUBLISHABLE_KEY ||= "sb_publishable_2ISD80iREidAoqebB9d3ag_AbzP4Njh";
-process.env.VITE_SUPABASE_PROJECT_ID ||= "hviprglhhlwgsitdfvxp";
-process.env.SUPABASE_URL ||= process.env.VITE_SUPABASE_URL;
-process.env.SUPABASE_PUBLISHABLE_KEY ||= process.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+// This remixed project previously carried environment values for the source
+// project's backend. Pin the publishable connection to this project's Lovable
+// Cloud backend so production and preview always read the same menu data.
+process.env.VITE_SUPABASE_URL = "https://otpcizzzeibwbghypdty.supabase.co";
+process.env.VITE_SUPABASE_PUBLISHABLE_KEY = "sb_publishable_1H3NDGhLZAQG5C2wD17uHQ_F40lnmsc";
+process.env.VITE_SUPABASE_PROJECT_ID = "otpcizzzeibwbghypdty";
+process.env.SUPABASE_URL = process.env.VITE_SUPABASE_URL;
+process.env.SUPABASE_PUBLISHABLE_KEY = process.env.VITE_SUPABASE_PUBLISHABLE_KEY;
 
 export default defineConfig({
   tanstackStart: {
