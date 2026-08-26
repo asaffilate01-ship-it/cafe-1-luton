@@ -6,6 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useSession } from "@/hooks/use-auth";
 import { getCustomerFavourites, toggleFavourite } from "@/lib/customer-experience.functions";
 import { SiteHeader, SiteFooter } from "@/components/site-header";
+import { InstallAppButton } from "@/components/install-app-button";
 import { PromoBanner } from "@/components/promo-banner";
 import { PromoCarousel } from "@/components/promo-carousel";
 import { StoreStatus } from "@/components/store-status";
@@ -435,7 +436,14 @@ function MenuPage() {
           <p className="text-[11px] font-medium uppercase tracking-widest text-primary sm:text-xs">
             Cafe1 · Luton
           </p>
-          <h1 className="mt-0.5 font-display text-2xl font-bold sm:mt-1 sm:text-5xl">Menu</h1>
+          <div className="mt-0.5 flex flex-wrap items-center justify-between gap-2 sm:mt-1">
+            <h1 className="font-display text-2xl font-bold sm:text-5xl">Menu</h1>
+            <InstallAppButton
+              manifest="/manifest.webmanifest"
+              label="Install app"
+              className="flex items-center gap-1.5 rounded-full border border-primary/30 bg-primary/5 px-3 py-1.5 text-xs font-semibold text-primary hover:bg-primary/10"
+            />
+          </div>
           <p className="mt-1 hidden max-w-xl text-sm text-muted-foreground sm:mt-2 sm:block">
             Freshly made all day. Choose Luton Crown Court or Futures House, then dine in or take
             away.
