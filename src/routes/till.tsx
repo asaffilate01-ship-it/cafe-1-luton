@@ -38,7 +38,6 @@ import { chargeOrderToAccount, findSimilarAccountOrder } from "@/lib/judge-tab.f
 import { QrCode } from "@/components/qr-code";
 import { InstallAppButton } from "@/components/install-app-button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
-import { ReaderLinkGuide } from "@/components/reader-connection";
 import { money } from "@/lib/format";
 import { LOCATIONS, SITE_URL } from "@/lib/nap";
 import { calculateCounterDue } from "@/lib/counter-pricing";
@@ -3942,7 +3941,10 @@ function TillSettings({
         <p className="text-xs font-bold uppercase tracking-widest text-slate-500">
           EVO Mobile/3500 card terminal
         </p>
-        <ReaderLinkGuide defaultMode="bluetooth" />
+        <p className="mt-1 text-xs text-slate-300">
+          The EVO terminal runs in standalone mode. Take the card payment on the terminal, then
+          record the approved receipt reference against the order on this till.
+        </p>
       </div>
 
       <p className="mt-6 text-xs font-bold uppercase tracking-widest text-slate-500">

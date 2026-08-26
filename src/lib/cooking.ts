@@ -211,7 +211,6 @@ const VAGUE_LABELS = new Set([
   "uncategorised",
   "uncategorized",
   "default",
-  "sumup",
   "pos",
   "custom",
   "custom amount",

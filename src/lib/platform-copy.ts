@@ -44,7 +44,7 @@ const en = {
       ["Branded website & SEO", "Fast, mobile-first marketing site with local SEO pages, blog, structured data, sitemap and social feeds — built per venue, not a template page."],
       ["Direct ordering app (PWA)", "Dine-in, collection and delivery with time slots, live menu search, allergen info, saved baskets and installable app on iOS and Android."],
       ["Kitchen Display System", "Colour-coded KDS by channel and fulfilment type, cooked/not-cooked banners, area moves, audible alerts and dual ticket printing."],
-      ["EPOS & card payments", "Till app with SumUp Solo card reader, cash drawer, customer display, receipt printing and online card checkout — one ledger for every channel."],
+      ["EPOS & card payments", "Till app with card reader, cash drawer, customer display, receipt printing and online card checkout — one ledger for every channel."],
       ["Vouchers & code schemes", "Built-in voucher issuing, gated access codes, single-use redemption, automatic email-based discounts and secure server-side promo validation."],
       ["Driver app & live tracking", "Assign or claim jobs, turn-by-turn routing, live map tracking for customers and automatic status notifications end to end."],
       ["Financials & reporting", "Sales, gross margin, food cost, expenses, supplier invoices, payment mix, settlement imports and daily P&L snapshots."],
@@ -109,7 +109,7 @@ const en = {
     lead: "Every part of the platform follows compliance-minded defaults: secure payments, transparent data handling, audit trails and accessibility from the start.",
     items: [
       ["Encrypted & secure", "HTTPS in transit, role-based access, row-level database security and audit logs for sensitive changes."],
-      ["Payment-safe", "Card payments are handled by SumUp. The platform never stores full card numbers, CVV or PIN data."],
+      ["Payment-safe", "Card payments are handled by a PCI-compliant card processor. The platform never stores full card numbers, CVV or PIN data."],
       ["Cookie consent", "Granular consent for analytics and marketing, with strictly-necessary storage only until a choice is made."],
       ["GDPR-ready", "Data request workflows, purpose limitation and clear privacy, terms and cookie policies for every tenant."],
     ] as [string, string][],
@@ -142,12 +142,12 @@ const en = {
     privacy: {
       heading: "Privacy & GDPR",
       badges: ["Cookie consent", "Data request workflows", "Lawful-basis purpose limiting"],
-      body: "We collect the minimum data needed to take, prepare and deliver an order. Card details are handled by SumUp and never stored by us. Cookie consent is required before any analytics or marketing storage loads, and customers can request data deletion or export through the venue contact. Each tenant's own privacy notice explains their specific data use.",
+      body: "We collect the minimum data needed to take, prepare and deliver an order. Card details are handled by the card processor and never stored by us. Cookie consent is required before any analytics or marketing storage loads, and customers can request data deletion or export through the venue contact. Each tenant's own privacy notice explains their specific data use.",
     },
     payments: {
       heading: "Payments",
-      badges: ["SumUp card processing", "No card data stored"],
-      body: "Online, till and card-reader payments are processed by SumUp, which maintains its own PCI DSS compliance programme. The platform stores only a payment reference and status, never the full card number, CVV or PIN.",
+      badges: ["PCI-compliant card processing", "No card data stored"],
+      body: "Online, till and card-reader payments are processed by a PCI DSS compliant card processor. The platform stores only a payment reference and status, never the full card number, CVV or PIN.",
     },
     accessibility: {
       heading: "Accessibility",
@@ -213,7 +213,7 @@ const de: PlatformCopy = {
       ["Website mit eigener Marke & SEO", "Schnelle, mobil-optimierte Website mit lokalen SEO-Seiten, Blog, strukturierten Daten, Sitemap und Social-Feeds — individuell pro Betrieb, keine Vorlagenseite."],
       ["Direktbestell-App (PWA)", "Vor Ort, Abholung und Lieferung mit Zeitfenstern, Live-Suche, Allergenangaben, gespeicherten Warenkörben und installierbarer App für iOS und Android."],
       ["Küchendisplay-System", "Farbcodiertes Küchendisplay nach Kanal und Bestellart, Banner für zubereitet/offen, Bereichswechsel, akustische Signale und doppelter Bonausdruck."],
-      ["Kassensystem & Kartenzahlung", "Kassen-App mit SumUp-Solo-Kartenleser, Kassenlade, Kundendisplay, Belegdruck und Online-Kartenzahlung — ein Buchungsjournal für alle Kanäle."],
+      ["Kassensystem & Kartenzahlung", "Kassen-App mit Kartenleser, Kassenlade, Kundendisplay, Belegdruck und Online-Kartenzahlung — ein Buchungsjournal für alle Kanäle."],
       ["Gutscheine & Code-Systeme", "Gutscheinausgabe, geschützte Zugangscodes, Einmal-Einlösung, automatische E-Mail-basierte Rabatte und sichere serverseitige Aktionscode-Prüfung."],
       ["Fahrer-App & Live-Tracking", "Aufträge zuweisen oder annehmen, Navigation, Live-Karte für Kundinnen und Kunden sowie automatische Statusbenachrichtigungen."],
       ["Finanzen & Auswertungen", "Umsatz, Rohertrag, Wareneinsatz, Ausgaben, Lieferantenrechnungen, Zahlungsmix, Abrechnungsimporte und tägliche Ergebnisberichte."],
@@ -278,7 +278,7 @@ const de: PlatformCopy = {
     lead: "Jeder Teil der Plattform folgt compliance-orientierten Standards: sichere Zahlungen, transparente Datenverarbeitung, Audit-Protokolle und Barrierefreiheit von Anfang an.",
     items: [
       ["Verschlüsselt & sicher", "HTTPS bei der Übertragung, rollenbasierte Zugriffe, Row-Level-Sicherheit und Audit-Protokolle für sensible Änderungen."],
-      ["Zahlungssicher", "Kartenzahlungen werden von SumUp abgewickelt. Die Plattform speichert nie vollständige Kartennummern, CVV oder PIN."],
+      ["Zahlungssicher", "Kartenzahlungen werden vom Zahlungsdienstleister abgewickelt. Die Plattform speichert nie vollständige Kartennummern, CVV oder PIN."],
       ["Cookie-Einwilligung", "Granulare Einwilligung für Analyse und Marketing; bis zur Entscheidung werden nur notwendige Daten gespeichert."],
       ["DSGVO-bereit", "Prozesse für Auskunfts- und Löschanfragen, Zweckbindung sowie klare Datenschutz-, AGB- und Cookie-Richtlinien für jeden Mandanten."],
     ],
@@ -311,12 +311,12 @@ const de: PlatformCopy = {
     privacy: {
       heading: "Datenschutz & DSGVO",
       badges: ["Cookie-Einwilligung", "Prozesse für Datenanfragen", "Zweckbindung nach Rechtsgrundlage"],
-      body: "Wir erheben nur die Daten, die zur Annahme, Zubereitung und Lieferung einer Bestellung nötig sind. Kartendaten werden von SumUp verarbeitet und nie von uns gespeichert. Vor dem Laden von Analyse- oder Marketing-Speicher ist eine Cookie-Einwilligung erforderlich; Gäste können Löschung oder Export über den Betrieb anfordern. Die Datenschutzerklärung jedes Mandanten erläutert die konkrete Datennutzung.",
+      body: "Wir erheben nur die Daten, die zur Annahme, Zubereitung und Lieferung einer Bestellung nötig sind. Kartendaten werden vom Zahlungsdienstleister verarbeitet und nie von uns gespeichert. Vor dem Laden von Analyse- oder Marketing-Speicher ist eine Cookie-Einwilligung erforderlich; Gäste können Löschung oder Export über den Betrieb anfordern. Die Datenschutzerklärung jedes Mandanten erläutert die konkrete Datennutzung.",
     },
     payments: {
       heading: "Zahlungen",
-      badges: ["Kartenzahlung über SumUp", "Keine Kartendaten gespeichert"],
-      body: "Online-, Kassen- und Kartenleserzahlungen werden von SumUp verarbeitet, das ein eigenes PCI-DSS-Compliance-Programm unterhält. Die Plattform speichert nur Zahlungsreferenz und Status, nie die vollständige Kartennummer, CVV oder PIN.",
+      badges: ["PCI-konforme Kartenzahlung", "Keine Kartendaten gespeichert"],
+      body: "Online-, Kassen- und Kartenleserzahlungen werden von einem PCI-DSS-konformen Zahlungsdienstleister verarbeitet. Die Plattform speichert nur Zahlungsreferenz und Status, nie die vollständige Kartennummer, CVV oder PIN.",
     },
     accessibility: {
       heading: "Barrierefreiheit",

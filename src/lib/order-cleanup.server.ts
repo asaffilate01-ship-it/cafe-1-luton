@@ -1,73 +1,18 @@
 /**
- * Reconciles stale payment orders without deleting financial records. A paid
- * SumUp checkout is recovered first; only authoritatively unpaid/expired rows
- * are marked abandoned and have their reserved benefits released.
+ * Reconciles stale payment orders without deleting financial records. Only
+ * authoritatively unpaid/expired rows are marked abandoned and have their
+ * reserved benefits released.
  */
-import {
-  decideSumUpCleanup,
-  isPastCleanupThreshold,
-  WEB_UNPAID_TTL_MS,
-} from "./order-cleanup-policy";
-
-async function reconcileReaderPayments(): Promise<number> {
-  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-  const { getReaderTransaction } = await import("./sumup-readers.server");
-  const { data: attempts } = await supabaseAdmin
-    .from("payment_attempts")
-    .select("*")
-    .in("status", ["pending", "paid"])
-    .lt("created_at", new Date(Date.now() - 30_000).toISOString())
-    .limit(100);
-
-  let recovered = 0;
-  for (const attempt of attempts ?? []) {
-    if (attempt.status === "pending" && attempt.client_transaction_id) {
-      const transaction = await getReaderTransaction(attempt.client_transaction_id);
-      const status = transaction?.status?.toUpperCase() ?? "PENDING";
-      if (status === "SUCCESSFUL" || status === "PAID") {
-        const amountCents = Math.round(Number(transaction?.amount ?? 0) * 100);
-        const transactionId = transaction?.id ?? transaction?.transaction_code;
-        if (
-          amountCents === attempt.amount_cents &&
-          (transaction?.currency ?? "GBP") === attempt.currency &&
-          transactionId
-        ) {
-          await supabaseAdmin
-            .from("payment_attempts")
-            .update({ status: "paid", provider_transaction_id: transactionId })
-            .eq("id", attempt.id)
-            .eq("status", "pending");
-          attempt.status = "paid";
-          attempt.provider_transaction_id = transactionId;
-        }
-      } else if (["FAILED", "CANCELLED", "CANCELED"].includes(status)) {
-        await supabaseAdmin
-          .from("payment_attempts")
-          .update({ status: "failed", failure_reason: `Reader returned ${status}` })
-          .eq("id", attempt.id);
-      }
-    }
-
-    if (attempt.status === "paid" && attempt.provider_transaction_id) {
-      const { error } = await supabaseAdmin.rpc("finalize_counter_card", {
-        _order_id: attempt.order_id,
-        _payment_attempt_id: attempt.id,
-      });
-      if (!error) recovered++;
-    }
-  }
-  return recovered;
-}
+import { isPastCleanupThreshold, WEB_UNPAID_TTL_MS } from "./order-cleanup-policy";
 
 export async function purgeStaleUnpaidOrders(): Promise<number> {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-  await reconcileReaderPayments();
   const cutoff = new Date(Date.now() - WEB_UNPAID_TTL_MS).toISOString();
 
   const { data: stale } = await supabaseAdmin
     .from("orders")
     .select(
-      "id, source, created_at, total_cents, sumup_reference, promo_code, sumup_checkout_id, voucher_holder_id, voucher_cents, customer_id, loyalty_free_drinks_used, account_id, payment_method",
+      "id, source, created_at, total_cents, promo_code, voucher_holder_id, voucher_cents, customer_id, loyalty_free_drinks_used, account_id, payment_method",
     )
     .eq("status", "pending_payment")
     .eq("payment_status", "pending")
@@ -77,50 +22,6 @@ export async function purgeStaleUnpaidOrders(): Promise<number> {
   let abandoned = 0;
   for (const order of stale ?? []) {
     if (!isPastCleanupThreshold(order)) continue;
-
-    if (order.sumup_checkout_id) {
-      try {
-        const { getSumUpCheckout } = await import("./sumup.server");
-        const checkout = await getSumUpCheckout(order.sumup_checkout_id);
-        const decision = decideSumUpCleanup(
-          {
-            checkoutId: order.sumup_checkout_id,
-            checkoutReference: order.sumup_reference,
-            totalCents: order.total_cents,
-          },
-          checkout,
-        );
-
-        if (decision === "recover_paid") {
-          const { error } = await supabaseAdmin
-            .from("orders")
-            .update({
-              payment_status: "paid",
-              status: "preparing",
-              sumup_transaction_id: checkout.transaction_id ?? null,
-            })
-            .eq("id", order.id)
-            .eq("payment_status", "pending");
-          if (!error) {
-            const { awardLoyaltyForOrder } = await import("./loyalty.server");
-            await awardLoyaltyForOrder(order.id);
-          }
-          continue;
-        }
-
-        if (decision === "hold") {
-          if (checkout.status.trim().toUpperCase() === "PAID") {
-            console.error("[order-cleanup] paid checkout mismatch", order.id);
-          }
-          continue;
-        }
-      } catch (error) {
-        console.error("[order-cleanup] SumUp reconciliation failed", order.id, error);
-        // Provider uncertainty always fails closed. The scheduler retries; it
-        // never releases a voucher, promotion or loyalty reservation on error.
-        continue;
-      }
-    }
 
     // A reader response that is still uncertain must never release benefits or
     // abandon the order. The next scheduler run will reconcile it again.

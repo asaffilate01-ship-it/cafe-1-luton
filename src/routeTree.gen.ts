@@ -24,8 +24,6 @@ import { Route as DisplayRouteImport } from './routes/display'
 import { Route as DriverRouteImport } from './routes/driver'
 import { Route as FaqRouteImport } from './routes/faq'
 import { Route as GdprRouteImport } from './routes/gdpr'
-import { Route as GooglePayReviewRouteImport } from './routes/google-pay-review'
-import { Route as GooglePayTestRouteImport } from './routes/google-pay-test'
 import { Route as HalalFoodLutonRouteImport } from './routes/halal-food-luton'
 import { Route as JudgesRouteImport } from './routes/judges'
 import { Route as JudgesMenuRouteImport } from './routes/judges-menu'
@@ -72,14 +70,11 @@ import { Route as AdminVouchersRouteImport } from './routes/admin.vouchers'
 import { Route as BlogIndexRouteImport } from './routes/blog.index'
 import { Route as BlogSlugRouteImport } from './routes/blog.$slug'
 import { Route as OrderOrderIdRouteImport } from './routes/order.$orderId'
-import { Route as PayOrderIdRouteImport } from './routes/pay.$orderId'
 import { Route as PlatformComplianceRouteImport } from './routes/platform_.compliance'
 import { Route as PrintOrderIdRouteImport } from './routes/print.$orderId'
 import { Route as ApiPublicCleanupUnpaidRouteImport } from './routes/api/public/cleanup-unpaid'
 import { Route as ApiPublicHealthRouteImport } from './routes/api/public/health'
 import { Route as ApiPublicJurorDailyRouteImport } from './routes/api/public/juror-daily'
-import { Route as ApiPublicSumupReaderWebhookRouteImport } from './routes/api/public/sumup-reader-webhook'
-import { Route as ApiPublicSumupWebhookRouteImport } from './routes/api/public/sumup-webhook'
 import { Route as ApiPublicDeliverooHubIngestRouteImport } from './routes/api/public/deliveroo/hub-ingest'
 import { Route as ApiPublicDeliverooPrintBridgeRouteImport } from './routes/api/public/deliveroo/print-bridge'
 import { Route as ApiPublicDeliverooWebhookRouteImport } from './routes/api/public/deliveroo/webhook'
@@ -163,16 +158,6 @@ const FaqRoute = FaqRouteImport.update({
 const GdprRoute = GdprRouteImport.update({
   id: '/gdpr',
   path: '/gdpr',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const GooglePayReviewRoute = GooglePayReviewRouteImport.update({
-  id: '/google-pay-review',
-  path: '/google-pay-review',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const GooglePayTestRoute = GooglePayTestRouteImport.update({
-  id: '/google-pay-test',
-  path: '/google-pay-test',
   getParentRoute: () => rootRouteImport,
 } as any)
 const HalalFoodLutonRoute = HalalFoodLutonRouteImport.update({
@@ -405,11 +390,6 @@ const OrderOrderIdRoute = OrderOrderIdRouteImport.update({
   path: '/order/$orderId',
   getParentRoute: () => rootRouteImport,
 } as any)
-const PayOrderIdRoute = PayOrderIdRouteImport.update({
-  id: '/pay/$orderId',
-  path: '/pay/$orderId',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const PlatformComplianceRoute = PlatformComplianceRouteImport.update({
   id: '/platform_/compliance',
   path: '/platform/compliance',
@@ -433,17 +413,6 @@ const ApiPublicHealthRoute = ApiPublicHealthRouteImport.update({
 const ApiPublicJurorDailyRoute = ApiPublicJurorDailyRouteImport.update({
   id: '/api/public/juror-daily',
   path: '/api/public/juror-daily',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ApiPublicSumupReaderWebhookRoute =
-  ApiPublicSumupReaderWebhookRouteImport.update({
-    id: '/api/public/sumup-reader-webhook',
-    path: '/api/public/sumup-reader-webhook',
-    getParentRoute: () => rootRouteImport,
-  } as any)
-const ApiPublicSumupWebhookRoute = ApiPublicSumupWebhookRouteImport.update({
-  id: '/api/public/sumup-webhook',
-  path: '/api/public/sumup-webhook',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiPublicDeliverooHubIngestRoute =
@@ -513,8 +482,6 @@ export interface FileRoutesByFullPath {
   '/driver': typeof DriverRoute
   '/faq': typeof FaqRoute
   '/gdpr': typeof GdprRoute
-  '/google-pay-review': typeof GooglePayReviewRoute
-  '/google-pay-test': typeof GooglePayTestRoute
   '/halal-food-luton': typeof HalalFoodLutonRoute
   '/judges': typeof JudgesRoute
   '/judges-menu': typeof JudgesMenuRoute
@@ -559,7 +526,6 @@ export interface FileRoutesByFullPath {
   '/admin/vouchers': typeof AdminVouchersRoute
   '/blog/$slug': typeof BlogSlugRoute
   '/order/$orderId': typeof OrderOrderIdRoute
-  '/pay/$orderId': typeof PayOrderIdRoute
   '/platform/compliance': typeof PlatformComplianceRoute
   '/print/$orderId': typeof PrintOrderIdRoute
   '/admin/': typeof AdminIndexRoute
@@ -567,8 +533,6 @@ export interface FileRoutesByFullPath {
   '/api/public/cleanup-unpaid': typeof ApiPublicCleanupUnpaidRoute
   '/api/public/health': typeof ApiPublicHealthRoute
   '/api/public/juror-daily': typeof ApiPublicJurorDailyRoute
-  '/api/public/sumup-reader-webhook': typeof ApiPublicSumupReaderWebhookRoute
-  '/api/public/sumup-webhook': typeof ApiPublicSumupWebhookRoute
   '/api/public/deliveroo/hub-ingest': typeof ApiPublicDeliverooHubIngestRoute
   '/api/public/deliveroo/print-bridge': typeof ApiPublicDeliverooPrintBridgeRoute
   '/api/public/deliveroo/webhook': typeof ApiPublicDeliverooWebhookRoute
@@ -595,8 +559,6 @@ export interface FileRoutesByTo {
   '/driver': typeof DriverRoute
   '/faq': typeof FaqRoute
   '/gdpr': typeof GdprRoute
-  '/google-pay-review': typeof GooglePayReviewRoute
-  '/google-pay-test': typeof GooglePayTestRoute
   '/halal-food-luton': typeof HalalFoodLutonRoute
   '/judges': typeof JudgesRoute
   '/judges-menu': typeof JudgesMenuRoute
@@ -641,7 +603,6 @@ export interface FileRoutesByTo {
   '/admin/vouchers': typeof AdminVouchersRoute
   '/blog/$slug': typeof BlogSlugRoute
   '/order/$orderId': typeof OrderOrderIdRoute
-  '/pay/$orderId': typeof PayOrderIdRoute
   '/platform/compliance': typeof PlatformComplianceRoute
   '/print/$orderId': typeof PrintOrderIdRoute
   '/admin': typeof AdminIndexRoute
@@ -649,8 +610,6 @@ export interface FileRoutesByTo {
   '/api/public/cleanup-unpaid': typeof ApiPublicCleanupUnpaidRoute
   '/api/public/health': typeof ApiPublicHealthRoute
   '/api/public/juror-daily': typeof ApiPublicJurorDailyRoute
-  '/api/public/sumup-reader-webhook': typeof ApiPublicSumupReaderWebhookRoute
-  '/api/public/sumup-webhook': typeof ApiPublicSumupWebhookRoute
   '/api/public/deliveroo/hub-ingest': typeof ApiPublicDeliverooHubIngestRoute
   '/api/public/deliveroo/print-bridge': typeof ApiPublicDeliverooPrintBridgeRoute
   '/api/public/deliveroo/webhook': typeof ApiPublicDeliverooWebhookRoute
@@ -678,8 +637,6 @@ export interface FileRoutesById {
   '/driver': typeof DriverRoute
   '/faq': typeof FaqRoute
   '/gdpr': typeof GdprRoute
-  '/google-pay-review': typeof GooglePayReviewRoute
-  '/google-pay-test': typeof GooglePayTestRoute
   '/halal-food-luton': typeof HalalFoodLutonRoute
   '/judges': typeof JudgesRoute
   '/judges-menu': typeof JudgesMenuRoute
@@ -724,7 +681,6 @@ export interface FileRoutesById {
   '/admin/vouchers': typeof AdminVouchersRoute
   '/blog/$slug': typeof BlogSlugRoute
   '/order/$orderId': typeof OrderOrderIdRoute
-  '/pay/$orderId': typeof PayOrderIdRoute
   '/platform_/compliance': typeof PlatformComplianceRoute
   '/print/$orderId': typeof PrintOrderIdRoute
   '/admin/': typeof AdminIndexRoute
@@ -732,8 +688,6 @@ export interface FileRoutesById {
   '/api/public/cleanup-unpaid': typeof ApiPublicCleanupUnpaidRoute
   '/api/public/health': typeof ApiPublicHealthRoute
   '/api/public/juror-daily': typeof ApiPublicJurorDailyRoute
-  '/api/public/sumup-reader-webhook': typeof ApiPublicSumupReaderWebhookRoute
-  '/api/public/sumup-webhook': typeof ApiPublicSumupWebhookRoute
   '/api/public/deliveroo/hub-ingest': typeof ApiPublicDeliverooHubIngestRoute
   '/api/public/deliveroo/print-bridge': typeof ApiPublicDeliverooPrintBridgeRoute
   '/api/public/deliveroo/webhook': typeof ApiPublicDeliverooWebhookRoute
@@ -762,8 +716,6 @@ export interface FileRouteTypes {
     | '/driver'
     | '/faq'
     | '/gdpr'
-    | '/google-pay-review'
-    | '/google-pay-test'
     | '/halal-food-luton'
     | '/judges'
     | '/judges-menu'
@@ -808,7 +760,6 @@ export interface FileRouteTypes {
     | '/admin/vouchers'
     | '/blog/$slug'
     | '/order/$orderId'
-    | '/pay/$orderId'
     | '/platform/compliance'
     | '/print/$orderId'
     | '/admin/'
@@ -816,8 +767,6 @@ export interface FileRouteTypes {
     | '/api/public/cleanup-unpaid'
     | '/api/public/health'
     | '/api/public/juror-daily'
-    | '/api/public/sumup-reader-webhook'
-    | '/api/public/sumup-webhook'
     | '/api/public/deliveroo/hub-ingest'
     | '/api/public/deliveroo/print-bridge'
     | '/api/public/deliveroo/webhook'
@@ -844,8 +793,6 @@ export interface FileRouteTypes {
     | '/driver'
     | '/faq'
     | '/gdpr'
-    | '/google-pay-review'
-    | '/google-pay-test'
     | '/halal-food-luton'
     | '/judges'
     | '/judges-menu'
@@ -890,7 +837,6 @@ export interface FileRouteTypes {
     | '/admin/vouchers'
     | '/blog/$slug'
     | '/order/$orderId'
-    | '/pay/$orderId'
     | '/platform/compliance'
     | '/print/$orderId'
     | '/admin'
@@ -898,8 +844,6 @@ export interface FileRouteTypes {
     | '/api/public/cleanup-unpaid'
     | '/api/public/health'
     | '/api/public/juror-daily'
-    | '/api/public/sumup-reader-webhook'
-    | '/api/public/sumup-webhook'
     | '/api/public/deliveroo/hub-ingest'
     | '/api/public/deliveroo/print-bridge'
     | '/api/public/deliveroo/webhook'
@@ -926,8 +870,6 @@ export interface FileRouteTypes {
     | '/driver'
     | '/faq'
     | '/gdpr'
-    | '/google-pay-review'
-    | '/google-pay-test'
     | '/halal-food-luton'
     | '/judges'
     | '/judges-menu'
@@ -972,7 +914,6 @@ export interface FileRouteTypes {
     | '/admin/vouchers'
     | '/blog/$slug'
     | '/order/$orderId'
-    | '/pay/$orderId'
     | '/platform_/compliance'
     | '/print/$orderId'
     | '/admin/'
@@ -980,8 +921,6 @@ export interface FileRouteTypes {
     | '/api/public/cleanup-unpaid'
     | '/api/public/health'
     | '/api/public/juror-daily'
-    | '/api/public/sumup-reader-webhook'
-    | '/api/public/sumup-webhook'
     | '/api/public/deliveroo/hub-ingest'
     | '/api/public/deliveroo/print-bridge'
     | '/api/public/deliveroo/webhook'
@@ -1009,8 +948,6 @@ export interface RootRouteChildren {
   DriverRoute: typeof DriverRoute
   FaqRoute: typeof FaqRoute
   GdprRoute: typeof GdprRoute
-  GooglePayReviewRoute: typeof GooglePayReviewRoute
-  GooglePayTestRoute: typeof GooglePayTestRoute
   HalalFoodLutonRoute: typeof HalalFoodLutonRoute
   JudgesRoute: typeof JudgesRoute
   JudgesMenuRoute: typeof JudgesMenuRoute
@@ -1055,7 +992,6 @@ export interface RootRouteChildren {
   AdminVouchersRoute: typeof AdminVouchersRoute
   BlogSlugRoute: typeof BlogSlugRoute
   OrderOrderIdRoute: typeof OrderOrderIdRoute
-  PayOrderIdRoute: typeof PayOrderIdRoute
   PlatformComplianceRoute: typeof PlatformComplianceRoute
   PrintOrderIdRoute: typeof PrintOrderIdRoute
   AdminIndexRoute: typeof AdminIndexRoute
@@ -1063,8 +999,6 @@ export interface RootRouteChildren {
   ApiPublicCleanupUnpaidRoute: typeof ApiPublicCleanupUnpaidRoute
   ApiPublicHealthRoute: typeof ApiPublicHealthRoute
   ApiPublicJurorDailyRoute: typeof ApiPublicJurorDailyRoute
-  ApiPublicSumupReaderWebhookRoute: typeof ApiPublicSumupReaderWebhookRoute
-  ApiPublicSumupWebhookRoute: typeof ApiPublicSumupWebhookRoute
   ApiPublicDeliverooHubIngestRoute: typeof ApiPublicDeliverooHubIngestRoute
   ApiPublicDeliverooPrintBridgeRoute: typeof ApiPublicDeliverooPrintBridgeRoute
   ApiPublicDeliverooWebhookRoute: typeof ApiPublicDeliverooWebhookRoute
@@ -1181,20 +1115,6 @@ declare module '@tanstack/react-router' {
       path: '/gdpr'
       fullPath: '/gdpr'
       preLoaderRoute: typeof GdprRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/google-pay-review': {
-      id: '/google-pay-review'
-      path: '/google-pay-review'
-      fullPath: '/google-pay-review'
-      preLoaderRoute: typeof GooglePayReviewRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/google-pay-test': {
-      id: '/google-pay-test'
-      path: '/google-pay-test'
-      fullPath: '/google-pay-test'
-      preLoaderRoute: typeof GooglePayTestRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/halal-food-luton': {
@@ -1519,13 +1439,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof OrderOrderIdRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/pay/$orderId': {
-      id: '/pay/$orderId'
-      path: '/pay/$orderId'
-      fullPath: '/pay/$orderId'
-      preLoaderRoute: typeof PayOrderIdRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/platform_/compliance': {
       id: '/platform_/compliance'
       path: '/platform/compliance'
@@ -1559,20 +1472,6 @@ declare module '@tanstack/react-router' {
       path: '/api/public/juror-daily'
       fullPath: '/api/public/juror-daily'
       preLoaderRoute: typeof ApiPublicJurorDailyRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/public/sumup-reader-webhook': {
-      id: '/api/public/sumup-reader-webhook'
-      path: '/api/public/sumup-reader-webhook'
-      fullPath: '/api/public/sumup-reader-webhook'
-      preLoaderRoute: typeof ApiPublicSumupReaderWebhookRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/public/sumup-webhook': {
-      id: '/api/public/sumup-webhook'
-      path: '/api/public/sumup-webhook'
-      fullPath: '/api/public/sumup-webhook'
-      preLoaderRoute: typeof ApiPublicSumupWebhookRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/public/deliveroo/hub-ingest': {
@@ -1657,8 +1556,6 @@ const rootRouteChildren: RootRouteChildren = {
   DriverRoute: DriverRoute,
   FaqRoute: FaqRoute,
   GdprRoute: GdprRoute,
-  GooglePayReviewRoute: GooglePayReviewRoute,
-  GooglePayTestRoute: GooglePayTestRoute,
   HalalFoodLutonRoute: HalalFoodLutonRoute,
   JudgesRoute: JudgesRoute,
   JudgesMenuRoute: JudgesMenuRoute,
@@ -1703,7 +1600,6 @@ const rootRouteChildren: RootRouteChildren = {
   AdminVouchersRoute: AdminVouchersRoute,
   BlogSlugRoute: BlogSlugRoute,
   OrderOrderIdRoute: OrderOrderIdRoute,
-  PayOrderIdRoute: PayOrderIdRoute,
   PlatformComplianceRoute: PlatformComplianceRoute,
   PrintOrderIdRoute: PrintOrderIdRoute,
   AdminIndexRoute: AdminIndexRoute,
@@ -1711,8 +1607,6 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicCleanupUnpaidRoute: ApiPublicCleanupUnpaidRoute,
   ApiPublicHealthRoute: ApiPublicHealthRoute,
   ApiPublicJurorDailyRoute: ApiPublicJurorDailyRoute,
-  ApiPublicSumupReaderWebhookRoute: ApiPublicSumupReaderWebhookRoute,
-  ApiPublicSumupWebhookRoute: ApiPublicSumupWebhookRoute,
   ApiPublicDeliverooHubIngestRoute: ApiPublicDeliverooHubIngestRoute,
   ApiPublicDeliverooPrintBridgeRoute: ApiPublicDeliverooPrintBridgeRoute,
   ApiPublicDeliverooWebhookRoute: ApiPublicDeliverooWebhookRoute,

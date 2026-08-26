@@ -46,7 +46,7 @@ const faqs = [
   {
     question: "How do I pay when ordering direct?",
     answer:
-      "Checkout takes card payments through SumUp, including Apple Pay and Google Pay on supported devices. Court staff and approved house accounts can also charge to a tab and settle later.",
+      "Checkout takes card payments, including Apple Pay and Google Pay on supported devices. Court staff and approved house accounts can also charge to a tab and settle later.",
   },
   {
     question: "Which Luton branch can I order from?",
@@ -115,7 +115,7 @@ const benefits = [
   {
     icon: Wallet,
     title: "Pay how you like",
-    body: "Card, Apple Pay and Google Pay through SumUp, or pay at the counter where your order type allows it.",
+    body: "Card, Apple Pay and Google Pay, or pay at the counter where your order type allows it.",
   },
 ];
 
