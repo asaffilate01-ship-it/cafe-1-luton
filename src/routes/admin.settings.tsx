@@ -3,6 +3,7 @@ import { AdminNav } from "@/components/admin-nav";
 import { useEffect, useState } from "react";
 import { PosDevicesCard } from "@/components/pos-devices-card";
 import { useSession, useRoles } from "@/hooks/use-auth";
+import { useSites } from "@/hooks/use-sites";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -22,13 +23,15 @@ function AdminSettings() {
   useEffect(() => { if (!loading && !user) navigate({ to: "/admin/login", search: { next: "/admin/settings" } }); }, [loading, user, navigate]);
   const allowed = has("admin");
 
+  const { sites, siteId, setSiteId } = useSites();
+
   const { data } = useQuery({
-    queryKey: ["admin-settings"],
+    queryKey: ["admin-settings", siteId],
     enabled: !!user && allowed,
     queryFn: async () => {
       const [s, h] = await Promise.all([
-        supabase.from("business_settings").select("*").limit(1).maybeSingle(),
-        supabase.from("business_hours").select("*").order("day_of_week"),
+        supabase.from("business_settings").select("*").eq("site_id", siteId).limit(1).maybeSingle(),
+        supabase.from("business_hours").select("*").eq("site_id", siteId).order("day_of_week"),
       ]);
       return { settings: s.data as BusinessSettings | null, hours: (h.data ?? []) as HourRow[] };
     },
@@ -38,7 +41,7 @@ function AdminSettings() {
   const [hours, setHours] = useState<HourRow[]>([]);
   const [busy, setBusy] = useState(false);
 
-  useEffect(() => { if (data?.settings) setS(data.settings); if (data?.hours) setHours(data.hours); }, [data]);
+  useEffect(() => { setS(data?.settings ?? null); setHours(data?.hours ?? []); }, [data]);
 
   async function save() {
     if (!s) return;
@@ -66,7 +69,7 @@ function AdminSettings() {
     for (const h of hours) {
       const { error } = await supabase.from("business_hours").update({
         open_time: h.open_time, close_time: h.close_time, closed: h.closed,
-      }).eq("day_of_week", h.day_of_week);
+      }).eq("site_id", siteId).eq("day_of_week", h.day_of_week);
       if (error) { setBusy(false); return toast.error(error.message); }
     }
     setBusy(false);
@@ -77,7 +80,25 @@ function AdminSettings() {
 
   if (loading || rl) return null;
   if (!allowed) return <div className="p-12 text-center text-muted-foreground">Manager access is required.</div>;
-  if (!s) return <div className="p-12 text-center text-muted-foreground">Loading…</div>;
+
+  const branchPicker = (
+    <label className="mt-6 block">
+      <span className="text-sm font-semibold">Branch</span>
+      <select
+        value={siteId}
+        onChange={(e) => setSiteId(e.target.value)}
+        className="mt-1 w-full rounded-xl border border-border bg-background p-3"
+      >
+        {sites.length === 0 ? <option value={siteId}>Loading branches…</option> : null}
+        {sites.map((site) => (
+          <option key={site.id} value={site.id}>{site.name}</option>
+        ))}
+      </select>
+      <span className="mt-1 block text-xs text-muted-foreground">
+        Opening hours, fees and delivery settings below apply to this branch only.
+      </span>
+    </label>
+  );
 
   return (
     <div className="min-h-screen bg-background">
@@ -90,6 +111,16 @@ function AdminSettings() {
             <p className="text-sm text-muted-foreground">Manager-controlled opening hours, delivery limits, VAT treatment and fees.</p>
           </div>
         </div>
+
+        {branchPicker}
+
+        {!s ? (
+          <p className="mt-8 rounded-2xl border border-border bg-card p-5 text-sm text-muted-foreground">
+            This branch has no store settings yet.
+          </p>
+        ) : (
+        <>
+
 
         <div className="mt-8 space-y-6">
           <section className="rounded-2xl border border-border bg-card p-5">
@@ -220,6 +251,8 @@ function AdminSettings() {
 
           <PosDevicesCard />
         </div>
+        </>
+        )}
       </div>
     </div>
   );

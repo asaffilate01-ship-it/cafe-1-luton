@@ -1,16 +1,27 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { DEFAULT_SITE_ID } from "@/hooks/use-sites";
 import { computeStoreStatus, PUBLIC_SETTINGS_COLUMNS, type BankHoliday, type BusinessSettings, type HourRow } from "@/lib/business";
 
-export function useStoreStatus() {
+/**
+ * Opening hours and store settings are per branch. Callers that render a
+ * specific branch pass its site id; the default keeps the Crown Court branch
+ * for the shared header/storefront.
+ */
+export function useStoreStatus(siteId: string = DEFAULT_SITE_ID) {
   const { data } = useQuery({
-    queryKey: ["store-status"],
+    queryKey: ["store-status", siteId],
     staleTime: 60_000,
     queryFn: async () => {
       const today = new Date().toISOString().slice(0, 10);
       const [s, h, bh] = await Promise.all([
-        supabase.from("business_settings").select(PUBLIC_SETTINGS_COLUMNS).limit(1).maybeSingle(),
-        supabase.from("business_hours").select("*").order("day_of_week"),
+        supabase
+          .from("business_settings")
+          .select(PUBLIC_SETTINGS_COLUMNS)
+          .eq("site_id", siteId)
+          .limit(1)
+          .maybeSingle(),
+        supabase.from("business_hours").select("*").eq("site_id", siteId).order("day_of_week"),
         supabase.from("bank_holidays").select("holiday_date, name").gte("holiday_date", today).order("holiday_date"),
       ]);
       return {

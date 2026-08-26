@@ -343,6 +343,7 @@ export type Database = {
           day_of_week: number
           id: string
           open_time: string
+          site_id: string
         }
         Insert: {
           close_time?: string
@@ -350,6 +351,7 @@ export type Database = {
           day_of_week: number
           id?: string
           open_time?: string
+          site_id?: string
         }
         Update: {
           close_time?: string
@@ -357,8 +359,17 @@ export type Database = {
           day_of_week?: number
           id?: string
           open_time?: string
+          site_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "business_hours_site_id_fkey"
+            columns: ["site_id"]
+            isOneToOne: false
+            referencedRelation: "sites"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       business_settings: {
         Row: {
