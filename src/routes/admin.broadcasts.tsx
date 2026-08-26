@@ -1,3 +1,5 @@
+import { useServerFn } from "@tanstack/react-start";
+import { sendOffersPush } from "@/lib/push.functions";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { askConfirm } from "@/lib/confirm";
 import { AdminNav } from "@/components/admin-nav";
@@ -55,6 +57,8 @@ function Broadcasts() {
 
   const [form, setForm] = useState({ title: "", body: "", cta_url: "", cta_label: "" });
   const [busy, setBusy] = useState(false);
+  const [pushToo, setPushToo] = useState(true);
+  const pushOffer = useServerFn(sendOffersPush);
 
   async function create(e: React.FormEvent) {
     e.preventDefault();
@@ -69,6 +73,24 @@ function Broadcasts() {
     setBusy(false);
     if (error) return toast.error(error.message);
     toast.success("Broadcast published");
+    if (pushToo) {
+      try {
+        const res = await pushOffer({
+          data: {
+            title: form.title.slice(0, 80),
+            body: form.body.slice(0, 200),
+            url: form.cta_url || "/menu",
+          },
+        });
+        toast.success(
+          res.sent > 0
+            ? `Push sent to ${res.sent} device${res.sent === 1 ? "" : "s"}`
+            : "No customers have alerts turned on yet",
+        );
+      } catch (err) {
+        toast.error(err instanceof Error ? err.message : "Push failed");
+      }
+    }
     setForm({ title: "", body: "", cta_url: "", cta_label: "" });
     qc.invalidateQueries({ queryKey: ["admin-broadcasts"] });
     qc.invalidateQueries({ queryKey: ["broadcasts", "active"] });
@@ -141,6 +163,15 @@ function Broadcasts() {
               className="h-11 rounded-xl border border-border bg-background px-4"
             />
           </div>
+          <label className="flex items-center gap-2 text-sm">
+            <input
+              type="checkbox"
+              checked={pushToo}
+              onChange={(e) => setPushToo(e.target.checked)}
+              className="h-4 w-4 accent-[hsl(var(--primary))]"
+            />
+            Also send as a phone notification to customers who opted in
+          </label>
           <button
             disabled={busy}
             className="h-11 rounded-full bg-primary px-6 font-semibold text-primary-foreground shadow-brand hover:bg-primary-hover disabled:opacity-60"
