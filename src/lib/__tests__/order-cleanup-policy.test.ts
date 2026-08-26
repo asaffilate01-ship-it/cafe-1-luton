@@ -4,7 +4,6 @@ import {
   COUNTER_UNPAID_TTL_MS,
   isPastCleanupThreshold,
   WEB_UNPAID_TTL_MS,
-  type CleanupCheckoutSnapshot,
 } from "../order-cleanup-policy";
 
 const NOW = Date.parse("2026-08-08T12:00:00.000Z");
@@ -13,20 +12,6 @@ function createdAt(ageMs: number) {
   return new Date(NOW - ageMs).toISOString();
 }
 
-const paidCheckout: CleanupCheckoutSnapshot = {
-  id: "checkout-1",
-  checkout_reference: "CAFE1-1001",
-  status: "PAID",
-  amount: 5.71,
-  currency: "GBP",
-  transaction_id: "transaction-1",
-};
-
-const order = {
-  checkoutId: "checkout-1",
-  checkoutReference: "CAFE1-1001",
-  totalCents: 571,
-};
 
 describe("unpaid order cleanup threshold", () => {
   it("uses separate web and counter grace periods", () => {
