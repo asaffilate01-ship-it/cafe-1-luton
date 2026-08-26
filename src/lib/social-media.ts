@@ -161,8 +161,12 @@ function profile(platform: SocialPlatform, raw: unknown, fallback = ""): SocialP
 }
 
 export function createSocialProfiles(env: Record<string, unknown>): SocialProfile[] {
+  const facebookUrl = (env.VITE_SOCIAL_FACEBOOK_URL as string | undefined)?.replace(
+    /cafeoneluton/i,
+    "Cafe1luton",
+  );
   return [
-    profile("facebook", env.VITE_SOCIAL_FACEBOOK_URL, "https://www.facebook.com/Cafe1luton"),
+    profile("facebook", facebookUrl, "https://www.facebook.com/Cafe1luton"),
     profile("instagram", env.VITE_SOCIAL_INSTAGRAM_URL, "https://www.instagram.com/cafe1luton/"),
     profile("tiktok", env.VITE_SOCIAL_TIKTOK_URL, "https://www.tiktok.com/@cafe1.luton"),
     profile("youtube", env.VITE_SOCIAL_YOUTUBE_URL),
