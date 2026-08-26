@@ -4,6 +4,7 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { getRequest } from "@tanstack/react-start/server";
 import { createClient } from "@supabase/supabase-js";
 import type { Database } from "@/integrations/supabase/types";
+import { PUBLIC_SETTINGS_COLUMNS } from "./business";
 import { validateModifierSelection, type ModifierRule } from "./modifier-rules";
 import { orderingHoursForLocation } from "./nap";
 import { requireStaffOrderAccess, requireStaffSiteAccess } from "./staff-site-access.server";
