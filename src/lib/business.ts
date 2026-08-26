@@ -27,6 +27,14 @@ export type BusinessSettings = {
   justeat_url?: string | null;
 };
 
+/**
+ * Customer-facing business_settings columns. Anonymous reads are granted
+ * column-by-column (vat_number and court_staff_discount_percent stay private),
+ * so browser queries must select exactly this list — never "*".
+ */
+export const PUBLIC_SETTINGS_COLUMNS =
+  "id,name,accepting_orders,allow_preorder_when_closed,prep_minutes,delivery_minutes,min_order_cents,delivery_fee_cents,free_delivery_threshold_cents,closed_message,updated_at,delivery_open_time,delivery_close_time,delivery_origin_postcode,delivery_radius_m,site_id,vat_registered,deliveroo_url,justeat_url";
+
 export const DAY_NAMES = [
   "Sunday",
   "Monday",
