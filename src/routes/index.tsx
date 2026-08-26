@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import { SiteHeader, SiteFooter } from "@/components/site-header";
 import { PromoCarousel } from "@/components/promo-carousel";
+import { BranchStatusBoard } from "@/components/branch-status";
 import { StoreStatus } from "@/components/store-status";
 // Compressed WebP: the original hero was a 740 KB JPEG and was the slowest
 // thing on first paint.
