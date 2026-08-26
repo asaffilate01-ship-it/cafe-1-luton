@@ -5,8 +5,8 @@
  *
  * Pseudonymous throughout — Juror IDs/voucher codes, never juror names or contact details.
  */
-const FROM = "CAFE 1 LUTON <no-reply@cafe1luton.co.uk>";
-const TO = ["info@cafe1luton.co.uk"];
+const FROM = "CAFE 1 LUTON <hello@cafe1luton.co.uk>";
+const TO = ["hello@cafe1luton.co.uk"];
 const RESEND_GATEWAY = "https://connector-gateway.lovable.dev/resend";
 
 const money = (c: number) => `£${(c / 100).toFixed(2)}`;
@@ -140,7 +140,7 @@ export async function runJurorDailyJob(forDate?: string): Promise<JurorDailyResu
         body: JSON.stringify({
           from: FROM,
           to: TO,
-          reply_to: "info@cafe1luton.co.uk",
+          reply_to: "hello@cafe1luton.co.uk",
           subject: `Juror voucher claim ${date} — ${money(total)} (${rows.length} redemptions)`,
           html,
           attachments: [
