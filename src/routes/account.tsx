@@ -4,6 +4,8 @@ import { useSession } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
 import { SiteHeader } from "@/components/site-header";
+import { PushAlertsButton } from "@/components/push-alerts-button";
+import { InstallAppButton } from "@/components/install-app-button";
 import { money } from "@/lib/format";
 import { useEffect } from "react";
 import { cart } from "@/lib/cart";
