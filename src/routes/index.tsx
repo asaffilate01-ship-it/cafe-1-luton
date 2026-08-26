@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import { SiteHeader, SiteFooter } from "@/components/site-header";
 import { PromoCarousel } from "@/components/promo-carousel";
+import { BranchStatusBoard } from "@/components/branch-status";
 import { StoreStatus } from "@/components/store-status";
 // Compressed WebP: the original hero was a 740 KB JPEG and was the slowest
 // thing on first paint.
@@ -142,6 +143,18 @@ function Home() {
       </section>
 
       <section className="border-y border-border bg-soft">
+        <div className="mx-auto max-w-6xl px-4 py-14">
+          <h2 className="font-display text-2xl font-bold">Today at our cafés</h2>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Live open and closed status with opening times for both Luton branches. Dine in or
+            takeaway only — we do not offer delivery.
+          </p>
+          <BranchStatusBoard className="mt-6" />
+        </div>
+      </section>
+
+      <section className="border-b border-border bg-background">
+
         <div className="mx-auto grid max-w-6xl gap-6 px-4 py-16 sm:grid-cols-2 lg:grid-cols-4">
           {[
             {

@@ -202,9 +202,10 @@ export function OrderSetupGate({
           {step === 2 && (
             <>
               <p className="text-sm leading-relaxed text-muted-foreground">
-                Online delivery is not offered. Choose how you will collect or enjoy your order at
-                the selected café.
+                Delivery is not provided at either café. Choose dine in or takeaway to collect at the
+                selected café.
               </p>
+
               <div className="grid grid-cols-2 gap-3">
                 {[
                   { id: "dine_in" as const, label: "Dine in", Icon: Utensils },
@@ -225,6 +226,8 @@ export function OrderSetupGate({
                   </button>
                 ))}
               </div>
+
+
               <div className="flex gap-2">
                 <button
                   type="button"
