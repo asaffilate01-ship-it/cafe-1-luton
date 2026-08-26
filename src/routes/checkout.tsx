@@ -557,7 +557,7 @@ function Checkout() {
       </div>
     );
 
-  if (!loading && !user && !tabSession && !jurySession)
+  if (!loading && !user && !tabSession && !jurySessionActive)
     return (
       <div className="min-h-screen bg-background">
         <SiteHeader />
