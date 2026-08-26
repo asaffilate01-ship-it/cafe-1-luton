@@ -251,6 +251,8 @@ function AdminSettings() {
 
           <PosDevicesCard />
         </div>
+        </>
+        )}
       </div>
     </div>
   );
