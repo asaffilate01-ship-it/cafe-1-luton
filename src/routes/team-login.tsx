@@ -116,6 +116,10 @@ function StaffLogin() {
                 onChange={(event) => setEmail(event.target.value)}
                 required
                 autoComplete="username"
+                inputMode="email"
+                autoCapitalize="none"
+                autoCorrect="off"
+                spellCheck={false}
                 className="h-11 w-full rounded-xl border border-border bg-background px-4"
               />
             </div>
