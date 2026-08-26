@@ -3,7 +3,12 @@ import { Building2, Clock, Eye, MapPin, Store, Utensils, X } from "lucide-react"
 
 import { useStoreStatus } from "@/hooks/use-store-status";
 import { buildScheduleSlots, computeStoreStatus } from "@/lib/business";
-import { LOCATIONS, orderingHoursForLocation, type CafeLocationId } from "@/lib/nap";
+import {
+  BRANCH_SITE_IDS,
+  LOCATIONS,
+  orderingHoursForLocation,
+  type CafeLocationId,
+} from "@/lib/nap";
 import {
   orderContext,
   type OrderContext,
@@ -40,16 +45,21 @@ export function OrderSetupGate({
   juryOnly?: boolean;
 }) {
   const existing = useOrderContext();
-  const { status: defaultStatus, settings, hours, holidays } = useStoreStatus();
   const [step, setStep] = useState<1 | 2 | 3>(1);
   const [location, setLocation] = useState<CafeLocationId | null>(existing?.location ?? null);
+  const {
+    status: defaultStatus,
+    settings,
+    hours,
+    holidays,
+  } = useStoreStatus(location ? BRANCH_SITE_IDS[location] : undefined);
   const [mode, setMode] = useState<PublicOrderMode>(
     existing?.mode === "dine_in" ? "dine_in" : "collection",
   );
   const [scheduleMode, setScheduleMode] = useState<ScheduleMode>(existing?.schedule_mode ?? "asap");
   const [scheduledFor, setScheduledFor] = useState(existing?.scheduled_for ?? "");
   const branchHours = useMemo(
-    () => (location ? orderingHoursForLocation(location) : hours),
+    () => (hours.length ? hours : location ? orderingHoursForLocation(location) : hours),
     [hours, location],
   );
   const status = useMemo(

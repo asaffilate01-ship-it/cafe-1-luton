@@ -14,7 +14,7 @@ import { tab, useTab } from "@/lib/tab";
 import { toast } from "sonner";
 import { useStoreStatus } from "@/hooks/use-store-status";
 import { buildScheduleSlots, computeStoreStatus } from "@/lib/business";
-import { orderingHoursForLocation } from "@/lib/nap";
+import { BRANCH_SITE_IDS, orderingHoursForLocation } from "@/lib/nap";
 import { useOrderContext, describeContext } from "@/lib/order-context";
 import { OrderSetupGate } from "@/components/order-setup-gate";
 import { requiresOrderSetup } from "@/lib/menu-intent";
@@ -67,7 +67,7 @@ function Checkout() {
   const [scheduleMode, setScheduleMode] = useState<ScheduleMode>(ctx?.schedule_mode ?? "asap");
   const [scheduledFor, setScheduledFor] = useState<string>(ctx?.scheduled_for ?? "");
   const branchHours = useMemo(
-    () => (ctx?.location ? orderingHoursForLocation(ctx.location) : hours),
+    () => (hours.length ? hours : ctx?.location ? orderingHoursForLocation(ctx.location) : hours),
     [ctx?.location, hours],
   );
   const status = useMemo(

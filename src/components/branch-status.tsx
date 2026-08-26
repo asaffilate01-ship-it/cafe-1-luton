@@ -1,13 +1,9 @@
 import { CheckCircle2, Clock, XCircle } from "lucide-react";
 
 import { useStoreStatus } from "@/hooks/use-store-status";
-import { LOCATIONS, type CafeLocationId } from "@/lib/nap";
+import { BRANCH_SITE_IDS, LOCATIONS, type CafeLocationId } from "@/lib/nap";
 
-/** Live open/closed board for both Luton branches. */
-export const BRANCH_SITE_IDS: Record<CafeLocationId, string> = {
-  "luton-crown-court": "cafe1000-0000-4000-8000-000000000001",
-  "futures-house": "bc24b444-ffc2-4912-9b0a-143513df4f20",
-};
+export { BRANCH_SITE_IDS };
 
 const DAY_LABELS = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
 
