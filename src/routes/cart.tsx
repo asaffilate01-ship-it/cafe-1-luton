@@ -2,6 +2,7 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useRef } from "react";
 import { SiteHeader, SiteFooter } from "@/components/site-header";
 import { cart, useCart } from "@/lib/cart";
+import { useSession } from "@/hooks/use-auth";
 import { money } from "@/lib/format";
 import { Minus, Plus, Trash2 } from "lucide-react";
 
@@ -29,6 +30,7 @@ export const Route = createFileRoute("/cart")({
 
 function CartPage() {
   const c = useCart();
+  const { user, loading } = useSession();
   const navigate = useNavigate();
   const hadItems = useRef(false);
   useEffect(() => {
