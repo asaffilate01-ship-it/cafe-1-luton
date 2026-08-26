@@ -2,6 +2,14 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { DEFAULT_SITE_ID } from "@/hooks/use-sites";
 import { computeStoreStatus, PUBLIC_SETTINGS_COLUMNS, type BankHoliday, type BusinessSettings, type HourRow } from "@/lib/business";
+import { BRANCH_SITE_IDS, orderingHoursForLocation, type CafeLocationId } from "@/lib/nap";
+
+const BRANCH_SITE_ENTRIES = Object.entries(BRANCH_SITE_IDS) as [CafeLocationId, string][];
+
+function fallbackHoursForSite(siteId: string): HourRow[] {
+  const branch = BRANCH_SITE_ENTRIES.find(([, branchSiteId]) => branchSiteId === siteId)?.[0];
+  return branch ? orderingHoursForLocation(branch) : orderingHoursForLocation("luton-crown-court");
+}
 
 /**
  * Opening hours and store settings are per branch. Callers that render a
@@ -9,6 +17,7 @@ import { computeStoreStatus, PUBLIC_SETTINGS_COLUMNS, type BankHoliday, type Bus
  * for the shared header/storefront.
  */
 export function useStoreStatus(siteId: string = DEFAULT_SITE_ID) {
+  const fallbackHours = fallbackHoursForSite(siteId);
   const { data } = useQuery({
     queryKey: ["store-status", siteId],
     staleTime: 60_000,
@@ -31,6 +40,7 @@ export function useStoreStatus(siteId: string = DEFAULT_SITE_ID) {
       };
     },
   });
-  const status = computeStoreStatus(data?.hours ?? [], data?.settings ?? null, new Date(), data?.holidays ?? []);
-  return { status, settings: data?.settings ?? null, hours: data?.hours ?? [], holidays: data?.holidays ?? [] };
+  const hours = data?.hours.length ? data.hours : fallbackHours;
+  const status = computeStoreStatus(hours, data?.settings ?? null, new Date(), data?.holidays ?? []);
+  return { status, settings: data?.settings ?? null, hours, holidays: data?.holidays ?? [] };
 }
