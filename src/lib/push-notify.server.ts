@@ -84,3 +84,60 @@ export async function notifyOrderStatus(orderId: string, status: string): Promis
     await sendEmailFallback(order.customer_email, title, body, link);
   }
 }
+
+// --- Topic fan-out ----------------------------------------------------------
+type TopicMessage = { title: string; body: string; url?: string; tag?: string };
+
+/**
+ * Sends one message to every device subscribed to `topic`. When `siteId` is
+ * given, only devices registered for that branch (or with no branch) receive it.
+ */
+export async function sendTopicPush(
+  topic: "orders" | "offers" | "kitchen",
+  message: TopicMessage,
+  siteId?: string | null,
+): Promise<{ sent: number }> {
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  let query = supabaseAdmin
+    .from("push_subscriptions")
+    .select("id, endpoint, p256dh, auth, site_id")
+    .contains("topics", [topic]);
+  if (siteId) query = query.or(`site_id.eq.${siteId},site_id.is.null`);
+  const { data: subs } = await query;
+  let sent = 0;
+  for (const sub of subs ?? []) {
+    const res = await sendWebPush(sub, message);
+    if (res.ok) sent += 1;
+    if (res.gone) await supabaseAdmin.from("push_subscriptions").delete().eq("id", sub.id);
+  }
+  return { sent };
+}
+
+/** Alerts kitchen devices (KDS phones/tablets) that a new ticket has landed. */
+export async function notifyKitchenNewOrder(orderId: string): Promise<void> {
+  try {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: order } = await supabaseAdmin
+      .from("orders")
+      .select("id, order_number, type, site_id, total_cents")
+      .eq("id", orderId)
+      .maybeSingle();
+    if (!order) return;
+    const appUrl = (process.env["PUBLIC_APP_URL"] ?? "https://cafe1luton.co.uk").replace(
+      /\/+$/,
+      "",
+    );
+    await sendTopicPush(
+      "kitchen",
+      {
+        title: `New order #${order.order_number}`,
+        body: `${order.type === "delivery" ? "Delivery" : order.type === "dine_in" ? "Dine in" : "Takeaway"} — £${((order.total_cents ?? 0) / 100).toFixed(2)}`,
+        url: `${appUrl}/kds`,
+        tag: `kds-${order.id}`,
+      },
+      order.site_id,
+    );
+  } catch (err) {
+    console.error("[notify] kitchen push failed", err);
+  }
+}
