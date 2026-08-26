@@ -80,7 +80,25 @@ function AdminSettings() {
 
   if (loading || rl) return null;
   if (!allowed) return <div className="p-12 text-center text-muted-foreground">Manager access is required.</div>;
-  if (!s) return <div className="p-12 text-center text-muted-foreground">Loading…</div>;
+
+  const branchPicker = (
+    <label className="mt-6 block">
+      <span className="text-sm font-semibold">Branch</span>
+      <select
+        value={siteId}
+        onChange={(e) => setSiteId(e.target.value)}
+        className="mt-1 w-full rounded-xl border border-border bg-background p-3"
+      >
+        {sites.length === 0 ? <option value={siteId}>Loading branches…</option> : null}
+        {sites.map((site) => (
+          <option key={site.id} value={site.id}>{site.name}</option>
+        ))}
+      </select>
+      <span className="mt-1 block text-xs text-muted-foreground">
+        Opening hours, fees and delivery settings below apply to this branch only.
+      </span>
+    </label>
+  );
 
   return (
     <div className="min-h-screen bg-background">
@@ -93,6 +111,16 @@ function AdminSettings() {
             <p className="text-sm text-muted-foreground">Manager-controlled opening hours, delivery limits, VAT treatment and fees.</p>
           </div>
         </div>
+
+        {branchPicker}
+
+        {!s ? (
+          <p className="mt-8 rounded-2xl border border-border bg-card p-5 text-sm text-muted-foreground">
+            This branch has no store settings yet.
+          </p>
+        ) : (
+        <>
+
 
         <div className="mt-8 space-y-6">
           <section className="rounded-2xl border border-border bg-card p-5">
