@@ -3,6 +3,7 @@ import { AdminNav } from "@/components/admin-nav";
 import { useEffect, useState } from "react";
 import { PosDevicesCard } from "@/components/pos-devices-card";
 import { useSession, useRoles } from "@/hooks/use-auth";
+import { useSites } from "@/hooks/use-sites";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
