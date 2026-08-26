@@ -147,6 +147,35 @@ export function LiveMap({
   }, [points, ready]);
 
   if (error) {
+    // Keyless live map: Google rejects keys that are not authorised for this
+    // domain, so fall back to an interactive OpenStreetMap embed instead of a
+    // dead panel.
+    const centre = points[0];
+    if (centre) {
+      const d = 0.008;
+      const bbox = `${centre.lng - d},${centre.lat - d},${centre.lng + d},${centre.lat + d}`;
+      const osmSrc = `https://www.openstreetmap.org/export/embed.html?bbox=${bbox}&layer=mapnik&marker=${centre.lat},${centre.lng}`;
+      return (
+        <div className={`relative overflow-hidden rounded-2xl border border-border ${className}`}>
+          <iframe
+            title={`Map — ${centre.label}`}
+            src={osmSrc}
+            className="h-full w-full border-0"
+            loading="lazy"
+          />
+          {fallbackHref && (
+            <a
+              href={fallbackHref}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="absolute bottom-2 right-2 rounded-full bg-background/95 px-3 py-1.5 text-xs font-semibold text-primary shadow backdrop-blur"
+            >
+              Open in Google Maps
+            </a>
+          )}
+        </div>
+      );
+    }
     return (
       <div
         className={`grid place-items-center gap-2 rounded-2xl border border-border bg-secondary p-4 text-center text-sm text-muted-foreground ${className}`}

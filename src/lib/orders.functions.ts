@@ -4,10 +4,10 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { getRequest } from "@tanstack/react-start/server";
 import { createClient } from "@supabase/supabase-js";
 import type { Database } from "@/integrations/supabase/types";
-import { PUBLIC_SETTINGS_COLUMNS } from "./business";
 import { validateModifierSelection, type ModifierRule } from "./modifier-rules";
 import { orderingHoursForLocation } from "./nap";
 import { requireStaffOrderAccess, requireStaffSiteAccess } from "./staff-site-access.server";
+import { PUBLIC_SETTINGS_COLUMNS } from "./business";
 
 function createServerSupabase(bearer?: string) {
   const url = process.env.SUPABASE_URL!;
@@ -79,8 +79,6 @@ const CreateOrderSchema = z.object({
     .regex(/^\d{6}$/)
     .optional(),
   jury_room: z.string().max(60).optional(),
-  /** Jury Lounge orders: settle at the Café 1 counter instead of paying online. */
-  pay_at_counter: z.boolean().optional().default(false),
   /** HMCTS Juror ID used to unlock the Jury Only menu (re-verified server side). */
   juror_id: z.string().trim().max(40).optional(),
   /** Court staff scheme: the internal delivery point (e.g. "CC Floor 1"). */
@@ -589,11 +587,18 @@ export const createOrder = createServerFn({ method: "POST" })
       }
     }
 
-    // Online Luton orders are sent to the correct KDS and paid at the selected
-    // branch. EVO handles the card in person; the website has no separate card
-    // processor integration.
+    // Website and pre-orders must be paid online before they reach either KDS.
+    // The EVO Mobile/3500 / Diamond integration is card-present and cannot be
+    // used as a website checkout. Fail closed until EVO Gateway Hosted Payment
+    // Page credentials and the verified payment callback are connected.
     const checkout_id: string | null = null;
-    const pay_at_counter = !account_id && payable > 0;
+    if (!account_id && payable > 0) {
+      await releaseVoucher();
+      await refundPoints();
+      throw new Error(
+        "Online card payment is being configured. Your order has not been sent to the kitchen or saved. Please try again once card checkout is available.",
+      );
+    }
 
     // Voucher covers the whole order (and it isn't on a tab) — nothing to charge.
     const fully_covered =
@@ -660,13 +665,6 @@ export const createOrder = createServerFn({ method: "POST" })
         promo_discount_cents: free_delivery_promo ? 0 : promo_discount,
         ...(account_id
           ? { payment_status: "on_account" as const, status: "preparing" as const }
-          : {}),
-        ...(pay_at_counter && !account_id
-          ? {
-              payment_status: "pending" as const,
-              status: "preparing" as const,
-              payment_method: "counter",
-            }
           : {}),
         ...(fully_covered ? { payment_status: "paid" as const, status: "paid" as const } : {}),
         ...(account_id || fully_covered ? { loyalty_awarded: true } : {}),
@@ -774,8 +772,7 @@ export const createOrder = createServerFn({ method: "POST" })
       voucher_holder_name,
       checkout_id,
       tracking_token,
-      payment_configured: !!checkout_id || fully_covered || pay_at_counter,
-      pay_at_counter,
+      payment_configured: !!checkout_id || fully_covered,
       on_tab: !!account_id,
       fully_covered,
       free_drinks_used,

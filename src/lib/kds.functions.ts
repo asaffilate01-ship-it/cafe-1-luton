@@ -27,6 +27,14 @@ export const getKitchenBoard = createServerFn({ method: "POST" })
       .in("status", ["preparing", "ready"])
       .order("created_at");
     if (activeError) throw new Error(activeError.message);
+    // A website/pre-order ticket must never appear in the kitchen until its
+    // online card payment has been confirmed. `on_account` is retained only
+    // for the separately authorised Crown Court judge-tab flow.
+    const visibleActive = (active ?? []).filter(
+      (order) =>
+        !["website", "online"].includes(order.source) ||
+        ["paid", "on_account"].includes(order.payment_status ?? ""),
+    );
 
     let recent: typeof active = [];
     if (data.recall) {
@@ -43,7 +51,7 @@ export const getKitchenBoard = createServerFn({ method: "POST" })
       recent = recalled ?? [];
     }
 
-    const orderIds = [...new Set([...(active ?? []), ...(recent ?? [])].map((order) => order.id))];
+    const orderIds = [...new Set([...visibleActive, ...(recent ?? [])].map((order) => order.id))];
     const [{ data: items, error: itemsError }, { data: categories, error: categoriesError }] =
       await Promise.all([
         orderIds.length
@@ -58,7 +66,7 @@ export const getKitchenBoard = createServerFn({ method: "POST" })
     if (categoriesError) throw new Error(categoriesError.message);
 
     return {
-      active: active ?? [],
+      active: visibleActive,
       recent: recent ?? [],
       items: items ?? [],
       categories: categories ?? [],

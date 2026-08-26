@@ -521,7 +521,6 @@ function Checkout() {
             voucher && (juryRoom.trim() || ctx?.jury_room)
               ? (juryRoom.trim() || ctx?.jury_room)!.slice(0, 60)
               : undefined,
-          pay_at_counter: !onTab && finalTotal > 0,
           court_location: staffApproved && mode === "delivery" ? courtLocation : undefined,
         },
       });
@@ -535,13 +534,6 @@ function Checkout() {
         });
       } else if (res.fully_covered) {
         toast.success(`Paid in full by court voucher (${money(res.voucher_cents)})`);
-        navigate({
-          to: "/order/$orderId",
-          params: { orderId: res.order_id },
-          search: { token: res.tracking_token },
-        });
-      } else if (res.pay_at_counter) {
-        toast.success("Order sent to the kitchen — pay at the Café 1 counter");
         navigate({
           to: "/order/$orderId",
           params: { orderId: res.order_id },
@@ -1251,10 +1243,10 @@ function Checkout() {
           {!onTab && finalTotal > 0 && (
             <div className="mt-4 flex items-start gap-3 rounded-2xl border border-primary/40 bg-primary/5 p-4 text-sm">
               <span>
-                <span className="font-semibold text-primary">Pay at the Café 1 counter</span>
+                <span className="font-semibold text-primary">Card payment online</span>
                 <span className="mt-1 block text-muted-foreground">
-                  Your order goes straight to the selected branch. Pay by card or cash when you
-                  collect it or before dining in.
+                  Pre-orders and online orders must be paid securely by card before they are sent
+                  to the selected branch. There is no pay-later or pay-at-counter option online.
                 </span>
               </span>
             </div>
@@ -1277,12 +1269,12 @@ function Checkout() {
                     ? `Add £${((minOrder - subtotal) / 100).toFixed(2)} more`
                     : onTab
                       ? "Add to tab"
-                      : "Place order — pay at the counter"}
+                      : "Continue to secure card payment"}
           </button>
           <p className="mt-2 text-center text-xs text-muted-foreground">
             {onTab
               ? "Billed to your account — settle later"
-              : "Payment is taken securely at your selected Café 1 branch"}
+              : "Your order reaches the kitchen only after online card payment is confirmed"}
           </p>
         </aside>
       </div>
