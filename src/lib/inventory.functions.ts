@@ -169,8 +169,6 @@ export const startStocktake = createServerFn({ method: "POST" })
     z.object({ site_id: z.string().uuid(), title: z.string().trim().min(3).max(140) }).parse(value),
   )
   .handler(async ({ data, context }) => {
-    const { requireManagerMfa } = await import("./elevated-auth.server");
-    requireManagerMfa(context.claims);
     return callOperationsRpc<string>(context.supabase, "cafe1_start_stocktake", {
       _site_id: data.site_id,
       _title: data.title,
@@ -197,8 +195,6 @@ export const completeStocktake = createServerFn({ method: "POST" })
       .parse(value),
   )
   .handler(async ({ data, context }) => {
-    const { requireManagerMfa } = await import("./elevated-auth.server");
-    requireManagerMfa(context.claims);
     return callOperationsRpc<{ stocktake_id: string; absolute_variance_value_cents: number }>(
       context.supabase,
       "cafe1_complete_stocktake",

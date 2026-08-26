@@ -39,8 +39,6 @@ export const getSecurityDashboard = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .validator((value: unknown) => z.object({ site_id: z.string().uuid() }).parse(value))
   .handler(async ({ data, context }) => {
-    const { requireManagerMfa } = await import("./elevated-auth.server");
-    requireManagerMfa(context.claims);
     return callOperationsRpc<SecurityDashboard>(context.supabase, "cafe1_security_dashboard", {
       _site_id: data.site_id,
     });
@@ -50,8 +48,6 @@ export const refreshOperationalAlerts = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .validator((value: unknown) => z.object({ site_id: z.string().uuid() }).parse(value))
   .handler(async ({ data, context }) => {
-    const { requireManagerMfa } = await import("./elevated-auth.server");
-    requireManagerMfa(context.claims);
     return callOperationsRpc<number>(context.supabase, "cafe1_refresh_operational_alerts", {
       _site_id: data.site_id,
     });
@@ -61,8 +57,6 @@ export const resolveSystemAlert = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .validator((value: unknown) => z.object({ alert_id: z.string().uuid() }).parse(value))
   .handler(async ({ data, context }) => {
-    const { requireManagerMfa } = await import("./elevated-auth.server");
-    requireManagerMfa(context.claims);
     return callOperationsRpc<boolean>(context.supabase, "cafe1_resolve_alert", {
       _alert_id: data.alert_id,
     });

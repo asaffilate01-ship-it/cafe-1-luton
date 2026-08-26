@@ -52,16 +52,12 @@ async function requireAdmin(
     ) => PromiseLike<{ data: unknown }>;
   };
   },
-  options: { mfa?: boolean } = {},
 ) {
   const { data } = await context.supabase.rpc("has_role", {
     _user_id: context.userId,
     _role: "admin",
   });
   if (!data) throw new Error("Manager approval required");
-  if (options.mfa === false) return;
-  const { requireManagerMfa } = await import("./elevated-auth.server");
-  requireManagerMfa(context.claims);
 }
 
 export const listAccounts = createServerFn({ method: "GET" })
@@ -150,7 +146,7 @@ export const quickAddAccount = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     // Quick-add during a manual/KDS order is a low-risk, high-frequency counter
     // action, so any signed-in operator (kitchen staff or manager) may do it
-    // without step-up MFA. The RPC re-checks the operator role server-side.
+    // The RPC re-checks the operator role server-side.
     const [{ data: isAdmin }, { data: isStaff }] = await Promise.all([
       context.supabase.rpc("has_role", { _user_id: context.userId, _role: "admin" }),
       context.supabase.rpc("has_role", { _user_id: context.userId, _role: "staff" }),

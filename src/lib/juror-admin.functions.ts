@@ -1,7 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { requireManagerMfa } from "./elevated-auth.server";
 import { callOperationsRpc } from "./ops-rpc";
 
 const IsoDate = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
@@ -27,7 +26,6 @@ export const manageJurorVoucher = createServerFn({ method: "POST" })
       .parse(value),
   )
   .handler(async ({ data, context }) => {
-    requireManagerMfa(context.claims);
     return callOperationsRpc<{
       id: string;
       code: string;
@@ -64,7 +62,6 @@ export const activateJurorIds = createServerFn({ method: "POST" })
       .parse(value),
   )
   .handler(async ({ data, context }) => {
-    requireManagerMfa(context.claims);
     return callOperationsRpc<ActivatedJurorId[]>(context.supabase, "cafe1_activate_juror_ids", {
       _batch: data.batch,
       _juror_ids: data.juror_ids,
@@ -82,7 +79,6 @@ export const resetJurorPin = createServerFn({ method: "POST" })
       .parse(value),
   )
   .handler(async ({ data, context }) => {
-    requireManagerMfa(context.claims);
     return callOperationsRpc<{ code: string; pin: string }>(
       context.supabase,
       "cafe1_reset_juror_pin",
@@ -103,7 +99,6 @@ export const setJurorDailyAllowance = createServerFn({ method: "POST" })
       .parse(value),
   )
   .handler(async ({ data, context }) => {
-    requireManagerMfa(context.claims);
     return callOperationsRpc<{
       holder_id: string;
       for_date: string;

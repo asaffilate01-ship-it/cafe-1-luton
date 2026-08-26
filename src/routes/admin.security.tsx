@@ -4,7 +4,6 @@ import { useCallback, useEffect, useState } from "react";
 import { AdminNav } from "@/components/admin-nav";
 import { RequireRole } from "@/components/require-role";
 import { SiteSwitcher } from "@/components/site-switcher";
-import { AdminMfaCard } from "@/components/admin-mfa-card";
 import { useSites } from "@/hooks/use-sites";
 import {
   getSecurityDashboard,
@@ -42,13 +41,7 @@ function SecurityPage() {
   const [data, setData] = useState<SecurityDashboard | null>(null);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
-  const [mfaReady, setMfaReady] = useState(false);
   const load = useCallback(async () => {
-    if (!mfaReady) {
-      setData(null);
-      setLoading(false);
-      return;
-    }
     setLoading(true);
     try {
       setData(await get({ data: { site_id: sites.siteId } }));
@@ -57,7 +50,7 @@ function SecurityPage() {
     } finally {
       setLoading(false);
     }
-  }, [get, sites.siteId, mfaReady]);
+  }, [get, sites.siteId]);
   useEffect(() => {
     void load();
   }, [load]);
@@ -84,7 +77,7 @@ function SecurityPage() {
               error={sites.error}
             />
             <button
-              disabled={busy || !mfaReady}
+              disabled={busy}
               onClick={async () => {
                 setBusy(true);
                 try {
@@ -101,12 +94,7 @@ function SecurityPage() {
             </button>
           </div>
         </div>
-        <AdminMfaCard onAssuranceChange={setMfaReady} />
-        {!mfaReady ? (
-          <section className="mt-6 rounded-2xl border border-amber-300 bg-amber-50 p-5 text-sm text-amber-950">
-            Verify manager MFA above to unlock security alerts, audit events and sensitive actions.
-          </section>
-        ) : loading ? (
+        {loading ? (
           <div className="grid min-h-64 place-items-center">
             <Loader2 className="h-6 w-6 animate-spin" />
           </div>

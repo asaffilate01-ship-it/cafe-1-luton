@@ -348,7 +348,7 @@ const steps: Step[] = [
           1.
         </Fact>
         <Fact icon={ShieldCheck} title="Access control">
-          Two-factor authentication on admin accounts, named staff logins, PINs stored hashed with
+          Role-protected admin accounts, named staff logins, PINs stored hashed with
           lock-out and rate limiting.
         </Fact>
         <Fact icon={FileSpreadsheet} title="Immutable audit log">

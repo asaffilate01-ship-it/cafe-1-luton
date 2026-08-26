@@ -46,8 +46,6 @@ export const saveSite = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .validator((value: unknown) => SiteSchema.parse(value))
   .handler(async ({ data, context }) => {
-    const { requireManagerMfa } = await import("./elevated-auth.server");
-    requireManagerMfa(context.claims);
     return callOperationsRpc<CafeSite>(context.supabase, "cafe1_save_site", {
       _payload: data,
     });

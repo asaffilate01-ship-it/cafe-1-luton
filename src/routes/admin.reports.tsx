@@ -1,19 +1,17 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   BadgePoundSterling,
   BarChart3,
   Boxes,
   Download,
-  FileUp,
   Loader2,
   Plus,
   ReceiptText,
   RefreshCw,
   Store,
   Trash2,
-  WalletCards,
 } from "lucide-react";
 import { toast } from "sonner";
 import { AdminNav } from "@/components/admin-nav";
@@ -27,15 +25,12 @@ import {
   EXPENSE_CATEGORIES,
   PAYMENT_METHODS,
   getFinanceDashboard,
-  importSumupExpenses,
   receivePurchase,
   saveExpense,
   saveSupplier,
-  syncSumupSettlements,
   voidExpense,
   type FinanceDashboard,
 } from "@/lib/finance.functions";
-import { parseSumupExpenseCsv } from "@/lib/expense-import";
 
 export const Route = createFileRoute("/admin/reports")({
   head: () => ({
@@ -55,7 +50,7 @@ export const Route = createFileRoute("/admin/reports")({
   ),
 });
 
-type Section = "overview" | "expenses" | "purchases" | "sumup";
+type Section = "overview" | "expenses" | "purchases";
 type PurchaseLine = { inventory_item_id: string; quantity: string; unit_cost: string };
 
 const CATEGORY_LABELS: Record<string, string> = {
@@ -122,10 +117,7 @@ function FinancePage() {
   const postExpense = useServerFn(saveExpense);
   const postSupplier = useServerFn(saveSupplier);
   const postPurchase = useServerFn(receivePurchase);
-  const postImport = useServerFn(importSumupExpenses);
-  const postSync = useServerFn(syncSumupSettlements);
   const postVoid = useServerFn(voidExpense);
-  const fileInput = useRef<HTMLInputElement>(null);
   const [section, setSection] = useState<Section>("overview");
   const [days, setDays] = useState(30);
   const [data, setData] = useState<FinanceDashboard | null>(null);
@@ -133,7 +125,7 @@ function FinancePage() {
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  
+
   const fromDate = useMemo(() => startFor(days), [days]);
   const toDate = isoDate();
 
@@ -171,19 +163,6 @@ function FinancePage() {
     } finally {
       setBusy(false);
     }
-  }
-
-  async function handleExpenseCsv(file: File) {
-    try {
-      const rows = parseSumupExpenseCsv(await file.text());
-      await run(async () => {
-        const result = await postImport({ data: { site_id: siteId, rows } });
-        toast.info(`${result.imported} new · ${result.skipped} already imported`);
-      }, "Processor expense report imported");
-    } catch (cause) {
-      toast.error(cause instanceof Error ? cause.message : "Could not read the CSV");
-    }
-    if (fileInput.current) fileInput.current.value = "";
   }
 
   function exportManagement() {
@@ -277,16 +256,12 @@ function FinancePage() {
           </div>
         </header>
 
-
-
-
         <div className="mt-5 flex gap-2 overflow-x-auto pb-1">
           {(
             [
               ["overview", "Overview", BarChart3],
               ["expenses", "Expenses", ReceiptText],
               ["purchases", "Purchases", Boxes],
-              ["sumup", "Payments", WalletCards],
             ] as const
           ).map(([id, label, Icon]) => (
             <button
@@ -305,7 +280,7 @@ function FinancePage() {
             <p className="font-semibold">Financial dashboard is not ready</p>
             <p className="mt-1">{error}</p>
             <p className="mt-2">
-              Apply the Phase 33 migration and sign in with manager authenticator MFA (AAL2).
+              Apply the Phase 33 migration and sign in with an administrator account.
             </p>
           </div>
         )}
@@ -338,71 +313,6 @@ function FinancePage() {
             postSupplier={postSupplier}
             postPurchase={postPurchase}
           />
-        )}
-        {data && section === "sumup" && (
-          <section className="mt-5 grid gap-4 lg:grid-cols-2">
-            <Panel
-              title="Automatic settlement reconciliation"
-              subtitle="Pulls processor payouts, deductions and processing fees. Repeating a sync updates existing references; it never duplicates fees."
-            >
-              <div className="grid gap-3 sm:grid-cols-3">
-                <Metric label="Paid out" value={money(data.sumup.paid_out_cents)} />
-                <Metric label="Deductions" value={money(data.sumup.deductions_cents)} />
-                <Metric label="Fees" value={money(data.sumup.fees_cents)} />
-              </div>
-              <button
-                disabled={busy}
-                onClick={() =>
-                  void run(
-                    () =>
-                      postSync({ data: { site_id: siteId, from_date: fromDate, to_date: toDate } }),
-                    "Payment settlements and fees reconciled",
-                  )
-                }
-                className="mt-4 inline-flex h-11 items-center gap-2 rounded-xl bg-primary px-5 text-sm font-bold text-primary-foreground disabled:opacity-50"
-              >
-                <RefreshCw className={`h-4 w-4 ${busy ? "animate-spin" : ""}`} />
-                Sync {days} days
-              </button>
-              <p className="mt-3 text-xs text-muted-foreground">
-                The payment API key needs payout-read access. Refund and chargeback deductions
-                are stored for settlement reconciliation, not double-posted as ordinary expenses.
-              </p>
-            </Panel>
-            <Panel
-              title="Import POS expense history"
-              subtitle="Export the POS expense history as CSV, then import it here."
-            >
-              <ol className="space-y-2 text-sm text-muted-foreground">
-                <li>1. Payment back office → Transactions → Expenses.</li>
-                <li>2. Choose the period and select Export → CSV.</li>
-                <li>3. Import below. Identical rows are skipped automatically.</li>
-              </ol>
-              <input
-                ref={fileInput}
-                type="file"
-                accept=".csv,text/csv"
-                className="hidden"
-                onChange={(event) => {
-                  const file = event.target.files?.[0];
-                  if (file) void handleExpenseCsv(file);
-                }}
-              />
-              <button
-                disabled={busy}
-                onClick={() => fileInput.current?.click()}
-                className="mt-4 inline-flex h-11 items-center gap-2 rounded-xl border border-primary bg-primary-soft px-5 text-sm font-bold text-primary disabled:opacity-50"
-              >
-                <FileUp className="h-4 w-4" />
-                Choose expense CSV
-              </button>
-              <p className="mt-3 text-xs text-muted-foreground">
-                The CSV parser supports quoted descriptions, UK/ISO dates and VAT shown by the processor,
-                payment method, operator and bill number. VAT is retained only as invoice
-                information and is not reclaimed.
-              </p>
-            </Panel>
-          </section>
         )}
       </main>
     </div>

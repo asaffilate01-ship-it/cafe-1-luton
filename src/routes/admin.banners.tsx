@@ -7,6 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { ImageIcon, Trash2, Upload } from "lucide-react";
+import { HOME_BANNER_RESET_AT } from "@/lib/home-banners";
 
 export const Route = createFileRoute("/admin/banners")({
   head: () => ({
@@ -17,6 +18,7 @@ export const Route = createFileRoute("/admin/banners")({
 
 type Row = {
   id: string;
+  created_at: string;
   title: string;
   subtitle: string | null;
   badge: string | null;
@@ -58,6 +60,8 @@ function AdminBanners() {
     bg_color: "oklch(0.55 0.22 27)",
     image_url: "",
     sort_order: 0,
+    starts_at: "",
+    ends_at: "",
   });
   const [busy, setBusy] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -90,11 +94,21 @@ function AdminBanners() {
       cta_url: form.cta_url || null,
       sort_order: form.sort_order,
       active: true,
+      starts_at: form.starts_at ? new Date(form.starts_at).toISOString() : null,
+      ends_at: form.ends_at ? new Date(form.ends_at).toISOString() : null,
     });
     setBusy(false);
     if (error) return toast.error(error.message);
     toast.success("Banner added");
-    setForm({ ...form, title: "", subtitle: "", badge: "", image_url: "" });
+    setForm({
+      ...form,
+      title: "",
+      subtitle: "",
+      badge: "",
+      image_url: "",
+      starts_at: "",
+      ends_at: "",
+    });
     qc.invalidateQueries({ queryKey: ["admin-banners"] });
     qc.invalidateQueries({ queryKey: ["promo-banners"] });
   }
@@ -107,6 +121,23 @@ function AdminBanners() {
   async function remove(id: string) {
     if (!(await askConfirm("Delete this banner?"))) return;
     await supabase.from("promo_banners").delete().eq("id", id);
+    qc.invalidateQueries({ queryKey: ["admin-banners"] });
+    qc.invalidateQueries({ queryKey: ["promo-banners"] });
+  }
+
+  async function removeLegacy() {
+    if (
+      !(await askConfirm(
+        "Delete the old homepage banners? The permanent pre-order banner will remain.",
+      ))
+    )
+      return;
+    const { error } = await supabase
+      .from("promo_banners")
+      .delete()
+      .lt("created_at", HOME_BANNER_RESET_AT);
+    if (error) return toast.error(error.message);
+    toast.success("Old homepage banners removed");
     qc.invalidateQueries({ queryKey: ["admin-banners"] });
     qc.invalidateQueries({ queryKey: ["promo-banners"] });
   }
@@ -126,7 +157,8 @@ function AdminBanners() {
           <div>
             <h1 className="font-display text-3xl font-bold">Promo banners</h1>
             <p className="text-sm text-muted-foreground">
-              Hero carousel shown on the home & menu pages.
+              The pre-order banner is always shown. Add, schedule or disable any extra homepage
+              banners here.
             </p>
           </div>
         </div>
@@ -194,6 +226,26 @@ function AdminBanners() {
               className="h-11 rounded-xl border border-border bg-background px-4"
             />
           </div>
+          <div className="grid gap-3 sm:grid-cols-2">
+            <label className="text-xs font-medium text-muted-foreground">
+              Show from (optional)
+              <input
+                type="datetime-local"
+                value={form.starts_at}
+                onChange={(e) => setForm({ ...form, starts_at: e.target.value })}
+                className="mt-1 h-11 w-full rounded-xl border border-border bg-background px-4 text-foreground"
+              />
+            </label>
+            <label className="text-xs font-medium text-muted-foreground">
+              Hide after (optional)
+              <input
+                type="datetime-local"
+                value={form.ends_at}
+                onChange={(e) => setForm({ ...form, ends_at: e.target.value })}
+                className="mt-1 h-11 w-full rounded-xl border border-border bg-background px-4 text-foreground"
+              />
+            </label>
+          </div>
           {form.image_url && (
             <div className="flex items-center gap-3 text-xs text-muted-foreground">
               <img src={form.image_url} alt="preview" className="h-14 w-24 rounded object-cover" />
@@ -214,7 +266,20 @@ function AdminBanners() {
           </button>
         </form>
 
-        <h2 className="mt-10 font-display text-xl font-bold">All banners</h2>
+        <div className="mt-10 flex items-center justify-between gap-3">
+          <h2 className="font-display text-xl font-bold">Added banners</h2>
+          {(rows ?? []).some(
+            (row) => new Date(row.created_at).getTime() < new Date(HOME_BANNER_RESET_AT).getTime(),
+          ) && (
+            <button
+              type="button"
+              onClick={() => void removeLegacy()}
+              className="rounded-full border border-border px-3 py-1.5 text-xs font-semibold hover:border-destructive hover:text-destructive"
+            >
+              Remove old banners
+            </button>
+          )}
+        </div>
         <ul className="mt-3 space-y-3">
           {(rows ?? []).map((r) => (
             <li

@@ -17,9 +17,7 @@ import {
   listRecentTillOrders,
   openTillShift,
   recordTillCashEvent,
-  startReaderPayment,
-  checkReaderPayment,
-  cancelReaderPayment,
+  settleOnlineOrderAtTill,
 } from "@/lib/till.functions";
 import { refundOrder } from "@/lib/payments.functions";
 import { openCashDrawer } from "@/lib/drawer";
@@ -41,12 +39,7 @@ import { chargeOrderToAccount, findSimilarAccountOrder } from "@/lib/judge-tab.f
 import { QrCode } from "@/components/qr-code";
 import { InstallAppButton } from "@/components/install-app-button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
-import {
-  ReaderConnectionAlert,
-  ReaderStatusPill,
-  ReaderLinkGuide,
-} from "@/components/reader-connection";
-import { isReaderOnline } from "@/lib/reader-status";
+import { ReaderLinkGuide } from "@/components/reader-connection";
 import { money } from "@/lib/format";
 import { LOCATIONS, SITE_URL } from "@/lib/nap";
 import { calculateCounterDue } from "@/lib/counter-pricing";
@@ -170,7 +163,7 @@ type DraftBasket = {
   table: string;
 };
 type Side = "jury" | "judge" | "public";
-type TillTerminal = Side | "futures_public";
+type TillTerminal = Side;
 type Fulfilment = "dine_in" | "collection";
 type TillShift = {
   id: string;
@@ -455,8 +448,10 @@ function Till() {
   const crownCourt = isCrownCourt(sites.site);
   const receiptLocation = futuresHouse ? LOCATIONS[1] : LOCATIONS[0];
   /** One physical till per branch; Crown Court destination is stored on each order. */
-  const shiftTerminal: TillTerminal = futuresHouse ? "futures_public" : "public";
-  const orderDestination: TillTerminal = futuresHouse ? "futures_public" : side;
+  // The database recognises jury, judge and public. Futures House uses public,
+  // with site_id providing the branch separation for its shift and orders.
+  const shiftTerminal: TillTerminal = "public";
+  const orderDestination: TillTerminal = futuresHouse ? "public" : side;
   const availableFulfilChoices = FULFIL_CHOICES;
   const [evoConnected, setEvoConnected] = useState(() =>
     typeof window === "undefined"
@@ -688,13 +683,17 @@ function Till() {
   const manualDiscountCents = pricing.manualDiscountCents;
   const due = pricing.dueCents;
   /** Sent with every counter order so the discount is priced and audited server-side. */
-  const manualDiscountArgs = manualDiscount
-    ? {
-        manual_discount_type: manualDiscount.type,
-        manual_discount_value: manualDiscount.value,
-        manual_discount_reason: manualDiscount.reason,
-      }
-    : {};
+  const manualDiscountArgs = useMemo(
+    () =>
+      manualDiscount
+        ? {
+            manual_discount_type: manualDiscount.type,
+            manual_discount_value: manualDiscount.value,
+            manual_discount_reason: manualDiscount.reason,
+          }
+        : {},
+    [manualDiscount],
+  );
 
   // mirror the basket onto the customer-facing second screen (/display)
   useEffect(() => {
@@ -2098,6 +2097,7 @@ function Till() {
           {recentOrdersOpen && (
             <RecentTillOrdersModal
               siteId={sites.siteId}
+              shiftId={shift?.id ?? null}
               onClose={() => setRecentOrdersOpen(false)}
             />
           )}
@@ -2531,10 +2531,19 @@ type TillTabStatement = Awaited<ReturnType<typeof getAccountStatement>>;
 type RecentTillOrder = Awaited<ReturnType<typeof listRecentTillOrders>>[number];
 
 /** Staff-facing history for correcting unpaid sales and refunding settled ones. */
-function RecentTillOrdersModal({ siteId, onClose }: { siteId: string; onClose: () => void }) {
+function RecentTillOrdersModal({
+  siteId,
+  shiftId,
+  onClose,
+}: {
+  siteId: string;
+  shiftId: string | null;
+  onClose: () => void;
+}) {
   const listOrders = useServerFn(listRecentTillOrders);
   const refund = useServerFn(refundOrder);
   const cancel = useServerFn(cancelCounterOrder);
+  const settleOnline = useServerFn(settleOnlineOrderAtTill);
   const [orders, setOrders] = useState<RecentTillOrder[]>([]);
   const [loading, setLoading] = useState(true);
   const [workingId, setWorkingId] = useState<string | null>(null);
@@ -2617,6 +2626,59 @@ function RecentTillOrdersModal({ siteId, onClose }: { siteId: string; onClose: (
     }
   }
 
+  async function takeOnlinePayment(order: RecentTillOrder, method: "cash" | "card" | "split") {
+    if (!shiftId) return toast.error("Open the till shift before taking payment");
+    let cashComponentCents = 0;
+    let cardReference: string | undefined;
+    if (method === "cash") {
+      if (
+        !(await askConfirm(
+          `Take ${money(order.total_cents)} cash for order #${order.order_number}?`,
+        ))
+      )
+        return;
+    } else {
+      if (method === "split") {
+        const cash = await askPrompt({
+          title: `Split payment for #${order.order_number}`,
+          description: `Order total ${money(order.total_cents)}. Enter the cash part; the rest is paid by EVO card.`,
+          label: "Cash amount (£)",
+          inputMode: "decimal",
+          confirmLabel: "Continue",
+        });
+        if (cash === null) return;
+        cashComponentCents = Math.round(Number(cash) * 100);
+      }
+      const reference = await askPrompt({
+        title: `EVO payment for #${order.order_number}`,
+        description:
+          "Take the card payment on the Mobile/3500, then enter its approved receipt reference.",
+        label: "EVO receipt reference",
+        confirmLabel: "Mark paid",
+      });
+      if (!reference?.trim()) return;
+      cardReference = reference.trim();
+    }
+    setWorkingId(order.id);
+    try {
+      await settleOnline({
+        data: {
+          order_id: order.id,
+          shift_id: shiftId,
+          payment_method: method,
+          cash_component_cents: cashComponentCents,
+          card_reference: cardReference,
+        },
+      });
+      toast.success(`Order #${order.order_number} paid`);
+      await load();
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Could not record payment");
+    } finally {
+      setWorkingId(null);
+    }
+  }
+
   return (
     <div
       className="fixed inset-0 z-[120] grid place-items-center bg-black/75 p-3"
@@ -2688,18 +2750,32 @@ function RecentTillOrdersModal({ siteId, onClose }: { siteId: string; onClose: (
                     </div>
                     <div className="flex gap-2 sm:justify-end">
                       {!settled && order.status !== "cancelled" && (
-                        <button
-                          disabled={busy}
-                          onClick={() => void cancelSale(order)}
-                          className="inline-flex h-10 items-center gap-1.5 rounded-xl border border-red-400/50 px-3 text-xs font-bold text-red-300 disabled:opacity-40"
-                        >
-                          {busy ? (
-                            <Loader2 className="h-4 w-4 animate-spin" />
-                          ) : (
-                            <X className="h-4 w-4" />
-                          )}{" "}
-                          Cancel
-                        </button>
+                        <>
+                          {["cash", "card", "split"].map((method) => (
+                            <button
+                              key={method}
+                              disabled={busy || !shiftId}
+                              onClick={() =>
+                                void takeOnlinePayment(order, method as "cash" | "card" | "split")
+                              }
+                              className="inline-flex h-10 items-center rounded-xl bg-primary px-2.5 text-xs font-bold text-primary-foreground disabled:opacity-40"
+                            >
+                              {method[0].toUpperCase() + method.slice(1)}
+                            </button>
+                          ))}
+                          <button
+                            disabled={busy}
+                            onClick={() => void cancelSale(order)}
+                            className="inline-flex h-10 items-center gap-1.5 rounded-xl border border-red-400/50 px-3 text-xs font-bold text-red-700 disabled:opacity-40"
+                          >
+                            {busy ? (
+                              <Loader2 className="h-4 w-4 animate-spin" />
+                            ) : (
+                              <X className="h-4 w-4" />
+                            )}{" "}
+                            Cancel
+                          </button>
+                        </>
                       )}
                       {settled && remaining > 0 && (
                         <button
@@ -3844,215 +3920,6 @@ function ShiftModal({
         )}
         {mode === "open" ? "Open shift" : mode === "close" ? "Count and close" : "Record movement"}
       </button>
-    </Modal>
-  );
-}
-
-function ReaderPay({
-  total,
-  cashComponent,
-  basket,
-  readers,
-  readerId,
-  setReaderId,
-  readerError,
-  reloadReaders,
-  onClose,
-  onPaid,
-  onSettings,
-}: {
-  total: number;
-  cashComponent: number;
-  basket: CounterBasketInput;
-  readers: { id: string; name: string; status: string }[];
-  readerId: string;
-  setReaderId: (v: string) => void;
-  readerError?: string | null;
-  reloadReaders: () => Promise<void>;
-  onClose: () => void;
-  onPaid: (result: CounterResult) => void;
-  onSettings: () => void;
-}) {
-  const prepare = useServerFn(prepareCounterOrder);
-  const finalize = useServerFn(finalizeCounterCardPayment);
-  const cancelOrder = useServerFn(cancelCounterOrder);
-  const start = useServerFn(startReaderPayment);
-  const check = useServerFn(checkReaderPayment);
-  const cancel = useServerFn(cancelReaderPayment);
-  const [state, setState] = useState<"idle" | "waiting" | "failed">("idle");
-  const [note, setNote] = useState("");
-  const [prepared, setPrepared] = useState<CounterResult | null>(null);
-  const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const stopped = useRef(false);
-  const attemptId = useRef<string | null>(null);
-
-  useEffect(
-    () => () => {
-      stopped.current = true;
-      if (timer.current) clearTimeout(timer.current);
-    },
-    [],
-  );
-
-  async function begin() {
-    if (!readerId) return toast.error("Pick a card reader first");
-    stopped.current = false;
-    setState("waiting");
-    setNote("Tap, insert or swipe on the Solo…");
-    try {
-      let order = prepared;
-      if (!order) {
-        const created = await prepare({ data: basket });
-        order = created;
-        setPrepared(created);
-        if (created.total_cents < 1 || created.payment_status === "paid") {
-          onPaid(created);
-          return;
-        }
-      }
-      const startedAttempt = await start({
-        data: {
-          reader_id: readerId,
-          order_id: order.order_id,
-          cash_component_cents: cashComponent,
-        },
-      });
-      attemptId.current = startedAttempt.payment_attempt_id;
-      const started = Date.now();
-      const poll = async () => {
-        if (stopped.current) return;
-        try {
-          const r = await check({
-            data: { payment_attempt_id: startedAttempt.payment_attempt_id },
-          });
-          if (r.paid) {
-            stopped.current = true;
-            try {
-              const completed = await finalize({
-                data: {
-                  order_id: order.order_id,
-                  payment_attempt_id: startedAttempt.payment_attempt_id,
-                },
-              });
-              onPaid(completed);
-            } catch (error) {
-              setState("failed");
-              setNote(
-                error instanceof Error
-                  ? `Card was approved, but the order could not be finalised: ${error.message}`
-                  : "Card was approved, but the order could not be finalised. Ask a manager to reconcile it.",
-              );
-            }
-            return;
-          } else if (r.failed) {
-            stopped.current = true;
-            setState("failed");
-            setNote("Payment declined or cancelled on the reader");
-            return;
-          } else if (Date.now() - started > 3 * 60_000) {
-            stopped.current = true;
-            setState("failed");
-            setNote("Timed out waiting for the reader");
-            return;
-          }
-        } catch (error) {
-          console.error("[till] reader poll", error);
-        }
-        if (!stopped.current) timer.current = setTimeout(() => void poll(), 2500);
-      };
-      timer.current = setTimeout(() => void poll(), 1500);
-    } catch (e) {
-      setState("failed");
-      setNote(e instanceof Error ? e.message : "Could not reach the reader");
-    }
-  }
-
-  async function abort() {
-    stopped.current = true;
-    if (timer.current) clearTimeout(timer.current);
-    try {
-      if (readerId) {
-        await cancel({
-          data: {
-            reader_id: readerId,
-            payment_attempt_id: attemptId.current ?? undefined,
-          },
-        });
-      }
-      if (prepared) {
-        await cancelOrder({
-          data: { order_id: prepared.order_id, reason: "Reader payment cancelled at till" },
-        });
-      }
-      onClose();
-    } catch (error) {
-      setState("failed");
-      setNote(error instanceof Error ? error.message : "Could not safely cancel payment");
-    }
-  }
-
-  return (
-    <Modal title="Card payment on EVO Mobile/3500" onClose={abort}>
-      <div className="rounded-2xl bg-slate-100 p-4 text-center">
-        <p className="text-xs font-bold uppercase tracking-widest text-slate-500">Card amount</p>
-        <p className="font-display text-4xl font-black text-primary">
-          {money(prepared ? prepared.total_cents - cashComponent : total)}
-        </p>
-        {cashComponent > 0 && (
-          <p className="mt-1 text-xs text-slate-500">Plus {money(cashComponent)} cash</p>
-        )}
-      </div>
-
-      {readers.length > 0 && (
-        <div className="mt-4 space-y-1.5">
-          {readers.map((r) => (
-            <button
-              key={r.id}
-              onClick={() => setReaderId(r.id)}
-              disabled={state === "waiting"}
-              className={`flex w-full items-center gap-2 rounded-xl px-3 py-2.5 text-sm font-semibold ${readerId === r.id ? "bg-primary text-primary-foreground" : "border border-slate-200 text-slate-800 hover:border-slate-400"}`}
-            >
-              <Smartphone className="h-4 w-4" /> {r.name}
-              <span className="ml-auto">
-                <ReaderStatusPill status={r.status} />
-              </span>
-            </button>
-          ))}
-        </div>
-      )}
-
-      <ReaderConnectionAlert
-        readers={readers}
-        readerId={readerId}
-        error={readerError}
-        onRetry={reloadReaders}
-        onSettings={onSettings}
-      />
-
-      {state === "waiting" ? (
-        <div className="mt-5 rounded-2xl border border-primary/40 bg-primary/10 p-4 text-center">
-          <Loader2 className="mx-auto h-6 w-6 animate-spin text-primary" />
-          <p className="mt-2 text-sm font-semibold">{note}</p>
-          <button onClick={abort} className="mt-3 text-xs font-semibold text-slate-600 underline">
-            Cancel payment
-          </button>
-        </div>
-      ) : (
-        <>
-          {state === "failed" && (
-            <p className="mt-4 rounded-xl bg-red-500/15 p-3 text-sm text-red-300">{note}</p>
-          )}
-          <button
-            disabled={
-              !readers.length || !isReaderOnline(readers.find((r) => r.id === readerId)?.status)
-            }
-            onClick={begin}
-            className="mt-5 inline-flex h-14 w-full items-center justify-center gap-2 rounded-xl bg-primary text-base font-bold text-primary-foreground disabled:opacity-40"
-          >
-            <CreditCard className="h-5 w-5" /> {prepared ? "Retry reader" : "Send to reader"}
-          </button>
-        </>
-      )}
     </Modal>
   );
 }

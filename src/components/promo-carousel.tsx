@@ -3,12 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Link } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-
-type Banner = {
-  id: string; title: string; subtitle: string | null; badge: string | null;
-  image_url: string | null; bg_color: string | null;
-  cta_label: string | null; cta_url: string | null;
-};
+import { isLiveAdminBanner, PREORDER_HOME_BANNER, type HomeBanner } from "@/lib/home-banners";
 
 export function PromoCarousel() {
   const { data } = useQuery({
@@ -17,13 +12,18 @@ export function PromoCarousel() {
     queryFn: async () => {
       const { data } = await supabase
         .from("promo_banners")
-        .select("id,title,subtitle,badge,image_url,bg_color,cta_label,cta_url")
+        .select(
+          "id,title,subtitle,badge,image_url,bg_color,cta_label,cta_url,created_at,active,starts_at,ends_at",
+        )
         .order("sort_order");
-      return (data ?? []) as Banner[];
+      return (data ?? []) as HomeBanner[];
     },
   });
 
-  const banners = data ?? [];
+  const banners = [
+    PREORDER_HOME_BANNER,
+    ...(data ?? []).filter((banner) => isLiveAdminBanner(banner)),
+  ];
   const [idx, setIdx] = useState(0);
   const trackRef = useRef<HTMLDivElement | null>(null);
 
@@ -49,8 +49,14 @@ export function PromoCarousel() {
       >
         {banners.map((b) => {
           const cardStyle = b.image_url
-            ? { backgroundImage: `linear-gradient(120deg, rgba(20,20,20,.55), rgba(20,20,20,.15)), url(${b.image_url})`, backgroundSize: "cover", backgroundPosition: "center" }
-              : { background: `linear-gradient(120deg, ${b.bg_color ?? "oklch(0.55 0.22 27)"}, color-mix(in oklab, ${b.bg_color ?? "oklch(0.55 0.22 27)"} 60%, black))` };
+            ? {
+                backgroundImage: `linear-gradient(120deg, rgba(20,20,20,.55), rgba(20,20,20,.15)), url(${b.image_url})`,
+                backgroundSize: "cover",
+                backgroundPosition: "center",
+              }
+            : {
+                background: `linear-gradient(120deg, ${b.bg_color ?? "oklch(0.55 0.22 27)"}, color-mix(in oklab, ${b.bg_color ?? "oklch(0.55 0.22 27)"} 60%, black))`,
+              };
           const inner = (
             <div
               className="banner-gloss flex h-40 w-full min-w-full snap-start items-end rounded-2xl px-5 py-5 text-white sm:h-56 sm:px-16 sm:py-6"
@@ -62,9 +68,13 @@ export function PromoCarousel() {
                     {b.badge}
                   </span>
                 )}
-                <p className="mt-2 font-display text-2xl font-bold leading-tight [text-shadow:0_2px_8px_rgba(0,0,0,0.45)] sm:text-3xl">{b.title}</p>
+                <p className="mt-2 font-display text-2xl font-bold leading-tight [text-shadow:0_2px_8px_rgba(0,0,0,0.45)] sm:text-3xl">
+                  {b.title}
+                </p>
                 {b.subtitle && (
-                  <p className="mt-1 text-sm opacity-95 [text-shadow:0_1px_5px_rgba(0,0,0,0.4)] sm:text-base">{b.subtitle}</p>
+                  <p className="mt-1 text-sm opacity-95 [text-shadow:0_1px_5px_rgba(0,0,0,0.4)] sm:text-base">
+                    {b.subtitle}
+                  </p>
                 )}
                 {b.cta_label && b.cta_url && (
                   <span className="mt-3 inline-block rounded-full bg-gradient-to-b from-white to-white/85 px-4 py-1.5 text-sm font-semibold text-primary shadow-[0_6px_16px_-6px_rgba(0,0,0,0.55),inset_0_1px_0_rgba(255,255,255,0.95)]">
@@ -88,7 +98,11 @@ export function PromoCarousel() {
               </a>
             );
           }
-          return <div key={b.id} className="min-w-full snap-start">{inner}</div>;
+          return (
+            <div key={b.id} className="min-w-full snap-start">
+              {inner}
+            </div>
+          );
         })}
       </div>
       {banners.length > 1 && (

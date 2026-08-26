@@ -32,11 +32,9 @@ async function assertAdmin(context: StaffContext) {
     _role: "admin",
   });
   if (!isAdmin) throw new Error("Manager approval required");
-  const { requireManagerMfa } = await import("./elevated-auth.server");
-  requireManagerMfa(context.claims);
 }
 
-const TerminalSchema = z.enum(["jury", "judge", "public", "futures_public"]);
+const TerminalSchema = z.enum(["jury", "judge", "public"]);
 const SiteTerminalSchema = z.object({
   terminal: TerminalSchema,
   site_id: z.string().uuid(),
@@ -71,17 +69,6 @@ export const openTillShift = createServerFn({ method: "POST" })
   )
   .handler(async ({ data, context }) => {
     await requireStaffSiteAccess(context, data.site_id);
-    const { data: openedShift, error } = await context.supabase.rpc("open_till_shift", {
-      _terminal: data.terminal,
-      _opening_float_cents: data.opening_float_cents,
-    });
-    if (error) throw new Error(error.message);
-    if (!openedShift) throw new Error("Could not open the till shift");
-    if (openedShift.site_id === data.site_id) return openedShift;
-
-    // The legacy RPC opens against the default site. A branch-specific
-    // terminal name keeps shifts distinct; attach the new shift to the branch
-    // selected on this device before any sale is taken.
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data: site } = await supabaseAdmin
       .from("sites")
@@ -90,13 +77,31 @@ export const openTillShift = createServerFn({ method: "POST" })
       .eq("active", true)
       .maybeSingle();
     if (!site) throw new Error("That Café 1 branch is not active");
-    const { data: shift, error: updateError } = await supabaseAdmin
+
+    // Shifts are branch-scoped. The old open_till_shift RPC only accepts a
+    // terminal and therefore always opens against its default site. Inserting
+    // the already-authorised shift with an explicit site prevents a Futures
+    // House device from reassigning Crown Court's public shift.
+    const { data: existing } = await supabaseAdmin
       .from("till_shifts")
-      .update({ site_id: data.site_id })
-      .eq("id", openedShift.id)
+      .select("*")
+      .eq("site_id", data.site_id)
+      .eq("terminal", data.terminal)
+      .is("closed_at", null)
+      .maybeSingle();
+    if (existing) return existing;
+
+    const { data: shift, error } = await supabaseAdmin
+      .from("till_shifts")
+      .insert({
+        site_id: data.site_id,
+        terminal: data.terminal,
+        staff_id: context.userId,
+        opening_float_cents: data.opening_float_cents,
+      })
       .select("*")
       .single();
-    if (updateError) throw new Error(updateError.message);
+    if (error) throw new Error(error.message);
     return shift;
   });
 
@@ -159,11 +164,117 @@ export const listRecentTillOrders = createServerFn({ method: "POST" })
         "id, order_number, created_at, customer_name, type, total_cents, refunded_cents, payment_status, payment_method, status, source",
       )
       .eq("site_id", data.site_id)
-      .in("source", ["counter", "sumup_pos"])
+      .in("source", ["counter", "website", "online", "sumup_pos"])
       .order("created_at", { ascending: false })
       .limit(40);
     if (error) throw new Error(error.message);
     return orders ?? [];
+  });
+
+/** Takes payment at the branch for an online dine-in/takeaway pre-order. */
+export const settleOnlineOrderAtTill = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .validator((input: unknown) =>
+    z
+      .object({
+        order_id: z.string().uuid(),
+        shift_id: z.string().uuid(),
+        payment_method: z.enum(["cash", "card", "split"]),
+        cash_component_cents: z.number().int().min(0).max(500_000).default(0),
+        card_reference: z.string().trim().max(120).optional(),
+      })
+      .parse(input),
+  )
+  .handler(async ({ data, context }) => {
+    const [{ orderSiteId }, { shiftSiteId }] = await Promise.all([
+      requireStaffOrderAccess(context, data.order_id),
+      requireStaffShiftAccess(context, data.shift_id),
+    ]);
+    if (orderSiteId !== shiftSiteId) throw new Error("The order belongs to a different branch");
+    if (data.payment_method !== "cash" && !data.card_reference) {
+      throw new Error("Enter the EVO receipt reference");
+    }
+
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: order, error: orderError } = await supabaseAdmin
+      .from("orders")
+      .select("id,total_cents,payment_status,source")
+      .eq("id", data.order_id)
+      .maybeSingle();
+    if (orderError) throw new Error(orderError.message);
+    if (!order || !["website", "online"].includes(order.source)) {
+      throw new Error("That is not an online branch order");
+    }
+    if (order.payment_status !== "pending") throw new Error("That order is already settled");
+    if (
+      data.payment_method === "split" &&
+      (data.cash_component_cents < 1 || data.cash_component_cents >= order.total_cents)
+    ) {
+      throw new Error("The cash part must be between 1p and less than the order total");
+    }
+
+    const { data: settled, error: settleError } = await supabaseAdmin
+      .from("orders")
+      .update({
+        payment_status: "paid",
+        payment_method: data.payment_method,
+        till_shift_id: data.shift_id,
+      })
+      .eq("id", order.id)
+      .eq("payment_status", "pending")
+      .select("id,order_number,total_cents,payment_status")
+      .single();
+    if (settleError || !settled) {
+      throw new Error(settleError?.message ?? "That order was settled on another device");
+    }
+
+    const cardAmount =
+      data.payment_method === "cash"
+        ? 0
+        : data.payment_method === "split"
+          ? order.total_cents - data.cash_component_cents
+          : order.total_cents;
+    const cashAmount =
+      data.payment_method === "cash"
+        ? order.total_cents
+        : data.payment_method === "split"
+          ? data.cash_component_cents
+          : 0;
+    const tenders = [
+      ...(cashAmount
+        ? [
+            {
+              order_id: order.id,
+              amount_cents: cashAmount,
+              method: "cash",
+              provider: null,
+              provider_transaction_id: null,
+              received_by: context.userId,
+            },
+          ]
+        : []),
+      ...(cardAmount
+        ? [
+            {
+              order_id: order.id,
+              amount_cents: cardAmount,
+              method: "card",
+              provider: "evo",
+              provider_transaction_id: data.card_reference ?? null,
+              received_by: context.userId,
+            },
+          ]
+        : []),
+    ];
+    const { error: tenderError } = await supabaseAdmin.from("order_payments").insert(tenders);
+    if (tenderError) {
+      throw new Error(
+        `Payment was marked paid but its tender audit needs review: ${tenderError.message}`,
+      );
+    }
+    const { awardLoyaltyForOrder } = await import("./loyalty.server");
+    await awardLoyaltyForOrder(order.id);
+    return settled;
   });
 
 /** Card readers (SumUp Solo) paired to this merchant account. */

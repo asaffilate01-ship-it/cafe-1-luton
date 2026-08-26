@@ -12,7 +12,7 @@ import {
 } from "lucide-react";
 
 import { SiteFooter, SiteHeader } from "@/components/site-header";
-import hero from "@/assets/about-interior.webp.asset.json";
+import hero from "@/assets/cafe1-hero.webp";
 import { localBusinessJsonLd } from "@/lib/nap";
 import {
   absoluteUrl,
@@ -33,12 +33,11 @@ export const Route = createFileRoute("/about")({
       title,
       description,
       path: "/about",
-      image: hero.url,
       keywords: ["independent cafe Luton", "Cafe 1 Crown Court", "Cafe 1 Futures House"],
     }),
     links: [canonicalLink("/about")],
     scripts: [
-      jsonLdScript(localBusinessJsonLd(absoluteUrl(hero.url))),
+      jsonLdScript(localBusinessJsonLd(absoluteUrl(hero))),
       jsonLdScript(webPageJsonLd({ name: title, description, path: "/about" })),
       jsonLdScript(
         breadcrumbJsonLd([
@@ -107,8 +106,8 @@ function About() {
             <div className="relative">
               <div className="overflow-hidden rounded-[2rem] border border-white/50 bg-card p-2 shadow-2xl shadow-primary/10">
                 <img
-                  src={hero.url}
-                  alt="Café 1 Luton interior with counter, seating and menu boards"
+                  src={hero}
+                  alt="A selection of Café 1 breakfasts, lunches and hot meals"
                   className="aspect-[4/3] w-full rounded-[1.6rem] object-cover"
                   width={1200}
                   height={960}

@@ -36,11 +36,7 @@ export function validateProductionEnvironment(env, { expectedRelease } = {}) {
     "SUPABASE_SERVICE_ROLE_KEY",
     "PUBLIC_APP_URL",
     "PUBLIC_RELEASE_SHA",
-    "SUMUP_API_KEY",
-    "SUMUP_MERCHANT_CODE",
-    "GOOGLE_PAY_MERCHANT_ID",
     "CRON_SECRET",
-    "REQUIRE_ADMIN_MFA",
     "LOVABLE_API_KEY",
     "RESEND_API_KEY",
     "GOOGLE_MAPS_API_KEY",
@@ -90,12 +86,6 @@ export function validateProductionEnvironment(env, { expectedRelease } = {}) {
   }
   if (value(env, "CRON_SECRET").length < 32) {
     errors.push("CRON_SECRET must contain at least 32 characters");
-  }
-  if (value(env, "SUMUP_API_KEY").startsWith("sk_test_")) {
-    errors.push("SUMUP_API_KEY is a test key; production requires a live SumUp credential");
-  }
-  if (value(env, "REQUIRE_ADMIN_MFA") !== "true") {
-    errors.push("REQUIRE_ADMIN_MFA must be true for production");
   }
   if (
     value(env, "GOOGLE_PLACE_ID") &&
@@ -203,12 +193,6 @@ export function validateProductionEnvironment(env, { expectedRelease } = {}) {
   }
   if (uberEatsMode === "disabled" && value(env, "UBEREATS_BRIDGE_SECRET")) {
     warnings.push("UBEREATS_BRIDGE_SECRET is present but UBEREATS_INGEST_MODE is disabled");
-  }
-
-  if (!value(env, "SUMUP_AFFILIATE_KEY")) {
-    warnings.push(
-      "SUMUP_AFFILIATE_KEY is absent; confirm it is not required for the connected readers",
-    );
   }
 
   const analyticsMeasurement = value(env, "VITE_GA_MEASUREMENT_ID");

@@ -3,6 +3,9 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { money } from "@/lib/format";
 import { orderCode } from "@/lib/order-code";
+import { DEFAULT_SITE_ID } from "@/hooks/use-sites";
+import { LOCATIONS, SITE_URL } from "@/lib/nap";
+import cafe1Logo from "@/assets/cafe1-logo.webp";
 
 type Order = {
   id: string;
@@ -28,6 +31,7 @@ type Order = {
   scheduled_for: string | null;
   source?: string | null;
   pos_terminal?: string | null;
+  site_id: string;
 };
 type Item = {
   id: string;
@@ -94,6 +98,7 @@ function sampleOrder(
       scheduled_for: scheduled ? slot.toISOString() : null,
       source: "web",
       pos_terminal: null,
+      site_id: DEFAULT_SITE_ID,
     },
     items: [
       { id: "t1", name: "Flat White", qty: 2, notes: "Oat milk, extra hot", unit_price_cents: 320 },
@@ -160,7 +165,23 @@ function PrintPage() {
   }, [orderId, isTest, sampleType, sampleScheduled]);
 
   useEffect(() => {
-    if (order && !preview && !isTest) setTimeout(() => window.print(), 400);
+    if (!order || preview || isTest) return;
+    let cancelled = false;
+    let timer: number | undefined;
+
+    // Wait for the logo and fonts before opening the system print dialog. This
+    // prevents partially rendered or blank receipt headers on slower devices.
+    void Promise.all([
+      document.fonts?.ready ?? Promise.resolve(),
+      ...Array.from(document.images).map((image) => image.decode().catch(() => undefined)),
+    ]).then(() => {
+      if (!cancelled) timer = window.setTimeout(() => window.print(), 150);
+    });
+
+    return () => {
+      cancelled = true;
+      if (timer !== undefined) window.clearTimeout(timer);
+    };
   }, [order, preview, isTest]);
 
   if (!order) return <div className="p-6">Loading…</div>;
@@ -169,6 +190,10 @@ function PrintPage() {
     { label: "KITCHEN COPY", showPrices: false },
     { label: "COUNTER COPY", showPrices: true },
   ];
+  const location =
+    order.pos_terminal === "futures_public" || order.site_id !== DEFAULT_SITE_ID
+      ? LOCATIONS[1]
+      : LOCATIONS[0];
 
   return (
     <div style={{ fontFamily: "monospace" }} className="bg-white text-black">
@@ -235,8 +260,18 @@ function PrintPage() {
           style={{ maxWidth: paper === 58 ? 240 : 320 }}
         >
           <div className="text-center">
-            <p className="text-lg font-bold">CAFE1</p>
-            <p className="text-xs">{copy.label}</p>
+            <img
+              src={cafe1Logo}
+              alt="Café 1"
+              className="mx-auto mb-1 h-12 w-auto max-w-[80%] object-contain grayscale"
+            />
+            <p className="text-[13px] font-black leading-tight">{location.name}</p>
+            <p className="text-[10px] leading-tight">{location.streetAddress}</p>
+            <p className="text-[10px] leading-tight">
+              {location.addressLocality}, {location.postalCode}
+            </p>
+            <p className="text-[10px] leading-tight">{SITE_URL.replace(/^https?:\/\//, "")}</p>
+            <p className="mt-1 text-xs font-bold">{copy.label}</p>
             <p className="mt-1 text-xs">{new Date(order.created_at).toLocaleString()}</p>
           </div>
           <div className="my-2 border-t border-dashed border-black" />

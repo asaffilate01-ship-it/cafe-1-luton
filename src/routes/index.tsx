@@ -14,7 +14,6 @@ import {
   Salad,
 } from "lucide-react";
 import { SiteHeader, SiteFooter } from "@/components/site-header";
-import { PromoBanner } from "@/components/promo-banner";
 import { PromoCarousel } from "@/components/promo-carousel";
 import { StoreStatus } from "@/components/store-status";
 // Compressed WebP: the original hero was a 740 KB JPEG and was the slowest
@@ -63,7 +62,6 @@ function Home() {
   return (
     <div className="min-h-screen bg-background text-foreground">
       <SiteHeader />
-      <PromoBanner />
       <div className="mx-auto max-w-6xl px-4 pt-6">
         <PromoCarousel />
       </div>

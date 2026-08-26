@@ -72,39 +72,20 @@ export function LiveMap({
 
   useEffect(() => {
     let cancelled = false;
-    let timer: ReturnType<typeof setTimeout> | undefined;
     loadMaps()
       .then(() => {
         if (cancelled || !el.current) return;
-        const instance = new window.google.maps.Map(el.current, {
+        map.current = new window.google.maps.Map(el.current, {
           center: points[0] ?? { lat: 51.7486, lng: -0.3345 },
           zoom: 15,
           disableDefaultUI: true,
           zoomControl: true,
         });
-        map.current = instance;
-        // If the key is not authorised for this domain Google paints its own
-        // error panel and never renders tiles, so treat "no tiles" as a failure
-        // and switch to the keyless fallback map.
-        let painted = false;
-        window.google.maps.event.addListenerOnce(instance, "tilesloaded", () => {
-          painted = true;
-          if (!cancelled) setReady(true);
-        });
-        timer = setTimeout(() => {
-          if (cancelled || painted) return;
-          // Google paints its own failure panel inside the container, so wipe it
-          // before React swaps in the fallback map.
-          
-          if (el.current) el.current.innerHTML = "";
-          map.current = null;
-          setError("Map unavailable");
-        }, 3500);
+        setReady(true);
       })
       .catch((e) => !cancelled && setError(e instanceof Error ? e.message : "Map unavailable"));
     return () => {
       cancelled = true;
-      if (timer) clearTimeout(timer);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -148,39 +129,23 @@ export function LiveMap({
   }, [points, ready]);
 
   if (error) {
-    // The Google browser key is domain-restricted, so on a domain it does not
-    // cover the interactive map cannot start. Fall back to a keyless OpenStreetMap
-    // view so visitors still see the location rather than an empty panel.
-    const focus = points[0];
-    const centre = focus ?? { lat: 51.8787, lng: -0.4200 };
-    const span = points.length > 1 ? 0.03 : 0.006;
-    const bbox = [centre.lng - span, centre.lat - span / 2, centre.lng + span, centre.lat + span / 2]
-      .map((n) => n.toFixed(5))
-      .join(",");
-    const marker = `${centre.lat.toFixed(5)},${centre.lng.toFixed(5)}`;
     return (
-      <section
-        key="fallback-map"
-        className={`relative overflow-hidden rounded-2xl border border-border ${className}`}
+      <div
+        className={`grid place-items-center gap-2 rounded-2xl border border-border bg-secondary p-4 text-center text-sm text-muted-foreground ${className}`}
       >
-        <iframe
-          title={focus?.label ?? "Map"}
-          src={`https://www.openstreetmap.org/export/embed.html?bbox=${bbox}&layer=mapnik&marker=${marker}`}
-          loading="lazy"
-          className="h-full w-full border-0"
-        />
+        <span>Live map unavailable</span>
         {fallbackHref && (
           <a
             href={fallbackHref}
             target="_blank"
             rel="noopener noreferrer"
-            className="absolute bottom-2 right-2 rounded-full bg-background/90 px-3 py-1.5 text-xs font-semibold text-primary shadow-sm backdrop-blur"
+            className="font-semibold text-primary underline underline-offset-4"
           >
             Open in Google Maps
           </a>
         )}
-      </section>
+      </div>
     );
   }
-  return <div key="google-map" ref={el} className={`rounded-2xl border border-border ${className}`} />;
+  return <div ref={el} className={`rounded-2xl border border-border ${className}`} />;
 }

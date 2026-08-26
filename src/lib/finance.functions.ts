@@ -110,8 +110,6 @@ export const getFinanceDashboard = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .validator((value: unknown) => SitePeriod.parse(value))
   .handler(async ({ data, context }) => {
-    const { requireManagerMfa } = await import("./elevated-auth.server");
-    requireManagerMfa(context.claims);
     return callOperationsRpc<FinanceDashboard>(context.supabase, "cafe1_finance_dashboard", {
       _site_id: data.site_id,
       _from_date: data.from_date,
@@ -143,8 +141,6 @@ export const saveExpense = createServerFn({ method: "POST" })
       .parse(value),
   )
   .handler(async ({ data, context }) => {
-    const { requireManagerMfa } = await import("./elevated-auth.server");
-    requireManagerMfa(context.claims);
     const { site_id, ...payload } = data;
     return callOperationsRpc<{ id: string }>(context.supabase, "cafe1_save_expense", {
       _site_id: site_id,
@@ -160,8 +156,6 @@ export const voidExpense = createServerFn({ method: "POST" })
       .parse(value),
   )
   .handler(async ({ data, context }) => {
-    const { requireManagerMfa } = await import("./elevated-auth.server");
-    requireManagerMfa(context.claims);
     return callOperationsRpc<{ id: string }>(context.supabase, "cafe1_void_expense", {
       _expense_id: data.expense_id,
       _reason: data.reason,
@@ -184,8 +178,6 @@ export const saveSupplier = createServerFn({ method: "POST" })
       .parse(value),
   )
   .handler(async ({ data, context }) => {
-    const { requireManagerMfa } = await import("./elevated-auth.server");
-    requireManagerMfa(context.claims);
     const { site_id, ...payload } = data;
     return callOperationsRpc<{ id: string; name: string }>(
       context.supabase,
@@ -223,8 +215,6 @@ export const receivePurchase = createServerFn({ method: "POST" })
       .parse(value),
   )
   .handler(async ({ data, context }) => {
-    const { requireManagerMfa } = await import("./elevated-auth.server");
-    requireManagerMfa(context.claims);
     const { site_id, ...payload } = data;
     return callOperationsRpc<{ id: string; line_count: number }>(
       context.supabase,
@@ -253,8 +243,6 @@ export const importSumupExpenses = createServerFn({ method: "POST" })
       .parse(value),
   )
   .handler(async ({ data, context }) => {
-    const { requireManagerMfa } = await import("./elevated-auth.server");
-    requireManagerMfa(context.claims);
     return callOperationsRpc<{ imported: number; skipped: number }>(
       context.supabase,
       "cafe1_import_sumup_expenses",
@@ -278,8 +266,6 @@ export const syncSumupSettlements = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .validator((value: unknown) => SitePeriod.parse(value))
   .handler(async ({ data, context }) => {
-    const { requireManagerMfa } = await import("./elevated-auth.server");
-    requireManagerMfa(context.claims);
     const key = process.env.SUMUP_API_KEY;
     const merchant = process.env.SUMUP_MERCHANT_CODE;
     if (!key || !merchant) throw new Error("SUMUP_API_KEY and SUMUP_MERCHANT_CODE are required");

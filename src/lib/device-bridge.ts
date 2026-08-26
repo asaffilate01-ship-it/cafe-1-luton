@@ -115,7 +115,9 @@ export async function printViaDeviceBridge(tickets: Ticket[]): Promise<DeviceBri
   try {
     await request<{ ok: true }>("/v1/print", {
       method: "POST",
-      body: JSON.stringify({ jobs: tickets.map((ticket) => ({ text: ticketToText(ticket) })) }),
+      body: JSON.stringify({
+        jobs: tickets.map((ticket) => ({ text: ticketToText(ticket), logo: ticket.logo === true })),
+      }),
     });
     return {
       ok: true,

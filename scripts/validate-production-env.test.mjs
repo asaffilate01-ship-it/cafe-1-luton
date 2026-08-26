@@ -12,12 +12,7 @@ function validEnvironment(overrides = {}) {
     SUPABASE_SERVICE_ROLE_KEY: "service-role-key",
     PUBLIC_APP_URL: "https://cafe1luton.co.uk",
     PUBLIC_RELEASE_SHA: "3e0b4f1e1c51a1b9437faa8a2eb0e7ee5c7c55c6",
-    SUMUP_API_KEY: "live-sumup-key",
-    SUMUP_MERCHANT_CODE: "merchant-code",
-    SUMUP_AFFILIATE_KEY: "affiliate-key",
-    GOOGLE_PAY_MERCHANT_ID: "123456789012345678",
     CRON_SECRET: "0123456789abcdefghijklmnopqrstuvwxyz",
-    REQUIRE_ADMIN_MFA: "true",
     ENABLE_DEV_LOGIN: "false",
     LOVABLE_API_KEY: "email-key",
     RESEND_API_KEY: "resend-key",
@@ -40,18 +35,14 @@ test("accepts a complete canonical production environment", () => {
   });
 });
 
-test("rejects test payments, disabled MFA and production dev access", () => {
+test("rejects production development access", () => {
   const result = validateProductionEnvironment(
     validEnvironment({
-      SUMUP_API_KEY: `sk_${"test"}_key`,
-      REQUIRE_ADMIN_MFA: "false",
       ENABLE_DEV_LOGIN: "true",
       DEV_ADMIN_PASSWORD: "should-not-be-in-production",
     }),
   );
 
-  assert.ok(result.errors.some((message) => message.includes("test key")));
-  assert.ok(result.errors.some((message) => message.includes("MFA")));
   assert.ok(result.errors.some((message) => message.includes("ENABLE_DEV_LOGIN")));
   assert.ok(result.errors.some((message) => message.includes("DEV_ADMIN_PASSWORD")));
 });
