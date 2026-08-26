@@ -767,6 +767,12 @@ export const createOrder = createServerFn({ method: "POST" })
         .eq("id", userId);
     }
 
+    if (settled_now) {
+      // Tab / voucher-covered orders skip the payment step, so alert the kitchen here.
+      const { notifyKitchenNewOrder } = await import("./push-notify.server");
+      await notifyKitchenNewOrder(order.id);
+    }
+
     return {
       order_id: order.id,
       order_number: order.order_number,
