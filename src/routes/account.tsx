@@ -142,6 +142,28 @@ function Account() {
           </div>
         </div>
 
+        <div className="mt-8 rounded-2xl border border-border bg-card p-5">
+          <p className="font-display text-lg font-bold">Notifications</p>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Get a phone alert when your order is ready or on the way, plus the occasional
+            Café 1 offer. Add Café 1 to your home screen first for alerts on iPhone.
+          </p>
+          <div className="mt-4 flex flex-wrap gap-2">
+            <PushAlertsButton
+              topics={["orders", "offers"]}
+              label="Turn on alerts"
+              onLabel="Alerts on — tap to turn off"
+              className="flex items-center gap-2 rounded-full bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground shadow-brand hover:bg-primary-hover disabled:opacity-60"
+            />
+            <InstallAppButton
+              manifest="/manifest.webmanifest"
+              label="Install Café 1 app"
+              className="flex items-center gap-2 rounded-full border border-border px-5 py-2.5 text-sm font-semibold hover:bg-muted"
+            />
+          </div>
+        </div>
+
+
         <h2 className="mt-10 font-display text-2xl font-bold">Recent orders</h2>
         <span className="sr-only" role="status" aria-live="polite">
           {profileLoading || ordersLoading ? "Loading your account" : ""}
