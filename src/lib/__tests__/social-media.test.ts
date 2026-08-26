@@ -16,7 +16,7 @@ describe("social media embed configuration", () => {
       createSocialPost("youtube", "https://www.youtube.com/watch?v=dQw4w9WgXcQ")?.embedUrl,
     ).toBe("https://www.youtube-nocookie.com/embed/dQw4w9WgXcQ?rel=0");
     expect(
-      createSocialPost("tiktok", "https://www.tiktok.com/@cafe1luton/video/1234567890123456789")
+      createSocialPost("tiktok", "https://www.tiktok.com/@cafe1.luton/video/1234567890123456789")
         ?.embedUrl,
     ).toContain("www.tiktok.com/player/v1/1234567890123456789");
   });
@@ -24,7 +24,7 @@ describe("social media embed configuration", () => {
   it("rejects untrusted or malformed sources", () => {
     expect(createSocialPost("youtube", "javascript:alert(1)")).toBeNull();
     expect(createSocialPost("instagram", "https://example.com/reel/not-cafe1")).toBeNull();
-    expect(createSocialPost("tiktok", "https://www.tiktok.com/@cafe1luton")).toBeNull();
+    expect(createSocialPost("tiktok", "https://www.tiktok.com/@cafe1.luton")).toBeNull();
   });
 
   it("ignores invalid JSON entries and de-duplicates players", () => {
@@ -54,11 +54,20 @@ describe("social media embed configuration", () => {
     });
     expect(profiles.map((item) => item.platform)).toEqual(["facebook", "tiktok"]);
     expect(findSocialProfile(profiles, "facebook")?.label).toBe("Facebook");
+    expect(findSocialProfile(profiles, "facebook")?.profileId).toBe("cafe1luton");
+    expect(findSocialProfile(profiles, "tiktok")?.profileId).toBe("@cafe1.luton");
     expect(findSocialProfile(profiles, "youtube")).toBeNull();
   });
 
+  it("uses the confirmed Café 1 social profile IDs", () => {
+    const profiles = createSocialProfiles({});
+    expect(findSocialProfile(profiles, "facebook")?.profileId).toBe("Cafe1luton");
+    expect(findSocialProfile(profiles, "instagram")?.profileId).toBe("@cafe1luton");
+    expect(findSocialProfile(profiles, "tiktok")?.profileId).toBe("@cafe1.luton");
+  });
+
   it("creates validated profile embeds without accepting lookalike hosts", () => {
-    expect(tiktokCreatorHandle("https://www.tiktok.com/@cafe1luton")).toBe("cafe1luton");
+    expect(tiktokCreatorHandle("https://www.tiktok.com/@cafe1.luton")).toBe("cafe1.luton");
     expect(tiktokCreatorHandle("https://tiktok.example/@cafe1luton")).toBeNull();
     expect(facebookPagePluginUrl("https://www.facebook.com/cafe1luton")).toContain(
       "facebook.com%2Fcafe1luton",

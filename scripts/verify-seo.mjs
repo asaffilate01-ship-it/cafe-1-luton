@@ -42,13 +42,34 @@ export function verifySeoRepository(root = defaultRoot) {
     "BreadcrumbList",
     "articleJsonLd",
     "safeJsonLd",
+    "DEFAULT_SOCIAL_IMAGE",
+    "og:image:width",
+    'name: "keywords"',
   ]);
   requireMarkers("src/lib/nap.ts", [
     '"@type": "Restaurant"',
     "LU1 2AA",
     "openingHoursSpecification",
     "sameAs",
+    "https://www.facebook.com/Cafe1luton",
+    "https://www.instagram.com/cafe1luton/",
+    "https://www.tiktok.com/@cafe1.luton",
   ]);
+  requireMarkers("src/routes/__root.tsx", [
+    "/favicon.ico",
+    "/favicon-16x16.png",
+    "/favicon-32x32.png",
+    "DEFAULT_SOCIAL_IMAGE",
+  ]);
+  for (const asset of [
+    "public/favicon.ico",
+    "public/favicon-16x16.png",
+    "public/favicon-32x32.png",
+    "public/favicon.png",
+    "public/og-cafe1-luton.jpg",
+  ]) {
+    if (!existsSync(resolve(root, asset))) failures.push(`${asset}: file is missing`);
+  }
   requireMarkers("src/routes/blog.index.tsx", [
     "loader: loadPublishedPosts",
     "Route.useLoaderData()",

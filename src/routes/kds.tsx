@@ -44,6 +44,7 @@ import {
   Shuffle,
   Pencil,
   X,
+  ShieldCheck,
 } from "lucide-react";
 import { ManualOrderDialog } from "@/components/manual-order-dialog";
 import { EditOrderDialog } from "@/components/edit-order-dialog";
@@ -51,6 +52,7 @@ import { InstallAppButton } from "@/components/install-app-button";
 import { useWakeLock } from "@/hooks/use-wake-lock";
 import { orderCode } from "@/lib/order-code";
 import { getStaffMenuItems } from "@/lib/menu-operations.functions";
+import { getKitchenBoard } from "@/lib/kds.functions";
 import {
   fuzzyMenuKey,
   guessCategory,
@@ -63,7 +65,7 @@ import {
 } from "@/lib/cooking";
 import { useConnectionStatus } from "@/hooks/use-connection-status";
 import { askConfirm, askPrompt } from "@/lib/confirm";
-import { DEFAULT_SITE_ID, useSites } from "@/hooks/use-sites";
+import { useSites } from "@/hooks/use-sites";
 import { SiteSwitcher } from "@/components/site-switcher";
 
 type Item = {
@@ -111,9 +113,24 @@ type Ticket = Order & { items: Item[]; needsCooking: boolean; prepKind: PrepKind
 type KitchenStaff = { id: string; display_name: string; initials: string };
 
 const PREP_TONE: Record<PrepKind, { strip: string; soft: string; dot: string; label: string }> = {
-  cook: { strip: "bg-rose-600 text-white", soft: "bg-rose-50", dot: "bg-rose-600", label: "Cooked" },
-  prep: { strip: "bg-amber-400 text-slate-950", soft: "bg-amber-50", dot: "bg-amber-400", label: "Prep required" },
-  none: { strip: "bg-emerald-600 text-white", soft: "bg-emerald-50", dot: "bg-emerald-600", label: "No prep" },
+  cook: {
+    strip: "bg-rose-600 text-white",
+    soft: "bg-rose-50",
+    dot: "bg-rose-600",
+    label: "Cooked",
+  },
+  prep: {
+    strip: "bg-amber-400 text-slate-950",
+    soft: "bg-amber-50",
+    dot: "bg-amber-400",
+    label: "Prep required",
+  },
+  none: {
+    strip: "bg-emerald-600 text-white",
+    soft: "bg-emerald-50",
+    dot: "bg-emerald-600",
+    label: "No prep",
+  },
 };
 
 const TYPE_LABEL: Record<string, string> = {
@@ -368,7 +385,37 @@ function KDS() {
   const { has } = useRoles(user);
   const assignedSiteId =
     typeof user?.app_metadata?.site_id === "string" ? user.app_metadata.site_id : null;
-  const sites = useSites(has("admin") ? null : (assignedSiteId ?? DEFAULT_SITE_ID));
+
+  if (has("staff") && !has("admin") && !assignedSiteId) {
+    return (
+      <div className="grid min-h-screen place-items-center bg-secondary px-6 text-center">
+        <div className="max-w-md rounded-3xl border border-amber-200 bg-card p-8 shadow-xl">
+          <ShieldCheck className="mx-auto h-10 w-10 text-amber-700" />
+          <p className="mt-4 font-display text-2xl font-bold">Branch assignment required</p>
+          <p className="mt-2 text-sm text-muted-foreground">
+            This kitchen login is not assigned to Crown Court or Futures House. Ask an admin to set
+            the branch under Admin → Users & roles, then sign in again.
+          </p>
+          <button
+            onClick={() => void signOutAndRedirect()}
+            className="mt-5 rounded-full bg-primary px-6 py-2 text-sm font-semibold text-primary-foreground"
+          >
+            Sign out
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  return <BranchKDS />;
+}
+
+function BranchKDS() {
+  const { user } = useSession();
+  const { has } = useRoles(user);
+  const assignedSiteId =
+    typeof user?.app_metadata?.site_id === "string" ? user.app_metadata.site_id : null;
+  const sites = useSites(has("admin") ? undefined : assignedSiteId);
   const courtFeatures =
     sites.site?.code.toUpperCase() === "LUTON_CROWN_COURT" ||
     sites.site?.postcode?.toUpperCase() === "LU1 2AA";
@@ -409,6 +456,7 @@ function KDS() {
   // the previous tickets rather than a real empty kitchen.
   const [feedStale, setFeedStale] = useState(false);
   const getMenuItems = useServerFn(getStaffMenuItems);
+  const loadKitchenBoard = useServerFn(getKitchenBoard);
   const getKitchenStaff = useServerFn(listKitchenStaff);
   const [kitchenStaff, setKitchenStaff] = useState<KitchenStaff[]>([]);
   const [lastSync, setLastSync] = useState<number | null>(null);
@@ -425,7 +473,7 @@ function KDS() {
   const [feed, setFeed] = useState<FeedKey>("all");
   useEffect(() => {
     let cancelled = false;
-    getKitchenStaff()
+    getKitchenStaff({ data: { site_id: sites.siteId } })
       .then((staff) => {
         if (!cancelled) setKitchenStaff(staff as KitchenStaff[]);
       })
@@ -435,7 +483,7 @@ function KDS() {
     return () => {
       cancelled = true;
     };
-  }, [getKitchenStaff]);
+  }, [getKitchenStaff, sites.siteId]);
 
   useEffect(() => {
     if (!courtFeatures && ["jury", "judge", "delivery"].includes(feed)) setFeed("all");
@@ -459,43 +507,12 @@ function KDS() {
 
   useEffect(() => {
     async function load() {
-      const COLUMNS =
-        "id, order_number, status, type, customer_name, created_at, schedule_mode, scheduled_for, table_number, source, payment_method, payment_status, customer_phone, company_name, address_line1, address_line2, city, postcode, delivery_notes, pos_terminal, prepared_by, jury_room, court_location, site_id, delivered_at";
-      const { data: orders, error: ordersError } = await supabase
-        .from("orders")
-        .select(COLUMNS)
-        .eq("site_id", sites.siteId)
-        .in("status", ["preparing", "ready"])
-        .order("created_at");
-      // A dropped connection or a token refresh mid-request returns no rows.
-      // Treat that as "we don't know", not "the kitchen is empty" — wiping the
-      // board and showing "no active orders" is what forced a manual refresh.
-      if (ordersError || !orders) {
-        throw new Error(ordersError?.message ?? "Could not reach the order feed");
-      }
-      let rows = (orders ?? []) as Order[];
+      const board = await loadKitchenBoard({ data: { site_id: sites.siteId, recall } });
+      let rows = board.active as Order[];
       if (recall) {
-        // Rolling 24-hour window, not "since midnight": a late shift running
-        // past midnight would otherwise recall nothing at all.
-        const since = new Date(Date.now() - 24 * 60 * 60 * 1000);
-        const { data: recent } = await supabase
-          .from("orders")
-          .select(COLUMNS)
-          .eq("site_id", sites.siteId)
-          .gte("created_at", since.toISOString())
-          .in("status", [
-            "paid",
-            "preparing",
-            "ready",
-            "out_for_delivery",
-            "delivered",
-            "completed",
-          ])
-          .order("created_at", { ascending: false })
-          .limit(15);
         const seen = new Set(rows.map((o) => o.id));
-        rows = rows.concat(((recent ?? []) as Order[]).filter((o) => !seen.has(o.id)));
-        if (!recent?.length) {
+        rows = rows.concat((board.recent as Order[]).filter((o) => !seen.has(o.id)));
+        if (!board.recent.length) {
           toast.info("No orders in the last 24 hours to recall.");
         }
       }
@@ -514,15 +531,7 @@ function KDS() {
           // operator is deliberately recalling finished orders.
           (recall || !clearedIds.current.has(o.id)),
       );
-      const ids = live.map((o) => o.id);
-      const itemsRes = ids.length
-        ? await supabase
-            .from("order_items")
-            .select("id, order_id, menu_item_id, name, qty, notes, category_label")
-            .in("order_id", ids)
-        : { data: [] as Item[], error: null };
-      if (itemsRes.error) throw new Error(itemsRes.error.message);
-      const items = itemsRes.data;
+      const items = board.items as Item[];
       const fresh =
         menuCache.current && Date.now() - menuCache.current.at < 300_000 ? menuCache.current : null;
       let menu: unknown;
@@ -531,12 +540,8 @@ function KDS() {
         menu = fresh.menu;
         cats = fresh.cats;
       } else {
-        const [m, c] = await Promise.all([
-          getMenuItems({ data: { site_id: sites.siteId } }),
-          supabase.from("menu_categories").select("id, name").eq("site_id", sites.siteId),
-        ]);
-        menu = m;
-        cats = (c as { data: unknown }).data;
+        menu = await getMenuItems({ data: { site_id: sites.siteId } });
+        cats = board.categories;
         menuCache.current = { at: Date.now(), menu, cats };
       }
       const catName = new Map<string, string>(
@@ -686,59 +691,68 @@ function KDS() {
     void run();
     const ch = supabase
       .channel(`kds-${sites.siteId}`)
-      .on("postgres_changes", { event: "*", schema: "public", table: "orders" }, (payload) => {
-        const o = (payload.new ?? null) as Partial<Order> | null;
-        const removedRow = (payload.old ?? null) as Partial<Order> | null;
-        if (o?.site_id && o.site_id !== sites.siteId) return;
-        const voided =
-          !!o &&
-          (o.status === "cancelled" ||
-            o.status === "refunded" ||
-            o.payment_status === "refunded" ||
-            o.payment_status === "failed");
-        const goneId =
-          payload.eventType === "DELETE" ? (removedRow?.id as string | undefined) : undefined;
-        const dropId = voided ? (o?.id as string) : goneId;
-        if (dropId && liveIds.current.has(dropId)) {
-          liveIds.current.delete(dropId);
-          // Pull it off the screen immediately — don't wait for the refetch.
-          setTickets((prev) => prev.filter((t) => t.id !== dropId));
-          if (voided) {
-            toast.error(
-              `Order #${o?.order_number ?? ""} ${o?.status === "refunded" || o?.payment_status === "refunded" ? "refunded" : "cancelled"} — removed from the kitchen display`,
-              { duration: 10000 },
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "orders",
+          filter: `site_id=eq.${sites.siteId}`,
+        },
+        (payload) => {
+          const o = (payload.new ?? null) as Partial<Order> | null;
+          const removedRow = (payload.old ?? null) as Partial<Order> | null;
+          if (o?.site_id && o.site_id !== sites.siteId) return;
+          const voided =
+            !!o &&
+            (o.status === "cancelled" ||
+              o.status === "refunded" ||
+              o.payment_status === "refunded" ||
+              o.payment_status === "failed");
+          const goneId =
+            payload.eventType === "DELETE" ? (removedRow?.id as string | undefined) : undefined;
+          const dropId = voided ? (o?.id as string) : goneId;
+          if (dropId && liveIds.current.has(dropId)) {
+            liveIds.current.delete(dropId);
+            // Pull it off the screen immediately — don't wait for the refetch.
+            setTickets((prev) => prev.filter((t) => t.id !== dropId));
+            if (voided) {
+              toast.error(
+                `Order #${o?.order_number ?? ""} ${o?.status === "refunded" || o?.payment_status === "refunded" ? "refunded" : "cancelled"} — removed from the kitchen display`,
+                { duration: 10000 },
+              );
+              playChime();
+            }
+          }
+          // Status changes and chef allocation from another terminal apply straight
+          // away so every connected screen shows the same board within a second.
+          if (!dropId && o?.id && liveIds.current.has(o.id) && (o.status || "prepared_by" in o)) {
+            const next = o.status ? (o.status as Order["status"]) : undefined;
+            const prep = "prepared_by" in o ? ((o as Order).prepared_by ?? null) : undefined;
+            const stillLive = next
+              ? next === "preparing" || next === "ready" || next === "paid"
+              : true;
+            if (next && !stillLive && !recall) {
+              liveIds.current.delete(o.id);
+              clearedIds.current.set(o.id, Date.now());
+              setTickets((prev) => prev.filter((t) => t.id !== o.id));
+              return;
+            }
+            clearedIds.current.delete(o.id);
+            setTickets((prev) =>
+              prev.map((t) => {
+                if (t.id !== o.id) return t;
+                const patch: Partial<Ticket> = {};
+                if (next) patch.status = next;
+                if (prep !== undefined) patch.prepared_by = prep;
+                return { ...t, ...patch };
+              }),
             );
-            playChime();
+            if (next) return;
           }
-        }
-        // Status changes and chef allocation from another terminal apply straight
-        // away so every connected screen shows the same board within a second.
-        if (!dropId && o?.id && liveIds.current.has(o.id) && (o.status || "prepared_by" in o)) {
-          const next = o.status ? (o.status as Order["status"]) : undefined;
-          const prep = "prepared_by" in o ? ((o as Order).prepared_by ?? null) : undefined;
-          const stillLive = next
-            ? next === "preparing" || next === "ready" || next === "paid"
-            : true;
-          if (next && !stillLive && !recall) {
-            liveIds.current.delete(o.id);
-            clearedIds.current.set(o.id, Date.now());
-            setTickets((prev) => prev.filter((t) => t.id !== o.id));
-            return;
-          }
-          clearedIds.current.delete(o.id);
-          setTickets((prev) =>
-            prev.map((t) => {
-              if (t.id !== o.id) return t;
-              const patch: Partial<Ticket> = {};
-              if (next) patch.status = next;
-              if (prep !== undefined) patch.prepared_by = prep;
-              return { ...t, ...patch };
-            }),
-          );
-          if (next) return;
-        }
-        scheduleLoad();
-      })
+          scheduleLoad();
+        },
+      )
       .on("postgres_changes", { event: "*", schema: "public", table: "order_items" }, () =>
         scheduleLoad(),
       )
@@ -761,7 +775,7 @@ function KDS() {
       document.removeEventListener("visibilitychange", onVisible);
       supabase.removeChannel(ch);
     };
-  }, [getMenuItems, recall, sites.siteId]);
+  }, [getMenuItems, loadKitchenBoard, recall, sites.siteId]);
 
   type KdsStatus = "paid" | "preparing" | "ready" | "completed";
 
@@ -776,8 +790,7 @@ function KDS() {
               ? {
                   ...t,
                   status,
-                  delivered_at:
-                    status === "completed" ? new Date().toISOString() : t.delivered_at,
+                  delivered_at: status === "completed" ? new Date().toISOString() : t.delivered_at,
                 }
               : t,
           ),
@@ -1502,94 +1515,94 @@ function KDS() {
               </button>
               {courtFeatures && (
                 <>
-              <span
-                role="status"
-                aria-live="polite"
-                className={`flex shrink-0 items-center gap-1.5 rounded-full px-3 py-2 text-xs font-bold ${
-                  deliverooLive === null
-                    ? "bg-primary-foreground/15 text-primary-foreground"
-                    : deliverooLive
-                      ? "bg-[#00CCBC] text-black"
-                      : "bg-red-600 text-white"
-                }`}
-              >
-                <span
-                  className={`h-2 w-2 rounded-full ${
-                    deliverooLive === null
-                      ? "bg-primary-foreground/60"
+                  <span
+                    role="status"
+                    aria-live="polite"
+                    className={`flex shrink-0 items-center gap-1.5 rounded-full px-3 py-2 text-xs font-bold ${
+                      deliverooLive === null
+                        ? "bg-primary-foreground/15 text-primary-foreground"
+                        : deliverooLive
+                          ? "bg-[#00CCBC] text-black"
+                          : "bg-red-600 text-white"
+                    }`}
+                  >
+                    <span
+                      className={`h-2 w-2 rounded-full ${
+                        deliverooLive === null
+                          ? "bg-primary-foreground/60"
+                          : deliverooLive
+                            ? "animate-pulse bg-black/70"
+                            : "bg-white"
+                      }`}
+                    />
+                    <Bike className="h-4 w-4" />
+                    {deliverooLive === null
+                      ? "Deliveroo…"
                       : deliverooLive
-                        ? "animate-pulse bg-black/70"
-                        : "bg-white"
-                  }`}
-                />
-                <Bike className="h-4 w-4" />
-                {deliverooLive === null
-                  ? "Deliveroo…"
-                  : deliverooLive
-                    ? deliverooConnection === "orders_api"
-                      ? "Deliveroo API"
-                      : "Deliveroo online"
-                    : "Deliveroo offline"}
-              </span>
-              {deliverooLive === false ? (
-                <span className="shrink-0 rounded-full bg-primary-foreground/15 px-3 py-2 text-[11px] font-semibold text-primary-foreground">
-                  {deliverooSeenAt
-                    ? `Last seen ${Math.max(1, Math.round((now - deliverooSeenAt) / 60000))} min ago — key tickets in by hand`
-                    : "No verified Deliveroo check-in — key tickets in by hand"}
-                </span>
-              ) : null}
-              <span
-                role="status"
-                aria-live="polite"
-                className={`flex shrink-0 items-center gap-1.5 rounded-full px-3 py-2 text-xs font-bold ${
-                  justEatLive === null
-                    ? "bg-primary-foreground/15 text-primary-foreground"
-                    : justEatLive
-                      ? "bg-[#FF8000] text-black"
-                      : "bg-red-600 text-white"
-                }`}
-              >
-                <span
-                  className={`h-2 w-2 rounded-full ${
-                    justEatLive === null
-                      ? "bg-primary-foreground/60"
+                        ? deliverooConnection === "orders_api"
+                          ? "Deliveroo API"
+                          : "Deliveroo online"
+                        : "Deliveroo offline"}
+                  </span>
+                  {deliverooLive === false ? (
+                    <span className="shrink-0 rounded-full bg-primary-foreground/15 px-3 py-2 text-[11px] font-semibold text-primary-foreground">
+                      {deliverooSeenAt
+                        ? `Last seen ${Math.max(1, Math.round((now - deliverooSeenAt) / 60000))} min ago — key tickets in by hand`
+                        : "No verified Deliveroo check-in — key tickets in by hand"}
+                    </span>
+                  ) : null}
+                  <span
+                    role="status"
+                    aria-live="polite"
+                    className={`flex shrink-0 items-center gap-1.5 rounded-full px-3 py-2 text-xs font-bold ${
+                      justEatLive === null
+                        ? "bg-primary-foreground/15 text-primary-foreground"
+                        : justEatLive
+                          ? "bg-[#FF8000] text-black"
+                          : "bg-red-600 text-white"
+                    }`}
+                  >
+                    <span
+                      className={`h-2 w-2 rounded-full ${
+                        justEatLive === null
+                          ? "bg-primary-foreground/60"
+                          : justEatLive
+                            ? "animate-pulse bg-black/70"
+                            : "bg-white"
+                      }`}
+                    />
+                    <Bike className="h-4 w-4" />
+                    {justEatLive === null
+                      ? "Just Eat…"
                       : justEatLive
-                        ? "animate-pulse bg-black/70"
-                        : "bg-white"
-                  }`}
-                />
-                <Bike className="h-4 w-4" />
-                {justEatLive === null
-                  ? "Just Eat…"
-                  : justEatLive
-                    ? "Just Eat online"
-                    : "Just Eat offline"}
-              </span>
-              {justEatLive === false ? (
-                <span className="shrink-0 rounded-full bg-primary-foreground/15 px-3 py-2 text-[11px] font-semibold text-primary-foreground">
-                  {justEatSeenAt
-                    ? `Just Eat last seen ${Math.max(1, Math.round((now - justEatSeenAt) / 60000))} min ago — key tickets in by hand`
-                    : "No verified Just Eat check-in — key tickets in by hand"}
-                </span>
-              ) : null}
-              <span
-                role="status"
-                aria-live="polite"
-                className={`flex shrink-0 items-center gap-1.5 rounded-full px-3 py-2 text-xs font-bold ${
-                  uberEatsLive === null
-                    ? "bg-primary-foreground/15 text-primary-foreground"
-                    : uberEatsLive
-                      ? "bg-black text-white"
-                      : "bg-red-600 text-white"
-                }`}
-              >
-                <Bike className="h-4 w-4" />
-                {uberEatsLive === null
-                  ? "Uber Eats…"
-                  : uberEatsLive
-                    ? "Uber Eats online"
-                    : "Uber Eats offline"}
-              </span>
+                        ? "Just Eat online"
+                        : "Just Eat offline"}
+                  </span>
+                  {justEatLive === false ? (
+                    <span className="shrink-0 rounded-full bg-primary-foreground/15 px-3 py-2 text-[11px] font-semibold text-primary-foreground">
+                      {justEatSeenAt
+                        ? `Just Eat last seen ${Math.max(1, Math.round((now - justEatSeenAt) / 60000))} min ago — key tickets in by hand`
+                        : "No verified Just Eat check-in — key tickets in by hand"}
+                    </span>
+                  ) : null}
+                  <span
+                    role="status"
+                    aria-live="polite"
+                    className={`flex shrink-0 items-center gap-1.5 rounded-full px-3 py-2 text-xs font-bold ${
+                      uberEatsLive === null
+                        ? "bg-primary-foreground/15 text-primary-foreground"
+                        : uberEatsLive
+                          ? "bg-black text-white"
+                          : "bg-red-600 text-white"
+                    }`}
+                  >
+                    <Bike className="h-4 w-4" />
+                    {uberEatsLive === null
+                      ? "Uber Eats…"
+                      : uberEatsLive
+                        ? "Uber Eats online"
+                        : "Uber Eats offline"}
+                  </span>
                 </>
               )}
             </div>
@@ -1633,7 +1646,8 @@ function KDS() {
               >
                 {availableFeeds.map(({ key, label }) => (
                   <option key={key} value={key} className="text-foreground">
-                    {!courtFeatures && key === "public" ? "Till" : label} ({tickets.filter((ticket) => matchesFeed(key, ticket)).length})
+                    {!courtFeatures && key === "public" ? "Till" : label} (
+                    {tickets.filter((ticket) => matchesFeed(key, ticket)).length})
                   </option>
                 ))}
               </select>
@@ -1667,7 +1681,8 @@ function KDS() {
                   onClick={() => setRecall(!recall)}
                   className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left text-sm font-semibold hover:bg-muted"
                 >
-                  <RefreshCw className="h-4 w-4" /> {recall ? "Return to live orders" : "Recall last 15 orders"}
+                  <RefreshCw className="h-4 w-4" />{" "}
+                  {recall ? "Return to live orders" : "Recall last 15 orders"}
                 </button>
                 <FullscreenToggle menu />
                 <AlertsToggle menu />
@@ -1696,21 +1711,40 @@ function KDS() {
                   onClick={toggleTabletLayout}
                   className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left text-sm font-semibold hover:bg-muted"
                 >
-                  <Maximize2 className="h-4 w-4" /> {tabletKds ? "Use desktop layout" : "Use tablet layout"}
+                  <Maximize2 className="h-4 w-4" />{" "}
+                  {tabletKds ? "Use desktop layout" : "Use tablet layout"}
                 </button>
                 <div className="mt-1 border-t border-border px-3 pt-2 text-xs text-muted-foreground">
-                  <div className="flex items-center justify-between gap-3"><span>Order feed</span><SyncPill lastSync={lastSync} ok={syncOk} now={now} compact /></div>
+                  <div className="flex items-center justify-between gap-3">
+                    <span>Order feed</span>
+                    <SyncPill lastSync={lastSync} ok={syncOk} now={now} compact />
+                  </div>
                   {courtFeatures && (
                     <div className="mt-2 grid gap-1">
-                      <span>Deliveroo: {deliverooLive ? "online" : deliverooLive === null ? "checking" : "offline"}</span>
-                      <span>Just Eat: {justEatLive ? "online" : justEatLive === null ? "checking" : "offline"}</span>
-                      <span>Uber Eats: {uberEatsLive ? "online" : uberEatsLive === null ? "checking" : "offline"}</span>
+                      <span>
+                        Deliveroo:{" "}
+                        {deliverooLive ? "online" : deliverooLive === null ? "checking" : "offline"}
+                      </span>
+                      <span>
+                        Just Eat:{" "}
+                        {justEatLive ? "online" : justEatLive === null ? "checking" : "offline"}
+                      </span>
+                      <span>
+                        Uber Eats:{" "}
+                        {uberEatsLive ? "online" : uberEatsLive === null ? "checking" : "offline"}
+                      </span>
                     </div>
                   )}
                   <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1">
-                    <span className="inline-flex items-center gap-1"><span className="h-2.5 w-2.5 rounded-full bg-rose-600" /> Cooked</span>
-                    <span className="inline-flex items-center gap-1"><span className="h-2.5 w-2.5 rounded-full bg-amber-400" /> Prep</span>
-                    <span className="inline-flex items-center gap-1"><span className="h-2.5 w-2.5 rounded-full bg-emerald-600" /> No prep</span>
+                    <span className="inline-flex items-center gap-1">
+                      <span className="h-2.5 w-2.5 rounded-full bg-rose-600" /> Cooked
+                    </span>
+                    <span className="inline-flex items-center gap-1">
+                      <span className="h-2.5 w-2.5 rounded-full bg-amber-400" /> Prep
+                    </span>
+                    <span className="inline-flex items-center gap-1">
+                      <span className="h-2.5 w-2.5 rounded-full bg-emerald-600" /> No prep
+                    </span>
                   </div>
                 </div>
               </div>
@@ -1767,9 +1801,7 @@ function KDS() {
                 <span className={`truncate px-2 py-1 text-center ${channel.chip}`}>
                   {channelLabel}
                 </span>
-                <span
-                  className={`truncate px-2 py-1 text-center ${prepTone.strip}`}
-                >
+                <span className={`truncate px-2 py-1 text-center ${prepTone.strip}`}>
                   {prepTone.label}
                 </span>
               </div>
@@ -2096,9 +2128,10 @@ function KDS() {
                       {staff.display_name} ({staff.initials})
                     </option>
                   ))}
-                  {t.prepared_by && !kitchenStaff.some((staff) => staff.initials === t.prepared_by) && (
-                    <option value={t.prepared_by}>{t.prepared_by}</option>
-                  )}
+                  {t.prepared_by &&
+                    !kitchenStaff.some((staff) => staff.initials === t.prepared_by) && (
+                      <option value={t.prepared_by}>{t.prepared_by}</option>
+                    )}
                 </select>
               </label>
               <div className="mt-2 flex flex-wrap gap-1.5">

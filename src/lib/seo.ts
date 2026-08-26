@@ -2,7 +2,24 @@ import { NAP } from "./nap";
 
 export const SITE_URL = NAP.url;
 export const SITE_NAME = NAP.name;
-export const DEFAULT_SOCIAL_IMAGE = `${SITE_URL}/icon-512.png`;
+export const DEFAULT_SOCIAL_IMAGE = `${SITE_URL}/og-cafe1-luton.jpg`;
+export const DEFAULT_SEO_KEYWORDS = [
+  "Café 1 Luton",
+  "cafe in Luton",
+  "halal cafe Luton",
+  "halal breakfast Luton",
+  "all day breakfast Luton",
+  "breakfast in Luton",
+  "lunch in Luton",
+  "halal food Luton",
+  "coffee shop Luton",
+  "Luton Crown Court cafe",
+  "cafe near Luton Crown Court",
+  "Futures House cafe",
+  "Marsh Farm cafe",
+  "takeaway Luton",
+  "Desi breakfast Luton",
+];
 
 type SeoMetaInput = {
   title: string;
@@ -10,6 +27,7 @@ type SeoMetaInput = {
   path: string;
   image?: string;
   imageAlt?: string;
+  keywords?: string[];
   type?: "website" | "article";
   robots?: string;
 };
@@ -25,14 +43,23 @@ export function seoMeta({
   path,
   image = DEFAULT_SOCIAL_IMAGE,
   imageAlt = `${SITE_NAME} food and drink`,
+  keywords = [],
   type = "website",
   robots = "index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1",
 }: SeoMetaInput): Array<Record<string, string>> {
   const canonical = absoluteUrl(path);
   const socialImage = absoluteUrl(image);
+  const keywordContent = [...new Set([...keywords, ...DEFAULT_SEO_KEYWORDS])].join(", ");
+  const lowerImage = socialImage.toLowerCase();
+  const imageType = lowerImage.includes(".png")
+    ? "image/png"
+    : lowerImage.includes(".webp")
+      ? "image/webp"
+      : "image/jpeg";
   return [
     { title },
     { name: "description", content: description },
+    { name: "keywords", content: keywordContent },
     { name: "robots", content: robots },
     { name: "googlebot", content: robots },
     { property: "og:site_name", content: SITE_NAME },
@@ -42,6 +69,10 @@ export function seoMeta({
     { property: "og:type", content: type },
     { property: "og:url", content: canonical },
     { property: "og:image", content: socialImage },
+    { property: "og:image:secure_url", content: socialImage },
+    { property: "og:image:type", content: imageType },
+    { property: "og:image:width", content: "1200" },
+    { property: "og:image:height", content: "630" },
     { property: "og:image:alt", content: imageAlt },
     { name: "twitter:card", content: "summary_large_image" },
     { name: "twitter:title", content: title },

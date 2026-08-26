@@ -6,7 +6,7 @@ import { createClient } from "@supabase/supabase-js";
 import type { Database } from "@/integrations/supabase/types";
 import { validateModifierSelection, type ModifierRule } from "./modifier-rules";
 import { orderingHoursForLocation } from "./nap";
-import { PUBLIC_SETTINGS_COLUMNS } from "./business";
+import { requireStaffOrderAccess, requireStaffSiteAccess } from "./staff-site-access.server";
 
 function createServerSupabase(bearer?: string) {
   const url = process.env.SUPABASE_URL!;
@@ -119,10 +119,34 @@ export const createOrder = createServerFn({ method: "POST" })
       authEmail = u.user?.email ?? null;
     }
 
+    // Resolve the chosen branch before reading the catalogue. A branch must
+    // exist explicitly: Futures House orders must never fall back to Crown
+    // Court merely because its site record was not configured.
+    const selectedLocation =
+      data.site_location === "futures-house"
+        ? { label: "Futures House, Marsh Farm", postcode: "LU3 3QB" }
+        : { label: "Luton Crown Court", postcode: "LU1 2AA" };
+    const { supabaseAdmin: siteAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: selectedSite, error: selectedSiteError } = await siteAdmin
+      .from("sites")
+      .select("id, name")
+      .eq("active", true)
+      .eq("postcode", selectedLocation.postcode)
+      .limit(1)
+      .maybeSingle();
+    if (selectedSiteError) throw new Error(selectedSiteError.message);
+    if (!selectedSite) {
+      throw new Error(
+        `${selectedLocation.label} is not configured for online ordering. Please contact Café 1.`,
+      );
+    }
+    const selectedSiteId = selectedSite.id;
+
     const ids = data.items.map((i) => i.menu_item_id);
     const { data: menu, error: menuErr } = await supabase
       .from("menu_items")
       .select("id,name,price_cents,active,category_id,loyalty_drink,is_beverage")
+      .eq("site_id", selectedSiteId)
       .in("id", ids);
     if (menuErr) throw new Error(menuErr.message);
     const menuRows = (menu ?? []) as OrderMenuRow[];
@@ -201,32 +225,12 @@ export const createOrder = createServerFn({ method: "POST" })
       };
     });
 
-    // Route the order to the selected Luton branch when matching site records
-    // are configured. The branch label is also retained on every ticket so it
-    // remains visible on older backends that still rely on the default site.
-    const selectedLocation =
-      data.site_location === "futures-house"
-        ? { label: "Futures House, Marsh Farm", postcode: "LU3 3QB" }
-        : { label: "Luton Crown Court", postcode: "LU1 2AA" };
-    const { supabaseAdmin: siteAdmin } = await import("@/integrations/supabase/client.server");
-    const { data: selectedSite } = await siteAdmin
-      .from("sites")
-      .select("id")
-      .eq("active", true)
-      .eq("postcode", selectedLocation.postcode)
-      .limit(1)
-      .maybeSingle();
-    const selectedSiteId = selectedSite?.id ?? null;
-
-    // Load branch-specific settings and hours where available, otherwise use
-    // the existing default records for backwards compatibility.
-    let settingsQuery = supabase
+    // Load branch-specific settings and hours.
+    const settingsQuery = supabase
       .from("business_settings")
-      .select(PUBLIC_SETTINGS_COLUMNS)
+      .select("*")
+      .eq("site_id", selectedSiteId)
       .limit(1);
-    if (selectedSiteId) {
-      settingsQuery = settingsQuery.eq("site_id", selectedSiteId);
-    }
     const { data: settings } = await settingsQuery.maybeSingle();
     const branchHours = orderingHoursForLocation(data.site_location);
 
@@ -280,16 +284,9 @@ export const createOrder = createServerFn({ method: "POST" })
         .maybeSingle();
       if (staffRow) {
         staff_member_id = staffRow.id;
-        let defaultPercent: number | null = null;
-        if (staffRow.discount_percent == null) {
-          const { data: discountRow } = await supabaseAdmin
-            .from("business_settings")
-            .select("court_staff_discount_percent")
-            .limit(1)
-            .maybeSingle();
-          defaultPercent = discountRow?.court_staff_discount_percent ?? null;
-        }
-        staff_discount_percent = Number(staffRow.discount_percent ?? defaultPercent ?? 10);
+        staff_discount_percent = Number(
+          staffRow.discount_percent ?? settings?.court_staff_discount_percent ?? 10,
+        );
       }
     }
     const courtStaffDelivery = !!staff_member_id && !!data.court_location;
@@ -700,7 +697,7 @@ export const createOrder = createServerFn({ method: "POST" })
         sumup_reference: reference,
         sumup_checkout_id: checkout_id,
         tracking_token_hash,
-        ...(selectedSiteId ? { site_id: selectedSiteId } : {}),
+        site_id: selectedSiteId,
         promo_code: applied_promo,
         promo_discount_cents: free_delivery_promo ? 0 : promo_discount,
         ...(account_id
@@ -849,6 +846,7 @@ export const updateOrderStatus = createServerFn({ method: "POST" })
       .parse(d),
   )
   .handler(async ({ data, context }) => {
+    await requireStaffOrderAccess(context, data.order_id);
     const now = new Date().toISOString();
     const patch = {
       status: data.status,
@@ -905,6 +903,7 @@ export const setOrderFulfilment = createServerFn({ method: "POST" })
       .parse(d),
   )
   .handler(async ({ data, context }) => {
+    await requireStaffOrderAccess(context, data.order_id);
     const { error } = await context.supabase
       .from("orders")
       .update({
@@ -932,6 +931,7 @@ export const cancelTabOrder = createServerFn({ method: "POST" })
       .parse(d),
   )
   .handler(async ({ data, context }) => {
+    await requireStaffOrderAccess(context, data.order_id);
     const { error } = await context.supabase.rpc("cafe1_cancel_tab_order", {
       _order_id: data.order_id,
       _reason: data.reason,
@@ -955,6 +955,7 @@ export const settleTabOrder = createServerFn({ method: "POST" })
       .parse(d),
   )
   .handler(async ({ data, context }) => {
+    await requireStaffOrderAccess(context, data.order_id);
     const { error } = await context.supabase.rpc("cafe1_settle_tab_order", {
       _order_id: data.order_id,
       _method: data.method,
@@ -988,6 +989,7 @@ export const setOrderChannel = createServerFn({ method: "POST" })
       .parse(d),
   )
   .handler(async ({ data, context }) => {
+    await requireStaffOrderAccess(context, data.order_id);
     // Call through the client object so the SDK retains its internal REST
     // context. Aliasing or binding `rpc` can leave that context undefined.
     const { error } = await context.supabase.rpc("cafe1_reassign_order_channel", {
@@ -1013,6 +1015,7 @@ export const setOrderPreparedBy = createServerFn({ method: "POST" })
       .parse(d),
   )
   .handler(async ({ data, context }) => {
+    await requireStaffOrderAccess(context, data.order_id);
     const { error } = await context.supabase.rpc("cafe1_set_prepared_by", {
       _order_id: data.order_id,
       _initials: data.initials ?? "",
@@ -1083,19 +1086,36 @@ export const listDrivers = createServerFn({ method: "GET" })
 /** Staff/admin accounts shown in the KDS preparer selector. */
 export const listKitchenStaff = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .handler(async ({ context }) => {
-    const [{ data: isStaff }, { data: isAdmin }] = await Promise.all([
-      context.supabase.rpc("has_role", { _user_id: context.userId, _role: "staff" }),
-      context.supabase.rpc("has_role", { _user_id: context.userId, _role: "admin" }),
-    ]);
-    if (!isStaff && !isAdmin) throw new Error("Forbidden");
+  .validator((value: unknown) =>
+    z.object({ site_id: z.string().uuid().optional() }).default({}).parse(value),
+  )
+  .handler(async ({ context, data }) => {
+    const access = await requireStaffSiteAccess(context, data.site_id);
+    const effectiveSiteId = data.site_id ?? access.siteId;
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data: roles, error } = await supabaseAdmin
       .from("user_roles")
       .select("user_id")
       .in("role", ["staff", "admin"]);
     if (error) throw new Error(error.message);
-    const ids = [...new Set((roles ?? []).map((r) => r.user_id))];
+    let ids = [...new Set((roles ?? []).map((r) => r.user_id))];
+    if (effectiveSiteId) {
+      const [{ data: allRoles }, { data: authUsers, error: usersError }] = await Promise.all([
+        supabaseAdmin.from("user_roles").select("user_id, role").in("user_id", ids),
+        supabaseAdmin.auth.admin.listUsers({ page: 1, perPage: 1000 }),
+      ]);
+      if (usersError) throw new Error(usersError.message);
+      const adminIds = new Set(
+        (allRoles ?? []).filter((row) => row.role === "admin").map((row) => row.user_id),
+      );
+      const assigned = new Map(
+        authUsers.users.map((authUser) => [
+          authUser.id,
+          typeof authUser.app_metadata?.site_id === "string" ? authUser.app_metadata.site_id : null,
+        ]),
+      );
+      ids = ids.filter((id) => adminIds.has(id) || assigned.get(id) === effectiveSiteId);
+    }
     if (!ids.length) return [] as Array<{ id: string; display_name: string; initials: string }>;
     const { data: profiles, error: profileError } = await supabaseAdmin
       .from("profiles")
@@ -1105,10 +1125,19 @@ export const listKitchenStaff = createServerFn({ method: "GET" })
 
     const initialsFor = (name: string) => {
       const words = name.trim().split(/\s+/).filter(Boolean);
-      const raw = words.length > 1
-        ? words.slice(0, 3).map((word) => word[0]).join("")
-        : (words[0] ?? "STA").slice(0, 3);
-      return raw.replace(/[^a-z0-9]/gi, "").toUpperCase().slice(0, 3) || "STA";
+      const raw =
+        words.length > 1
+          ? words
+              .slice(0, 3)
+              .map((word) => word[0])
+              .join("")
+          : (words[0] ?? "STA").slice(0, 3);
+      return (
+        raw
+          .replace(/[^a-z0-9]/gi, "")
+          .toUpperCase()
+          .slice(0, 3) || "STA"
+      );
     };
     const used = new Set<string>();
     return (profiles ?? [])

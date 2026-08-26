@@ -21,7 +21,18 @@ const description =
 
 export const Route = createFileRoute("/halal-food-luton")({
   head: () => ({
-    meta: seoMeta({ title, description, path, image: heroImage }),
+    meta: seoMeta({
+      title,
+      description,
+      path,
+      keywords: [
+        "100% halal cafe Luton",
+        "halal lunch Luton",
+        "halal food Marsh Farm",
+        "halal cafe near Luton town centre",
+        "halal Desi breakfast Luton",
+      ],
+    }),
     links: [canonicalLink(path), { rel: "preload", as: "image", href: heroImage }],
     scripts: [
       jsonLdScript(localBusinessJsonLd(absoluteUrl(heroImage))),

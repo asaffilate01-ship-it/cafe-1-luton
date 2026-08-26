@@ -21,8 +21,13 @@ export function useSites(lockedSiteId?: string | null) {
       const rows = await load();
       setSites(rows);
       setSiteIdState((current) => {
-        if (lockedSiteId && rows.some((site) => site.id === lockedSiteId)) return lockedSiteId;
-        return rows.some((site) => site.id === current) ? current : (rows[0]?.id ?? DEFAULT_SITE_ID);
+        // A staff assignment must never fall back to another branch. If the
+        // assigned site was disabled or deleted, retain its id so the UI shows
+        // an unavailable branch instead of quietly opening Crown Court.
+        if (lockedSiteId) return lockedSiteId;
+        return rows.some((site) => site.id === current)
+          ? current
+          : (rows[0]?.id ?? DEFAULT_SITE_ID);
       });
       setError(null);
     } catch (cause) {

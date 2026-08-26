@@ -9,6 +9,7 @@ import { SiteHeader, SiteFooter } from "@/components/site-header";
 import { PromoBanner } from "@/components/promo-banner";
 import { PromoCarousel } from "@/components/promo-carousel";
 import { StoreStatus } from "@/components/store-status";
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { cart, useCart, type CartModifier } from "@/lib/cart";
 import { money } from "@/lib/format";
 import {
@@ -26,6 +27,10 @@ import {
   Tag,
   ShieldCheck,
   Heart,
+  PanelLeftOpen,
+  SlidersHorizontal,
+  MapPin,
+  Clock3,
 } from "lucide-react";
 import { toast } from "sonner";
 import { OrderSetupGate } from "@/components/order-setup-gate";
@@ -80,7 +85,19 @@ export const Route = createFileRoute("/menu")({
     juror: s.juror === true || s.juror === "true" ? true : undefined,
   }),
   head: () => ({
-    meta: seoMeta({ title, description, path: "/menu" }),
+    meta: seoMeta({
+      title,
+      description,
+      path: "/menu",
+      keywords: [
+        "Café 1 Luton menu",
+        "halal breakfast menu Luton",
+        "Desi breakfast Luton",
+        "cheese flan Cafe 1",
+        "chicken pie Luton",
+        "Friday roast special Luton",
+      ],
+    }),
     links: [canonicalLink("/menu")],
     scripts: [
       jsonLdScript(localBusinessJsonLd("https://cafe1luton.co.uk/icon-512.png")),
@@ -134,6 +151,8 @@ function MenuPage() {
   const [excludedAllergen, setExcludedAllergen] = useState("");
   const [dietaryTag, setDietaryTag] = useState("");
   const [activeCat, setActiveCat] = useState<string | null>(null);
+  const [categoryDrawerOpen, setCategoryDrawerOpen] = useState(false);
+  const [detailsDrawerOpen, setDetailsDrawerOpen] = useState(false);
   const { user } = useSession();
   const loadFavourites = useServerFn(getCustomerFavourites);
   const saveFavourite = useServerFn(toggleFavourite);
@@ -141,6 +160,29 @@ function MenuPage() {
   const cartState = useCart();
   const cartCount = cartState.items.reduce((a, i) => a + i.qty, 0);
   const cartTotal = cartState.items.reduce((a, i) => a + i.qty * i.price_cents, 0);
+
+  useEffect(() => {
+    const openCategories = () => {
+      setDetailsDrawerOpen(false);
+      setCategoryDrawerOpen(true);
+    };
+    const openDetails = () => {
+      setCategoryDrawerOpen(false);
+      setDetailsDrawerOpen(true);
+    };
+    const closePanels = () => {
+      setCategoryDrawerOpen(false);
+      setDetailsDrawerOpen(false);
+    };
+    window.addEventListener("cafe1:menu-open-categories", openCategories);
+    window.addEventListener("cafe1:menu-open-details", openDetails);
+    window.addEventListener("cafe1:menu-close-panels", closePanels);
+    return () => {
+      window.removeEventListener("cafe1:menu-open-categories", openCategories);
+      window.removeEventListener("cafe1:menu-open-details", openDetails);
+      window.removeEventListener("cafe1:menu-close-panels", closePanels);
+    };
+  }, []);
 
   function browseMenuOnly() {
     setMenuBrowsingIntent(true);
@@ -334,6 +376,7 @@ function MenuPage() {
   }
 
   function scrollToCat(id: string) {
+    setCategoryDrawerOpen(false);
     setActiveCat(id);
     lockRef.current = Date.now() + 1200;
 
@@ -399,6 +442,235 @@ function MenuPage() {
         dismissible={!!ctx}
       />
 
+      {/* Native mobile navigation: categories live off-canvas on the left. */}
+      <Sheet open={categoryDrawerOpen} onOpenChange={setCategoryDrawerOpen}>
+        <SheetContent
+          side="left"
+          className="z-[70] w-[90vw] max-w-sm overflow-y-auto border-r-0 bg-background p-0 shadow-2xl md:hidden"
+        >
+          <SheetHeader className="border-b border-border bg-gradient-to-br from-primary/15 via-background to-background px-5 pb-5 pt-[calc(1.25rem+env(safe-area-inset-top))] text-left">
+            <span className="grid h-11 w-11 place-items-center rounded-2xl bg-primary text-primary-foreground shadow-brand">
+              <PanelLeftOpen className="h-5 w-5" />
+            </span>
+            <SheetTitle className="font-display text-2xl font-bold">Menu categories</SheetTitle>
+            <p className="text-sm text-muted-foreground">
+              Jump straight to breakfast, lunch, drinks or any other section.
+            </p>
+          </SheetHeader>
+          <nav aria-label="Mobile menu categories" className="space-y-1 p-3 pb-28">
+            {filtered?.cats.map((category) => {
+              const active = category.id === activeCat;
+              const itemCount = filtered.items.filter(
+                (item) => item.category_id === category.id,
+              ).length;
+              return (
+                <button
+                  key={category.id}
+                  type="button"
+                  aria-current={active ? "true" : undefined}
+                  onClick={() => scrollToCat(category.id)}
+                  className={`flex min-h-14 w-full items-center justify-between gap-3 rounded-2xl px-4 text-left text-base font-semibold transition active:scale-[0.98] ${
+                    active
+                      ? "bg-primary text-primary-foreground shadow-brand"
+                      : "bg-card text-foreground hover:bg-muted"
+                  }`}
+                >
+                  <span className="truncate">{category.name}</span>
+                  <span
+                    className={`grid h-7 min-w-7 place-items-center rounded-full px-2 text-xs font-bold ${
+                      active ? "bg-white/20" : "bg-muted text-muted-foreground"
+                    }`}
+                  >
+                    {itemCount}
+                  </span>
+                </button>
+              );
+            })}
+          </nav>
+        </SheetContent>
+      </Sheet>
+
+      {/* Order context, filters and basket slide in from the right on phones. */}
+      <Sheet open={detailsDrawerOpen} onOpenChange={setDetailsDrawerOpen}>
+        <SheetContent
+          side="right"
+          className="z-[70] w-[92vw] max-w-sm overflow-y-auto border-l-0 bg-soft p-0 shadow-2xl md:hidden"
+        >
+          <SheetHeader className="border-b border-border bg-background px-5 pb-5 pt-[calc(1.25rem+env(safe-area-inset-top))] text-left">
+            <span className="grid h-11 w-11 place-items-center rounded-2xl bg-neutral-950 text-white shadow-lg">
+              <SlidersHorizontal className="h-5 w-5" />
+            </span>
+            <SheetTitle className="font-display text-2xl font-bold">Order details</SheetTitle>
+            <p className="text-sm text-muted-foreground">
+              Your visit, filters and basket in one place.
+            </p>
+          </SheetHeader>
+
+          <div className="space-y-4 p-4 pb-28">
+            <section className="rounded-3xl border border-border bg-card p-4 shadow-sm">
+              <div className="flex items-start gap-3">
+                <span className="grid h-10 w-10 shrink-0 place-items-center rounded-2xl bg-primary/10 text-primary">
+                  <MapPin className="h-5 w-5" />
+                </span>
+                <div className="min-w-0 flex-1">
+                  <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground">
+                    Ordering for
+                  </p>
+                  <p className="mt-1 font-semibold">
+                    {ctx ? describeContext(ctx) : browsingOnly ? "Just browsing" : "Not set yet"}
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  setDetailsDrawerOpen(false);
+                  openOrderSetup();
+                }}
+                className="mt-4 h-11 w-full rounded-2xl border border-primary/35 bg-primary/10 text-sm font-bold text-primary active:scale-[0.99]"
+              >
+                {ctx ? "Change branch or order type" : "Set up an order"}
+              </button>
+            </section>
+
+            <section className="rounded-3xl border border-border bg-card p-4 shadow-sm">
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground">
+                    Quick filters
+                  </p>
+                  <h2 className="mt-1 font-display text-xl font-bold">Find food faster</h2>
+                </div>
+                {filtersOn && (
+                  <button onClick={clearFilters} className="text-xs font-bold text-primary">
+                    Clear all
+                  </button>
+                )}
+              </div>
+              <div className="mt-4 grid grid-cols-2 gap-2">
+                <MobileFilterButton
+                  active={vegOnly}
+                  onClick={() => setVegOnly((value) => !value)}
+                  icon={<Leaf className="h-4 w-4" />}
+                  label="Vegetarian"
+                />
+                <MobileFilterButton
+                  active={temp === "hot"}
+                  onClick={() => setTemp((value) => (value === "hot" ? "any" : "hot"))}
+                  icon={<Flame className="h-4 w-4" />}
+                  label="Hot food"
+                />
+                <MobileFilterButton
+                  active={temp === "cold"}
+                  onClick={() => setTemp((value) => (value === "cold" ? "any" : "cold"))}
+                  icon={<Snowflake className="h-4 w-4" />}
+                  label="Cold & drinks"
+                />
+                <MobileFilterButton
+                  active={under5}
+                  onClick={() => setUnder5((value) => !value)}
+                  icon={<Tag className="h-4 w-4" />}
+                  label="Under £5"
+                />
+              </div>
+              {(filterOptions.allergens.length > 0 || filterOptions.dietary.length > 0) && (
+                <div className="mt-3 grid gap-2">
+                  {filterOptions.allergens.length > 0 && (
+                    <select
+                      value={excludedAllergen}
+                      onChange={(event) => setExcludedAllergen(event.target.value)}
+                      className="h-11 rounded-2xl border border-border bg-background px-3 text-sm font-semibold outline-none focus:border-primary"
+                      aria-label="Exclude an allergen"
+                    >
+                      <option value="">All allergens</option>
+                      {filterOptions.allergens.map((value) => (
+                        <option key={value} value={value}>
+                          Exclude {value}
+                        </option>
+                      ))}
+                    </select>
+                  )}
+                  {filterOptions.dietary.length > 0 && (
+                    <select
+                      value={dietaryTag}
+                      onChange={(event) => setDietaryTag(event.target.value)}
+                      className="h-11 rounded-2xl border border-border bg-background px-3 text-sm font-semibold outline-none focus:border-primary"
+                      aria-label="Dietary preference"
+                    >
+                      <option value="">All dietary options</option>
+                      {filterOptions.dietary.map((value) => (
+                        <option key={value} value={value}>
+                          {value}
+                        </option>
+                      ))}
+                    </select>
+                  )}
+                </div>
+              )}
+            </section>
+
+            <section className="rounded-3xl border border-border bg-card p-4 shadow-sm">
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground">
+                    Basket
+                  </p>
+                  <h2 className="mt-1 font-display text-xl font-bold">
+                    {formatCount(cartCount, "item")}
+                  </h2>
+                </div>
+                <span className="font-display text-2xl font-bold text-primary">
+                  {money(cartTotal)}
+                </span>
+              </div>
+              {cartState.items.length > 0 ? (
+                <ul className="mt-3 divide-y divide-border">
+                  {cartState.items.slice(0, 5).map((item) => (
+                    <li
+                      key={item.id}
+                      className="flex items-center justify-between gap-3 py-2.5 text-sm"
+                    >
+                      <span className="min-w-0 truncate">
+                        <span className="mr-2 font-bold text-primary">{item.qty}×</span>
+                        {item.name}
+                      </span>
+                      <span className="shrink-0 font-semibold tabular-nums">
+                        {money(item.qty * item.price_cents)}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p className="mt-3 rounded-2xl bg-muted p-4 text-sm text-muted-foreground">
+                  Your basket is empty. Choose a category and tap an item to start.
+                </p>
+              )}
+              <Link
+                to="/cart"
+                onClick={() => setDetailsDrawerOpen(false)}
+                className={`mt-4 flex h-12 items-center justify-between rounded-2xl px-4 font-bold ${
+                  cartCount
+                    ? "bg-primary text-primary-foreground shadow-brand"
+                    : "pointer-events-none bg-muted text-muted-foreground"
+                }`}
+              >
+                <span className="inline-flex items-center gap-2">
+                  <ShoppingBag className="h-5 w-5" /> View basket
+                </span>
+                <span>{money(cartTotal)}</span>
+              </Link>
+            </section>
+
+            <div className="grid grid-cols-2 gap-2 rounded-3xl bg-neutral-950 p-4 text-white">
+              <span className="flex items-center gap-2 text-sm font-semibold">
+                <Clock3 className="h-4 w-4 text-primary" /> Order ahead
+              </span>
+              <span className="text-right text-sm text-white/70">Dine in or takeaway</span>
+            </div>
+          </div>
+        </SheetContent>
+      </Sheet>
+
       {/* Sticky search + category pills */}
       <div
         ref={stickyBarRef}
@@ -406,6 +678,14 @@ function MenuPage() {
       >
         <div className="mx-auto max-w-6xl px-4 py-3">
           <div className="flex items-center gap-2 lg:max-w-md">
+            <button
+              type="button"
+              onClick={() => setCategoryDrawerOpen(true)}
+              aria-label="Open menu categories"
+              className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl border border-border bg-card text-foreground shadow-sm active:scale-95 md:hidden"
+            >
+              <PanelLeftOpen className="h-5 w-5" />
+            </button>
             <label className="relative flex-1">
               <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <input
@@ -425,6 +705,21 @@ function MenuPage() {
                 </button>
               )}
             </label>
+            <button
+              type="button"
+              onClick={() => setDetailsDrawerOpen(true)}
+              aria-label="Open order details and filters"
+              className={`relative grid h-11 w-11 shrink-0 place-items-center rounded-2xl border shadow-sm active:scale-95 md:hidden ${
+                filtersOn
+                  ? "border-primary bg-primary text-primary-foreground"
+                  : "border-border bg-card text-foreground"
+              }`}
+            >
+              <SlidersHorizontal className="h-5 w-5" />
+              {filtersOn && (
+                <span className="absolute -right-1 -top-1 h-3 w-3 rounded-full border-2 border-background bg-primary" />
+              )}
+            </button>
             {filtered && (
               <span
                 className="hidden shrink-0 text-xs font-medium text-muted-foreground sm:inline"
@@ -436,7 +731,7 @@ function MenuPage() {
           </div>
 
           {/* Dietary & quick filters */}
-          <div className="mt-2.5 flex items-center gap-2 overflow-x-auto pb-0.5 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+          <div className="mt-2.5 hidden items-center gap-2 overflow-x-auto pb-0.5 [-ms-overflow-style:none] [scrollbar-width:none] md:flex [&::-webkit-scrollbar]:hidden">
             <span className="hidden shrink-0 text-xs font-semibold uppercase tracking-widest text-muted-foreground lg:inline">
               Filters
             </span>
@@ -519,7 +814,7 @@ function MenuPage() {
 
           {/* Category pills (mobile/tablet — desktop uses the sidebar) */}
           {filtered && filtered.cats.length > 0 && (
-            <div className="relative mt-3 lg:hidden">
+            <div className="relative mt-3 hidden md:block lg:hidden">
               <div
                 aria-hidden
                 className={`pointer-events-none absolute inset-y-0 left-0 z-10 w-8 bg-gradient-to-r from-background to-transparent transition-opacity ${canScroll.left ? "opacity-100" : "opacity-0"}`}
@@ -696,7 +991,7 @@ function MenuPage() {
 
       {/* Floating basket bar */}
       {cartCount > 0 && (
-        <div className="fixed inset-x-0 bottom-[calc(4.75rem+env(safe-area-inset-bottom))] z-40 mx-auto flex max-w-md justify-center px-4 md:bottom-4">
+        <div className="fixed inset-x-0 bottom-4 z-40 mx-auto hidden max-w-md justify-center px-4 md:flex">
           <Link
             to="/cart"
             className="group flex w-full items-center justify-between gap-3 rounded-full bg-primary px-4 py-3 text-primary-foreground shadow-brand transition hover:bg-primary-hover"
@@ -744,6 +1039,34 @@ function FilterChip({
     >
       {icon}
       {children}
+    </button>
+  );
+}
+
+function MobileFilterButton({
+  active,
+  onClick,
+  icon,
+  label,
+}: {
+  active: boolean;
+  onClick: () => void;
+  icon: React.ReactNode;
+  label: string;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-pressed={active}
+      className={`flex min-h-12 items-center gap-2 rounded-2xl border px-3 text-left text-sm font-bold transition active:scale-[0.98] ${
+        active
+          ? "border-primary bg-primary text-primary-foreground shadow-brand"
+          : "border-border bg-background text-foreground"
+      }`}
+    >
+      {icon}
+      <span>{label}</span>
     </button>
   );
 }

@@ -14,9 +14,9 @@ Set the profile URLs in the production host. Public `VITE_` values are not
 secrets, but each URL is validated against the expected platform domain.
 
 ```text
-VITE_SOCIAL_FACEBOOK_URL=https://www.facebook.com/YOUR_PAGE
-VITE_SOCIAL_INSTAGRAM_URL=https://www.instagram.com/YOUR_ACCOUNT/
-VITE_SOCIAL_TIKTOK_URL=https://www.tiktok.com/@cafe1luton
+VITE_SOCIAL_FACEBOOK_URL=https://www.facebook.com/Cafe1luton
+VITE_SOCIAL_INSTAGRAM_URL=https://www.instagram.com/cafe1luton/
+VITE_SOCIAL_TIKTOK_URL=https://www.tiktok.com/@cafe1.luton
 VITE_SOCIAL_YOUTUBE_URL=https://www.youtube.com/@YOUR_CHANNEL
 ```
 
@@ -35,7 +35,7 @@ unique entries from `facebook`, `instagram`, `tiktok` and `youtube`.
   },
   {
     "platform": "tiktok",
-    "url": "https://www.tiktok.com/@cafe1luton/video/VIDEO_ID",
+    "url": "https://www.tiktok.com/@cafe1.luton/video/VIDEO_ID",
     "title": "Behind the counter"
   },
   {

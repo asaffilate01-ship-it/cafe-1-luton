@@ -71,7 +71,7 @@ Do not enable live ordering or live SumUp charging until every mandatory box is 
 - [ ] Confirm the scheduled **Production smoke** workflow has a recent successful run and retained JSON evidence.
 - [ ] Verify email delivery, bounce handling and the correct sender/domain records.
 - [ ] Configure official social profiles, automatic YouTube/Instagram feeds and `GOOGLE_PLACE_ID` using `docs/SOCIALS_AUTO_SETUP.md`; verify `/about` and `/socials`, the marketing-consent gate, source links and Google review attribution on phone and desktop.
-- [ ] On `/socials`, choose **Allow and show TikTok**; confirm the cookie banner closes, the canonical `@cafe1luton` creator feed replaces the paused card, and no **Profile not available** error appears.
+- [ ] Confirm the canonical TikTok profile is `@cafe1.luton` and no **Profile not available** error appears.
 - [ ] Correct the public TikTok bio's legacy postcode and `08:30–17:00` hours to `LU1 2AA` and the confirmed public hours: Mon–Fri 08:00–17:00, delivery 08:30–16:30, weekends and England/Wales bank holidays closed. Verify Facebook, Instagram and YouTube profiles show the same NAP and hours.
 - [ ] If Deliveroo Orders API is enabled, complete `docs/DELIVEROO_ORDERS_API_SETUP.md`: verify exact-byte HMAC rejection, accepted-only KDS release, cross-channel duplicate handling, tablet sync status, scheduled orders, cancellation and staff-triggered ready-for-collection.
 - [ ] While the Hub watcher fallback is used, complete `docs/DELIVEROO_WATCHER_SETUP.md`: prove accepted-only KDS release, exact items/modifiers/notes/total, refresh/restart deduplication, cancellation removal, minute heartbeats, sign-out warning and automatic Windows restart. Record the chosen flow under `deliveroo_kds_integration`.

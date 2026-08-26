@@ -42,6 +42,7 @@ function UsersAdmin() {
   const [email, setEmail] = useState("");
   const [role, setRole] = useState<Role>("staff");
   const sites = useSites();
+  const [staffSiteId, setStaffSiteId] = useState("");
   const getAssignments = useServerFn(listStaffSiteAssignments);
   const saveAssignment = useServerFn(assignStaffSite);
 
@@ -51,7 +52,10 @@ function UsersAdmin() {
 
   const load = useCallback(async () => {
     const [{ data: profs }, { data: allRoles }, assignments] = await Promise.all([
-      supabase.from("profiles").select("id, email, full_name").order("created_at", { ascending: false }),
+      supabase
+        .from("profiles")
+        .select("id, email, full_name")
+        .order("created_at", { ascending: false }),
       supabase.from("user_roles").select("user_id, role"),
       getAssignments(),
     ]);
@@ -74,13 +78,17 @@ function UsersAdmin() {
     if (user && has("admin")) load();
   }, [user, has, load]);
 
+  useEffect(() => {
+    if (!staffSiteId && sites.siteId) setStaffSiteId(sites.siteId);
+  }, [sites.siteId, staffSiteId]);
+
   async function grant(userId: string, r: Role) {
     setBusy(true);
     const { error } = await supabase.from("user_roles").insert({ user_id: userId, role: r });
     setBusy(false);
     if (error && !error.message.includes("duplicate")) return toast.error(error.message);
     toast.success(`Granted ${r}`);
-    load();
+    await load();
   }
   async function revoke(userId: string, r: Role) {
     if (r === "admin" && userId === user?.id)
@@ -114,6 +122,10 @@ function UsersAdmin() {
       .maybeSingle();
     if (!prof) return toast.error("No user with that email. They must sign up first at /auth.");
     await grant(prof.id, role);
+    if (role === "staff") {
+      if (!staffSiteId) return toast.error("Choose the staff member's branch");
+      await assignSite(prof.id, staffSiteId);
+    }
     setEmail("");
   }
 
@@ -200,6 +212,24 @@ function UsersAdmin() {
                 </option>
               ))}
             </select>
+            {role === "staff" && (
+              <select
+                value={staffSiteId}
+                onChange={(event) => setStaffSiteId(event.target.value)}
+                disabled={sites.loading}
+                aria-label="New staff branch"
+                className="h-11 rounded-full border border-border bg-background px-4 text-sm"
+              >
+                <option value="" disabled>
+                  Choose branch…
+                </option>
+                {sites.sites.map((site) => (
+                  <option key={site.id} value={site.id}>
+                    {site.name}
+                  </option>
+                ))}
+              </select>
+            )}
             <button
               disabled={busy}
               onClick={grantByEmail}
@@ -214,6 +244,11 @@ function UsersAdmin() {
           <p className="mt-2 rounded-xl bg-primary-soft px-3 py-2 text-xs font-medium text-primary">
             Kitchen chefs: grant the <strong>staff</strong> role and set their name below. They will
             automatically appear in the KDS “Prepared by” dropdown.
+          </p>
+          <p className="mt-2 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-xs font-medium text-amber-900">
+            Branch access is exclusive: Crown Court staff see only the Crown Court till and KDS;
+            Futures House staff see only Futures House. Only administrators can switch branches.
+            Staff must sign out and back in after a branch is changed.
           </p>
         </div>
 

@@ -125,7 +125,7 @@ export function localBusinessJsonLd(image: string) {
       sameAs: [
         "https://www.facebook.com/Cafe1luton",
         "https://www.instagram.com/cafe1luton/",
-        "https://www.tiktok.com/@cafe1luton",
+        "https://www.tiktok.com/@cafe1.luton",
       ],
       hasMap:
         "https://www.google.com/maps/search/?api=1&query=" +

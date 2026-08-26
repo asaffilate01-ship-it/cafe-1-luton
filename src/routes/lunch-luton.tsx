@@ -21,7 +21,19 @@ const description =
 
 export const Route = createFileRoute("/lunch-luton")({
   head: () => ({
-    meta: seoMeta({ title, description, path, image: heroImage }),
+    meta: seoMeta({
+      title,
+      description,
+      path,
+      keywords: [
+        "halal lunch Luton",
+        "lunch near Luton Crown Court",
+        "lunch Marsh Farm",
+        "chicken pie Luton",
+        "Friday roast Luton",
+        "cheese flan Luton",
+      ],
+    }),
     links: [canonicalLink(path), { rel: "preload", as: "image", href: heroImage }],
     scripts: [
       jsonLdScript(localBusinessJsonLd(absoluteUrl(heroImage))),

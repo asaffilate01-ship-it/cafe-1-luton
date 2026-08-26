@@ -5,6 +5,7 @@ import { callOperationsRpc } from "./ops-rpc";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/integrations/supabase/types";
 import { validateModifierSelection, type ModifierRule } from "./modifier-rules";
+import { requireStaffOrderAccess, requireStaffShiftAccess } from "./staff-site-access.server";
 
 const CounterLineSchema = z.object({
   menu_item_id: z.string().uuid(),
@@ -54,11 +55,13 @@ type CounterModifierRow = ModifierRule & {
 async function validateCounterModifierRules(
   supabase: SupabaseClient<Database>,
   data: CounterBasket,
+  siteId: string,
 ) {
   const itemIds = [...new Set(data.items.map((item) => item.menu_item_id))];
   const { data: menu, error: menuError } = await supabase
     .from("menu_items")
     .select("id,category_id,active")
+    .eq("site_id", siteId)
     .in("id", itemIds);
   if (menuError) throw new Error(menuError.message);
   const menuRows = (menu ?? []) as CounterMenuRow[];
@@ -146,7 +149,8 @@ async function saveOrderNotes(orderId: string, notes: string | undefined) {
     .from("orders")
     .update({ delivery_notes: clean, notes_manual: true })
     .eq("id", orderId);
-  if (error) throw new Error(`Order was created but its notes could not be saved: ${error.message}`);
+  if (error)
+    throw new Error(`Order was created but its notes could not be saved: ${error.message}`);
 }
 
 /**
@@ -163,13 +167,14 @@ export const setCounterOrderSchedule = createServerFn({ method: "POST" })
       })
       .parse(input),
   )
-  .handler(({ data, context }) =>
-    callOperationsRpc<{ id: string; scheduled_for: string | null }>(
+  .handler(async ({ data, context }) => {
+    await requireStaffOrderAccess(context, data.order_id);
+    return callOperationsRpc<{ id: string; scheduled_for: string | null }>(
       context.supabase,
       "set_counter_order_schedule",
       { _order_id: data.order_id, _scheduled_for: data.scheduled_for },
-    ),
-  );
+    );
+  });
 
 /**
  * Reserves a counter order, including any juror allowance, before a reader is
@@ -180,7 +185,8 @@ export const prepareCounterOrder = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .validator((input: unknown) => CounterBasketSchema.parse(input))
   .handler(async ({ data, context }) => {
-    await validateCounterModifierRules(context.supabase, data);
+    const { shiftSiteId } = await requireStaffShiftAccess(context, data.shift_id);
+    await validateCounterModifierRules(context.supabase, data, shiftSiteId);
     const rows = await callOperationsRpc<CounterOrderResult[]>(
       context.supabase,
       "prepare_counter_order_secure",
@@ -207,7 +213,8 @@ export const createCounterOrder = createServerFn({ method: "POST" })
     if (data.payment_method === "card" && !data.manual_card_reference) {
       throw new Error("A card terminal receipt reference is required");
     }
-    await validateCounterModifierRules(context.supabase, data);
+    const { shiftSiteId } = await requireStaffShiftAccess(context, data.shift_id);
+    await validateCounterModifierRules(context.supabase, data, shiftSiteId);
     const rows = await callOperationsRpc<CounterOrderResult[]>(
       context.supabase,
       "prepare_counter_order_secure",
@@ -232,7 +239,8 @@ export const createCounterSplitOrder = createServerFn({ method: "POST" })
     }).parse(input),
   )
   .handler(async ({ data, context }) => {
-    await validateCounterModifierRules(context.supabase, data);
+    const { shiftSiteId } = await requireStaffShiftAccess(context, data.shift_id);
+    await validateCounterModifierRules(context.supabase, data, shiftSiteId);
     const rows = await callOperationsRpc<CounterOrderResult[]>(
       context.supabase,
       "prepare_counter_order_secure",
@@ -250,7 +258,8 @@ export const createCounterSplitOrder = createServerFn({ method: "POST" })
       .from("order_payments")
       .delete()
       .eq("order_id", result.order_id);
-    if (clearError) throw new Error(`Sale completed but tender split needs review: ${clearError.message}`);
+    if (clearError)
+      throw new Error(`Sale completed but tender split needs review: ${clearError.message}`);
     const { error: paymentError } = await supabaseAdmin.from("order_payments").insert([
       {
         order_id: result.order_id,
@@ -268,12 +277,14 @@ export const createCounterSplitOrder = createServerFn({ method: "POST" })
         received_by: context.userId,
       },
     ]);
-    if (paymentError) throw new Error(`Sale completed but tender split needs review: ${paymentError.message}`);
+    if (paymentError)
+      throw new Error(`Sale completed but tender split needs review: ${paymentError.message}`);
     const { error: orderError } = await supabaseAdmin
       .from("orders")
       .update({ payment_method: "split" })
       .eq("id", result.order_id);
-    if (orderError) throw new Error(`Sale completed but tender label needs review: ${orderError.message}`);
+    if (orderError)
+      throw new Error(`Sale completed but tender label needs review: ${orderError.message}`);
     return result;
   });
 
@@ -289,6 +300,7 @@ export const finalizeCounterCardPayment = createServerFn({ method: "POST" })
       .parse(input),
   )
   .handler(async ({ data, context }) => {
+    await requireStaffOrderAccess(context, data.order_id);
     const { data: order, error } = await context.supabase.rpc("finalize_counter_card", {
       _order_id: data.order_id,
       _payment_attempt_id: data.payment_attempt_id,
@@ -313,6 +325,7 @@ export const cancelCounterOrder = createServerFn({ method: "POST" })
     z.object({ order_id: z.string().uuid(), reason: z.string().min(3).max(200) }).parse(input),
   )
   .handler(async ({ data, context }) => {
+    await requireStaffOrderAccess(context, data.order_id);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data: unsettled } = await supabaseAdmin
       .from("payment_attempts")
