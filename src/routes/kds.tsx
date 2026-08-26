@@ -1381,7 +1381,7 @@ function BranchKDS() {
                 )}
                 <SyncPill lastSync={lastSync} ok={syncOk} now={now} />
                 <AlertsToggle />
-              <PushAlertsButton topics={["kitchen"]} siteId={assignedSiteId} label="Phone alerts" />
+              <PushAlertsButton topics={["kitchen"]} siteId={sites.siteId} label="Phone alerts" />
                 <WakeToggle />
                 <button
                   onClick={() => setManualOpen(true)}
@@ -1486,7 +1486,7 @@ function BranchKDS() {
               </button>
               <FullscreenToggle />
               <AlertsToggle />
-              <PushAlertsButton topics={["kitchen"]} siteId={assignedSiteId} label="Phone alerts" />
+              <PushAlertsButton topics={["kitchen"]} siteId={sites.siteId} label="Phone alerts" />
               <WakeToggle />
               <InstallAppButton
                 manifest="/kds.webmanifest"
