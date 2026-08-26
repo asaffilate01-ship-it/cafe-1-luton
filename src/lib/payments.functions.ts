@@ -4,89 +4,9 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { requireStaffOrderAccess } from "./staff-site-access.server";
 
 /**
- * Re-verifies a checkout with SumUp. Calls are rate-limited and every amount,
- * currency and checkout reference must match our immutable order record.
- */
-export const confirmPayment = createServerFn({ method: "POST" })
-  .validator((d: unknown) =>
-    z
-      .object({
-        order_id: z.string().uuid(),
-        tracking_token: z.string().min(32).max(200).optional(),
-      })
-      .parse(d),
-  )
-  .handler(async ({ data }) => {
-    const { checkThrottle, recordAttempt, requestIdentity } = await import("./rate-limit.server");
-    const identity = requestIdentity();
-    const gate = await checkThrottle("payment", identity);
-    if (!gate.allowed) throw new Error(gate.message ?? "Too many payment checks");
-
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { data: order, error } = await supabaseAdmin
-      .from("orders")
-      .select(
-        "id, customer_id, tracking_token_hash, created_at, payment_status, total_cents, sumup_checkout_id, sumup_reference, sumup_transaction_id",
-      )
-      .eq("id", data.order_id)
-      .maybeSingle();
-    if (error) throw new Error(error.message);
-    if (!order) {
-      await recordAttempt("payment", identity, false);
-      throw new Error("Order not found");
-    }
-    const { canAccessPublicOrder } = await import("./order-access.server");
-    if (!(await canAccessPublicOrder(order, data.tracking_token))) {
-      await recordAttempt("payment", identity, false);
-      throw new Error("Order not found");
-    }
-    if (order.payment_status === "paid" || order.payment_status === "on_account") {
-      await recordAttempt("payment", identity, true);
-      return { paid: true, status: order.payment_status };
-    }
-    if (!order.sumup_checkout_id) {
-      await recordAttempt("payment", identity, false);
-      return { paid: false, status: order.payment_status };
-    }
-
-    const { getSumUpCheckout } = await import("./sumup.server");
-    const checkout = await getSumUpCheckout(order.sumup_checkout_id);
-    const matches =
-      checkout.id === order.sumup_checkout_id &&
-      checkout.checkout_reference === order.sumup_reference &&
-      checkout.currency === "GBP" &&
-      Math.round(Number(checkout.amount) * 100) === order.total_cents;
-    if (!matches) {
-      await recordAttempt("payment", identity, false);
-      throw new Error("Payment verification did not match this order");
-    }
-    if (checkout.status !== "PAID") {
-      await recordAttempt("payment", identity, true);
-      return { paid: false, status: order.payment_status };
-    }
-    if (!checkout.transaction_id) throw new Error("SumUp transaction ID is missing");
-
-    const { error: updateError } = await supabaseAdmin
-      .from("orders")
-      .update({
-        payment_status: "paid",
-        status: "preparing",
-        sumup_transaction_id: checkout.transaction_id,
-      })
-      .eq("id", order.id)
-      .eq("payment_status", "pending");
-    if (updateError) throw new Error(updateError.message);
-    const { awardLoyaltyForOrder } = await import("./loyalty.server");
-    await awardLoyaltyForOrder(order.id);
-    const { notifyKitchenNewOrder } = await import("./push-notify.server");
-    await notifyKitchenNewOrder(order.id);
-    await recordAttempt("payment", identity, true);
-    return { paid: true, status: "preparing" as const };
-  });
-
-/**
  * Authorised till refund ledger with partial-refund accounting and idempotency.
- * Provider calls happen once; the database then atomically posts the result.
+ * Card refunds are settled on the EVO terminal by staff; this records the
+ * ledger entry so the till, reports and order history stay in balance.
  */
 export const refundOrder = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
@@ -116,9 +36,7 @@ export const refundOrder = createServerFn({ method: "POST" })
 
     const { data: order, error } = await supabaseAdmin
       .from("orders")
-      .select(
-        "id, total_cents, refunded_cents, payment_status, payment_method, source, sumup_checkout_id, sumup_transaction_id",
-      )
+      .select("id, total_cents, refunded_cents, payment_status, payment_method, source")
       .eq("id", data.order_id)
       .maybeSingle();
     if (error) throw new Error(error.message);
@@ -131,14 +49,7 @@ export const refundOrder = createServerFn({ method: "POST" })
     const amount = data.amount_cents ?? remaining;
     if (amount > remaining) throw new Error("Refund exceeds the remaining paid amount");
 
-    const [{ data: attempt }, { data: tenders }, { data: previousRefunds }] = await Promise.all([
-      supabaseAdmin
-        .from("payment_attempts")
-        .select("provider_transaction_id")
-        .eq("order_id", order.id)
-        .in("status", ["paid", "used"])
-        .limit(1)
-        .maybeSingle(),
+    const [{ data: tenders }, { data: previousRefunds }] = await Promise.all([
       supabaseAdmin.from("order_payments").select("method, amount_cents").eq("order_id", order.id),
       supabaseAdmin
         .from("order_refunds")
@@ -146,9 +57,6 @@ export const refundOrder = createServerFn({ method: "POST" })
         .eq("order_id", order.id)
         .eq("status", "succeeded"),
     ]);
-    const providerTransactionId =
-      attempt?.provider_transaction_id ??
-      (order.sumup_checkout_id || order.source === "sumup_pos" ? order.sumup_transaction_id : null);
 
     let paidCard = (tenders ?? [])
       .filter((payment) => payment.method === "card")
@@ -187,10 +95,8 @@ export const refundOrder = createServerFn({ method: "POST" })
         _cash_amount_cents: cashAmount,
         _reason: data.reason,
         _requested_by: context.userId,
-        _provider: (providerTransactionId && cardAmount > 0 ? "sumup" : null) as unknown as string,
-        _provider_transaction_id: (providerTransactionId && cardAmount > 0
-          ? providerTransactionId
-          : null) as unknown as string,
+        _provider: null as unknown as string,
+        _provider_transaction_id: null as unknown as string,
       },
     );
     if (reserveError) throw new Error(reserveError.message);
@@ -199,25 +105,14 @@ export const refundOrder = createServerFn({ method: "POST" })
       throw new Error("That refund attempt failed previously; start a new refund");
     }
 
-    let note = "Refund recorded for manual settlement";
-    let providerRefunded = false;
+    const note =
+      cardAmount > 0 && cashAmount > 0
+        ? `Refund recorded — return ${cardAmount}p on the EVO terminal and ${cashAmount}p in cash`
+        : cardAmount > 0
+          ? "Refund recorded — complete the card refund on the EVO terminal"
+          : "Cash refund posted to the till ledger";
+
     try {
-      if (providerTransactionId && cardAmount > 0) {
-        const { refundSumUpTransaction } = await import("./sumup.server");
-        await refundSumUpTransaction(
-          providerTransactionId,
-          refundedCard === 0 && cardAmount === paidCard ? undefined : cardAmount,
-        );
-        providerRefunded = true;
-        note =
-          cashAmount > 0
-            ? `Refunded ${cardAmount}p to SumUp and allocated ${cashAmount}p to cash`
-            : amount < remaining
-              ? "Partial refund sent to SumUp"
-              : "Full refund sent to SumUp";
-      } else if (cashAmount > 0) {
-        note = "Cash refund posted to the till ledger";
-      }
       const { error: completeError } = await supabaseAdmin.rpc("complete_order_refund", {
         _refund_id: refundRow.id,
       });
@@ -227,9 +122,7 @@ export const refundOrder = createServerFn({ method: "POST" })
       await supabaseAdmin
         .from("order_refunds")
         .update({
-          // A successful provider call must remain pending for reconciliation;
-          // marking it failed would allow a second external refund.
-          status: providerRefunded ? "pending" : "failed",
+          status: "failed",
           failure_reason:
             refundError instanceof Error ? refundError.message.slice(0, 500) : "Refund failed",
         })
@@ -237,14 +130,3 @@ export const refundOrder = createServerFn({ method: "POST" })
       throw refundError;
     }
   });
-
-/**
- * Public wallet config. The Google Pay merchant ID is not a secret (it is sent
- * to the browser by design) but is stored server-side so it can be set without
- * a rebuild.
- */
-export const getWalletConfig = createServerFn({ method: "GET" }).handler(async () => {
-  return {
-    googlePayMerchantId: (process.env["GOOGLE_PAY_MERCHANT_ID"] ?? "").trim() || null,
-  };
-});
