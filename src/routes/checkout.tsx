@@ -747,14 +747,19 @@ function Checkout() {
           ) : (
             <div className="rounded-2xl border border-border bg-card p-5">
               <p className="font-semibold">Your details</p>
+              <p className="mt-1 text-sm text-muted-foreground">
+                We call your name and order number when it's ready — please give both at the
+                counter when you collect.
+              </p>
               <div className="mt-3 grid gap-3 sm:grid-cols-2">
                 <input
                   required
-                  placeholder="Contact person's name"
+                  placeholder="Your name (called out at collection)"
                   value={form.customer_name}
                   onChange={(e) => setForm({ ...form, customer_name: e.target.value })}
                   className="h-11 rounded-xl border border-border bg-background px-4"
                 />
+
                 <input
                   required={!voucher}
                   placeholder={voucher ? "Phone (optional)" : "Phone"}
