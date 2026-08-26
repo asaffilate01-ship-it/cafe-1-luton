@@ -41,7 +41,20 @@ function AdminSettings() {
   const [hours, setHours] = useState<HourRow[]>([]);
   const [busy, setBusy] = useState(false);
 
-  useEffect(() => { setS(data?.settings ?? null); setHours(data?.hours ?? []); }, [data]);
+  useEffect(() => {
+    setS(data?.settings ?? null);
+    // Always render all seven days so timings can be edited manually even when
+    // a branch has no row saved yet for that weekday.
+    const saved = data?.hours ?? [];
+    setHours(
+      Array.from({ length: 7 }, (_, day_of_week) => {
+        const row = saved.find((h) => h.day_of_week === day_of_week);
+        return (
+          row ?? ({ day_of_week, open_time: "09:00", close_time: "17:00", closed: true } as HourRow)
+        );
+      }),
+    );
+  }, [data]);
 
   async function save() {
     if (!s) return;
@@ -67,9 +80,17 @@ function AdminSettings() {
     }).eq("id", s.id);
     if (upd.error) { setBusy(false); return toast.error(upd.error.message); }
     for (const h of hours) {
-      const { error } = await supabase.from("business_hours").update({
-        open_time: h.open_time, close_time: h.close_time, closed: h.closed,
-      }).eq("site_id", siteId).eq("day_of_week", h.day_of_week);
+      const existing = (data?.hours ?? []).some((r) => r.day_of_week === h.day_of_week);
+      const payload = { open_time: h.open_time, close_time: h.close_time, closed: h.closed };
+      const { error } = existing
+        ? await supabase
+            .from("business_hours")
+            .update(payload)
+            .eq("site_id", siteId)
+            .eq("day_of_week", h.day_of_week)
+        : await supabase
+            .from("business_hours")
+            .insert({ ...payload, site_id: siteId, day_of_week: h.day_of_week });
       if (error) { setBusy(false); return toast.error(error.message); }
     }
     setBusy(false);
@@ -229,7 +250,9 @@ function AdminSettings() {
           <section className="rounded-2xl border border-border bg-card p-5">
             <p className="font-semibold">Opening hours</p>
             <p className="mt-1 text-xs text-muted-foreground">
-              Saturday, Sunday and configured England/Wales bank holidays remain closed.
+              Set each day's opening and closing time manually per branch, or tick Closed. These
+              times drive the website, ordering and the live open/closed board. Configured
+              England/Wales bank holidays stay closed.
             </p>
             <div className="mt-3 space-y-2">
               {hours.map((h, i) => (
