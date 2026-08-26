@@ -202,9 +202,8 @@ export function OrderSetupGate({
           {step === 2 && (
             <>
               <p className="text-sm leading-relaxed text-muted-foreground">
-                {location === "luton-crown-court"
-                  ? "We do not run our own delivery. Order here for dine in or takeaway, or use one of our delivery partners below."
-                  : "Delivery is not available from Futures House. Choose dine in or takeaway to collect at the café."}
+                Delivery is not provided at either café. Choose dine in or takeaway to collect at the
+                selected café.
               </p>
 
               <div className="grid grid-cols-2 gap-3">
@@ -227,29 +226,7 @@ export function OrderSetupGate({
                   </button>
                 ))}
               </div>
-              {location === "luton-crown-court" && (
-                <div className="rounded-2xl border border-border bg-muted/40 p-4">
-                  <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
-                    Want it delivered?
-                  </p>
-                  <p className="mt-1 text-sm text-muted-foreground">
-                    Café 1 at Luton Crown Court is available on our delivery partners.
-                  </p>
-                  <div className="mt-3 grid gap-2 sm:grid-cols-3">
-                    {DELIVERY_PARTNERS.map((partner) => (
-                      <a
-                        key={partner.name}
-                        href={partner.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="flex min-h-11 items-center justify-center rounded-full border border-border bg-background px-3 text-sm font-semibold transition hover:border-primary hover:text-primary"
-                      >
-                        {partner.name}
-                      </a>
-                    ))}
-                  </div>
-                </div>
-              )}
+
 
               <div className="flex gap-2">
                 <button
