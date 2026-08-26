@@ -7,6 +7,7 @@ import type { Database } from "@/integrations/supabase/types";
 import { validateModifierSelection, type ModifierRule } from "./modifier-rules";
 import { orderingHoursForLocation } from "./nap";
 import { requireStaffOrderAccess, requireStaffSiteAccess } from "./staff-site-access.server";
+import { PUBLIC_SETTINGS_COLUMNS } from "./business";
 
 function createServerSupabase(bearer?: string) {
   const url = process.env.SUPABASE_URL!;
@@ -226,7 +227,7 @@ export const createOrder = createServerFn({ method: "POST" })
     // Load branch-specific settings and hours.
     const settingsQuery = supabase
       .from("business_settings")
-      .select("*")
+      .select(PUBLIC_SETTINGS_COLUMNS)
       .eq("site_id", selectedSiteId)
       .limit(1);
     const { data: settings } = await settingsQuery.maybeSingle();
@@ -282,9 +283,19 @@ export const createOrder = createServerFn({ method: "POST" })
         .maybeSingle();
       if (staffRow) {
         staff_member_id = staffRow.id;
-        staff_discount_percent = Number(
-          staffRow.discount_percent ?? settings?.court_staff_discount_percent ?? 10,
-        );
+        // court_staff_discount_percent is not anon-readable; fetch it
+        // server-side only when an approved staff member actually orders.
+        let defaultPercent: number | null = null;
+        if (staffRow.discount_percent == null) {
+          const { data: privateSettings } = await supabaseAdmin
+            .from("business_settings")
+            .select("court_staff_discount_percent")
+            .eq("site_id", selectedSiteId)
+            .limit(1)
+            .maybeSingle();
+          defaultPercent = privateSettings?.court_staff_discount_percent ?? null;
+        }
+        staff_discount_percent = Number(staffRow.discount_percent ?? defaultPercent ?? 10);
       }
     }
     const courtStaffDelivery = !!staff_member_id && !!data.court_location;
