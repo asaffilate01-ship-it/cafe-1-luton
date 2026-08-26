@@ -2,7 +2,7 @@ import { createFileRoute, useNavigate, useSearch } from "@tanstack/react-router"
 import { useState } from "react";
 import { z } from "zod";
 import { supabase } from "@/integrations/supabase/client";
-import { lovable } from "@/integrations/lovable/index";
+
 import { SiteHeader } from "@/components/site-header";
 import { toast } from "sonner";
 import { PasswordField } from "@/components/password-field";
@@ -70,23 +70,6 @@ function AuthPage() {
     }
   }
 
-  async function google() {
-    setError("");
-    try {
-      if (next && next.startsWith("/")) sessionStorage.setItem("cafe1:postAuthNext", next);
-      const result = await lovable.auth.signInWithOAuth("google", {
-        redirect_uri: window.location.origin,
-      });
-      if (result.error) throw result.error;
-      if (result.redirected) return;
-      go();
-    } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : "Google sign-in failed";
-      setError(message);
-      toast.error(message);
-    }
-  }
-
   return (
     <div className="min-h-screen bg-background">
       <SiteHeader />
@@ -98,17 +81,8 @@ function AuthPage() {
           <p className="mt-1 text-sm text-muted-foreground">
             Order faster and track your deliveries.
           </p>
-          <button
-            type="button"
-            onClick={google}
-            className="mt-6 flex h-11 w-full items-center justify-center gap-2 rounded-full border border-border bg-background font-semibold hover:border-primary hover:text-primary"
-          >
-            Continue with Google
-          </button>
-          <div className="my-5 flex items-center gap-3 text-xs text-muted-foreground">
-            <span className="h-px flex-1 bg-border" /> or with email{" "}
-            <span className="h-px flex-1 bg-border" />
-          </div>
+          <div className="mt-6" />
+
           {error && (
             <p
               role="alert"
