@@ -2,7 +2,6 @@ import { describe, expect, it } from "vitest";
 
 import {
   COUNTER_UNPAID_TTL_MS,
-  decideSumUpCleanup,
   isPastCleanupThreshold,
   WEB_UNPAID_TTL_MS,
   type CleanupCheckoutSnapshot,
@@ -74,33 +73,5 @@ describe("unpaid order cleanup threshold", () => {
         NOW,
       ),
     ).toBe(false);
-  });
-});
-
-describe("SumUp cleanup decisions", () => {
-  it("requires an exact paid identity before recovery", () => {
-    expect(decideSumUpCleanup(order, paidCheckout)).toBe("recover_paid");
-
-    for (const mismatch of [
-      { id: "other-checkout" },
-      { checkout_reference: "OTHER-REFERENCE" },
-      { currency: "EUR" },
-      { amount: 5.7 },
-      { transaction_id: "" },
-    ]) {
-      expect(decideSumUpCleanup(order, { ...paidCheckout, ...mismatch })).toBe("hold");
-    }
-  });
-
-  it("allows only terminal unpaid states to be abandoned", () => {
-    for (const status of ["FAILED", "CANCELLED", "CANCELED", "EXPIRED", " expired "]) {
-      expect(decideSumUpCleanup(order, { ...paidCheckout, status })).toBe("abandon");
-    }
-  });
-
-  it("keeps pending and unknown provider states on hold", () => {
-    for (const status of ["PENDING", "PROCESSING", "pending", "", "SUCCESSFUL", "UNKNOWN"]) {
-      expect(decideSumUpCleanup(order, { ...paidCheckout, status })).toBe("hold");
-    }
   });
 });

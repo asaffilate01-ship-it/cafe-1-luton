@@ -75,7 +75,7 @@ const PAYMENT_LABELS: Record<string, string> = {
   card: "Card",
   bank_transfer: "Bank transfer",
   direct_debit: "Direct debit",
-  sumup_card: "Card processor",
+  card_processor: "Card processor",
   other: "Other",
 };
 

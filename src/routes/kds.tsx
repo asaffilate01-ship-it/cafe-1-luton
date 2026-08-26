@@ -213,7 +213,7 @@ function channelOf(t: { source: string | null; pos_terminal: string | null }): C
   if (side === "jury") return "jury";
   if (side === "judge") return "judge";
   if (side === "public") return "public";
-  if (src === "sumup_pos" || src === "counter" || src === "till") return "public";
+  if (src === "counter" || src === "till") return "public";
   return "web";
 }
 const STATIONS = ["ALL", "HOT", "SANDWICH", "DRINKS", "PASS"] as const;
@@ -240,7 +240,7 @@ function channelFields(
 ): { source: string; pos_terminal: string | null } {
   if (next === "jury" || next === "judge" || next === "public") {
     const src = (currentSource ?? "").toLowerCase();
-    const keepTill = src === "sumup_pos" || src === "counter" || src === "till";
+    const keepTill = src === "counter" || src === "till";
     return { source: keepTill ? src : "counter", pos_terminal: next };
   }
   return { source: next, pos_terminal: null };

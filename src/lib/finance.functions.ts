@@ -25,7 +25,7 @@ export const PAYMENT_METHODS = [
   "card",
   "bank_transfer",
   "direct_debit",
-  "sumup_card",
+  "card_processor",
   "other",
 ] as const;
 
@@ -67,7 +67,6 @@ export type FinanceDashboard = {
   zero_cost_lines: number;
   sold_lines: number;
   payment_mix: Record<string, number>;
-  sumup: { paid_out_cents: number; deductions_cents: number; fees_cents: number };
   expense_categories: Array<{ category: string; amount_cents: number; count: number }>;
   daily: Array<{ date: string; income_cents: number; orders: number; expenses_cents: number }>;
   recent_expenses: Array<{
@@ -220,103 +219,5 @@ export const receivePurchase = createServerFn({ method: "POST" })
       context.supabase,
       "cafe1_receive_purchase",
       { _site_id: site_id, _payload: payload },
-    );
-  });
-
-const ImportedExpense = z.object({
-  expense_date: z.string().date(),
-  category: Category,
-  description: z.string().trim().min(2).max(300),
-  amount_cents: z.number().int().positive().max(100_000_000),
-  tax_included_cents: z.number().int().min(0).max(100_000_000),
-  payment_method: PaymentMethod,
-  provider_reference: z.string().trim().min(5).max(500),
-  invoice_reference: z.string().trim().max(100),
-  notes: z.string().trim().max(500),
-});
-
-export const importSumupExpenses = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
-  .validator((value: unknown) =>
-    z
-      .object({ site_id: z.string().uuid(), rows: z.array(ImportedExpense).min(1).max(1000) })
-      .parse(value),
-  )
-  .handler(async ({ data, context }) => {
-    return callOperationsRpc<{ imported: number; skipped: number }>(
-      context.supabase,
-      "cafe1_import_sumup_expenses",
-      { _site_id: data.site_id, _rows: data.rows },
-    );
-  });
-
-type SumUpPayout = {
-  id: number | string;
-  type: string;
-  amount: number;
-  date: string;
-  currency: string;
-  fee: number;
-  status: string;
-  reference?: string;
-  transaction_code?: string;
-};
-
-export const syncSumupSettlements = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
-  .validator((value: unknown) => SitePeriod.parse(value))
-  .handler(async ({ data, context }) => {
-    const key = process.env.SUMUP_API_KEY;
-    const merchant = process.env.SUMUP_MERCHANT_CODE;
-    if (!key || !merchant) throw new Error("SUMUP_API_KEY and SUMUP_MERCHANT_CODE are required");
-    const params = new URLSearchParams({
-      start_date: data.from_date,
-      end_date: data.to_date,
-      format: "json",
-      limit: "9999",
-      order: "desc",
-    });
-    const response = await fetch(
-      `https://api.sumup.com/v1.0/merchants/${encodeURIComponent(merchant)}/payouts?${params}`,
-      {
-        headers: { Authorization: `Bearer ${key}` },
-      },
-    );
-    if (!response.ok) {
-      const body = (await response.text()).slice(0, 240);
-      throw new Error(
-        `SumUp payout sync failed (${response.status}). Confirm the payouts.read scope. ${body}`,
-      );
-    }
-    const payload = (await response.json()) as SumUpPayout[];
-    const allowedTypes = new Set([
-      "PAYOUT",
-      "CHARGE_BACK_DEDUCTION",
-      "REFUND_DEDUCTION",
-      "DD_RETURN_DEDUCTION",
-      "BALANCE_DEDUCTION",
-    ]);
-    const rows = payload
-      .filter(
-        (row) =>
-          row.currency === "GBP" &&
-          allowedTypes.has(row.type) &&
-          ["SUCCESSFUL", "FAILED"].includes(row.status),
-      )
-      .map((row) => ({
-        provider_id: String(row.id),
-        settlement_date: row.date,
-        settlement_type: row.type,
-        status: row.status,
-        amount_cents: Math.round(Number(row.amount) * 100),
-        fee_cents: Math.max(0, Math.round(Number(row.fee ?? 0) * 100)),
-        currency: "GBP",
-        provider_reference: row.reference ?? "",
-        transaction_code: row.transaction_code ?? "",
-      }));
-    return callOperationsRpc<{ records: number; fee_cents: number }>(
-      context.supabase,
-      "cafe1_import_sumup_settlements",
-      { _site_id: data.site_id, _rows: rows },
     );
   });
