@@ -10,6 +10,8 @@ function normalise(pc: string) {
 
 const GATEWAY_URL = "https://connector-gateway.lovable.dev/google_maps";
 
+import { getGoogleMapsApiKey } from "./google-maps-env.server";
+
 /** Geocode a UK postcode/address via the Google Maps Platform gateway. */
 export async function geocodePostcode(postcode: string): Promise<LatLng | null> {
   const key = normalise(postcode);
@@ -17,7 +19,7 @@ export async function geocodePostcode(postcode: string): Promise<LatLng | null> 
   if (cache.has(key)) return cache.get(key) ?? null;
 
   const lovableKey = process.env.LOVABLE_API_KEY;
-  const gmKey = process.env.GOOGLE_MAPS_API_KEY;
+  const gmKey = getGoogleMapsApiKey();
   if (!lovableKey || !gmKey) {
     // Connector not linked yet — don't block orders.
     cache.set(key, null);

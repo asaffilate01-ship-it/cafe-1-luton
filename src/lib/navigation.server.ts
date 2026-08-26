@@ -1,3 +1,5 @@
+import { getGoogleMapsApiKey } from "./google-maps-env.server";
+
 /** Turn-by-turn routing via the Google Maps Routes API (server only). */
 
 const GATEWAY_URL = "https://connector-gateway.lovable.dev/google_maps";
@@ -22,7 +24,7 @@ export async function computeWalkingOrDrivingRoute(input: {
   mode: "DRIVE" | "TWO_WHEELER" | "WALK" | "BICYCLE";
 }): Promise<NavRoute | null> {
   const lovableKey = process.env.LOVABLE_API_KEY;
-  const gmKey = process.env.GOOGLE_MAPS_API_KEY;
+  const gmKey = getGoogleMapsApiKey();
   if (!lovableKey || !gmKey) return null;
 
   const body = {
