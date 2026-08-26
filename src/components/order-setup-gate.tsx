@@ -202,9 +202,11 @@ export function OrderSetupGate({
           {step === 2 && (
             <>
               <p className="text-sm leading-relaxed text-muted-foreground">
-                Online delivery is not offered. Choose how you will collect or enjoy your order at
-                the selected café.
+                {location === "luton-crown-court"
+                  ? "We do not run our own delivery. Order here for dine in or takeaway, or use one of our delivery partners below."
+                  : "Delivery is not available from Futures House. Choose dine in or takeaway to collect at the café."}
               </p>
+
               <div className="grid grid-cols-2 gap-3">
                 {[
                   { id: "dine_in" as const, label: "Dine in", Icon: Utensils },
