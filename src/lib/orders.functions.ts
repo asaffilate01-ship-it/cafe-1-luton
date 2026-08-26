@@ -231,7 +231,14 @@ export const createOrder = createServerFn({ method: "POST" })
       .eq("site_id", selectedSiteId)
       .limit(1);
     const { data: settings } = await settingsQuery.maybeSingle();
-    const branchHours = orderingHoursForLocation(data.site_location);
+    // Admin-managed hours win; the static branch table is only a fallback.
+    const { data: savedHours } = await supabase
+      .from("business_hours")
+      .select("day_of_week, open_time, close_time, closed")
+      .eq("site_id", selectedSiteId)
+      .order("day_of_week");
+    const branchHours =
+      savedHours && savedHours.length ? savedHours : orderingHoursForLocation(data.site_location);
 
     if (settings && !settings.accepting_orders) {
       throw new Error(settings.closed_message || "Sorry, we're not accepting orders right now.");

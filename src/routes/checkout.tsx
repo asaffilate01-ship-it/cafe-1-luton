@@ -55,7 +55,13 @@ function Checkout() {
   const navigate = useNavigate();
   const { user, loading } = useSession();
   const tabSession = useTab();
-  const { status: defaultStatus, settings, hours, holidays } = useStoreStatus();
+  const ctxEarly = useOrderContext();
+  const {
+    status: defaultStatus,
+    settings,
+    hours,
+    holidays,
+  } = useStoreStatus(ctxEarly?.location ? BRANCH_SITE_IDS[ctxEarly.location] : undefined);
   const place = useServerFn(createOrder);
   const findVoucher = useServerFn(lookupVoucher);
   const checkArea = useServerFn(checkDeliveryPostcode);
