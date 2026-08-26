@@ -65,7 +65,10 @@ function AdminLogin() {
     try {
       // A stale session from another account blocks a fresh sign in — clear it first.
       if (user) await supabase.auth.signOut();
-      const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email: email.trim().toLowerCase(),
+        password: password.trim(),
+      });
       if (error) throw error;
       const uid = data.user?.id;
       if (!uid) throw new Error("Sign in failed");
