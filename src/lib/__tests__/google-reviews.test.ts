@@ -21,6 +21,7 @@ afterEach(() => {
 describe("Google Reviews provider fallback", () => {
   it("uses the direct Places API when the Lovable connector is unavailable", async () => {
     process.env.GOOGLE_PLACE_ID = "ChIJcafe1Luton12345";
+    delete process.env.GOOGLE_MAPS_API_KEY_1;
     process.env.GOOGLE_MAPS_API_KEY = "server-maps-key";
     process.env.LOVABLE_API_KEY = "lovable-connector-key";
     const calls: Array<{ url: string; init?: RequestInit }> = [];
