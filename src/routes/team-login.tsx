@@ -44,8 +44,8 @@ function StaffLogin() {
     setError("");
     try {
       const { data, error: signInError } = await supabase.auth.signInWithPassword({
-        email,
-        password,
+        email: email.trim().toLowerCase(),
+        password: password.trim(),
       });
       if (signInError) throw signInError;
       if (!data.user) throw new Error("Sign in failed");
