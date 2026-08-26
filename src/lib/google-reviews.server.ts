@@ -85,6 +85,8 @@ export function normalisePlacesResponse(
   };
 }
 
+import { getGoogleMapsApiKey } from "./google-maps-env.server";
+
 export async function loadGoogleReviews(
   fetchImpl: typeof fetch = fetch,
 ): Promise<GoogleReviewsResult> {
@@ -92,7 +94,7 @@ export async function loadGoogleReviews(
 
   const placeId = process.env.GOOGLE_PLACE_ID?.trim();
   const lovableKey = process.env.LOVABLE_API_KEY?.trim();
-  const mapsKey = process.env.GOOGLE_MAPS_API_KEY?.trim();
+  const mapsKey = getGoogleMapsApiKey();
   if (!placeId || !mapsKey || !/^[A-Za-z0-9_-]{10,255}$/.test(placeId)) {
     return {
       configured: false,
