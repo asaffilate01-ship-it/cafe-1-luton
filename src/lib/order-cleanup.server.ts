@@ -3,7 +3,7 @@
  * authoritatively unpaid/expired rows are marked abandoned and have their
  * reserved benefits released.
  */
-import { isPastCleanupThreshold, WEB_UNPAID_TTL_MS } from "./order-cleanup-policy";
+import { isPastCleanupThreshold, mayAutoReleaseUnpaidReservation, WEB_UNPAID_TTL_MS } from "./order-cleanup-policy";
 
 export async function purgeStaleUnpaidOrders(): Promise<number> {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
@@ -12,7 +12,7 @@ export async function purgeStaleUnpaidOrders(): Promise<number> {
   const { data: stale } = await supabaseAdmin
     .from("orders")
     .select(
-      "id, source, created_at, total_cents, promo_code, voucher_holder_id, voucher_cents, customer_id, loyalty_free_drinks_used, account_id, payment_method",
+      "id, source, created_at, total_cents, sumup_checkout_id, sumup_reference, promo_code, voucher_holder_id, voucher_cents, customer_id, loyalty_free_drinks_used, account_id, payment_method",
     )
     .eq("status", "pending_payment")
     .eq("payment_status", "pending")
@@ -22,19 +22,20 @@ export async function purgeStaleUnpaidOrders(): Promise<number> {
   let abandoned = 0;
   for (const order of stale ?? []) {
     if (!isPastCleanupThreshold(order)) continue;
+    // A customer may have completed payment after the local timeout or have a
+    // transaction in flight. Until an approved provider reconciliation exists,
+    // hold any online, card or SumUp-linked order instead of freeing its
+    // voucher/promotion/loyalty reservation.
+    if (!mayAutoReleaseUnpaidReservation(order)) continue;
 
-    // A reader response that is still uncertain must never release benefits or
-    // abandon the order. The next scheduler run will reconcile it again.
-    if (order.source === "counter") {
-      const { data: activeAttempt } = await supabaseAdmin
-        .from("payment_attempts")
-        .select("id")
-        .eq("order_id", order.id)
-        .in("status", ["created", "pending", "paid"])
-        .limit(1)
-        .maybeSingle();
-      if (activeAttempt) continue;
-    }
+    const {data:activeAttempt,error:attemptError}=await supabaseAdmin
+      .from("payment_attempts")
+      .select("id")
+      .eq("order_id",order.id)
+      .in("status",["created","pending","paid"])
+      .limit(1)
+      .maybeSingle();
+    if(attemptError||activeAttempt)continue;
 
     await supabaseAdmin.from("voucher_redemptions").delete().eq("order_id", order.id);
     if (order.voucher_holder_id && order.voucher_cents > 0) {
