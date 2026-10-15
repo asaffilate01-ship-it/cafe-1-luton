@@ -172,8 +172,20 @@ for (const path of compatibilityMigrations) {
 const activeRelease = read(
   "supabase/migrations/20260802102930_5d58aeb2-21c2-49b4-95d6-e60e3fec1ff6.sql",
 );
-for (const expected of ["LU1 2AA", "auth.jwt()", "REVOKE SELECT ON public.menu_items"]) {
+// Historical migration contains a St Albans postcode and has already been
+// published. Never rewrite it to obtain a passing release guard.
+for (const expected of ["auth.jwt()", "REVOKE SELECT ON public.menu_items"]) {
   if (!activeRelease.includes(expected)) fail(`active release migration is missing: ${expected}`);
+}
+// The Luton postcode and site identity must be proven by the additive,
+// forward-only correction rather than assumed to exist in a published file.
+const lutonSiteCorrection=read("supabase/migrations/20261015180000_luton_crown_court_identity.sql");
+for(const expected of ["LU1 2AA","cafe1000-0000-4000-8000-000000000001","delivery_origin_postcode"]){
+  if(!lutonSiteCorrection.includes(expected))fail(`Luton site correction is missing: ${expected}`);
+}
+const futuresSitePrerequisite=read("supabase/migrations/20260826100000_futures_house_site_replay.sql");
+for(const expected of ["FUTURES_HOUSE","LU3 3QB","bc24b444-ffc2-4912-9b0a-143513df4f20"]){
+  if(!futuresSitePrerequisite.includes(expected))fail(`Futures House prerequisite is missing: ${expected}`);
 }
 
 const activeTextFiles = releaseFiles.filter(
